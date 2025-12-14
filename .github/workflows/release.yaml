@@ -51,3 +51,13 @@ jobs:
       - name: Push image
         run: |
           docker push $REGISTRY/$OWNER/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Tag latest
+        run: |
+          docker tag \
+            $IMAGE_NAME \
+            $REGISTRY/$OWNER/$IMAGE_NAME:latest
+
+      - name: Push latest
+        run: |
+          docker push $REGISTRY/$OWNER/$IMAGE_NAME:latest

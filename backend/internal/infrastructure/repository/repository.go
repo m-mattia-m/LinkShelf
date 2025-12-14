@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -18,6 +19,11 @@ import (
 
 	"github.com/spf13/viper"
 )
+
+// Embed the migrations directory in the binary file
+//
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
 
 type Repository struct {
 	UserRepository    UserRepository
