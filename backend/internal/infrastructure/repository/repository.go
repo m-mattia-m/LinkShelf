@@ -22,7 +22,7 @@ import (
 
 // Embed the migrations directory in the binary file
 //
-//go:embed migrations/*.sql
+//go:embed ../../../migrations/*.sql
 var migrationsFS embed.FS
 
 type Repository struct {
