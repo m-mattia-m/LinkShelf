@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"backend/migrations"
 	"database/sql"
-	"embed"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -19,11 +20,6 @@ import (
 
 	"github.com/spf13/viper"
 )
-
-// Embed the migrations directory in the binary file
-//
-//go:embed ../../../migrations/*.sql
-var migrationsFS embed.FS
 
 type Repository struct {
 	UserRepository    UserRepository
@@ -93,8 +89,14 @@ func connectToDatabase(dsn, driver string) (*sql.DB, error) {
 func runMigrations(migrateDSN string) error {
 	slog.Info("Applying DB migrations...")
 
-	m, err := migrate.New(
-		"file://migrations",
+	source, err := iofs.New(migrations.FS, ".")
+	if err != nil {
+		return fmt.Errorf("migration source failed: %w", err)
+	}
+
+	m, err := migrate.NewWithSourceInstance(
+		"iofs",
+		source,
 		migrateDSN,
 	)
 	if err != nil {
