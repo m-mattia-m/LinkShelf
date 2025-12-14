@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: linkshelf
+      POSTGRES_PASSWORD: linkshelf
+      POSTGRES_DB: linkshelf
+
+  mysql:
+    image: mysql:8.4.1
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=linkshelf
+      - MYSQL_DATABASE=linkshelf
+      - MYSQL_USER=linkshelf
+      - MYSQL_PASSWORD=linkshelf
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"

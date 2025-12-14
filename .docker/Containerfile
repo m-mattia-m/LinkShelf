@@ -1,0 +1,65 @@
+# =========================
+# Build Go backend
+# =========================
+FROM golang:1.25-alpine AS go-builder
+
+ARG IMAGE_NAME
+ARG IMAGE_TAG
+
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+
+WORKDIR /app
+
+# Cache deps
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# Copy source
+COPY backend/ .
+
+# Build
+RUN go build \
+  -ldflags="-s -w -X main.sentryRelease=${IMAGE_NAME}:${IMAGE_TAG}" \
+  -o /out/linkshelf \
+  ./cmd/app/main.go
+
+# =========================
+# Build Nuxt frontend
+# =========================
+FROM node:20-alpine AS nuxt-builder
+
+WORKDIR /frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend .
+RUN npm run build
+
+# =========================
+# Runtime (ONE IMAGE)
+# =========================
+FROM node:20-alpine
+
+# tini = tiny init, nothing more
+RUN apk add --no-cache tini ca-certificates
+
+WORKDIR /app
+
+COPY --from=go-builder /out/linkshelf /app/linkshelf
+COPY ./backend/migrations /app/migrations
+COPY --from=nuxt-builder /frontend/.output /app/.output
+
+ENV NODE_ENV=production
+ENV GIN_MODE=release
+ENV PORT=8080
+ENV NITRO_PORT=3000
+ENV NITRO_HOST=0.0.0.0
+
+EXPOSE 8080
+EXPOSE 3000
+
+ENTRYPOINT ["/sbin/tini", "--"]
+
+CMD ["sh", "-c", "/app/linkshelf & node /app/.output/server/index.mjs"]

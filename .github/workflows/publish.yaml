@@ -1,0 +1,25 @@
+name: Build and Push Docker Image
+
+on:
+  release:
+    types:
+      - created
+
+env:
+  IMAGE_NAME: linkshelf
+  IMAGE_TAG: ${{ github.event.release.tag_name }} # eg. v0.0.1
+  GH_USERNAME: fermionhq
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.1
+      - name: Build image
+        run: docker build . --file ./.docker/Dockerfile --tag $IMAGE_NAME --label $IMAGE_TAG --build-arg IMAGE_NAME=$IMAGE_NAME --build-arg IMAGE_TAG=$IMAGE_TAG
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+      - name: Add tag to image
+        run: docker tag $IMAGE_NAME ghcr.io/$GH_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+      - name: Push image to container-registry
+        run: docker push ghcr.io/$GH_USERNAME/$IMAGE_NAME:$IMAGE_TAG

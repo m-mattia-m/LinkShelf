@@ -1,0 +1,7 @@
+frontend/.idea
+frontend/.nuxt
+frontend/node_modules
+frontend/.gitignore
+
+backend/.idea
+.idea

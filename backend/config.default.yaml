@@ -1,0 +1,26 @@
+app:
+  name: LinkShelf
+  description: LinkShelf is an OpenSource alternative to linktree.
+  environment: prod
+  logo: <base64-encoded-logo-or-path>
+server:
+  scheme: http
+  host: localhost
+  port: 8080 # Do not change this port since the Containerfile exposes this port. It's just for development purposes.
+  trustedProxies:
+    - 127.0.0.1
+database:
+  engine: POSTGRES # MYSQL # POSTGRES
+  host: localhost
+  port: 5432 # 3306 # 5432
+  username: linkshelf
+  password: linkshelf
+  name: linkshelf
+  params: "sslmode=disable" # "charset=utf8mb4&parseTime=true" # "sslmode=disable" # optional
+logging:
+  level: debug
+domain:
+  openapi:
+    usePort: true
+  authentication:
+    skipAuthentication: true

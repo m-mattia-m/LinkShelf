@@ -1,0 +1,26 @@
+app:
+  name: LinkShelfTest
+  description: LinkShelf is an OpenSource alternative to linktree.
+  environment: test
+  logo: <base64-encoded-logo-or-path>
+server:
+  scheme: http
+  host: localhost
+  port: 18081
+  trustedProxies:
+    - 127.0.0.1
+database:
+  engine: POSTGRES # MYSQL # POSTGRES
+  host: localhost
+  port: 15432 # 3306 # 5432
+  username: linkshelf
+  password: linkshelf
+  name: linkshelf
+  params: "sslmode=disable" # "charset=utf8mb4&parseTime=true" # "sslmode=disable" # optional
+logging:
+  level: debug
+domain:
+  openapi:
+    usePort: true
+  authentication:
+    skipAuthentication: true
