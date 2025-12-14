@@ -1,6 +1,7 @@
 services:
   linkshelf:
-    image: linkshelf6
+    build:
+      dockerfile: .docker/Containerfile
     restart: unless-stopped
     ports:
       - "3000:3000"
