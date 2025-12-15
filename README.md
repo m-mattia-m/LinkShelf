@@ -20,8 +20,6 @@ efficient way to keep track of important web resources.
 - **OIDC**: Supports OpenID Connect (OIDC) for secure and flexible authentication.
 - **Open Source**: LinkShelf is open source, allowing users to contribute to its development and customize it as needed.
 
-## Setup
-
 ## Contributing and Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)

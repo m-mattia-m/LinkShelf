@@ -61,3 +61,33 @@ jobs:
       - name: Push latest
         run: |
           docker push $REGISTRY/$OWNER/$IMAGE_NAME:latest
+  coverage:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@v6.1.0
+        with:
+          go-version: '1.25'
+
+      - name: Run tests with coverage
+        working-directory: backend
+        run: |
+          go test ./... -coverprofile=coverage.out
+
+      - name: Generate coverage badge
+        uses: tj-actions/coverage-badge-go@v3
+        with:
+          filename: backend/coverage.out
+
+      - name: Commit coverage badge
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: "chore: update coverage badge"
+          add: "README.md"
