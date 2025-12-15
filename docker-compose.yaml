@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: linkshelf
 
   mysql:
-    image: mysql:8.4.1
+    image: mysql:9.5.0
     restart: unless-stopped
     ports:
       - "3306:3306"
