@@ -8,24 +8,24 @@ updates:
   - package-ecosystem: "npm"
     directory: "frontend"
     schedule:
-      interval: "daily"
+      interval: "monthly"
 
   - package-ecosystem: "gomod"
     directory: "backend"
     schedule:
-      interval: "daily"
+      interval: "monthly"
 
   - package-ecosystem: "docker"
     directory: ".docker"
     schedule:
-      interval: "daily"
+      interval: "monthly"
 
   - package-ecosystem: "docker-compose"
     directory: ""
     schedule:
-      interval: "daily"
+      interval: "monthly"
 
   - package-ecosystem: "github-actions"
     directory: ".github/workflows"
     schedule:
-      interval: "daily"
+      interval: "monthly"
