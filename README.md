@@ -22,25 +22,18 @@ efficient way to keep track of important web resources.
 
 ## Setup
 
-## Development
+## Contributing and Development
 
-## Running Locally
-
-```bash
-docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
-
-# if you want to build a new image:
-docker build . --file ./.docker/Containerfile --tag linkshelf --label linkshelf --build-arg IMAGE_NAME=linkshelf --build-arg IMAGE_TAG=linkshelf
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Todo:
 
-- [] add validations
-    - [] does user exist on shelfCreate/Update
-    - [] does shelf exist on sectionCreate/Update
-    - [] does sectiotion exist on linkCreate/Update
-    - [] are all required fields given
-        - [] ShelfPath, ShelfName, ...
-    - [] handle default values like for themes
-- [] Write unit tests
-- [] Add Renovate
+- [ ] add validations
+    - [ ] does user exist on shelfCreate/Update
+    - [ ] does shelf exist on sectionCreate/Update
+    - [ ] does sectiotion exist on linkCreate/Update
+    - [ ] are all required fields given
+        - [ ] ShelfPath, ShelfName, ...
+    - [ ] handle default values like for themes
+- [ ] Write unit tests
+- [ ] Add Renovate
