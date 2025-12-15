@@ -63,6 +63,8 @@ func LoadConfig() error {
 	viper.AddConfigPath("../..")
 	viper.AddConfigPath("../../..")
 	viper.AddConfigPath("../../../..")
+	viper.AddConfigPath("backend")
+	viper.AddConfigPath("./backend")
 
 	if err := viper.ReadInConfig(); err != nil {
 		return err

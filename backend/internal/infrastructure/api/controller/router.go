@@ -82,12 +82,13 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	})
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-user",
-		Summary:     "Create user",
-		Description: "Create a new user.",
-		Path:        "/v1/user",
-		Tags:        []string{"User"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-user",
+		Summary:       "Create user",
+		Description:   "Create a new user.",
+		Path:          "/v1/user",
+		Tags:          []string{"User"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateUser(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
@@ -124,12 +125,13 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}, DeleteUser(svc))
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-shelf",
-		Summary:     "Create shelf",
-		Description: "Create a new shelf.",
-		Path:        "/v1/shelf",
-		Tags:        []string{"Shelf"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-shelf",
+		Summary:       "Create shelf",
+		Description:   "Create a new shelf.",
+		Path:          "/v1/shelf",
+		Tags:          []string{"Shelf"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateShelf(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
@@ -158,12 +160,13 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}, DeleteShelf(svc))
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-section",
-		Summary:     "Create section",
-		Description: "Create a new section.",
-		Path:        "/v1/section",
-		Tags:        []string{"Section"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-section",
+		Summary:       "Create section",
+		Description:   "Create a new section.",
+		Path:          "/v1/section",
+		Tags:          []string{"Section"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateSection(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
@@ -192,12 +195,13 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}, DeleteSection(svc))
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-link",
-		Summary:     "Create link",
-		Description: "Create a new link.",
-		Path:        "/v1/link",
-		Tags:        []string{"Link"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-link",
+		Summary:       "Create link",
+		Description:   "Create a new link.",
+		Path:          "/v1/link",
+		Tags:          []string{"Link"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateLink(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,

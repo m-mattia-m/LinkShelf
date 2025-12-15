@@ -28,7 +28,12 @@ func NewUserService(repository *repository.Repository, domain *Service) UserServ
 }
 
 func (s *userServiceImpl) GetUserById(id string) (*model.User, error) {
-	return s.Repository.UserRepository.Get(id)
+	user, err := s.Repository.UserRepository.Get(id)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = "" // Do not return password hash
+	return user, nil
 }
 
 func (s *userServiceImpl) CreateUser(u *model.User) (*model.User, error) {
