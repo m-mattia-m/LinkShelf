@@ -32,6 +32,10 @@ jobs:
         run: |
           go build ./...
 
+      - name: Install mockgen
+        run: |
+          go install go.uber.org/mock/mockgen@latest
+
       - name: Verify go generate is up-to-date
         working-directory: backend
         run: |
