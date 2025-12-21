@@ -11,12 +11,12 @@ import (
 
 func CreateShelf(svc *domain.Service) func(c context.Context, input *model.ShelfRequestBody) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfRequestBody) (*model.ShelfResponse, error) {
-		userId, err := svc.ShelfService.CreateShelf(mapper.MapShelfBaseToShelfPointer(input.Body))
+		userId, err := svc.ShelfService.Create(mapper.MapShelfBaseToShelfPointer(input.Body))
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to create user", err)
 		}
 
-		user, err := svc.ShelfService.GetShelfById(userId)
+		user, err := svc.ShelfService.Get(userId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get user", err)
 		}
@@ -27,7 +27,7 @@ func CreateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 
 func GetShelfById(svc *domain.Service) func(c context.Context, input *model.ShelfRequestFilter) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfRequestFilter) (*model.ShelfResponse, error) {
-		user, err := svc.ShelfService.GetShelfById(input.ShelfId)
+		user, err := svc.ShelfService.Get(input.ShelfId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get user", err)
 		}
@@ -38,7 +38,7 @@ func GetShelfById(svc *domain.Service) func(c context.Context, input *model.Shel
 
 func UpdateShelf(svc *domain.Service) func(c context.Context, input *model.ShelfFilterFilterAndBody) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfFilterFilterAndBody) (*model.ShelfResponse, error) {
-		shelf, err := svc.ShelfService.UpdateShelf(input.ShelfId, mapper.MapShelfBaseToShelfPointer(input.Body))
+		shelf, err := svc.ShelfService.Update(input.ShelfId, mapper.MapShelfBaseToShelfPointer(input.Body))
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to update user", err)
 		}
@@ -49,12 +49,12 @@ func UpdateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 
 func DeleteShelf(svc *domain.Service) func(c context.Context, input *model.ShelfRequestFilter) (*struct{}, error) {
 	return func(c context.Context, input *model.ShelfRequestFilter) (*struct{}, error) {
-		user, err := svc.ShelfService.GetShelfById(input.ShelfId)
+		user, err := svc.ShelfService.Get(input.ShelfId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get user", err)
 		}
 
-		err = svc.ShelfService.DeleteShelf(user)
+		err = svc.ShelfService.Delete(user)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to delete user", err)
 		}

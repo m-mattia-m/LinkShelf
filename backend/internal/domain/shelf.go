@@ -6,10 +6,10 @@ import (
 )
 
 type ShelfService interface {
-	GetShelfById(id string) (*model.Shelf, error)
-	CreateShelf(u *model.Shelf) (string, error)
-	UpdateShelf(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error)
-	DeleteShelf(u *model.Shelf) error
+	Get(id string) (*model.Shelf, error)
+	Create(u *model.Shelf) (string, error)
+	Update(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error)
+	Delete(u *model.Shelf) error
 }
 
 type shelfServiceImpl struct {
@@ -24,15 +24,15 @@ func NewShelfService(repository *repository.Repository, domain *Service) ShelfSe
 	}
 }
 
-func (s *shelfServiceImpl) GetShelfById(id string) (*model.Shelf, error) {
+func (s *shelfServiceImpl) Get(id string) (*model.Shelf, error) {
 	return s.Repository.ShelfRepository.Get(id)
 }
 
-func (s *shelfServiceImpl) CreateShelf(shelfRequest *model.Shelf) (string, error) {
+func (s *shelfServiceImpl) Create(shelfRequest *model.Shelf) (string, error) {
 	return s.Repository.ShelfRepository.Create(shelfRequest)
 }
 
-func (s *shelfServiceImpl) UpdateShelf(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error) {
+func (s *shelfServiceImpl) Update(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error) {
 	shelfRequest.Id = shelfId
 	err := s.Repository.ShelfRepository.Update(shelfRequest)
 	if err != nil {
@@ -46,6 +46,6 @@ func (s *shelfServiceImpl) UpdateShelf(shelfId string, shelfRequest *model.Shelf
 	return shelf, nil
 }
 
-func (s *shelfServiceImpl) DeleteShelf(shelfRequest *model.Shelf) error {
+func (s *shelfServiceImpl) Delete(shelfRequest *model.Shelf) error {
 	return s.Repository.ShelfRepository.Delete(shelfRequest)
 }

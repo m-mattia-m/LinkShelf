@@ -86,7 +86,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "post-create-user",
 		Summary:       "Create user",
 		Description:   "Create a new user.",
-		Path:          "/v1/user",
+		Path:          "/v1/users",
 		Tags:          []string{"User"},
 		DefaultStatus: http.StatusCreated,
 	}, CreateUser(svc))
@@ -95,7 +95,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "get-user-by-id",
 		Summary:     "Get user by ID",
 		Description: "Get a user by ID.",
-		Path:        "/v1/user/{userId}",
+		Path:        "/v1/users/{userId}",
 		Tags:        []string{"User"},
 	}, GetUserById(svc))
 	huma.Register(api, huma.Operation{
@@ -103,7 +103,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-user",
 		Summary:     "Update user",
 		Description: "Update an existing user. Consider that password updates are not handled here.",
-		Path:        "/v1/user/{userId}",
+		Path:        "/v1/users/{userId}",
 		Tags:        []string{"User"},
 	}, UpdateUser(svc))
 	huma.Register(api, huma.Operation{
@@ -111,7 +111,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "patch-user-password",
 		Summary:     "Patch user password",
 		Description: "Patch a user's password.",
-		Path:        "/v1/user/{userId}/password",
+		Path:        "/v1/users/{userId}/password",
 		Tags:        []string{"User"},
 	}, PatchUserPassword(svc))
 	huma.Register(api, huma.Operation{
@@ -119,7 +119,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-user",
 		Summary:       "Delete user",
 		Description:   "Delete a user by ID.",
-		Path:          "/v1/user/{userId}",
+		Path:          "/v1/users/{userId}",
 		Tags:          []string{"User"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteUser(svc))
@@ -129,7 +129,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "post-create-shelf",
 		Summary:       "Create shelf",
 		Description:   "Create a new shelf.",
-		Path:          "/v1/shelf",
+		Path:          "/v1/shelves",
 		Tags:          []string{"Shelf"},
 		DefaultStatus: http.StatusCreated,
 	}, CreateShelf(svc))
@@ -138,7 +138,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "get-shelf-by-id",
 		Summary:     "Get shelf by ID",
 		Description: "Get a shelf by ID.",
-		Path:        "/v1/shelf/{shelfId}",
+		Path:        "/v1/shelves/{shelfId}",
 		Tags:        []string{"Shelf"},
 	}, GetShelfById(svc))
 	huma.Register(api, huma.Operation{
@@ -146,7 +146,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-shelf",
 		Summary:     "Update shelf",
 		Description: "Update an existing shelf.",
-		Path:        "/v1/shelf/{shelfId}",
+		Path:        "/v1/shelves/{shelfId}",
 		Tags:        []string{"Shelf"},
 	}, UpdateShelf(svc))
 	huma.Register(api, huma.Operation{
@@ -154,7 +154,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-shelf",
 		Summary:       "Delete shelf",
 		Description:   "Delete a shelf by ID.",
-		Path:          "/v1/shelf/{shelfId}",
+		Path:          "/v1/shelves/{shelfId}",
 		Tags:          []string{"Shelf"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteShelf(svc))
@@ -164,7 +164,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "post-create-section",
 		Summary:       "Create section",
 		Description:   "Create a new section.",
-		Path:          "/v1/section",
+		Path:          "/v1/sections",
 		Tags:          []string{"Section"},
 		DefaultStatus: http.StatusCreated,
 	}, CreateSection(svc))
@@ -173,7 +173,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "get-sections",
 		Summary:     "Get sections by shelf ID",
 		Description: "Get sections by shelf ID.",
-		Path:        "/v1/section/{sectionId}",
+		Path:        "/v1/sections",
 		Tags:        []string{"Section"},
 	}, GetSections(svc))
 	huma.Register(api, huma.Operation{
@@ -181,7 +181,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-section",
 		Summary:     "Update section",
 		Description: "Update an existing section.",
-		Path:        "/v1/section/{sectionId}",
+		Path:        "/v1/sections/{sectionId}",
 		Tags:        []string{"Section"},
 	}, UpdateSection(svc))
 	huma.Register(api, huma.Operation{
@@ -189,7 +189,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-section",
 		Summary:       "Delete section",
 		Description:   "Delete a section by ID.",
-		Path:          "/v1/section/{sectionId}",
+		Path:          "/v1/sections/{sectionId}",
 		Tags:          []string{"Section"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteSection(svc))
@@ -199,7 +199,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "post-create-link",
 		Summary:       "Create link",
 		Description:   "Create a new link.",
-		Path:          "/v1/link",
+		Path:          "/v1/links",
 		Tags:          []string{"Link"},
 		DefaultStatus: http.StatusCreated,
 	}, CreateLink(svc))
@@ -208,7 +208,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "get-links",
 		Summary:     "Get links by shelf ID",
 		Description: "Get links by shelf ID.",
-		Path:        "/v1/link/{linkId}",
+		Path:        "/v1/links",
 		Tags:        []string{"Link"},
 	}, GetLinks(svc))
 	huma.Register(api, huma.Operation{
@@ -216,7 +216,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-link",
 		Summary:     "Update link",
 		Description: "Update an existing link.",
-		Path:        "/v1/link/{linkId}",
+		Path:        "/v1/links/{linkId}",
 		Tags:        []string{"Link"},
 	}, UpdateLink(svc))
 	huma.Register(api, huma.Operation{
@@ -224,7 +224,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-link",
 		Summary:       "Delete link",
 		Description:   "Delete a link by ID.",
-		Path:          "/v1/link/{linkId}",
+		Path:          "/v1/links/{linkId}",
 		Tags:          []string{"Link"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteLink(svc))

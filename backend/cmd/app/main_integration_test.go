@@ -4,6 +4,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/controller"
+	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/repository"
 	"context"
 	"database/sql"
@@ -14,15 +15,18 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 var (
 	TestRepository *repository.Repository
+	TestService    *domain.Service
 	BaseURL        string
 	httpServer     *http.Server
 )
@@ -69,7 +73,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	TestService := domain.NewService(TestRepository)
+	TestService = domain.NewService(TestRepository)
 
 	// Build router
 	router, err := controller.Router(TestService)
@@ -144,7 +148,13 @@ func doRequest(
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,4 +169,65 @@ func ObjectToJSON(object any) string {
 	}
 
 	return string(bytes)
+}
+
+func getShelfOwnerUser() (string, error) {
+	userRequest := &model.User{
+		UserBase: model.UserBase{
+			Email:     fmt.Sprintf("test-shelf-owner-%s@test.com", ShortUUID(uuid.New().String())),
+			FirstName: "test-shelf-owner-firstname",
+			LastName:  "test-shelf-owner-lastname",
+			Password:  "secret",
+		},
+	}
+
+	user, err := TestService.UserService.CreateUser(userRequest)
+	if err != nil {
+		return "", err
+	}
+
+	return user.Id, nil
+}
+
+func getShelfInclusiveItsOwnerUser() (string, error) {
+	userId, err := getShelfOwnerUser()
+	if err != nil {
+		return "", err
+	}
+
+	shelfId, err := TestService.ShelfService.Create(&model.Shelf{ShelfBase: model.ShelfBase{
+		Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(uuid.New().String())),
+		Path:        "/shelf-for-owner",
+		Description: "A shelf created during API integration tests",
+		Theme:       "",
+		Icon:        "",
+		UserId:      userId,
+	}})
+	if err != nil {
+		return "", err
+	}
+
+	return shelfId, nil
+
+}
+
+func getSectionAndShelfInclusiveItsOwnerUser() (string, error) {
+	shelfId, err := getShelfInclusiveItsOwnerUser()
+	if err != nil {
+		return "", err
+	}
+
+	section, err := TestService.SectionService.Create(&model.Section{
+		SectionBase: model.SectionBase{
+			Title:   "test-section-get",
+			ShelfId: shelfId,
+		},
+	})
+
+	return section.Id, nil
+}
+
+func ShortUUID(u string) string {
+	parts := strings.Split(u, "-")
+	return parts[len(parts)-1]
 }

@@ -21,8 +21,8 @@ func CreateSection(svc *domain.Service) func(c context.Context, input *model.Sec
 	}
 }
 
-func GetSections(svc *domain.Service) func(c context.Context, input *model.SectionRequestFilter) (*model.SectionResponseList, error) {
-	return func(c context.Context, input *model.SectionRequestFilter) (*model.SectionResponseList, error) {
+func GetSections(svc *domain.Service) func(c context.Context, input *model.SectionRequestShelfFilter) (*model.SectionResponseList, error) {
+	return func(c context.Context, input *model.SectionRequestShelfFilter) (*model.SectionResponseList, error) {
 		if strings.TrimSpace(input.ShelfId) == "" {
 			return nil, huma.Error400BadRequest("shelfId is required", nil)
 		}
@@ -36,10 +36,10 @@ func GetSections(svc *domain.Service) func(c context.Context, input *model.Secti
 	}
 }
 
-func UpdateSection(svc *domain.Service) func(c context.Context, input *model.SectionFilterFilterAndBody) (*model.SectionResponse, error) {
-	return func(c context.Context, input *model.SectionFilterFilterAndBody) (*model.SectionResponse, error) {
-		if strings.TrimSpace(input.ShelfId) == "" {
-			return nil, huma.Error400BadRequest("shelfId is required", nil)
+func UpdateSection(svc *domain.Service) func(c context.Context, input *model.SectionRequestSectionFilterAndBody) (*model.SectionResponse, error) {
+	return func(c context.Context, input *model.SectionRequestSectionFilterAndBody) (*model.SectionResponse, error) {
+		if strings.TrimSpace(input.SectionId) == "" {
+			return nil, huma.Error400BadRequest("sectionId is required", nil)
 		}
 
 		section, err := svc.SectionService.Update(input.SectionId, mapper.MapSectionBaseToSectionPointer(input.Body))
@@ -51,8 +51,8 @@ func UpdateSection(svc *domain.Service) func(c context.Context, input *model.Sec
 	}
 }
 
-func DeleteSection(svc *domain.Service) func(c context.Context, input *model.SectionRequestFilter) (*struct{}, error) {
-	return func(c context.Context, input *model.SectionRequestFilter) (*struct{}, error) {
+func DeleteSection(svc *domain.Service) func(c context.Context, input *model.SectionRequestSectionFilter) (*struct{}, error) {
+	return func(c context.Context, input *model.SectionRequestSectionFilter) (*struct{}, error) {
 		err := svc.SectionService.Delete(input.SectionId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to delete section", err)
