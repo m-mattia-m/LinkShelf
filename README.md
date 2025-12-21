@@ -1,5 +1,5 @@
 # LinkShelf
-![Coverage](https://img.shields.io/badge/Coverage-1-red)
+![Coverage](https://img.shields.io/badge/Coverage-0-red)
 
 [![CI – Build, Test & Coverage](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml)
 
