@@ -15,12 +15,25 @@ type SectionRequestBody struct {
 }
 
 type SectionRequestFilter struct {
-	ShelfId   string `path:"shelfId"`
+	SectionRequestShelfFilter
+	SectionRequestSectionFilter
+}
+
+type SectionRequestShelfFilter struct {
+	ShelfId string `query:"shelfId"`
+}
+
+type SectionRequestSectionFilter struct {
 	SectionId string `path:"sectionId"`
 }
 
 type SectionFilterFilterAndBody struct {
 	SectionRequestFilter
+	Body SectionBase `json:"body" bson:"body"`
+}
+
+type SectionRequestSectionFilterAndBody struct {
+	SectionRequestSectionFilter
 	Body SectionBase `json:"body" bson:"body"`
 }
 
