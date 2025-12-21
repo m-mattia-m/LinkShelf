@@ -52,6 +52,7 @@ jobs:
           go generate ./...
           git diff --exit-code
 
+
       - name: Run unit tests
         working-directory: backend
         run: |
@@ -65,8 +66,8 @@ jobs:
       - name: Merge coverage
         working-directory: backend
         run: |
-          echo "mode: atomic" > coverage.out
-          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> coverage.out
+          echo "mode: atomic" > ../coverage.out
+          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> ../coverage.out
 
       - name: Coverage summary
         working-directory: backend
@@ -79,12 +80,9 @@ jobs:
       - name: check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
-          profile: backend/coverage.out
-          threshold-total: 0 # if you want to enforce a minimum coverage, set it here
+          profile: coverage.out
+          threshold-total: 0
           debug: true
 
-          # push badge only when allowed (no fork PRs)
           git-token: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && secrets.GITHUB_TOKEN || '' }}
-
-          # store badge on the SAME branch as the pipeline
           git-branch: ${{ github.ref_name }}
