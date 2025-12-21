@@ -70,7 +70,6 @@ func LoadConfig() error {
 		return err
 	}
 
-	// Optional local override (lowest priority)
 	viper.SetConfigName("config")
 	_ = viper.MergeInConfig()
 

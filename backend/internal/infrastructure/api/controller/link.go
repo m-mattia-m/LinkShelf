@@ -20,8 +20,8 @@ func CreateLink(svc *domain.Service) func(c context.Context, input *model.LinkRe
 	}
 }
 
-func GetLinks(svc *domain.Service) func(c context.Context, input *model.LinkRequestFilter) (*model.LinkResponseList, error) {
-	return func(c context.Context, input *model.LinkRequestFilter) (*model.LinkResponseList, error) {
+func GetLinks(svc *domain.Service) func(c context.Context, input *model.LinkRequestShelfFilter) (*model.LinkResponseList, error) {
+	return func(c context.Context, input *model.LinkRequestShelfFilter) (*model.LinkResponseList, error) {
 		links, err := svc.LinkService.List(input.ShelfId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get links", err)
