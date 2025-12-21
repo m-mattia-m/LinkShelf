@@ -76,3 +76,71 @@ jobs:
             -f .docker/Containerfile \
             -t $IMAGE_NAME:ci \
             .
+
+
+  test-and-coverage:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Build
+        working-directory: backend
+        run: |
+          go build ./...
+
+      - name: Install mockgen
+        run: |
+          go install go.uber.org/mock/mockgen@latest
+
+      - name: Verify go generate is up-to-date
+        working-directory: backend
+        run: |
+          go generate ./...
+          git diff --exit-code
+
+      - name: Run unit tests
+        working-directory: backend
+        run: |
+          go test ./... -coverprofile=coverage.unit.out
+
+      - name: Run integration tests
+        working-directory: backend
+        run: |
+          go test -tags=integration ./... -coverprofile=coverage.integration.out
+
+      - name: Merge coverage profiles
+        working-directory: backend
+        run: |
+          echo "mode: atomic" > coverage.out
+          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> coverage.out
+
+
+      - name: Coverage summary
+        working-directory: backend
+        run: |
+          echo "-------------------------------"
+          go tool cover -func=coverage.out | tee coverage.txt
+          echo "-------------------------------"
+          grep total: coverage.txt
+
+      - name: Generate coverage badge
+        uses: tj-actions/coverage-badge-go@v3
+        with:
+          filename: backend/coverage.out
+
+      - name: Commit coverage badge
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: "chore: update coverage badge (release ${{ github.event.release.tag_name }})"
+          add: "README.md"
