@@ -79,15 +79,16 @@ jobs:
       - name: check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
-          profile: cover.out
+          profile: backend/coverage.out
           threshold-total: 95
+          debug: true
 
-          ## when token is not specified (value '') this feature is turned off
-          ## in this example badge is created and committed only for main branch
-          git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
-          ## name of branch where badges are stored
-          ## ideally this should be orphan branch (see below how to create this branch)
-          git-branch: badges
+          # push badge only when allowed (no fork PRs)
+          git-token: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && secrets.GITHUB_TOKEN || '' }}
+
+          # store badge on the SAME branch as the pipeline
+          git-branch: ${{ github.ref_name }}
+
       - name: Checkout current branch
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
