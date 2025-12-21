@@ -1,3 +1,5 @@
+//go:generate mockgen -source=shelf.go -destination=mocks/shelf_service.go -package=mocks
+
 package domain
 
 import (
