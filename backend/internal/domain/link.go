@@ -1,3 +1,5 @@
+//go:generate mockgen -source=link.go -destination=mocks/link_service.go -package=mocks
+
 package domain
 
 import (
