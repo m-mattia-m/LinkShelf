@@ -1,4 +1,4 @@
-name: Release – Build & Push Docker Image
+name: Release – Test, Coverage & Publish
 
 on:
   release:
@@ -11,7 +11,71 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Build
+        working-directory: backend
+        run: |
+          go build ./...
+
+      - name: Verify go generate is up-to-date
+        working-directory: backend
+        run: |
+          go generate ./...
+          git diff --exit-code
+
+      - name: Run unit tests
+        working-directory: backend
+        run: |
+          go test ./... -coverprofile=coverage.unit.out
+
+      - name: Run integration tests
+        working-directory: backend
+        run: |
+          go test -tags=integration ./... -coverprofile=coverage.integration.out
+
+      - name: Merge coverage profiles
+        working-directory: backend
+        run: |
+          echo "mode: atomic" > coverage.out
+          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> coverage.out
+
+
+      - name: Coverage summary
+        working-directory: backend
+        run: |
+          echo "-------------------------------"
+          go tool cover -func=coverage.out | tee coverage.txt
+          echo "-------------------------------"
+          grep total: coverage.txt
+
+      - name: Generate coverage badge
+        uses: tj-actions/coverage-badge-go@v3
+        with:
+          filename: backend/coverage.out
+
+      - name: Commit coverage badge
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: "chore: update coverage badge (release ${{ github.event.release.tag_name }})"
+          add: "README.md"
+
   build-and-push:
+    needs: test-and-coverage
     runs-on: ubuntu-latest
 
     permissions:
@@ -32,7 +96,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image
+      - name: Build Docker image
         run: |
           docker build \
             -f .docker/Containerfile \
@@ -42,57 +106,22 @@ jobs:
             --label org.opencontainers.image.version=$IMAGE_TAG \
             .
 
-      - name: Tag image
+      - name: Tag image (release)
         run: |
           docker tag \
             $IMAGE_NAME \
             $REGISTRY/$OWNER/$IMAGE_NAME:$IMAGE_TAG
 
-      - name: Push image
+      - name: Push image (release)
         run: |
           docker push $REGISTRY/$OWNER/$IMAGE_NAME:$IMAGE_TAG
 
-      - name: Tag latest
+      - name: Tag image (latest)
         run: |
           docker tag \
             $IMAGE_NAME \
             $REGISTRY/$OWNER/$IMAGE_NAME:latest
 
-      - name: Push latest
+      - name: Push image (latest)
         run: |
           docker push $REGISTRY/$OWNER/$IMAGE_NAME:latest
-  coverage:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25'
-
-      - name: Run unit tests
-        working-directory: backend
-        run: |
-          go test ./... -coverprofile=coverage.out
-
-      - name: Run integration tests
-        working-directory: backend
-        run: |
-          go test -tags=integration ./... -coverprofile=coverage.out
-
-      - name: Generate coverage badge
-        uses: tj-actions/coverage-badge-go@v3
-        with:
-          filename: backend/coverage.out
-
-      - name: Commit coverage badge
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: "chore: update coverage badge"
-          add: "README.md"
