@@ -70,10 +70,10 @@ jobs:
           grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> ../coverage.out
 
       - name: Coverage summary
+        working-directory: backend
         run: |
           echo "-------------------------------"
-          ls -la
-          go tool cover -func=coverage.out | tee coverage.txt
+          go tool cover -func=../coverage.out | tee coverage.txt
           echo "-------------------------------"
           grep total: coverage.txt
 
