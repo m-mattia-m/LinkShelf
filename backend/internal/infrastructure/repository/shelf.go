@@ -1,3 +1,5 @@
+//go:generate mockgen -source=shelf.go -destination=mocks/shelf_repository.go -package=mocks
+
 package repository
 
 import (
