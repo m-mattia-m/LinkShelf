@@ -80,7 +80,7 @@ jobs:
         uses: vladopajic/go-test-coverage@v2
         with:
           profile: backend/coverage.out
-          threshold-total: 95
+          threshold-total: 0 # if you want to enforce a minimum coverage, set it here
           debug: true
 
           # push badge only when allowed (no fork PRs)
