@@ -55,26 +55,12 @@ jobs:
       - name: Run unit tests
         working-directory: backend
         run: |
-          go test ./... -coverprofile=coverage.unit.out
+          go test ./...
 
       - name: Run integration tests
         working-directory: backend
         run: |
-          go test -tags=integration ./... -coverprofile=coverage.integration.out
-
-      - name: Merge coverage
-        working-directory: backend
-        run: |
-          echo "mode: atomic" > coverage.out
-          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> coverage.out
-
-      - name: Coverage summary
-        working-directory: backend
-        run: |
-          echo "-------------------------------"
-          go tool cover -func=coverage.out | tee coverage.txt
-          echo "-------------------------------"
-          grep total: coverage.txt
+          go test -tags=integration ./...
 
       - name: check test coverage
         uses: vladopajic/go-test-coverage@v2
@@ -88,22 +74,3 @@ jobs:
 
           # store badge on the SAME branch as the pipeline
           git-branch: ${{ github.ref_name }}
-
-      - name: Checkout current branch
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          git fetch origin
-          git checkout ${{ github.ref_name }}
-
-      - name: Generate coverage badge
-        uses: tj-actions/coverage-badge-go@v3
-        with:
-          filename: backend/coverage.out
-
-      - name: Commit coverage badge
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: "chore: update coverage badge"
-          add: README.md
-          push: true
