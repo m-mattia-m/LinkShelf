@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package main
 
 import (
@@ -181,7 +184,7 @@ func getShelfOwnerUser() (string, error) {
 		},
 	}
 
-	user, err := TestService.UserService.CreateUser(userRequest)
+	user, err := TestService.UserService.Create(userRequest)
 	if err != nil {
 		return "", err
 	}
