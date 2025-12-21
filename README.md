@@ -1,6 +1,8 @@
 # LinkShelf
 ![Coverage](https://img.shields.io/badge/Coverage-0-red)
 
+[![CI – Build, Test & Coverage](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml)
+
 LinkShelf is a web application designed to help users organize, manage, and share their favorite links and bookmarks in
 a user-friendly interface. Whether you're a student, professional, or casual internet user, LinkShelf provides an
 efficient way to keep track of important web resources.
