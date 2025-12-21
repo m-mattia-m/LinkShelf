@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package main
 
 import (
@@ -58,7 +61,7 @@ func Test_API_User_Get(t *testing.T) {
 		},
 	}
 
-	user, err := TestService.UserService.CreateUser(user)
+	user, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	resp := doRequest(
@@ -100,7 +103,7 @@ func Test_API_User_Update(t *testing.T) {
 		},
 	}
 
-	user, err := TestService.UserService.CreateUser(user)
+	user, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	updateRequest := model.UserBase{
@@ -148,7 +151,7 @@ func Test_API_User_PatchPassword(t *testing.T) {
 		},
 	}
 
-	user, err := TestService.UserService.CreateUser(user)
+	user, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	patchPasswordRequest := model.UserRequestBodyOnlyPassword{
@@ -190,7 +193,7 @@ func Test_API_User_Delete(t *testing.T) {
 		},
 	}
 
-	user, err := TestService.UserService.CreateUser(user)
+	user, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	resp := doRequest(
