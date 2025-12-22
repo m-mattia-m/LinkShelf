@@ -35,5 +35,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
     - [ ] are all required fields given
         - [ ] ShelfPath, ShelfName, ...
     - [ ] handle default values like for themes
-- [ ] Write unit tests
-- [ ] Add Renovate
+- [x] Write unit tests
+- [ ] tests for repository → incl. verify if it works for mysql and postgres (also in the pipeline)
+- [x] Add Dependabot
