@@ -102,7 +102,11 @@ func (r *sectionRepository) Create(s *model.Section) (string, error) {
 		return "", err
 	}
 
-	s.Id = uuid.New().String()
+	generatedSectionId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	s.Id = generatedSectionId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
