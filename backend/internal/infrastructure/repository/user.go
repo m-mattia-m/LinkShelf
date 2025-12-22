@@ -124,7 +124,11 @@ func (r *userRepository) Create(u *model.User) (string, error) {
 		return "", err
 	}
 
-	u.Id = uuid.New().String()
+	generatedUserId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	u.Id = generatedUserId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),

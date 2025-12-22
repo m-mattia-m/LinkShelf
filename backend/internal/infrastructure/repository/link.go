@@ -112,7 +112,11 @@ func (r *linkRepository) Create(l *model.Link) (string, error) {
 		return "", err
 	}
 
-	l.Id = uuid.New().String()
+	generatedLinkId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	l.Id = generatedLinkId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
