@@ -175,9 +175,15 @@ func ObjectToJSON(object any) string {
 }
 
 func getShelfOwnerUser() (string, error) {
+
+	randUuid, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+
 	userRequest := &model.User{
 		UserBase: model.UserBase{
-			Email:     fmt.Sprintf("test-shelf-owner-%s@test.com", ShortUUID(uuid.New().String())),
+			Email:     fmt.Sprintf("test-shelf-owner-%s@test.com", ShortUUID(randUuid.String())),
 			FirstName: "test-shelf-owner-firstname",
 			LastName:  "test-shelf-owner-lastname",
 			Password:  "secret",
@@ -198,8 +204,13 @@ func getShelfInclusiveItsOwnerUser() (string, error) {
 		return "", err
 	}
 
+	randUuid, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{ShelfBase: model.ShelfBase{
-		Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(uuid.New().String())),
+		Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
 		Path:        "/shelf-for-owner",
 		Description: "A shelf created during API integration tests",
 		Theme:       "",

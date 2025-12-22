@@ -96,7 +96,11 @@ func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 		return "", err
 	}
 
-	s.Id = uuid.New().String()
+	generatedShelfId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	s.Id = generatedShelfId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
