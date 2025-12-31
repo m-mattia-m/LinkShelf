@@ -1,8 +1,17 @@
+CREATE TABLE IF NOT EXISTS "setting" (
+    key VARCHAR(255) NOT NULL,
+    language VARCHAR(10) NOT NULL DEFAULT 'en',
+    value VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_setting PRIMARY KEY (key, language),
+    CONSTRAINT uq_settings_key UNIQUE (key, language)
+);
+
 CREATE TABLE IF NOT EXISTS "user" (
     id CHAR(36) NOT NULL,
     email VARCHAR(255) NOT NULL,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'user',
     password VARCHAR(255) NOT NULL,
     CONSTRAINT pk_user PRIMARY KEY (id),
     CONSTRAINT uq_user_email UNIQUE (email)

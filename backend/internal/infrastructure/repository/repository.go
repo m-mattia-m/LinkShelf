@@ -26,6 +26,7 @@ type Repository struct {
 	ShelfRepository   ShelfRepository
 	SectionRepository SectionRepository
 	LinkRepository    LinkRepository
+	SettingRepository SettingRepository
 }
 
 func NewRepository() (*Repository, error) {
@@ -43,7 +44,7 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
-	userRepo, err := NewUserRepository(db, "users")
+	userRepo, err := NewUserRepository(db, "user")
 	if err != nil {
 		return nil, err
 	}
@@ -63,11 +64,17 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
+	settingRepo, err := NewSettingRepository(db, "setting")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repository{
 		UserRepository:    userRepo,
 		ShelfRepository:   shelfRepo,
 		SectionRepository: sectionRepo,
 		LinkRepository:    linkRepo,
+		SettingRepository: settingRepo,
 	}, nil
 }
 
