@@ -6,7 +6,7 @@ app:
 server:
   scheme: http
   host: localhost
-  port: 8080 # Do not change this port since the Containerfile exposes this port. It's just for development purposes.
+  port: 8085 # Do not change this port since the Containerfile exposes this port. It's just for development purposes.
   trustedProxies:
     - 127.0.0.1
 database:

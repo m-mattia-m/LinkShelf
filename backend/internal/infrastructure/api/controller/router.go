@@ -229,6 +229,23 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteLink(svc))
 
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-page-settings",
+		Summary:     "Get page settings",
+		Description: "Get page settings by language code.",
+		Path:        "/v1/settings",
+		Tags:        []string{"Setting"},
+	}, GetPageSettings(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "put-update-setting",
+		Summary:     "Update setting",
+		Description: "Update page settings.",
+		Path:        "/v1/settings",
+		Tags:        []string{"Setting"},
+	}, UpdateSetting(svc))
+
 	router.GET("/swagger", func(c *gin.Context) {
 		c.Header("Content-Type", "text/html")
 		c.String(http.StatusOK, `<!DOCTYPE html>

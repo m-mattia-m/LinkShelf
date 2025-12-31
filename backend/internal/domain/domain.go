@@ -7,6 +7,7 @@ type Service struct {
 	ShelfService   ShelfService
 	SectionService SectionService
 	LinkService    LinkService
+	SettingService SettingService
 }
 
 func NewService(repository *repository.Repository) *Service {
@@ -15,6 +16,7 @@ func NewService(repository *repository.Repository) *Service {
 	service.ShelfService = NewShelfService(repository, &service)
 	service.SectionService = NewSectionService(repository, &service)
 	service.LinkService = NewLinkService(repository, &service)
+	service.SettingService = NewSettingService(repository, &service)
 
 	return &service
 }

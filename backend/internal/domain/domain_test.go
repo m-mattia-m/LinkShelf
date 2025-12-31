@@ -16,6 +16,7 @@ type MockService struct {
 	ShelfRepository   *mocks.MockShelfRepository
 	SectionRepository *mocks.MockSectionRepository
 	LinkRepository    *mocks.MockLinkRepository
+	SettingRepository *mocks.MockSettingRepository
 }
 
 func NewMockService(t *testing.T) *MockService {
@@ -27,12 +28,14 @@ func NewMockService(t *testing.T) *MockService {
 	shelfRepository := mocks.NewMockShelfRepository(ctrl)
 	sectionRepository := mocks.NewMockSectionRepository(ctrl)
 	linkRepository := mocks.NewMockLinkRepository(ctrl)
+	settingService := mocks.NewMockSettingRepository(ctrl)
 
 	repo := &repository.Repository{
 		UserRepository:    userRepository,
 		ShelfRepository:   shelfRepository,
 		SectionRepository: sectionRepository,
 		LinkRepository:    linkRepository,
+		SettingRepository: settingService,
 	}
 
 	service := NewService(repo)
