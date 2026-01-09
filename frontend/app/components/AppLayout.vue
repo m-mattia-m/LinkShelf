@@ -121,6 +121,11 @@ const isActive = (base: string) =>
           variant="ghost"
         />
       </template>
+
+      <template #body>
+        <UNavigationMenu orientation="vertical" :items="items" />
+      </template>
+
     </UHeader>
 
     <UMain>
