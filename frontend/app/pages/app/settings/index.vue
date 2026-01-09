@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 definePageMeta({
   layout: 'app',
 })
@@ -7,7 +6,7 @@ definePageMeta({
 
 <template>
 
-  <h1 class="text-2xl text-highlighted pb-4">Dashboard</h1>
+  <h1 class="text-2xl text-highlighted pb-4">Settings</h1>
 
 </template>
 
