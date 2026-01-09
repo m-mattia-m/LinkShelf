@@ -57,7 +57,9 @@ const items = computed<NavigationMenuItem[][]>(() => [
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
-        <AppLogo v-if="!collapsed" class="h-5 w-auto shrink-0" />
+        <ULink v-if="!collapsed" href="/">
+          <AppLogo class="h-5 w-auto shrink-0" />
+        </ULink>
         <UIcon
           v-else
           name="i-simple-icons-nuxtdotjs"
