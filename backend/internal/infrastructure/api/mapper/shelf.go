@@ -15,3 +15,9 @@ func MapShelfToShelfResponse(body model.Shelf) *model.ShelfResponse {
 		Body: body,
 	}
 }
+
+func MapShelfToShelfListResponse(body []model.Shelf) *model.ShelfListResponse {
+	return &model.ShelfListResponse{
+		Body: body,
+	}
+}

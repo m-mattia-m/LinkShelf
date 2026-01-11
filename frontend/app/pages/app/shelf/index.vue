@@ -1,25 +1,13 @@
 <script setup lang="ts">
 import type {TableColumn} from "#ui/components/Table.vue";
+import {useShelfStore} from "~/stores/shelf";
+import type {ShelfBase} from "~~/api";
+import ShelfCreationDialog from "~/components/shelf/ShelfCreationDialog.vue";
 
-interface Shelf {
-  id: string,
-  name: string,
-  description: string,
-  path: string,
-  domain: string,
-}
+const shelfStore = useShelfStore()
 
-const data = ref<Shelf[]>([
-  {
-    id: '019ba50b-c797-70f1-85ed-33b556a1901c',
-    name: 'My links',
-    description: 'A collection of all my links I want to share.',
-    path: '/my-links',
-    domain: 'mattias-links.ch',
-  },
-])
-
-const columns: TableColumn<Shelf>[] = [
+const data = ref<ShelfBase[]>([])
+const columns: TableColumn<ShelfBase>[] = [
   {
     accessorKey: 'name',
     header: 'Name'
@@ -39,11 +27,17 @@ const columns: TableColumn<Shelf>[] = [
   {
     id: 'action',
   }
-] satisfies TableColumn<Shelf>[]
+] satisfies TableColumn<ShelfBase>[]
 
 function getShelfUrl(id: string): string {
   return `/app/shelf/${id}`
 }
+
+onMounted(async () => {
+  await callOnce(shelfStore.fetch)
+  console.log(shelfStore.shelves)
+  data.value = shelfStore.shelves
+})
 
 definePageMeta({
   app: 'Shelf',
@@ -52,7 +46,11 @@ definePageMeta({
 </script>
 
 <template>
-  <h1 class="text-2xl text-highlighted pb-4">Shelf</h1>
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl text-highlighted pb-4">Shelf</h1>
+
+    <ShelfCreationDialog/>
+  </div>
     <UTable :columns="columns" :data="data" class="flex-1">
       <template #action-cell="{ row }">
         <ULink
@@ -66,7 +64,6 @@ definePageMeta({
       </template>
     </UTable>
 </template>
-
 
 <style scoped>
 

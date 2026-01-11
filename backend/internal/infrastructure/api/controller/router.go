@@ -8,6 +8,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -56,6 +57,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}
 
 	router := gin.Default()
+	router.Use(cors.Default())
 	api := humagin.New(router, humaConfig)
 	api.UseMiddleware(NewAuthorizationMiddleware(api))
 
@@ -133,6 +135,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Tags:          []string{"Shelf"},
 		DefaultStatus: http.StatusCreated,
 	}, CreateShelf(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "list-shelves",
+		Summary:     "List shelves",
+		Description: "List all shelves.",
+		Path:        "/v1/shelves",
+		Tags:        []string{"Shelf"},
+	}, ListShelf(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-shelf-by-id",

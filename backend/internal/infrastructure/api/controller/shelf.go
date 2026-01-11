@@ -25,6 +25,17 @@ func CreateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 	}
 }
 
+func ListShelf(svc *domain.Service) func(c context.Context, input *struct{}) (*model.ShelfListResponse, error) {
+	return func(c context.Context, input *struct{}) (*model.ShelfListResponse, error) {
+		shelves, err := svc.ShelfService.List()
+		if err != nil {
+			return nil, huma.Error400BadRequest("failed to list shelves", err)
+		}
+
+		return mapper.MapShelfToShelfListResponse(shelves), nil
+	}
+}
+
 func GetShelfById(svc *domain.Service) func(c context.Context, input *model.ShelfRequestFilter) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfRequestFilter) (*model.ShelfResponse, error) {
 		user, err := svc.ShelfService.Get(input.ShelfId)
