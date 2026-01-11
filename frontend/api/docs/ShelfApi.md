@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost:8085*
 |------------- | ------------- | -------------|
 | [**deleteShelf**](ShelfApi.md#deleteshelf) | **DELETE** /v1/shelves/{shelfId} | Delete shelf |
 | [**getShelfById**](ShelfApi.md#getshelfbyid) | **GET** /v1/shelves/{shelfId} | Get shelf by ID |
+| [**listShelves**](ShelfApi.md#listshelves) | **GET** /v1/shelves | List shelves |
 | [**postCreateShelf**](ShelfApi.md#postcreateshelf) | **POST** /v1/shelves | Create shelf |
 | [**putUpdateShelf**](ShelfApi.md#putupdateshelf) | **PUT** /v1/shelves/{shelfId} | Update shelf |
 
@@ -127,6 +128,66 @@ example().catch(console.error);
 ### Return type
 
 [**Shelf**](Shelf.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## listShelves
+
+> Array&lt;Shelf&gt; listShelves()
+
+List shelves
+
+List all shelves.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ShelfApi,
+} from '';
+import type { ListShelvesRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new ShelfApi();
+
+  try {
+    const data = await api.listShelves();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**Array&lt;Shelf&gt;**](Shelf.md)
 
 ### Authorization
 

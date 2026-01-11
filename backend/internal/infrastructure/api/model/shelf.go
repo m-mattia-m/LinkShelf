@@ -31,3 +31,7 @@ type ShelfFilterFilterAndBody struct {
 type ShelfResponse struct {
 	Body Shelf `json:"body" bson:"body"`
 }
+
+type ShelfListResponse struct {
+	Body []Shelf `json:"body" bson:"body"`
+}

@@ -965,6 +965,42 @@
       }
     },
     "/v1/shelves": {
+      "get": {
+        "description": "List all shelves.",
+        "operationId": "list-shelves",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Shelf"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List shelves",
+        "tags": [
+          "Shelf"
+        ]
+      },
       "post": {
         "description": "Create a new shelf.",
         "operationId": "post-create-shelf",

@@ -128,6 +128,37 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
+     * List all shelves.
+     * List shelves
+     */
+    async listShelvesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Shelf>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/shelves`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ShelfFromJSON));
+    }
+
+    /**
+     * List all shelves.
+     * List shelves
+     */
+    async listShelves(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Shelf>> {
+        const response = await this.listShelvesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Create a new shelf.
      * Create shelf
      */

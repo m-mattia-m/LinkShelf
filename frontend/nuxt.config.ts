@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/mdc',
     '@nuxt/content',
+    '@pinia/nuxt'
   ],
 
   devtools: {
