@@ -87,7 +87,7 @@ jobs:
           filename: backend/coverage.out
 
       - name: Commit coverage badge
-        uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@v10
         with:
           message: "chore: update coverage badge"
           add: "README.md"
