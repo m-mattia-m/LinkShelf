@@ -17,7 +17,7 @@ func Test_Unit_Setting_List_Success(t *testing.T) {
 		{Key: "language", Value: "en"},
 	}
 
-	svc.ShelfRepository.
+	svc.SettingRepository.
 		EXPECT().
 		List().
 		Return(expected, nil)

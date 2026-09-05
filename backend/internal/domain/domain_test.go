@@ -28,14 +28,14 @@ func NewMockService(t *testing.T) *MockService {
 	shelfRepository := mocks.NewMockShelfRepository(ctrl)
 	sectionRepository := mocks.NewMockSectionRepository(ctrl)
 	linkRepository := mocks.NewMockLinkRepository(ctrl)
-	settingService := mocks.NewMockSettingRepository(ctrl)
+	settingRepository := mocks.NewMockSettingRepository(ctrl)
 
 	repo := &repository.Repository{
 		UserRepository:    userRepository,
 		ShelfRepository:   shelfRepository,
 		SectionRepository: sectionRepository,
 		LinkRepository:    linkRepository,
-		SettingRepository: settingService,
+		SettingRepository: settingRepository,
 	}
 
 	service := NewService(repo)
@@ -47,5 +47,6 @@ func NewMockService(t *testing.T) *MockService {
 		ShelfRepository:   shelfRepository,
 		SectionRepository: sectionRepository,
 		LinkRepository:    linkRepository,
+		SettingRepository: settingRepository,
 	}
 }

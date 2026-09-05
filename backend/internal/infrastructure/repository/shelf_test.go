@@ -36,11 +36,12 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 	mock.ExpectQuery("SELECT \\* FROM shelf").
 		WillReturnRows(rows)
 
-	shelf, err := repo.List()
+	shelves, err := repo.List()
 
 	require.NoError(t, err)
-	require.NotNil(t, shelf)
-	require.Equal(t, "test-shelf", shelf.Title)
+	require.Len(t, shelves, 1)
+	require.Equal(t, "shelf-uuid-test", shelves[0].Id)
+	require.Equal(t, "test-shelf", shelves[0].Title)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -55,10 +56,12 @@ func Test_ShelfRepository_List_NoRows(t *testing.T) {
 	mock.ExpectQuery("SELECT \\* FROM shelf").
 		WillReturnError(sql.ErrNoRows)
 
-	shelf, err := repo.List()
+	shelves, err := repo.List()
 
-	require.NoError(t, err)
-	require.Nil(t, shelf)
+	require.ErrorIs(t, err, sql.ErrNoRows)
+	require.Nil(t, shelves)
+
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 //func Test_ShelfRepository_List_ScanError(t *testing.T) {

@@ -25,20 +25,20 @@ func Test_MapSettingToSettingPageResponse_Success(t *testing.T) {
 
 	require.NotNil(t, resp)
 
-	require.True(t, resp.AboutShow)
-	require.Equal(t, "About EN", resp.About)
+	require.True(t, resp.Body.AboutShow)
+	require.Equal(t, "About EN", resp.Body.About)
 
-	require.False(t, resp.ContactShow)
-	require.Equal(t, "Contact EN", resp.Contact)
+	require.False(t, resp.Body.ContactShow)
+	require.Equal(t, "Contact EN", resp.Body.Contact)
 
-	require.True(t, resp.ImprintShow)
-	require.Equal(t, "Imprint EN", resp.Imprint)
+	require.True(t, resp.Body.ImprintShow)
+	require.Equal(t, "Imprint EN", resp.Body.Imprint)
 
-	require.True(t, resp.TermsOfUseShow)
-	require.Equal(t, "Terms EN", resp.TermsOfUse)
+	require.True(t, resp.Body.TermsOfUseShow)
+	require.Equal(t, "Terms EN", resp.Body.TermsOfUse)
 
-	require.False(t, resp.PrivacyPolicyShow)
-	require.Equal(t, "Privacy EN", resp.PrivacyPolicy)
+	require.False(t, resp.Body.PrivacyPolicyShow)
+	require.Equal(t, "Privacy EN", resp.Body.PrivacyPolicy)
 }
 
 func Test_MapSettingToSettingPageResponse_LanguageIsolation(t *testing.T) {
@@ -51,8 +51,8 @@ func Test_MapSettingToSettingPageResponse_LanguageIsolation(t *testing.T) {
 
 	resp := MapSettingToSettingPageResponse("de", settings)
 
-	require.False(t, resp.AboutShow)
-	require.Equal(t, "Über DE", resp.About)
+	require.False(t, resp.Body.AboutShow)
+	require.Equal(t, "Über DE", resp.Body.About)
 }
 
 func Test_MapSettingToSettingPageResponse_BooleanParsing(t *testing.T) {
@@ -64,7 +64,7 @@ func Test_MapSettingToSettingPageResponse_BooleanParsing(t *testing.T) {
 	resp := MapSettingToSettingPageResponse("en", settings)
 
 	// Only exact "true" is treated as true
-	require.False(t, resp.AboutShow)
+	require.False(t, resp.Body.AboutShow)
 }
 
 func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
@@ -72,18 +72,18 @@ func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
 
 	require.NotNil(t, resp)
 
-	require.False(t, resp.AboutShow)
-	require.Empty(t, resp.About)
+	require.False(t, resp.Body.AboutShow)
+	require.Empty(t, resp.Body.About)
 
-	require.False(t, resp.ContactShow)
-	require.Empty(t, resp.Contact)
+	require.False(t, resp.Body.ContactShow)
+	require.Empty(t, resp.Body.Contact)
 
-	require.False(t, resp.ImprintShow)
-	require.Empty(t, resp.Imprint)
+	require.False(t, resp.Body.ImprintShow)
+	require.Empty(t, resp.Body.Imprint)
 
-	require.False(t, resp.TermsOfUseShow)
-	require.Empty(t, resp.TermsOfUse)
+	require.False(t, resp.Body.TermsOfUseShow)
+	require.Empty(t, resp.Body.TermsOfUse)
 
-	require.False(t, resp.PrivacyPolicyShow)
-	require.Empty(t, resp.PrivacyPolicy)
+	require.False(t, resp.Body.PrivacyPolicyShow)
+	require.Empty(t, resp.Body.PrivacyPolicy)
 }
