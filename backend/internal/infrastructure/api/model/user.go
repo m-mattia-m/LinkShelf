@@ -9,11 +9,15 @@ type UserBase struct {
 	Email     string `json:"email" bson:"email"`
 	FirstName string `json:"first_name" bson:"first_name"`
 	LastName  string `json:"last_name" bson:"last_name"`
-	Password  string `json:"password" bson:"password"`
+}
+
+type UserCreate struct {
+	UserBase
+	Password string `json:"password" bson:"password"`
 }
 
 type UserRequestBody struct {
-	Body UserBase `json:"body" bson:"body"`
+	Body UserCreate `json:"body" bson:"body"`
 }
 
 type UserPatchPasswordFilterAndBody struct {
@@ -37,4 +41,8 @@ type UserFilterFilterAndBody struct {
 
 type UserResponse struct {
 	Body User `json:"body" bson:"body"`
+}
+
+type UserListResponse struct {
+	Body []User `json:"body" bson:"body"`
 }

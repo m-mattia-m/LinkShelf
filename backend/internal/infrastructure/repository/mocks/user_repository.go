@@ -41,18 +41,18 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(u *model.User) (string, error) {
+func (m *MockUserRepository) Create(u model.UserBase, hashedPassword string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u)
+	ret := m.ctrl.Call(m, "Create", u, hashedPassword)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserRepositoryMockRecorder) Create(u any) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Create(u, hashedPassword any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), u, hashedPassword)
 }
 
 // Delete mocks base method.
@@ -115,17 +115,17 @@ func (mr *MockUserRepositoryMockRecorder) List() *gomock.Call {
 }
 
 // PatchPassword mocks base method.
-func (m *MockUserRepository) PatchPassword(u *model.User) error {
+func (m *MockUserRepository) PatchPassword(id, hashedPassword string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PatchPassword", u)
+	ret := m.ctrl.Call(m, "PatchPassword", id, hashedPassword)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PatchPassword indicates an expected call of PatchPassword.
-func (mr *MockUserRepositoryMockRecorder) PatchPassword(u any) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) PatchPassword(id, hashedPassword any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPassword", reflect.TypeOf((*MockUserRepository)(nil).PatchPassword), u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPassword", reflect.TypeOf((*MockUserRepository)(nil).PatchPassword), id, hashedPassword)
 }
 
 // Update mocks base method.

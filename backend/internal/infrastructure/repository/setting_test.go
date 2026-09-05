@@ -143,37 +143,38 @@ func Test_SettingRepository_GetByKey_QueryError(t *testing.T) {
 	require.Nil(t, setting)
 }
 
-func Test_SettingRepository_Update_Success(t *testing.T) {
+func Test_SettingRepository_Upsert_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer db.Close()
 
 	repo := &settingRepository{Engine: db}
 
-	mock.ExpectExec(`UPDATE\s+setting`).
+	mock.ExpectExec(`INSERT INTO setting`).
 		WithArgs(
-			"dark",
 			"theme",
+			"en",
+			"dark",
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.Update("theme", "dark")
+	err = repo.Upsert("theme", "en", "dark")
 
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func Test_SettingRepository_Update_ExecError(t *testing.T) {
+func Test_SettingRepository_Upsert_ExecError(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer db.Close()
 
 	repo := &settingRepository{Engine: db}
 
-	mock.ExpectExec(`UPDATE\s+setting`).
-		WillReturnError(errors.New("update failed"))
+	mock.ExpectExec(`INSERT INTO setting`).
+		WillReturnError(errors.New("upsert failed"))
 
-	err = repo.Update("theme", "dark")
+	err = repo.Upsert("theme", "en", "dark")
 
 	require.Error(t, err)
 }

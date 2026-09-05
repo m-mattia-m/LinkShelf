@@ -15,3 +15,9 @@ func MapUserToUserResponse(body model.User) *model.UserResponse {
 		Body: body,
 	}
 }
+
+func MapUsersToUserListResponse(users []model.User) *model.UserListResponse {
+	return &model.UserListResponse{
+		Body: users,
+	}
+}

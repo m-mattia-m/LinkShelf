@@ -4,7 +4,7 @@ import type {SettingPageBody} from "~~/api";
 
 const route = useRoute()
 const router = useRouter()
-const websiteSettings = useState('settings') as unknown as SettingPageBody
+const websiteSettings = useState<SettingPageBody | null>('settings')
 const columns: FooterColumn[] = [
   {
     label: 'General',
@@ -12,12 +12,12 @@ const columns: FooterColumn[] = [
       {
         label: 'About',
         to: '/about',
-        class: websiteSettings.aboutShow ? 'hidden' : '',
+        class: websiteSettings.value?.aboutShow ? '' : 'hidden',
       },
       {
         label: 'Contact',
         to: '/contact',
-        class: websiteSettings.contactShow ? 'hidden' : '',
+        class: websiteSettings.value?.contactShow ? '' : 'hidden',
       }
     ]
   },
@@ -27,17 +27,17 @@ const columns: FooterColumn[] = [
       {
         label: 'Imprint',
         to: '/imprint',
-        class: websiteSettings.imprintShow ? 'hidden' : '',
+        class: websiteSettings.value?.imprintShow ? '' : 'hidden',
       },
       {
         label: 'Terms of use',
         to: '/terms-of-use',
-        class: websiteSettings.termsOfUseShow ? 'hidden' : '',
+        class: websiteSettings.value?.termsOfUseShow ? '' : 'hidden',
       },
       {
         label: 'Privacy policy',
         to: '/privacy-policy',
-        class: websiteSettings.privacyPolicyShow ? 'hidden' : '',
+        class: websiteSettings.value?.privacyPolicyShow ? '' : 'hidden',
       }
     ]
   },
@@ -90,7 +90,7 @@ const items = computed<NavigationMenuItem[]>(() => [
 ])
 
 onMounted(() => {
-  if (websiteSettings.redirectToDashboard) router.push("/dashboard")
+  if (websiteSettings.value?.redirectToDashboard) router.push("/app")
 })
 
 const isActive = (base: string) =>
@@ -103,7 +103,7 @@ const isActive = (base: string) =>
     <UHeader>
       <template #left>
         <NuxtLink to="/">
-          <AppLogo class="w-auto h-6 shrink-0"/>
+          <AppLogo class="w-auto h-10 shrink-0"/>
         </NuxtLink>
       </template>
 

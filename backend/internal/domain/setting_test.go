@@ -50,13 +50,14 @@ func Test_Unit_Setting_Update_Success(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	setting := model.Setting{
-		Key:   "theme",
-		Value: "dark",
+		Key:          "theme",
+		LanguageCode: "en",
+		Value:        "dark",
 	}
 
 	svc.SettingRepository.
 		EXPECT().
-		Update("theme", "dark").
+		Upsert("theme", "en", "dark").
 		Return(nil)
 
 	err := svc.Service.SettingService.Update(setting)
@@ -69,13 +70,14 @@ func Test_Unit_Setting_Update_Failure(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	setting := model.Setting{
-		Key:   "theme",
-		Value: "dark",
+		Key:          "theme",
+		LanguageCode: "en",
+		Value:        "dark",
 	}
 
 	svc.SettingRepository.
 		EXPECT().
-		Update("theme", "dark").
+		Upsert("theme", "en", "dark").
 		Return(errors.New("an error occurred"))
 
 	err := svc.Service.SettingService.Update(setting)

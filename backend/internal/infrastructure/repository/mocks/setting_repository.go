@@ -70,16 +70,16 @@ func (mr *MockSettingRepositoryMockRecorder) List() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockSettingRepository)(nil).List))
 }
 
-// Update mocks base method.
-func (m *MockSettingRepository) Update(key, value string) error {
+// Upsert mocks base method.
+func (m *MockSettingRepository) Upsert(key, language, value string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", key, value)
+	ret := m.ctrl.Call(m, "Upsert", key, language, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Update indicates an expected call of Update.
-func (mr *MockSettingRepositoryMockRecorder) Update(key, value any) *gomock.Call {
+// Upsert indicates an expected call of Upsert.
+func (mr *MockSettingRepositoryMockRecorder) Upsert(key, language, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSettingRepository)(nil).Update), key, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockSettingRepository)(nil).Upsert), key, language, value)
 }

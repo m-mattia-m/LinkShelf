@@ -22,7 +22,7 @@ func Test_API_Shelf_Create(t *testing.T) {
 
 	request := model.ShelfBase{
 		Title:       "shelf-title-creation",
-		Path:        "/shelf-title-creation",
+		Path:        "shelf-title-creation",
 		Domain:      "",
 		Description: "A shelf created during API integration tests",
 		Theme:       "",
@@ -62,7 +62,7 @@ func Test_API_Shelf_Update(t *testing.T) {
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
 		ShelfBase: model.ShelfBase{
 			Title:       "shelf-title-update",
-			Path:        "/shelf-title-update",
+			Path:        "shelf-title-update",
 			Domain:      "",
 			Description: "A shelf created during API integration tests",
 			Theme:       "",
@@ -74,7 +74,7 @@ func Test_API_Shelf_Update(t *testing.T) {
 
 	request := model.ShelfBase{
 		Title:       "shelf-title-updated",
-		Path:        "/shelf-title-updated",
+		Path:        "shelf-title-updated",
 		Domain:      "",
 		Description: "A shelf updated during API integration tests",
 		Theme:       "",
@@ -105,7 +105,7 @@ func Test_API_Shelf_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "shelf-title-updated", shelfResp.Title)
-	require.Equal(t, "/shelf-title-updated", shelfResp.Path)
+	require.Equal(t, "shelf-title-updated", shelfResp.Path)
 	require.Equal(t, "A shelf updated during API integration tests", shelfResp.Description)
 	require.Equal(t, "", shelfResp.Theme)
 	require.Equal(t, "", shelfResp.Icon)
@@ -120,7 +120,7 @@ func Test_API_Shelf_Delete(t *testing.T) {
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
 		ShelfBase: model.ShelfBase{
 			Title:       "shelf-title-delete",
-			Path:        "/shelf-title-delete",
+			Path:        "shelf-title-delete",
 			Domain:      "",
 			Description: "A shelf created during API integration tests",
 			Theme:       "",
@@ -153,8 +153,8 @@ func Test_API_Shelf_Get(t *testing.T) {
 
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
 		ShelfBase: model.ShelfBase{
-			Title:       "shelf-title-delete",
-			Path:        "/shelf-title-delete",
+			Title:       "shelf-title-get",
+			Path:        "shelf-title-get",
 			Domain:      "",
 			Description: "A shelf created during API integration tests",
 			Theme:       "",
@@ -186,10 +186,114 @@ func Test_API_Shelf_Get(t *testing.T) {
 	err = json.Unmarshal(body, &shelfResp)
 	require.NoError(t, err)
 
-	require.Equal(t, "shelf-title-delete", shelfResp.Title)
-	require.Equal(t, "/shelf-title-delete", shelfResp.Path)
+	require.Equal(t, "shelf-title-get", shelfResp.Title)
+	require.Equal(t, "shelf-title-get", shelfResp.Path)
 	require.Equal(t, "A shelf created during API integration tests", shelfResp.Description)
 	require.Equal(t, "", shelfResp.Theme)
 	require.Equal(t, "", shelfResp.Icon)
 	require.Equal(t, userId, shelfResp.UserId)
+}
+
+func Test_API_Shelf_Create_DuplicatePath_Conflict(t *testing.T) {
+	userId, err := getShelfOwnerUser()
+	require.NoError(t, err)
+
+	request := model.ShelfBase{
+		Title:       "shelf-title-duplicate-path",
+		Path:        "shelf-duplicate-path",
+		Domain:      "",
+		Description: "A shelf created during API integration tests",
+		Theme:       "",
+		Icon:        "",
+		UserId:      userId,
+	}
+
+	resp := doRequest(
+		t,
+		http.MethodPost,
+		"/v1/shelves",
+		strings.NewReader(ObjectToJSON(request)),
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	respConflict := doRequest(
+		t,
+		http.MethodPost,
+		"/v1/shelves",
+		strings.NewReader(ObjectToJSON(request)),
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(respConflict.Body)
+
+	require.Equal(t, http.StatusConflict, respConflict.StatusCode)
+}
+
+func Test_API_Shelf_Create_MissingTitle_Validation(t *testing.T) {
+	userId, err := getShelfOwnerUser()
+	require.NoError(t, err)
+
+	request := model.ShelfBase{
+		Title:       "",
+		Path:        "shelf-missing-title",
+		Domain:      "",
+		Description: "A shelf created during API integration tests",
+		Theme:       "",
+		Icon:        "",
+		UserId:      userId,
+	}
+
+	resp := doRequest(
+		t,
+		http.MethodPost,
+		"/v1/shelves",
+		strings.NewReader(ObjectToJSON(request)),
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+
+	require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+}
+
+func Test_API_Shelf_Create_InvalidPath_Validation(t *testing.T) {
+	userId, err := getShelfOwnerUser()
+	require.NoError(t, err)
+
+	request := model.ShelfBase{
+		Title:       "shelf-invalid-path",
+		Path:        "not a valid path!",
+		Domain:      "",
+		Description: "A shelf created during API integration tests",
+		Theme:       "",
+		Icon:        "",
+		UserId:      userId,
+	}
+
+	resp := doRequest(
+		t,
+		http.MethodPost,
+		"/v1/shelves",
+		strings.NewReader(ObjectToJSON(request)),
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+
+	require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 }

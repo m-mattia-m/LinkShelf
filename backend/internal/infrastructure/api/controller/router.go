@@ -94,6 +94,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}, CreateUser(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
+		OperationID: "list-users",
+		Summary:     "List users",
+		Description: "List all users.",
+		Path:        "/v1/users",
+		Tags:        []string{"User"},
+	}, ListUsers(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
 		OperationID: "get-user-by-id",
 		Summary:     "Get user by ID",
 		Description: "Get a user by ID.",

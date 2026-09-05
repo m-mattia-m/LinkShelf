@@ -87,3 +87,29 @@ func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
 	require.False(t, resp.Body.PrivacyPolicyShow)
 	require.Empty(t, resp.Body.PrivacyPolicy)
 }
+
+func Test_MapSettingToSettingPageResponse_LoginOptions(t *testing.T) {
+	settings := []model.Setting{
+		{Key: "login_options", LanguageCode: "en", Value: `["Local", "Zitadel"]`},
+	}
+
+	resp := MapSettingToSettingPageResponse("en", settings)
+
+	require.Equal(t, []string{"Local", "Zitadel"}, resp.Body.LoginOptions)
+}
+
+func Test_MapSettingToSettingPageResponse_LoginOptions_Missing(t *testing.T) {
+	resp := MapSettingToSettingPageResponse("en", nil)
+
+	require.Nil(t, resp.Body.LoginOptions)
+}
+
+func Test_MapSettingToSettingPageResponse_LoginOptions_Invalid(t *testing.T) {
+	settings := []model.Setting{
+		{Key: "login_options", LanguageCode: "en", Value: `not-json`},
+	}
+
+	resp := MapSettingToSettingPageResponse("en", settings)
+
+	require.Nil(t, resp.Body.LoginOptions)
+}

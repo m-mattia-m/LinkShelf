@@ -12,4 +12,5 @@ export * from './Shelf';
 export * from './ShelfBase';
 export * from './User';
 export * from './UserBase';
+export * from './UserCreate';
 export * from './UserRequestBodyOnlyPassword';

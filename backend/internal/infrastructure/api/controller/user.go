@@ -11,12 +11,23 @@ import (
 
 func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
-		user, err := svc.UserService.Create(mapper.MapUserBaseToUserPointer(input.Body))
+		user, err := svc.UserService.Create(&input.Body)
 		if err != nil {
-			return nil, huma.Error400BadRequest("failed to create user", err)
+			return nil, mapWriteError("failed to create user", err)
 		}
 
 		return mapper.MapUserToUserResponse(*user), nil
+	}
+}
+
+func ListUsers(svc *domain.Service) func(c context.Context, input *struct{}) (*model.UserListResponse, error) {
+	return func(c context.Context, input *struct{}) (*model.UserListResponse, error) {
+		users, err := svc.UserService.List()
+		if err != nil {
+			return nil, huma.Error400BadRequest("failed to list users", err)
+		}
+
+		return mapper.MapUsersToUserListResponse(users), nil
 	}
 }
 
@@ -35,7 +46,7 @@ func UpdateUser(svc *domain.Service) func(c context.Context, input *model.UserFi
 	return func(c context.Context, input *model.UserFilterFilterAndBody) (*model.UserResponse, error) {
 		user, err := svc.UserService.Update(input.UserId, mapper.MapUserBaseToUserPointer(input.Body))
 		if err != nil {
-			return nil, huma.Error400BadRequest("failed to update user", err)
+			return nil, mapWriteError("failed to update user", err)
 		}
 
 		return mapper.MapUserToUserResponse(*user), nil

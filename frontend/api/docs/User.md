@@ -4,14 +4,13 @@
 
 ## Properties
 
-Name | Type
------------- | -------------
-`$schema` | string
-`email` | string
-`firstName` | string
-`id` | string
-`lastName` | string
-`password` | string
+| Name        | Type   |
+|-------------|--------|
+| `$schema`   | string |
+| `email`     | string |
+| `firstName` | string |
+| `id`        | string |
+| `lastName`  | string |
 
 ## Example
 
@@ -25,7 +24,6 @@ const example = {
   "firstName": null,
   "id": null,
   "lastName": null,
-  "password": null,
 } satisfies User
 
 console.log(example)

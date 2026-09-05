@@ -10,8 +10,9 @@ import (
 )
 
 type UserService interface {
+	List() ([]model.User, error)
 	Get(id string) (*model.User, error)
-	Create(u *model.User) (*model.User, error)
+	Create(u *model.UserCreate) (*model.User, error)
 	Update(userId string, userRequest *model.User) (*model.User, error)
 	PatchPassword(userId string, u *model.UserRequestBodyOnlyPassword) error
 	Delete(u *model.User) error
@@ -29,24 +30,22 @@ func NewUserService(repository *repository.Repository, domain *Service) UserServ
 	}
 }
 
-func (s *userServiceImpl) Get(id string) (*model.User, error) {
-	user, err := s.Repository.UserRepository.Get(id)
-	if err != nil {
-		return nil, err
-	}
-	user.Password = "" // Do not return password hash
-	return user, nil
+func (s *userServiceImpl) List() ([]model.User, error) {
+	return s.Repository.UserRepository.List()
 }
 
-func (s *userServiceImpl) Create(u *model.User) (*model.User, error) {
+func (s *userServiceImpl) Get(id string) (*model.User, error) {
+	return s.Repository.UserRepository.Get(id)
+}
 
-	var err error
-	u.Password, err = hashPassword(u.Password)
+func (s *userServiceImpl) Create(u *model.UserCreate) (*model.User, error) {
+
+	hashedPassword, err := hashPassword(u.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	userId, err := s.Repository.UserRepository.Create(u)
+	userId, err := s.Repository.UserRepository.Create(u.UserBase, hashedPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +88,7 @@ func (s *userServiceImpl) PatchPassword(userId string, u *model.UserRequestBodyO
 		return err
 	}
 
-	return s.Repository.UserRepository.PatchPassword(&model.User{
-		Id: userId,
-		UserBase: model.UserBase{
-			Password: newHashedPassword,
-		},
-	})
+	return s.Repository.UserRepository.PatchPassword(userId, newHashedPassword)
 }
 
 func (s *userServiceImpl) Delete(u *model.User) error {

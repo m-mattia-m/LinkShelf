@@ -6,8 +6,8 @@ type Shelf struct {
 }
 
 type ShelfBase struct {
-	Title       string `json:"title" bson:"title"`
-	Path        string `json:"path" bson:"path"`
+	Title       string `json:"title" bson:"title" minLength:"1"`
+	Path        string `json:"path" bson:"path" pattern:"^[a-zA-Z0-9-]*$" patternDescription:"letters, numbers, and hyphens only"`
 	Domain      string `json:"domain" bson:"domain"`
 	Description string `json:"description" bson:"description"`
 	Theme       string `json:"theme" bson:"theme"`

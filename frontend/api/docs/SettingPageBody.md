@@ -13,6 +13,7 @@ Name | Type
 `contactShow` | boolean
 `imprint` | string
 `imprintShow` | boolean
+`loginOptions` | Array&lt;string&gt;
 `privacyPolicy` | string
 `privacyPolicyShow` | boolean
 `redirectToDashboard` | boolean
@@ -33,6 +34,7 @@ const example = {
   "contactShow": null,
   "imprint": null,
   "imprintShow": null,
+  "loginOptions": null,
   "privacyPolicy": null,
   "privacyPolicyShow": null,
   "redirectToDashboard": null,

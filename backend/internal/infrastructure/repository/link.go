@@ -47,7 +47,7 @@ func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 		return nil, err
 	}
 
-	var links []model.Link
+	links := make([]model.Link, 0)
 	for rows.Next() {
 		var link model.Link
 		err := rows.Scan(

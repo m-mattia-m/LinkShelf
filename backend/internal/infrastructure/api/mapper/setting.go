@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"backend/internal/infrastructure/api/model"
+	"encoding/json"
 	"fmt"
 )
 
@@ -25,6 +26,7 @@ func MapSettingToSettingPageResponse(languageCode string, settings []model.Setti
 			PrivacyPolicyShow:   getSettingValue(settingsMap, "privacy_policy_show", languageCode) == "true",
 			PrivacyPolicy:       getSettingValue(settingsMap, "privacy_policy", languageCode),
 			RedirectToDashboard: getSettingValue(settingsMap, "redirect_to_dashboard", languageCode) == "true",
+			LoginOptions:        getSettingArrayValue(settingsMap, "login_options", languageCode),
 		},
 	}
 }
@@ -39,4 +41,17 @@ func getSettingValue(settingsMap map[string]model.Setting, key string, languageC
 		}
 	}
 	return value.Value
+}
+
+func getSettingArrayValue(settingsMap map[string]model.Setting, key string, languageCode string) []string {
+	raw := getSettingValue(settingsMap, key, languageCode)
+	if raw == "" {
+		return nil
+	}
+
+	var values []string
+	if err := json.Unmarshal([]byte(raw), &values); err != nil {
+		return nil
+	}
+	return values
 }
