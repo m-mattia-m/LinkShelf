@@ -8,6 +8,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
@@ -56,6 +57,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}
 
 	router := gin.Default()
+	router.Use(cors.Default())
 	api := humagin.New(router, humaConfig)
 	api.UseMiddleware(NewAuthorizationMiddleware(api))
 
@@ -82,19 +84,20 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	})
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-user",
-		Summary:     "Create user",
-		Description: "Create a new user.",
-		Path:        "/v1/user",
-		Tags:        []string{"User"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-user",
+		Summary:       "Create user",
+		Description:   "Create a new user.",
+		Path:          "/v1/users",
+		Tags:          []string{"User"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateUser(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-user-by-id",
 		Summary:     "Get user by ID",
 		Description: "Get a user by ID.",
-		Path:        "/v1/user/{userId}",
+		Path:        "/v1/users/{userId}",
 		Tags:        []string{"User"},
 	}, GetUserById(svc))
 	huma.Register(api, huma.Operation{
@@ -102,7 +105,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-user",
 		Summary:     "Update user",
 		Description: "Update an existing user. Consider that password updates are not handled here.",
-		Path:        "/v1/user/{userId}",
+		Path:        "/v1/users/{userId}",
 		Tags:        []string{"User"},
 	}, UpdateUser(svc))
 	huma.Register(api, huma.Operation{
@@ -110,7 +113,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "patch-user-password",
 		Summary:     "Patch user password",
 		Description: "Patch a user's password.",
-		Path:        "/v1/user/{userId}/password",
+		Path:        "/v1/users/{userId}/password",
 		Tags:        []string{"User"},
 	}, PatchUserPassword(svc))
 	huma.Register(api, huma.Operation{
@@ -118,25 +121,34 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-user",
 		Summary:       "Delete user",
 		Description:   "Delete a user by ID.",
-		Path:          "/v1/user/{userId}",
+		Path:          "/v1/users/{userId}",
 		Tags:          []string{"User"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteUser(svc))
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-shelf",
-		Summary:     "Create shelf",
-		Description: "Create a new shelf.",
-		Path:        "/v1/shelf",
-		Tags:        []string{"Shelf"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-shelf",
+		Summary:       "Create shelf",
+		Description:   "Create a new shelf.",
+		Path:          "/v1/shelves",
+		Tags:          []string{"Shelf"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateShelf(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "list-shelves",
+		Summary:     "List shelves",
+		Description: "List all shelves.",
+		Path:        "/v1/shelves",
+		Tags:        []string{"Shelf"},
+	}, ListShelf(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-shelf-by-id",
 		Summary:     "Get shelf by ID",
 		Description: "Get a shelf by ID.",
-		Path:        "/v1/shelf/{shelfId}",
+		Path:        "/v1/shelves/{shelfId}",
 		Tags:        []string{"Shelf"},
 	}, GetShelfById(svc))
 	huma.Register(api, huma.Operation{
@@ -144,7 +156,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-shelf",
 		Summary:     "Update shelf",
 		Description: "Update an existing shelf.",
-		Path:        "/v1/shelf/{shelfId}",
+		Path:        "/v1/shelves/{shelfId}",
 		Tags:        []string{"Shelf"},
 	}, UpdateShelf(svc))
 	huma.Register(api, huma.Operation{
@@ -152,25 +164,26 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-shelf",
 		Summary:       "Delete shelf",
 		Description:   "Delete a shelf by ID.",
-		Path:          "/v1/shelf/{shelfId}",
+		Path:          "/v1/shelves/{shelfId}",
 		Tags:          []string{"Shelf"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteShelf(svc))
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-section",
-		Summary:     "Create section",
-		Description: "Create a new section.",
-		Path:        "/v1/section",
-		Tags:        []string{"Section"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-section",
+		Summary:       "Create section",
+		Description:   "Create a new section.",
+		Path:          "/v1/sections",
+		Tags:          []string{"Section"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateSection(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-sections",
 		Summary:     "Get sections by shelf ID",
 		Description: "Get sections by shelf ID.",
-		Path:        "/v1/section/{sectionId}",
+		Path:        "/v1/sections",
 		Tags:        []string{"Section"},
 	}, GetSections(svc))
 	huma.Register(api, huma.Operation{
@@ -178,7 +191,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-section",
 		Summary:     "Update section",
 		Description: "Update an existing section.",
-		Path:        "/v1/section/{sectionId}",
+		Path:        "/v1/sections/{sectionId}",
 		Tags:        []string{"Section"},
 	}, UpdateSection(svc))
 	huma.Register(api, huma.Operation{
@@ -186,25 +199,26 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-section",
 		Summary:       "Delete section",
 		Description:   "Delete a section by ID.",
-		Path:          "/v1/section/{sectionId}",
+		Path:          "/v1/sections/{sectionId}",
 		Tags:          []string{"Section"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteSection(svc))
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		OperationID: "post-create-link",
-		Summary:     "Create link",
-		Description: "Create a new link.",
-		Path:        "/v1/link",
-		Tags:        []string{"Link"},
+		Method:        http.MethodPost,
+		OperationID:   "post-create-link",
+		Summary:       "Create link",
+		Description:   "Create a new link.",
+		Path:          "/v1/links",
+		Tags:          []string{"Link"},
+		DefaultStatus: http.StatusCreated,
 	}, CreateLink(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-links",
 		Summary:     "Get links by shelf ID",
 		Description: "Get links by shelf ID.",
-		Path:        "/v1/link/{linkId}",
+		Path:        "/v1/links",
 		Tags:        []string{"Link"},
 	}, GetLinks(svc))
 	huma.Register(api, huma.Operation{
@@ -212,7 +226,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID: "put-update-link",
 		Summary:     "Update link",
 		Description: "Update an existing link.",
-		Path:        "/v1/link/{linkId}",
+		Path:        "/v1/links/{linkId}",
 		Tags:        []string{"Link"},
 	}, UpdateLink(svc))
 	huma.Register(api, huma.Operation{
@@ -220,10 +234,27 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		OperationID:   "delete-link",
 		Summary:       "Delete link",
 		Description:   "Delete a link by ID.",
-		Path:          "/v1/link/{linkId}",
+		Path:          "/v1/links/{linkId}",
 		Tags:          []string{"Link"},
 		DefaultStatus: http.StatusNoContent,
 	}, DeleteLink(svc))
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-page-settings",
+		Summary:     "Get page settings",
+		Description: "Get page settings by language code.",
+		Path:        "/v1/settings",
+		Tags:        []string{"Setting"},
+	}, GetPageSettings(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "put-update-setting",
+		Summary:     "Update setting",
+		Description: "Update page settings.",
+		Path:        "/v1/settings",
+		Tags:        []string{"Setting"},
+	}, UpdateSetting(svc))
 
 	router.GET("/swagger", func(c *gin.Context) {
 		c.Header("Content-Type", "text/html")

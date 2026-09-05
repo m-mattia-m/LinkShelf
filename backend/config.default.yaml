@@ -6,13 +6,13 @@ app:
 server:
   scheme: http
   host: localhost
-  port: 8080 # Do not change this port since the Containerfile exposes this port. It's just for development purposes.
+  port: 8085 # Do not change this port since the Containerfile exposes this port. It's just for development purposes.
   trustedProxies:
     - 127.0.0.1
 database:
   engine: POSTGRES # MYSQL # POSTGRES
   host: localhost
-  port: 5432 # 3306 # 5432
+  port: 15432 # 3306 # 5432
   username: linkshelf
   password: linkshelf
   name: linkshelf

@@ -18,8 +18,12 @@ type LinkRequestBody struct {
 }
 
 type LinkRequestFilter struct {
-	ShelfId string `path:"shelfId"`
-	LinkId  string `path:"linkId"`
+	LinkRequestShelfFilter
+	LinkId string `path:"linkId"`
+}
+
+type LinkRequestShelfFilter struct {
+	ShelfId string `query:"shelfId"`
 }
 
 type LinkFilterFilterAndBody struct {

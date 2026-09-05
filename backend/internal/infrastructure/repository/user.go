@@ -1,3 +1,5 @@
+//go:generate mockgen -source=user.go -destination=mocks/user_repository.go -package=mocks
+
 package repository
 
 import (
@@ -34,7 +36,7 @@ func NewUserRepository(engine *sql.DB, table string) (UserRepository, error) {
 
 func (r *userRepository) List() ([]model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, email, first_name, last_name
 		FROM "user"
 	`)
 	if err != nil {
@@ -67,7 +69,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, email, first_name, last_name, password
 		FROM "user"
 		WHERE id = ?
 	`)
@@ -122,7 +124,11 @@ func (r *userRepository) Create(u *model.User) (string, error) {
 		return "", err
 	}
 
-	u.Id = uuid.New().String()
+	generatedUserId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	u.Id = generatedUserId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),

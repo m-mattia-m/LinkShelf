@@ -1,3 +1,5 @@
+//go:generate mockgen -source=section.go -destination=mocks/section_repository.go -package=mocks
+
 package repository
 
 import (
@@ -5,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -31,16 +32,16 @@ func NewSectionRepository(engine *sql.DB, table string) (SectionRepository, erro
 }
 
 func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
-	query, err := buildSqlStatements(fmt.Sprintf(`
-		SELECT *
+	query, err := buildSqlStatements(`
+		SELECT id, title, shelf_id
 		FROM section
-		WHERE shelf_id = %s
-	`, id))
+		WHERE shelf_id = ?
+	`)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := r.Engine.QueryContext(context.TODO(), query)
+	rows, err := r.Engine.QueryContext(context.TODO(), query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -67,17 +68,17 @@ func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 }
 
 func (r *sectionRepository) Get(id string) (*model.Section, error) {
-	query, err := buildSqlStatements(fmt.Sprintf(`
-		SELECT *
+	query, err := buildSqlStatements(`
+		SELECT id, title, shelf_id
 		FROM section
-		WHERE id = %s
+		WHERE id = ?
 		LIMIT 1
-	`, id))
+	`)
 	if err != nil {
 		return nil, err
 	}
 
-	row := r.Engine.QueryRowContext(context.TODO(), query)
+	row := r.Engine.QueryRowContext(context.TODO(), query, id)
 
 	var section model.Section
 	err = row.Scan(
@@ -94,14 +95,18 @@ func (r *sectionRepository) Get(id string) (*model.Section, error) {
 
 func (r *sectionRepository) Create(s *model.Section) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO sections (id, title, shelf_id)
+		INSERT INTO section (id, title, shelf_id)
 		VALUES (?, ?, ?)
 	`)
 	if err != nil {
 		return "", err
 	}
 
-	s.Id = uuid.New().String()
+	generatedSectionId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	s.Id = generatedSectionId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
@@ -119,7 +124,7 @@ func (r *sectionRepository) Create(s *model.Section) (string, error) {
 
 func (r *sectionRepository) Update(s *model.Section) error {
 	query, err := buildSqlStatements(`
-		UPDATE sections
+		UPDATE section
 		SET title = ?
 		WHERE id = ?
 	`)
@@ -142,7 +147,7 @@ func (r *sectionRepository) Update(s *model.Section) error {
 
 func (r *sectionRepository) Delete(s *model.Section) error {
 	query, err := buildSqlStatements(`
-		DELETE FROM sections
+		DELETE FROM section
 		WHERE id = ?
 	`)
 	if err != nil {

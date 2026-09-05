@@ -1,3 +1,5 @@
+//go:generate mockgen -source=section.go -destination=mocks/section_service.go -package=mocks
+
 package domain
 
 import (
@@ -39,6 +41,9 @@ func (s *sectionServiceImpl) Create(sectionRequest *model.Section) (*model.Secti
 		return nil, err
 	}
 	section, err := s.Repository.SectionRepository.Get(sectionId)
+	if err != nil {
+		return nil, err
+	}
 	return section, nil
 }
 

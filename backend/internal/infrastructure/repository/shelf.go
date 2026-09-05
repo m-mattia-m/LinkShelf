@@ -1,3 +1,5 @@
+//go:generate mockgen -source=shelf.go -destination=mocks/shelf_repository.go -package=mocks
+
 package repository
 
 import (
@@ -10,7 +12,7 @@ import (
 )
 
 type ShelfRepository interface {
-	List() (*model.Shelf, error)
+	List() ([]model.Shelf, error)
 	Get(id string) (*model.Shelf, error)
 	Create(s *model.Shelf) (string, error)
 	Update(s *model.Shelf) error
@@ -29,36 +31,52 @@ func NewShelfRepository(engine *sql.DB, table string) (ShelfRepository, error) {
 	}, nil
 }
 
-func (r *shelfRepository) List() (*model.Shelf, error) {
+func (r *shelfRepository) List() ([]model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, path, domain, description, theme, icon, user_id
 		FROM shelf
-		WHERE id = ?
 	`)
 	if err != nil {
 		return nil, err
 	}
 
-	var shelf model.Shelf
-	err = r.Engine.QueryRowContext(context.TODO(), query).Scan(
-		&shelf.Id,
-		&shelf.Title,
-		&shelf.Description,
-		&shelf.Theme,
-		&shelf.Icon,
-		&shelf.UserId,
-	)
+	rows, err := r.Engine.QueryContext(context.TODO(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+	shelves := make([]model.Shelf, 0)
+
+	for rows.Next() {
+		var shelf model.Shelf
+		err := rows.Scan(
+			&shelf.Id,
+			&shelf.Title,
+			&shelf.Path,
+			&shelf.Domain,
+			&shelf.Description,
+			&shelf.Theme,
+			&shelf.Icon,
+			&shelf.UserId,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		shelves = append(shelves, shelf)
 	}
 
-	return &shelf, err
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return shelves, nil
 }
 
 func (r *shelfRepository) Get(id string) (*model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, path, domain, description, theme, icon, user_id
 		FROM shelf
 		WHERE id = ?
 	`)
@@ -94,7 +112,11 @@ func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 		return "", err
 	}
 
-	s.Id = uuid.New().String()
+	generatedShelfId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	s.Id = generatedShelfId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),

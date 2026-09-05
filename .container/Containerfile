@@ -27,7 +27,10 @@ RUN go build \
 # =========================
 # Build Nuxt frontend
 # =========================
-FROM node:20-alpine AS nuxt-builder
+FROM node:24-alpine AS nuxt-builder
+
+# better-sqlite3 has no musl prebuilds, so it is compiled from source here
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /frontend
 
@@ -40,7 +43,7 @@ RUN npm run build
 # =========================
 # Runtime (ONE IMAGE)
 # =========================
-FROM node:20-alpine
+FROM node:24-alpine
 
 # tini = tiny init, nothing more
 RUN apk add --no-cache tini ca-certificates
@@ -53,11 +56,11 @@ COPY --from=nuxt-builder /frontend/.output /app/.output
 
 ENV NODE_ENV=production
 ENV GIN_MODE=release
-ENV PORT=8080
+ENV PORT=8085
 ENV NITRO_PORT=3000
 ENV NITRO_HOST=0.0.0.0
 
-EXPOSE 8080
+EXPOSE 8085
 EXPOSE 3000
 
 ENTRYPOINT ["/sbin/tini", "--"]

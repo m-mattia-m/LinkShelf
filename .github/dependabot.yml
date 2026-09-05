@@ -16,7 +16,7 @@ updates:
       interval: "monthly"
 
   - package-ecosystem: "docker"
-    directory: ".docker"
+    directory: ".container"
     schedule:
       interval: "monthly"
 

@@ -1,3 +1,5 @@
+//go:generate mockgen -source=link.go -destination=mocks/link_repository.go -package=mocks
+
 package repository
 
 import (
@@ -5,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -31,17 +32,17 @@ func NewLinkRepository(engine *sql.DB, table string) (LinkRepository, error) {
 }
 
 func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
-	query, err := buildSqlStatements(fmt.Sprintf(`
-		SELECT l.*
+	query, err := buildSqlStatements(`
+		SELECT l.id, l.title, l.link, l.icon, l.color, l.section_id
 		FROM link l
 		JOIN section s ON l.section_id = s.id
-		WHERE s.shelf_id = %s;
-	`, id))
+		WHERE s.shelf_id = ?;
+	`)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := r.Engine.QueryContext(context.TODO(), query)
+	rows, err := r.Engine.QueryContext(context.TODO(), query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -71,17 +72,17 @@ func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 }
 
 func (r *linkRepository) Get(id string) (*model.Link, error) {
-	query, err := buildSqlStatements(fmt.Sprintf(`
-		SELECT *
+	query, err := buildSqlStatements(`
+		SELECT id, title, link, icon, color, section_id
 		FROM link
-		WHERE id = %s
+		WHERE id = ?
 		LIMIT 1
-	`, id))
+	`)
 	if err != nil {
 		return nil, err
 	}
 
-	row := r.Engine.QueryRowContext(context.TODO(), query)
+	row := r.Engine.QueryRowContext(context.TODO(), query, id)
 
 	var link model.Link
 	err = row.Scan(
@@ -104,14 +105,18 @@ func (r *linkRepository) Get(id string) (*model.Link, error) {
 
 func (r *linkRepository) Create(l *model.Link) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO links (id, title, link, icon, color, section_id)
+		INSERT INTO link (id, title, link, icon, color, section_id)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return "", err
 	}
 
-	l.Id = uuid.New().String()
+	generatedLinkId, err := uuid.NewV7()
+	if err != nil {
+		return "", err
+	}
+	l.Id = generatedLinkId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
@@ -132,7 +137,7 @@ func (r *linkRepository) Create(l *model.Link) (string, error) {
 
 func (r *linkRepository) Update(l *model.Link) error {
 	query, err := buildSqlStatements(`
-		UPDATE links
+		UPDATE link
 		SET title = ?,
 			link = ?,
 			icon = ?,
@@ -161,7 +166,7 @@ func (r *linkRepository) Update(l *model.Link) error {
 
 func (r *linkRepository) Delete(l *model.Link) error {
 	query, err := buildSqlStatements(`
-		DELETE FROM links
+		DELETE FROM link
 		WHERE id = ?
 	`)
 	if err != nil {

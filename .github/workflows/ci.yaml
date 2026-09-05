@@ -1,4 +1,4 @@
-name: CI – Test & Build Image
+name: CI – Build, Test & Coverage
 
 on:
   push:
@@ -19,25 +19,74 @@ env:
   IMAGE_NAME: linkshelf
 
 jobs:
-  test-and-build:
+  ci:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version: '1.26'
+          cache: true
 
-      - name: Run Go tests
-        working-directory: backend
-        run: go test ./...
-
-      - name: Build Docker image (no push)
+      - name: Install mockgen
         run: |
-          docker build \
-            -f .docker/Containerfile \
-            -t $IMAGE_NAME:ci \
-            .
+          go install go.uber.org/mock/mockgen@latest
+
+      - name: Build
+        working-directory: backend
+        run: |
+          go build ./...
+
+      - name: Verify go generate is up-to-date
+        working-directory: backend
+        run: |
+          go generate ./...
+          git diff --exit-code
+
+
+      - name: Run unit tests
+        working-directory: backend
+        run: |
+          PKGS=$(go list ./... | grep -Ev '/(mocks|config|cmd|migrations)')
+          go test $PKGS -coverprofile=coverage.unit.out
+
+      - name: Run integration tests
+        working-directory: backend
+        run: |
+          PKGS=$(go list -tags=integration ./... | grep -Ev '/(mocks|config|cmd|migrations)')
+          go test -tags=integration $PKGS -coverprofile=coverage.integration.out
+
+      - name: Merge coverage
+        working-directory: backend
+        run: |
+          echo "mode: atomic" > ../coverage.out
+          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> ../coverage.out
+
+      - name: Coverage summary
+        working-directory: backend
+        run: |
+          echo "-------------------------------"
+          go tool cover -func=../coverage.out | tee coverage.txt
+          echo "-------------------------------"
+          grep total: coverage.txt
+
+      - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: coverage.out
+          threshold-total: 0
+          debug: true
+
+          # On pull_request, github.ref_name is the merge ref ("47/merge"), not a
+          # branch, so skip the badge and only publish it on push.
+          git-token: ${{ github.event_name == 'push' && secrets.GITHUB_TOKEN || '' }}
+          git-branch: ${{ github.ref_name }}

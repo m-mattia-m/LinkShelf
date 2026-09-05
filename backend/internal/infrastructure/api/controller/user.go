@@ -11,7 +11,7 @@ import (
 
 func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
-		user, err := svc.UserService.CreateUser(mapper.MapUserBaseToUserPointer(input.Body))
+		user, err := svc.UserService.Create(mapper.MapUserBaseToUserPointer(input.Body))
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to create user", err)
 		}
@@ -22,7 +22,7 @@ func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRe
 
 func GetUserById(svc *domain.Service) func(c context.Context, input *model.UserRequestFilter) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserRequestFilter) (*model.UserResponse, error) {
-		user, err := svc.UserService.GetUserById(input.UserId)
+		user, err := svc.UserService.Get(input.UserId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get user", err)
 		}
@@ -33,7 +33,7 @@ func GetUserById(svc *domain.Service) func(c context.Context, input *model.UserR
 
 func UpdateUser(svc *domain.Service) func(c context.Context, input *model.UserFilterFilterAndBody) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserFilterFilterAndBody) (*model.UserResponse, error) {
-		user, err := svc.UserService.UpdateUser(input.UserId, mapper.MapUserBaseToUserPointer(input.Body))
+		user, err := svc.UserService.Update(input.UserId, mapper.MapUserBaseToUserPointer(input.Body))
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to update user", err)
 		}
@@ -55,12 +55,12 @@ func PatchUserPassword(svc *domain.Service) func(c context.Context, input *model
 
 func DeleteUser(svc *domain.Service) func(c context.Context, input *model.UserRequestFilter) (*struct{}, error) {
 	return func(c context.Context, input *model.UserRequestFilter) (*struct{}, error) {
-		user, err := svc.UserService.GetUserById(input.UserId)
+		user, err := svc.UserService.Get(input.UserId)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get user", err)
 		}
 
-		err = svc.UserService.DeleteUser(user)
+		err = svc.UserService.Delete(user)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to delete user", err)
 		}

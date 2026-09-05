@@ -1,3 +1,5 @@
+//go:generate mockgen -source=user.go -destination=mocks/user_service.go -package=mocks
+
 package domain
 
 import (
@@ -8,11 +10,11 @@ import (
 )
 
 type UserService interface {
-	GetUserById(id string) (*model.User, error)
-	CreateUser(u *model.User) (*model.User, error)
-	UpdateUser(userId string, userRequest *model.User) (*model.User, error)
+	Get(id string) (*model.User, error)
+	Create(u *model.User) (*model.User, error)
+	Update(userId string, userRequest *model.User) (*model.User, error)
 	PatchPassword(userId string, u *model.UserRequestBodyOnlyPassword) error
-	DeleteUser(u *model.User) error
+	Delete(u *model.User) error
 }
 
 type userServiceImpl struct {
@@ -27,11 +29,16 @@ func NewUserService(repository *repository.Repository, domain *Service) UserServ
 	}
 }
 
-func (s *userServiceImpl) GetUserById(id string) (*model.User, error) {
-	return s.Repository.UserRepository.Get(id)
+func (s *userServiceImpl) Get(id string) (*model.User, error) {
+	user, err := s.Repository.UserRepository.Get(id)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = "" // Do not return password hash
+	return user, nil
 }
 
-func (s *userServiceImpl) CreateUser(u *model.User) (*model.User, error) {
+func (s *userServiceImpl) Create(u *model.User) (*model.User, error) {
 
 	var err error
 	u.Password, err = hashPassword(u.Password)
@@ -44,21 +51,21 @@ func (s *userServiceImpl) CreateUser(u *model.User) (*model.User, error) {
 		return nil, err
 	}
 
-	user, err := s.GetUserById(userId)
+	user, err := s.Get(userId)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (s *userServiceImpl) UpdateUser(userId string, userRequest *model.User) (*model.User, error) {
+func (s *userServiceImpl) Update(userId string, userRequest *model.User) (*model.User, error) {
 	userRequest.Id = userId
 	err := s.Repository.UserRepository.Update(userRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := s.GetUserById(userId)
+	user, err := s.Get(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +97,7 @@ func (s *userServiceImpl) PatchPassword(userId string, u *model.UserRequestBodyO
 	})
 }
 
-func (s *userServiceImpl) DeleteUser(u *model.User) error {
+func (s *userServiceImpl) Delete(u *model.User) error {
 	return s.Repository.UserRepository.Delete(u)
 }
 

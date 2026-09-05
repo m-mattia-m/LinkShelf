@@ -63,12 +63,13 @@ func LoadConfig() error {
 	viper.AddConfigPath("../..")
 	viper.AddConfigPath("../../..")
 	viper.AddConfigPath("../../../..")
+	viper.AddConfigPath("backend")
+	viper.AddConfigPath("./backend")
 
 	if err := viper.ReadInConfig(); err != nil {
 		return err
 	}
 
-	// Optional local override (lowest priority)
 	viper.SetConfigName("config")
 	_ = viper.MergeInConfig()
 
