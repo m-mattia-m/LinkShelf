@@ -27,7 +27,7 @@ RUN go build \
 # =========================
 # Build Nuxt frontend
 # =========================
-FROM node:24-alpine AS nuxt-builder
+FROM node:26-alpine AS nuxt-builder
 
 # better-sqlite3 has no musl prebuilds, so it is compiled from source here
 RUN apk add --no-cache python3 make g++
@@ -43,7 +43,7 @@ RUN npm run build
 # =========================
 # Runtime (ONE IMAGE)
 # =========================
-FROM node:24-alpine
+FROM node:26-alpine
 
 # tini = tiny init, nothing more
 RUN apk add --no-cache tini ca-certificates
