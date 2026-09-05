@@ -36,5 +36,5 @@ docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
 docker compose up -d
 
 # if you want to build a new image:
-docker build . --file ./.docker/Containerfile --tag linkshelf --label linkshelf --build-arg IMAGE_NAME=linkshelf --build-arg IMAGE_TAG=linkshelf
+docker build . --file ./.container/Containerfile --tag linkshelf --label linkshelf --build-arg IMAGE_NAME=linkshelf --build-arg IMAGE_TAG=linkshelf
 ```

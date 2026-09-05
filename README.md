@@ -45,7 +45,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
   - https://coolors.co/palette/d8f3dc-b7e4c7-95d5b2-74c69d-52b788-40916c-2d6a4f-1b4332-081c15
   - https://coolors.co/palette/dad7cd-a3b18a-588157-3a5a40-344e41
   - https://coolors.co/palette/5bba6f-3fa34d-2a9134-137547-054a29
-- [ ] settings page -> the user should be allowed to set custom settings
+- [x] settings page -> the user should be allowed to set custom settings
   - allow the user to disable/enable these pages: about, contact, imprint, terms of use, privacy policy
   - allow the user to redirect to dashboard on root instead of showing the landing page
   - GET `/v1/settings` -> returns all settings
@@ -54,4 +54,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
   - PUT `/v1/settings/imprint` -> update imprint page. Language code must be sent in the body
   - PUT `/v1/settings/terms-of-use` -> update terms of use page. Language code must be sent in the body
   - PUT `/v1/settings/privacy-policy` -> update privacy policy page. Language code must be sent in the body
-  - 
+
+---
+
+# Next development Steps
+
+Implement authentication (incl. OIDC) since I have to send the userId on shelfCreate.

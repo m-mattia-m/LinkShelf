@@ -52,3 +52,6 @@ LinkShelf is committed to protecting your privacy. We do not collect personal da
 
 INSERT INTO "setting" (key, language, value)
 VALUES ('redirect_to_dashboard', 'en', 'false');
+
+INSERT INTO "setting" (key, language, value)
+VALUES ('login_options', 'en', '["Local", "Zitadel", "Microsoft", "Google"]');

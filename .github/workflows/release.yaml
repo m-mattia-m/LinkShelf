@@ -103,7 +103,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -f .docker/Containerfile \
+            -f .container/Containerfile \
             -t $IMAGE_NAME \
             --build-arg IMAGE_NAME=$IMAGE_NAME \
             --build-arg IMAGE_TAG=$IMAGE_TAG \

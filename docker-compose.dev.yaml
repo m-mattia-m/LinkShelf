@@ -1,14 +1,20 @@
 services:
   linkshelf:
     build:
-      dockerfile: .docker/Containerfile
+      dockerfile: .container/Containerfile
     restart: unless-stopped
     ports:
       - "3000:3000"
-      - "8082:8080"
+      - "8085:8085"
     environment:
       - APP_DATABASE_HOST=postgres
+      # Inside the compose network postgres listens on its container port, not
+      # the port published to the host in docker-compose.yaml.
+      - APP_DATABASE_PORT=5432
     volumes:
       - ./backend/config.default.yaml:/app/config.default.yaml
     depends_on:
-      - postgres
+      # Wait until postgres accepts connections: the backend exits if its first
+      # DB ping fails, which happens on a fresh volume without this gate.
+      postgres:
+        condition: service_healthy

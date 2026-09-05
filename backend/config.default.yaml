@@ -12,7 +12,7 @@ server:
 database:
   engine: POSTGRES # MYSQL # POSTGRES
   host: localhost
-  port: 5432 # 3306 # 5432
+  port: 15432 # 3306 # 5432
   username: linkshelf
   password: linkshelf
   name: linkshelf
