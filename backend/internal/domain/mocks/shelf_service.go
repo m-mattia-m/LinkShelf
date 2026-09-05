@@ -84,6 +84,21 @@ func (mr *MockShelfServiceMockRecorder) Get(id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockShelfService)(nil).Get), id)
 }
 
+// List mocks base method.
+func (m *MockShelfService) List() ([]model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List")
+	ret0, _ := ret[0].([]model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockShelfServiceMockRecorder) List() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockShelfService)(nil).List))
+}
+
 // Update mocks base method.
 func (m *MockShelfService) Update(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error) {
 	m.ctrl.T.Helper()

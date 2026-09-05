@@ -85,10 +85,10 @@ func (mr *MockShelfRepositoryMockRecorder) Get(id any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockShelfRepository) List() (*model.Shelf, error) {
+func (m *MockShelfRepository) List() ([]model.Shelf, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List")
-	ret0, _ := ret[0].(*model.Shelf)
+	ret0, _ := ret[0].([]model.Shelf)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
