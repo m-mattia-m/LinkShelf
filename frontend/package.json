@@ -12,31 +12,31 @@
     "openapi:generate": "npx @openapitools/openapi-generator-cli generate -i ./openapi-v3.json -g typescript-fetch -o api/"
   },
   "dependencies": {
-    "@iconify-json/lucide": "^1.2.82",
-    "@iconify-json/simple-icons": "^1.2.63",
-    "@nuxt/content": "3.10.0",
-    "@nuxt/hints": "1.0.0-alpha.4",
-    "@nuxt/icon": "2.1.1",
+    "@iconify-json/lucide": "^1.2.129",
+    "@iconify-json/simple-icons": "^1.2.94",
+    "@nuxt/content": "3.16.0",
+    "@nuxt/hints": "1.1.4",
+    "@nuxt/icon": "2.5.1",
     "@nuxt/image": "2.0.0",
-    "@nuxt/ui": "^4.3.0",
-    "@nuxtjs/i18n": "10.2.1",
-    "@nuxtjs/mdc": "0.19.2",
-    "@pinia/nuxt": "0.11.3",
-    "better-sqlite3": "^12.11.1",
-    "nuxt": "^4.2.2",
-    "pinia": "^3.0.4",
-    "valibot": "^1.2.0"
+    "@nuxt/ui": "^4.11.0",
+    "@nuxtjs/i18n": "10.6.0",
+    "@nuxtjs/mdc": "0.23.1",
+    "@pinia/nuxt": "1.0.2",
+    "better-sqlite3": "^13.0.3",
+    "nuxt": "^4.5.2",
+    "pinia": "^4.0.3",
+    "valibot": "^1.4.2"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.13.0",
-    "@nuxt/image": "^2.0.0",
+    "@nuxt/eslint": "^1.17.0",
+    "@nuxt/image": "^2.1.0",
     "@nuxt/ui": "^4.4.0",
-    "@openapitools/openapi-generator-cli": "^2.26.0",
-    "eslint": "^9.39.2",
+    "@openapitools/openapi-generator-cli": "^2.41.0",
+    "eslint": "^10.10.0",
     "nuxt": "^4.3.0",
-    "typescript": "^5.9.3",
-    "vue": "^3.5.27",
-    "vue-router": "^4.6.4",
-    "vue-tsc": "^3.2.1"
+    "typescript": "^7.0.2",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1",
+    "vue-tsc": "^3.3.11"
   }
 }
