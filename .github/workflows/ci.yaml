@@ -62,7 +62,7 @@ jobs:
       - name: Run integration tests
         working-directory: backend
         run: |
-          PKGS=$(go list ./... | grep -Ev '/(mocks|config|cmd|migrations)')
+          PKGS=$(go list -tags=integration ./... | grep -Ev '/(mocks|config|cmd|migrations)')
           go test -tags=integration $PKGS -coverprofile=coverage.integration.out
 
       - name: Merge coverage

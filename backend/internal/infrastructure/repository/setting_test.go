@@ -20,9 +20,11 @@ func Test_SettingRepository_List_Success(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{
 		"key",
+		"language",
 		"value",
 	}).AddRow(
 		"theme",
+		"en",
 		"dark",
 	)
 
@@ -34,6 +36,7 @@ func Test_SettingRepository_List_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, settings, 1)
 	require.Equal(t, "theme", settings[0].Key)
+	require.Equal(t, "en", settings[0].LanguageCode)
 	require.Equal(t, "dark", settings[0].Value)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -83,9 +86,11 @@ func Test_SettingRepository_GetByKey_Success(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{
 		"key",
+		"language",
 		"value",
 	}).AddRow(
 		"theme",
+		"en",
 		"dark",
 	)
 
@@ -98,6 +103,7 @@ func Test_SettingRepository_GetByKey_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, setting)
 	require.Equal(t, "theme", setting.Key)
+	require.Equal(t, "en", setting.LanguageCode)
 	require.Equal(t, "dark", setting.Value)
 
 	require.NoError(t, mock.ExpectationsWereMet())

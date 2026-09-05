@@ -26,7 +26,7 @@ func Test_SectionRepository_ListByShelfId_Success(t *testing.T) {
 		"shelf-uuid-test",
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM section").
+	mock.ExpectQuery(`FROM\s+section`).
 		WithArgs("shelf-uuid-test").
 		WillReturnRows(rows)
 
@@ -47,7 +47,7 @@ func Test_SectionRepository_ListByShelfId_QueryError(t *testing.T) {
 
 	repo := &sectionRepository{Engine: db}
 
-	mock.ExpectQuery("SELECT \\* FROM section").
+	mock.ExpectQuery(`FROM\s+section`).
 		WithArgs("shelf-uuid-test").
 		WillReturnError(errors.New("query failed"))
 
@@ -67,7 +67,7 @@ func Test_SectionRepository_ListByShelfId_ScanError(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"id"}).
 		AddRow("only-id")
 
-	mock.ExpectQuery("SELECT \\* FROM section").
+	mock.ExpectQuery(`FROM\s+section`).
 		WithArgs("shelf-uuid-test").
 		WillReturnRows(rows)
 
@@ -94,7 +94,7 @@ func Test_SectionRepository_Get_Success(t *testing.T) {
 		"shelf-uuid-test",
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM section").
+	mock.ExpectQuery(`FROM\s+section`).
 		WithArgs("section-uuid-test").
 		WillReturnRows(rows)
 
@@ -117,7 +117,7 @@ func Test_SectionRepository_Get_ScanError(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"id"}).
 		AddRow("only-id")
 
-	mock.ExpectQuery("SELECT \\* FROM section").
+	mock.ExpectQuery(`FROM\s+section`).
 		WithArgs("section-uuid-test").
 		WillReturnRows(rows)
 

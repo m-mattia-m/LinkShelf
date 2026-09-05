@@ -33,7 +33,7 @@ func NewSectionRepository(engine *sql.DB, table string) (SectionRepository, erro
 
 func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, shelf_id
 		FROM section
 		WHERE shelf_id = ?
 	`)
@@ -69,7 +69,7 @@ func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 
 func (r *sectionRepository) Get(id string) (*model.Section, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, shelf_id
 		FROM section
 		WHERE id = ?
 		LIMIT 1

@@ -36,7 +36,7 @@ func Test_LinkRepository_ListByShelfId_Success(t *testing.T) {
 		"section-uuid-test",
 	)
 
-	mock.ExpectQuery("SELECT l.\\*").
+	mock.ExpectQuery(`FROM\s+link l`).
 		WithArgs("shelf-uuid-test").
 		WillReturnRows(rows)
 
@@ -59,7 +59,7 @@ func Test_LinkRepository_ListByShelfId_QueryError(t *testing.T) {
 
 	repo := &linkRepository{Engine: db}
 
-	mock.ExpectQuery("SELECT l.\\*").
+	mock.ExpectQuery(`FROM\s+link l`).
 		WithArgs("shelf-uuid-test").
 		WillReturnError(errors.New("db error"))
 
@@ -81,7 +81,7 @@ func Test_LinkRepository_ListByShelfId_ScanError(t *testing.T) {
 		"title",
 	}).AddRow("id-only", "title-only")
 
-	mock.ExpectQuery("SELECT l.\\*").
+	mock.ExpectQuery(`FROM\s+link l`).
 		WithArgs("shelf-uuid-test").
 		WillReturnRows(rows)
 
@@ -114,7 +114,7 @@ func Test_LinkRepository_Get_Success(t *testing.T) {
 		"section-uuid-test",
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM link").
+	mock.ExpectQuery(`FROM\s+link\s`).
 		WithArgs("link-uuid-test").
 		WillReturnRows(rows)
 
@@ -135,7 +135,7 @@ func Test_LinkRepository_Get_NoRows(t *testing.T) {
 
 	repo := &linkRepository{Engine: db}
 
-	mock.ExpectQuery("SELECT \\* FROM link").
+	mock.ExpectQuery(`FROM\s+link\s`).
 		WithArgs("link-uuid-test").
 		WillReturnError(sql.ErrNoRows)
 
@@ -155,7 +155,7 @@ func Test_LinkRepository_Get_ScanError(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"id"}).
 		AddRow("only-id")
 
-	mock.ExpectQuery("SELECT \\* FROM link").
+	mock.ExpectQuery(`FROM\s+link\s`).
 		WithArgs("link-uuid-test").
 		WillReturnRows(rows)
 

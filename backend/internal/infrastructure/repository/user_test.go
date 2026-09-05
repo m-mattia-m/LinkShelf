@@ -29,7 +29,7 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"Last",
 	)
 
-	mock.ExpectQuery(`SELECT \* FROM "user"`).
+	mock.ExpectQuery(`FROM\s+"user"`).
 		WillReturnRows(rows)
 
 	users, err := repo.List()
@@ -48,7 +48,7 @@ func Test_UserRepository_List_QueryError(t *testing.T) {
 
 	repo := &userRepository{Engine: db}
 
-	mock.ExpectQuery(`SELECT \* FROM "user"`).
+	mock.ExpectQuery(`FROM\s+"user"`).
 		WillReturnError(errors.New("query failed"))
 
 	users, err := repo.List()
@@ -78,7 +78,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"hashed-password",
 	)
 
-	mock.ExpectQuery(`SELECT \* FROM "user" WHERE id =`).
+	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
 		WithArgs("user-uuid-test").
 		WillReturnRows(rows)
 
@@ -98,7 +98,7 @@ func Test_UserRepository_Get_NoRows(t *testing.T) {
 
 	repo := &userRepository{Engine: db}
 
-	mock.ExpectQuery(`SELECT \* FROM "user" WHERE id =`).
+	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
 		WithArgs("user-uuid-test").
 		WillReturnError(sql.ErrNoRows)
 

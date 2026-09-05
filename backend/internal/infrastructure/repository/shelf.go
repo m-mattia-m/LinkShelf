@@ -33,7 +33,7 @@ func NewShelfRepository(engine *sql.DB, table string) (ShelfRepository, error) {
 
 func (r *shelfRepository) List() ([]model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, path, domain, description, theme, icon, user_id
 		FROM shelf
 	`)
 	if err != nil {
@@ -53,6 +53,8 @@ func (r *shelfRepository) List() ([]model.Shelf, error) {
 		err := rows.Scan(
 			&shelf.Id,
 			&shelf.Title,
+			&shelf.Path,
+			&shelf.Domain,
 			&shelf.Description,
 			&shelf.Theme,
 			&shelf.Icon,
@@ -74,7 +76,7 @@ func (r *shelfRepository) List() ([]model.Shelf, error) {
 
 func (r *shelfRepository) Get(id string) (*model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, path, domain, description, theme, icon, user_id
 		FROM shelf
 		WHERE id = ?
 	`)

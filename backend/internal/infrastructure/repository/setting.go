@@ -29,7 +29,7 @@ func NewSettingRepository(engine *sql.DB, table string) (SettingRepository, erro
 
 func (r *settingRepository) List() ([]model.Setting, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT key, language, value
 		FROM setting
 	`)
 	if err != nil {
@@ -65,7 +65,7 @@ func (r *settingRepository) List() ([]model.Setting, error) {
 func (r *settingRepository) GetByKey(key string) (*model.Setting, error) {
 
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT key, language, value
 		FROM setting
 		WHERE key = ?
 	`)

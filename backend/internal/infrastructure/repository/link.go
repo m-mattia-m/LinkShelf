@@ -33,7 +33,7 @@ func NewLinkRepository(engine *sql.DB, table string) (LinkRepository, error) {
 
 func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 	query, err := buildSqlStatements(`
-		SELECT l.*
+		SELECT l.id, l.title, l.link, l.icon, l.color, l.section_id
 		FROM link l
 		JOIN section s ON l.section_id = s.id
 		WHERE s.shelf_id = ?;
@@ -73,7 +73,7 @@ func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 
 func (r *linkRepository) Get(id string) (*model.Link, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, title, link, icon, color, section_id
 		FROM link
 		WHERE id = ?
 		LIMIT 1

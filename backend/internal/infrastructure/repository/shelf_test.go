@@ -20,6 +20,8 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 	rows := sqlmock.NewRows([]string{
 		"id",
 		"title",
+		"path",
+		"domain",
 		"description",
 		"theme",
 		"icon",
@@ -27,13 +29,15 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
+		"/test",
+		"example.com",
 		"description-test",
 		"dark",
 		"icon-test",
 		"user-uuid-test",
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM shelf").
+	mock.ExpectQuery(`FROM\s+shelf`).
 		WillReturnRows(rows)
 
 	shelves, err := repo.List()
@@ -42,6 +46,8 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 	require.Len(t, shelves, 1)
 	require.Equal(t, "shelf-uuid-test", shelves[0].Id)
 	require.Equal(t, "test-shelf", shelves[0].Title)
+	require.Equal(t, "/test", shelves[0].Path)
+	require.Equal(t, "example.com", shelves[0].Domain)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -53,7 +59,7 @@ func Test_ShelfRepository_List_NoRows(t *testing.T) {
 
 	repo := &shelfRepository{Engine: db}
 
-	mock.ExpectQuery("SELECT \\* FROM shelf").
+	mock.ExpectQuery(`FROM\s+shelf`).
 		WillReturnError(sql.ErrNoRows)
 
 	shelves, err := repo.List()
@@ -88,7 +94,7 @@ func Test_ShelfRepository_List_NoRows(t *testing.T) {
 //		"user-id",
 //	)
 //
-//	mock.ExpectQuery("SELECT \\* FROM shelf").
+//	mock.ExpectQuery(`FROM\s+shelf`).
 //		WillReturnRows(rows)
 //
 //	shelf, err := repo.List()
@@ -124,7 +130,7 @@ func Test_ShelfRepository_Get_Success(t *testing.T) {
 		"user-uuid-test",
 	)
 
-	mock.ExpectQuery("SELECT \\* FROM shelf").
+	mock.ExpectQuery(`FROM\s+shelf`).
 		WithArgs("shelf-uuid-test").
 		WillReturnRows(rows)
 
@@ -144,7 +150,7 @@ func Test_ShelfRepository_Get_NoRows(t *testing.T) {
 
 	repo := &shelfRepository{Engine: db}
 
-	mock.ExpectQuery("SELECT \\* FROM shelf").
+	mock.ExpectQuery(`FROM\s+shelf`).
 		WithArgs("shelf-uuid-test").
 		WillReturnError(sql.ErrNoRows)
 

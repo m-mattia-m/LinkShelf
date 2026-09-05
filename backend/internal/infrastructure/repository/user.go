@@ -36,7 +36,7 @@ func NewUserRepository(engine *sql.DB, table string) (UserRepository, error) {
 
 func (r *userRepository) List() ([]model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, email, first_name, last_name
 		FROM "user"
 	`)
 	if err != nil {
@@ -69,7 +69,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT *
+		SELECT id, email, first_name, last_name, password
 		FROM "user"
 		WHERE id = ?
 	`)
