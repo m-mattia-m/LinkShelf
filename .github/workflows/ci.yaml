@@ -86,5 +86,7 @@ jobs:
           threshold-total: 0
           debug: true
 
-          git-token: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && secrets.GITHUB_TOKEN || '' }}
+          # On pull_request, github.ref_name is the merge ref ("47/merge"), not a
+          # branch, so skip the badge and only publish it on push.
+          git-token: ${{ github.event_name == 'push' && secrets.GITHUB_TOKEN || '' }}
           git-branch: ${{ github.ref_name }}
