@@ -42,13 +42,13 @@ func Test_Unit_User_List_Failure(t *testing.T) {
 	require.Nil(t, users)
 }
 
-func Test_Unit_User_Creation_Success(t *testing.T) {
+func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), model.RoleUser).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -60,6 +60,7 @@ func Test_Unit_User_Creation_Success(t *testing.T) {
 				FirstName: "firstname-test",
 				LastName:  "lastname-test",
 				Email:     "test@test.com",
+				Role:      model.RoleUser,
 			},
 		}, nil)
 
@@ -68,19 +69,57 @@ func Test_Unit_User_Creation_Success(t *testing.T) {
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
+			// A non-admin caller attempting to self-elevate must be ignored.
+			Role: model.RoleAdmin,
 		},
 		Password: "secret",
 	}
-	user, err := svc.Service.UserService.Create(&userRequest)
+	user, err := svc.Service.UserService.Create(&userRequest, false)
 
 	require.NoError(t, err)
 	require.NotNil(t, user)
+	require.Equal(t, model.RoleUser, user.Role)
+}
 
-	require.NotEmpty(t, user.Id)
-	require.Equal(t, userRequest.FirstName, user.FirstName)
-	require.Equal(t, userRequest.LastName, user.LastName)
-	require.Equal(t, userRequest.Email, user.Email)
+func Test_Unit_User_Creation_Success_AdminSetsRole(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
 
+	svc.UserRepository.
+		EXPECT().
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
+		Return("user-uuid-test", nil)
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{
+			Id:       "user-uuid-test",
+			UserBase: model.UserBase{Role: model.RoleAdmin},
+		}, nil)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Role: model.RoleAdmin},
+		Password: "secret",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, true)
+
+	require.NoError(t, err)
+	require.Equal(t, model.RoleAdmin, user.Role)
+}
+
+func Test_Unit_User_Creation_Failure_AdminSetsInvalidRole(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Role: "superuser"},
+		Password: "secret",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, true)
+
+	require.ErrorIs(t, err, ErrInvalidRole)
+	require.Nil(t, user)
 }
 
 func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
@@ -89,7 +128,7 @@ func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", errors.New("an error occurred"))
 
 	userRequest := model.UserCreate{
@@ -100,7 +139,7 @@ func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 		},
 		Password: "secret",
 	}
-	user, err := svc.Service.UserService.Create(&userRequest)
+	user, err := svc.Service.UserService.Create(&userRequest, false)
 
 	require.ErrorContains(t, err, "an error occurred")
 	require.Nil(t, user)
@@ -112,7 +151,7 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -128,7 +167,7 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 		},
 		Password: "secret",
 	}
-	user, err := svc.Service.UserService.Create(&userRequest)
+	user, err := svc.Service.UserService.Create(&userRequest, false)
 
 	require.ErrorContains(t, err, "an error occurred")
 	require.Nil(t, user)
@@ -176,7 +215,7 @@ func Test_Unit_User_Get_Failure(t *testing.T) {
 	require.Nil(t, user)
 }
 
-func Test_Unit_User_Update_Success(t *testing.T) {
+func Test_Unit_User_Update_Success_SelfUpdate_RoleUnchanged(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
@@ -185,8 +224,15 @@ func Test_Unit_User_Update_Success(t *testing.T) {
 			FirstName: "firstname-updated-test",
 			LastName:  "lastname-updated-test",
 			Email:     "test@test.com",
+			// A non-admin caller attempting to self-elevate must be ignored.
+			Role: model.RoleAdmin,
 		},
 	}
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
 
 	svc.UserRepository.
 		EXPECT().
@@ -202,54 +248,119 @@ func Test_Unit_User_Update_Success(t *testing.T) {
 				FirstName: "firstname-updated-test",
 				LastName:  "lastname-updated-test",
 				Email:     "test@test.com",
+				Role:      model.RoleUser,
 			},
 		}, nil)
 
-	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &userRequest)
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &userRequest, false)
 
 	require.NoError(t, err)
 	require.NotNil(t, updatedUser)
 	require.Equal(t, "user-uuid-test", updatedUser.Id)
-	require.Equal(t, "firstname-updated-test", updatedUser.FirstName)
-	require.Equal(t, "lastname-updated-test", updatedUser.LastName)
-	require.Equal(t, "test@test.com", updatedUser.Email)
+	require.Equal(t, model.RoleUser, updatedUser.Role)
+}
 
+func Test_Unit_User_Update_Success_AdminChangesRole(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	userRequest := model.User{UserBase: model.UserBase{Role: model.RoleAdmin}}
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		Update(gomock.Any()).
+		Return(nil)
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleAdmin}}, nil)
+
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &userRequest, true)
+
+	require.NoError(t, err)
+	require.Equal(t, model.RoleAdmin, updatedUser.Role)
+}
+
+func Test_Unit_User_Update_Failure_AdminSetsInvalidRole(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
+
+	userRequest := model.User{UserBase: model.UserBase{Role: "superuser"}}
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &userRequest, true)
+
+	require.ErrorIs(t, err, ErrInvalidRole)
+	require.Nil(t, updatedUser)
+}
+
+func Test_Unit_User_Update_NotFound(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(nil, nil)
+
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &model.User{}, false)
+
+	require.NoError(t, err)
+	require.Nil(t, updatedUser)
+}
+
+func Test_Unit_User_Update_Failure_Get_Existing(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(nil, errors.New("an error occurred"))
+
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &model.User{}, false)
+
+	require.ErrorContains(t, err, "an error occurred")
+	require.Nil(t, updatedUser)
 }
 
 func Test_Unit_User_Update_Failure_Update(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
-	userRequest := model.User{
-		UserBase: model.UserBase{
-			FirstName: "firstname-updated-test",
-			LastName:  "lastname-updated-test",
-			Email:     "test@test.com",
-		},
-	}
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
 
 	svc.UserRepository.
 		EXPECT().
 		Update(gomock.Any()).
 		Return(errors.New("an error occurred"))
 
-	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &userRequest)
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &model.User{}, false)
 
 	require.ErrorContains(t, err, "an error occurred")
 	require.Nil(t, updatedUser)
 }
 
-func Test_Unit_User_Update_Failure_Get(t *testing.T) {
+func Test_Unit_User_Update_Failure_Get_Final(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
-	userRequest := model.User{
-		UserBase: model.UserBase{
-			FirstName: "firstname-updated-test",
-			LastName:  "lastname-updated-test",
-			Email:     "test@test.com",
-		},
-	}
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
 
 	svc.UserRepository.
 		EXPECT().
@@ -261,7 +372,7 @@ func Test_Unit_User_Update_Failure_Get(t *testing.T) {
 		Get("user-uuid-test").
 		Return(nil, errors.New("an error occurred"))
 
-	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &userRequest)
+	updatedUser, err := svc.Service.UserService.Update("user-uuid-test", &model.User{}, false)
 
 	require.ErrorContains(t, err, "an error occurred")
 	require.Nil(t, updatedUser)

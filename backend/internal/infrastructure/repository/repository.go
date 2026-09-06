@@ -1,11 +1,11 @@
 package repository
 
 import (
+	"backend/internal/config"
 	"backend/migrations"
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"strings"
 
@@ -18,16 +18,18 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 type Repository struct {
-	UserRepository      UserRepository
-	ShelfRepository     ShelfRepository
-	SectionRepository   SectionRepository
-	LinkRepository      LinkRepository
-	SettingRepository   SettingRepository
-	StatisticRepository StatisticRepository
+	UserRepository         UserRepository
+	ShelfRepository        ShelfRepository
+	SectionRepository      SectionRepository
+	LinkRepository         LinkRepository
+	SettingRepository      SettingRepository
+	StatisticRepository    StatisticRepository
+	RefreshTokenRepository RefreshTokenRepository
+	OidcStateRepository    OidcStateRepository
 }
 
 func NewRepository() (*Repository, error) {
@@ -75,13 +77,25 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
+	refreshTokenRepo, err := NewRefreshTokenRepository(db, "refresh_token")
+	if err != nil {
+		return nil, err
+	}
+
+	oidcStateRepo, err := NewOidcStateRepository(db, "oidc_state")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repository{
-		UserRepository:      userRepo,
-		ShelfRepository:     shelfRepo,
-		SectionRepository:   sectionRepo,
-		LinkRepository:      linkRepo,
-		SettingRepository:   settingRepo,
-		StatisticRepository: statisticRepo,
+		UserRepository:         userRepo,
+		ShelfRepository:        shelfRepo,
+		SectionRepository:      sectionRepo,
+		LinkRepository:         linkRepo,
+		SettingRepository:      settingRepo,
+		StatisticRepository:    statisticRepo,
+		RefreshTokenRepository: refreshTokenRepo,
+		OidcStateRepository:    oidcStateRepo,
 	}, nil
 }
 
@@ -96,12 +110,12 @@ func connectToDatabase(dsn, driver string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
-	slog.Info("Database connected", slog.String("driver", driver))
+	zap.L().Info("Database connected", zap.String("driver", driver))
 	return db, nil
 }
 
 func runMigrations(migrateDSN string) error {
-	slog.Info("Applying DB migrations...")
+	zap.L().Info("Applying DB migrations...")
 
 	source, err := iofs.New(migrations.FS, ".")
 	if err != nil {
@@ -119,26 +133,26 @@ func runMigrations(migrateDSN string) error {
 
 	err = m.Up()
 	if errors.Is(err, migrate.ErrNoChange) {
-		slog.Info("No new migrations")
+		zap.L().Info("No new migrations")
 		return nil
 	}
 	if err != nil {
 		return fmt.Errorf("migration failed: %w", err)
 	}
 
-	slog.Info("Migrations applied successfully")
+	zap.L().Info("Migrations applied successfully")
 	return nil
 }
 
 func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
-	engine := strings.ToLower(viper.GetString("database.engine"))
+	engine := strings.ToLower(config.String("database.engine"))
 
-	host := viper.GetString("database.host")
-	port := viper.GetString("database.port")
-	dbname := viper.GetString("database.name")
-	username := viper.GetString("database.username")
-	password := viper.GetString("database.password")
-	params := viper.GetString("database.params")
+	host := config.String("database.host")
+	port := config.String("database.port")
+	dbname := config.String("database.name")
+	username := config.String("database.username")
+	password := config.String("database.password")
+	params := config.String("database.params")
 
 	safePassword := "***"
 
@@ -167,7 +181,7 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 		migrateDSN = fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s?%s",
 			username, password, host, port, dbname, params)
 	default:
-		slog.Error("Unsupported DB engine", slog.String("engine", engine))
+		zap.L().Error("Unsupported DB engine", zap.String("engine", engine))
 		os.Exit(1)
 	}
 
@@ -175,8 +189,8 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	migrateDSN = strings.TrimSuffix(migrateDSN, "?")
 
 	// Debug log with masked password
-	slog.Debug("SQL DSN: " + strings.Replace(sqlDSN, password, safePassword, -1))
-	slog.Debug("Migration DSN: " + strings.Replace(migrateDSN, password, safePassword, -1))
+	zap.L().Debug("SQL DSN: " + strings.Replace(sqlDSN, password, safePassword, -1))
+	zap.L().Debug("Migration DSN: " + strings.Replace(migrateDSN, password, safePassword, -1))
 
 	return sqlDSN, driver, migrateDSN, nil
 }

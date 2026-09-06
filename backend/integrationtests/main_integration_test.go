@@ -14,7 +14,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -23,8 +22,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"go.uber.org/zap"
 )
 
 var (
@@ -39,7 +38,7 @@ func TestMain(m *testing.M) {
 
 	// Load config
 	if err := config.LoadConfig(); err != nil {
-		slog.Error(err.Error())
+		zap.L().Error(err.Error())
 		panic(err)
 	}
 
@@ -47,9 +46,9 @@ func TestMain(m *testing.M) {
 	pg, err := postgres.Run(
 		ctx,
 		"postgres:18",
-		postgres.WithDatabase(viper.GetString("database.name")),
-		postgres.WithUsername(viper.GetString("database.username")),
-		postgres.WithPassword(viper.GetString("database.password")),
+		postgres.WithDatabase(config.String("database.name")),
+		postgres.WithUsername(config.String("database.username")),
+		postgres.WithPassword(config.String("database.password")),
 	)
 	if err != nil {
 		panic(err)
@@ -60,8 +59,8 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	viper.Set("database.host", "localhost")
-	viper.Set("database.port", port.Port())
+	config.Set("database.host", "localhost")
+	config.Set("database.port", port.Port())
 
 	// Wait for DB
 	dsn, _ := pg.ConnectionString(ctx)
@@ -76,7 +75,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	TestService = domain.NewService(TestRepository)
+	TestService = domain.NewService(TestRepository, nil)
 
 	// Build router
 	router, err := controller.Router(TestService)
@@ -209,15 +208,14 @@ func getShelfInclusiveItsOwnerUser() (string, error) {
 		return "", err
 	}
 
-	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
+	shelfId, err := TestService.ShelfService.Create(userId, &model.Shelf{
 		PublicShelf: model.PublicShelf{
 			Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
 			Path:        fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
 			Description: "A shelf created during API integration tests",
 			Icon:        "",
 		},
-		Theme:  "",
-		UserId: userId,
+		Theme: "",
 	})
 	if err != nil {
 		return "", err
@@ -233,7 +231,7 @@ func getSectionAndShelfInclusiveItsOwnerUser() (string, error) {
 		return "", err
 	}
 
-	section, err := TestService.SectionService.Create(&model.Section{
+	section, err := TestService.SectionService.Create("", true, &model.Section{
 		SectionBase: model.SectionBase{
 			Title:   "test-section-get",
 			ShelfId: shelfId,

@@ -22,11 +22,13 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"email",
 		"first_name",
 		"last_name",
+		"role",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
 		"First",
 		"Last",
+		"user",
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"`).
@@ -69,11 +71,13 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"email",
 		"first_name",
 		"last_name",
+		"role",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
 		"First",
 		"Last",
+		"user",
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
@@ -159,6 +163,7 @@ func Test_UserRepository_Create_Success(t *testing.T) {
 			"First",
 			"Last",
 			"hashed-password",
+			"user",
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -168,7 +173,7 @@ func Test_UserRepository_Create_Success(t *testing.T) {
 		LastName:  "Last",
 	}
 
-	id, err := repo.Create(base, "hashed-password")
+	id, err := repo.Create(base, "hashed-password", "user")
 
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
@@ -186,7 +191,7 @@ func Test_UserRepository_Create_ExecError(t *testing.T) {
 	mock.ExpectExec(`INSERT INTO "user"`).
 		WillReturnError(errors.New("insert failed"))
 
-	id, err := repo.Create(model.UserBase{}, "hashed-password")
+	id, err := repo.Create(model.UserBase{}, "hashed-password", "user")
 
 	require.Error(t, err)
 	require.Empty(t, id)
@@ -204,6 +209,7 @@ func Test_UserRepository_Update_Success(t *testing.T) {
 			"new@test.com",
 			"NewFirst",
 			"NewLast",
+			"admin",
 			"user-uuid-test",
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -214,6 +220,7 @@ func Test_UserRepository_Update_Success(t *testing.T) {
 			Email:     "new@test.com",
 			FirstName: "NewFirst",
 			LastName:  "NewLast",
+			Role:      "admin",
 		},
 	})
 

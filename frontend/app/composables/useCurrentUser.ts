@@ -1,34 +1,31 @@
 import type { User } from '~~/api'
 
-// The UUID of the dev user seeded by backend/migrations/0003_dashboard.up.sql.
-// Real authentication isn't built yet - swap this out once it exists and every
-// caller of useCurrentUser() keeps working unchanged.
-const MOCK_USER_ID = '018f1a3e-0000-7000-8000-000000000001'
-
-async function fetchCurrentUserId(): Promise<string> {
-  // Mocks an authentication lookup.
-  return MOCK_USER_ID
-}
-
 export function useCurrentUser() {
-  const userId = useState<string | null>('current-user-id', () => null)
-  const user = useState<User | null>('current-user', () => null)
+  const authStore = useAuthStore()
 
   async function ensureUserId(): Promise<string> {
-    if (!userId.value) {
-      userId.value = await fetchCurrentUserId()
+    authStore.init()
+    if (!authStore.userId) {
+      throw new Error('Not authenticated')
     }
-    return userId.value
+    return authStore.userId
   }
 
   async function ensureUser(): Promise<User> {
-    await ensureUserId()
-    if (!user.value) {
-      const api = useApi()
-      user.value = await api.user.getUserById({ userId: userId.value! })
+    authStore.init()
+    if (!authStore.user) {
+      await authStore.fetchUser()
     }
-    return user.value
+    if (!authStore.user) {
+      throw new Error('Not authenticated')
+    }
+    return authStore.user
   }
 
-  return { userId, user, ensureUserId, ensureUser }
+  return {
+    userId: computed(() => authStore.userId),
+    user: computed(() => authStore.user),
+    ensureUserId,
+    ensureUser
+  }
 }

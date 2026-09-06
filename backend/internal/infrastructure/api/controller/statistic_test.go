@@ -17,7 +17,7 @@ func Test_API_GetStatistic_Success(t *testing.T) {
 
 	svc.StatisticService.
 		EXPECT().
-		Get("TODO").
+		Get("").
 		Return(&model.Statistic{
 			ShelfNumber:   3,
 			SectionNumber: 5,
@@ -41,7 +41,7 @@ func Test_API_GetStatistic_Failure(t *testing.T) {
 
 	svc.StatisticService.
 		EXPECT().
-		Get("TODO").
+		Get("").
 		Return(nil, errors.New("failed to get statistic"))
 
 	resp, err := handler(context.Background(), &struct{}{})

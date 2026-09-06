@@ -49,6 +49,7 @@ export interface PatchUserPasswordRequest {
 
 export interface PostCreateUserRequest {
     userCreate: Omit<UserCreate, '$schema'>;
+    authorization?: string;
 }
 
 export interface PutUpdateUserRequest {
@@ -77,6 +78,14 @@ export class UserApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/users/{userId}`;
         urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
@@ -100,6 +109,45 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
+     * Get the authenticated caller\'s own profile.
+     * Get current user
+     */
+    async getCurrentUserRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/users/me`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    }
+
+    /**
+     * Get the authenticated caller\'s own profile.
+     * Get current user
+     */
+    async getCurrentUser(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<User> {
+        const response = await this.getCurrentUserRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Get a user by ID.
      * Get user by ID
      */
@@ -115,6 +163,14 @@ export class UserApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/users/{userId}`;
         urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
@@ -147,6 +203,14 @@ export class UserApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/users`;
 
@@ -170,7 +234,7 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch a user\'s password.
+     * Patch your own password. Only the account owner may do this - not even an admin can patch another user\'s password through this endpoint.
      * Patch user password
      */
     async patchUserPasswordRaw(requestParameters: PatchUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -194,6 +258,14 @@ export class UserApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/users/{userId}/password`;
         urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
@@ -210,7 +282,7 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch a user\'s password.
+     * Patch your own password. Only the account owner may do this - not even an admin can patch another user\'s password through this endpoint.
      * Patch user password
      */
     async patchUserPassword(requestParameters: PatchUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -218,7 +290,7 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new user.
+     * Register a new local user. When called with a valid admin Bearer token, the role field may also be set - ignored otherwise, so self-registration always creates a \'user\' role account.
      * Create user
      */
     async postCreateUserRaw(requestParameters: PostCreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
@@ -235,6 +307,10 @@ export class UserApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
+        }
+
 
         let urlPath = `/v1/users`;
 
@@ -250,7 +326,7 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new user.
+     * Register a new local user. When called with a valid admin Bearer token, the role field may also be set - ignored otherwise, so self-registration always creates a \'user\' role account.
      * Create user
      */
     async postCreateUser(requestParameters: PostCreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<User> {
@@ -259,7 +335,7 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing user. Consider that password updates are not handled here.
+     * Update your own profile, or (as an admin) anyone\'s. Only an admin caller may change the role field. Password updates are not handled here.
      * Update user
      */
     async putUpdateUserRaw(requestParameters: PutUpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
@@ -283,6 +359,14 @@ export class UserApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/users/{userId}`;
         urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
@@ -299,7 +383,7 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing user. Consider that password updates are not handled here.
+     * Update your own profile, or (as an admin) anyone\'s. Only an admin caller may change the role field. Password updates are not handled here.
      * Update user
      */
     async putUpdateUser(requestParameters: PutUpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<User> {

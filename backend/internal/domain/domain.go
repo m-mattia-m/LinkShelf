@@ -1,6 +1,9 @@
 package domain
 
-import "backend/internal/infrastructure/repository"
+import (
+	"backend/internal/infrastructure/oidcclient"
+	"backend/internal/infrastructure/repository"
+)
 
 type Service struct {
 	UserService      UserService
@@ -9,9 +12,12 @@ type Service struct {
 	LinkService      LinkService
 	SettingService   SettingService
 	StatisticService StatisticService
+	AuthService      AuthService
 }
 
-func NewService(repository *repository.Repository) *Service {
+// NewService wires up every domain service. oidc is nil when
+// authentication.type is not OIDC.
+func NewService(repository *repository.Repository, oidc *oidcclient.Client) *Service {
 	service := Service{}
 	service.UserService = NewUserService(repository, &service)
 	service.ShelfService = NewShelfService(repository, &service)
@@ -19,6 +25,7 @@ func NewService(repository *repository.Repository) *Service {
 	service.LinkService = NewLinkService(repository, &service)
 	service.SettingService = NewSettingService(repository, &service)
 	service.StatisticService = NewStatisticService(repository, &service)
+	service.AuthService = NewAuthService(repository, &service, oidc)
 
 	return &service
 }

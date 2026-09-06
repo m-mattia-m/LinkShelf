@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AuthApi';
 export * from './LinkApi';
 export * from './SectionApi';
 export * from './SettingApi';

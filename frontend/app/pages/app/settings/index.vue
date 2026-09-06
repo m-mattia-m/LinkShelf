@@ -2,7 +2,8 @@
 import { useSettingStore } from '~/stores/setting'
 
 definePageMeta({
-  layout: 'app'
+  layout: 'app',
+  middleware: 'admin'
 })
 
 const { t, locales } = useI18n()

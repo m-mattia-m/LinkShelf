@@ -12,12 +12,13 @@ type MockService struct {
 	Ctrl    *gomock.Controller
 	Service *Service
 
-	UserRepository      *mocks.MockUserRepository
-	ShelfRepository     *mocks.MockShelfRepository
-	SectionRepository   *mocks.MockSectionRepository
-	LinkRepository      *mocks.MockLinkRepository
-	SettingRepository   *mocks.MockSettingRepository
-	StatisticRepository *mocks.MockStatisticRepository
+	UserRepository         *mocks.MockUserRepository
+	ShelfRepository        *mocks.MockShelfRepository
+	SectionRepository      *mocks.MockSectionRepository
+	LinkRepository         *mocks.MockLinkRepository
+	SettingRepository      *mocks.MockSettingRepository
+	StatisticRepository    *mocks.MockStatisticRepository
+	RefreshTokenRepository *mocks.MockRefreshTokenRepository
 }
 
 func NewMockService(t *testing.T) *MockService {
@@ -31,26 +32,29 @@ func NewMockService(t *testing.T) *MockService {
 	linkRepository := mocks.NewMockLinkRepository(ctrl)
 	settingRepository := mocks.NewMockSettingRepository(ctrl)
 	statisticRepository := mocks.NewMockStatisticRepository(ctrl)
+	refreshTokenRepository := mocks.NewMockRefreshTokenRepository(ctrl)
 
 	repo := &repository.Repository{
-		UserRepository:      userRepository,
-		ShelfRepository:     shelfRepository,
-		SectionRepository:   sectionRepository,
-		LinkRepository:      linkRepository,
-		SettingRepository:   settingRepository,
-		StatisticRepository: statisticRepository,
+		UserRepository:         userRepository,
+		ShelfRepository:        shelfRepository,
+		SectionRepository:      sectionRepository,
+		LinkRepository:         linkRepository,
+		SettingRepository:      settingRepository,
+		StatisticRepository:    statisticRepository,
+		RefreshTokenRepository: refreshTokenRepository,
 	}
 
-	service := NewService(repo)
+	service := NewService(repo, nil)
 
 	return &MockService{
-		Ctrl:                ctrl,
-		Service:             service,
-		UserRepository:      userRepository,
-		ShelfRepository:     shelfRepository,
-		SectionRepository:   sectionRepository,
-		LinkRepository:      linkRepository,
-		SettingRepository:   settingRepository,
-		StatisticRepository: statisticRepository,
+		Ctrl:                   ctrl,
+		Service:                service,
+		UserRepository:         userRepository,
+		ShelfRepository:        shelfRepository,
+		SectionRepository:      sectionRepository,
+		LinkRepository:         linkRepository,
+		SettingRepository:      settingRepository,
+		StatisticRepository:    statisticRepository,
+		RefreshTokenRepository: refreshTokenRepository,
 	}
 }

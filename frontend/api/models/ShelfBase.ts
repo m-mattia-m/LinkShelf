@@ -61,12 +61,6 @@ export interface ShelfBase {
      * @memberof ShelfBase
      */
     title: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ShelfBase
-     */
-    userId: string;
 }
 
 /**
@@ -75,7 +69,6 @@ export interface ShelfBase {
 export function instanceOfShelfBase(value: object): value is ShelfBase {
     if (!('path' in value) || value['path'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
-    if (!('userId' in value) || value['userId'] === undefined) return false;
     return true;
 }
 
@@ -96,7 +89,6 @@ export function ShelfBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'path': json['path'],
         'theme': json['theme'] == null ? undefined : json['theme'],
         'title': json['title'],
-        'userId': json['userId'],
     };
 }
 
@@ -117,7 +109,6 @@ export function ShelfBaseToJSONTyped(value?: Omit<ShelfBase, '$schema'> | null, 
         'path': value['path'],
         'theme': value['theme'],
         'title': value['title'],
-        'userId': value['userId'],
     };
 }
 

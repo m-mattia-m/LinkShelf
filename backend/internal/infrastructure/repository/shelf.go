@@ -13,6 +13,7 @@ import (
 
 type ShelfRepository interface {
 	List() ([]model.Shelf, error)
+	ListByUserId(userId string) ([]model.Shelf, error)
 	Get(id string) (*model.Shelf, error)
 	GetByPath(path string) (*model.Shelf, error)
 	Create(s *model.Shelf) (string, error)
@@ -42,6 +43,50 @@ func (r *shelfRepository) List() ([]model.Shelf, error) {
 	}
 
 	rows, err := r.Engine.QueryContext(context.TODO(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	shelves := make([]model.Shelf, 0)
+
+	for rows.Next() {
+		var shelf model.Shelf
+		err := rows.Scan(
+			&shelf.Id,
+			&shelf.Title,
+			&shelf.Path,
+			&shelf.Domain,
+			&shelf.Description,
+			&shelf.Theme,
+			&shelf.Icon,
+			&shelf.UserId,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		shelves = append(shelves, shelf)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return shelves, nil
+}
+
+func (r *shelfRepository) ListByUserId(userId string) ([]model.Shelf, error) {
+	query, err := buildSqlStatements(`
+		SELECT id, title, path, domain, description, theme, icon, user_id
+		FROM shelf
+		WHERE user_id = ?
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Engine.QueryContext(context.TODO(), query, userId)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,10 @@
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
+const { t } = useI18n()
+const { user, ensureUser } = useCurrentUser()
+const authStore = useAuthStore()
+const router = useRouter()
 
 const items = computed<NavigationMenuItem[][]>(() => [
   [
@@ -17,23 +21,28 @@ const items = computed<NavigationMenuItem[][]>(() => [
       icon: 'uil-books',
       active: route.path.startsWith('/app/shelf')
     },
-    {
-      label: 'Settings',
-      defaultOpen: true,
-      icon: 'uil-cog',
-      children: [
-        {
-          label: 'General',
-          to: '/app/settings',
-          exact: true,
-        },
-        {
-          label: 'Users',
-          to: '/app/settings/users',
-          exact: true,
-        },
-      ]
-    }
+    // Settings (general site config, user management) are admin-only - a
+    // regular user can't reach these pages either (see middleware/admin.ts),
+    // so there's no point showing the link.
+    ...(authStore.isAdmin
+      ? [{
+          label: 'Settings',
+          defaultOpen: true,
+          icon: 'uil-cog',
+          children: [
+            {
+              label: 'General',
+              to: '/app/settings',
+              exact: true
+            },
+            {
+              label: 'Users',
+              to: '/app/settings/users',
+              exact: true
+            }
+          ]
+        }]
+      : [])
   ],
   [
     {
@@ -45,8 +54,6 @@ const items = computed<NavigationMenuItem[][]>(() => [
   ]
 ])
 
-const { user, ensureUser } = useCurrentUser()
-
 onMounted(() => {
   ensureUser()
 })
@@ -57,12 +64,24 @@ const userLabel = computed(() => {
   return name || user.value.email
 })
 
+async function signOut() {
+  await authStore.logout()
+  await router.push('/auth/sign-in')
+}
+
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: 'Account settings',
       icon: 'i-lucide-user-cog',
-      to: '/app/settings/users'
+      to: '/app/profile'
+    }
+  ],
+  [
+    {
+      label: t('auth.userMenu.signOut'),
+      icon: 'i-lucide-log-out',
+      onSelect: signOut
     }
   ]
 ])

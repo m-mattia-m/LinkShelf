@@ -2,79 +2,102 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
-type Config struct {
-	App struct {
-		Name        string `yaml:"name" json:"name" mapstructure:"name"`
-		Description string `yaml:"description" json:"description" mapstructure:"description"`
-		Environment string `yaml:"environment" json:"environment" mapstructure:"environment"`
-		Logo        string `yaml:"logo" json:"logo" mapstructure:"logo"`
-	} `yaml:"app" json:"app" mapstructure:"app"`
+const envPrefix = "APP_"
 
-	Server struct {
-		Scheme string `yaml:"scheme" json:"scheme" mapstructure:"scheme"`
-		Host   string `yaml:"host" json:"host" mapstructure:"host"`
-		Port   string `yaml:"port" json:"port" mapstructure:"port"`
-	}
+var searchPaths = []string{".", "..", "../..", "../../..", "../../../..", "backend", "./backend"}
 
-	Database struct {
-		Engine   string `yaml:"engine" json:"engine" mapstructure:"engine"`
-		Host     string `yaml:"host" json:"host" mapstructure:"host"`
-		Port     string `yaml:"port" json:"port" mapstructure:"port"`
-		Username string `yaml:"username" json:"username" mapstructure:"username"`
-		Password string `yaml:"password" json:"password" mapstructure:"password"`
-		Name     string `yaml:"name" json:"name" mapstructure:"name"`
-		Params   string `yaml:"params" json:"params" mapstructure:"params"`
-	} `yaml:"database" json:"database" mapstructure:"database"`
+var k = koanf.New(".")
 
-	Logging struct {
-		Level string `yaml:"level" json:"level" mapstructure:"level"`
-	} `yaml:"logging" json:"logging" mapstructure:"logging"`
-
-	Domain struct {
-		OpenAPI struct {
-			UserPort string `yaml:"userPort" json:"userPort" mapstructure:"userPort"`
-		}
-		Authentication struct {
-			SkipAuthentication bool `yaml:"skipAuthentication" json:"skipAuthentication" mapstructure:"skipAuthentication"`
-		} `yaml:"authentication" json:"authentication" mapstructure:"authentication"`
-	}
-}
-
+// LoadConfig loads configuration in three layers, each overriding the previous one:
+//  1. config.default.yaml (or config.test.yaml when running under `go test`)
+//  2. an optional config.yaml, if present
+//  3. environment variables prefixed with APP_ (dots replace underscores, e.g. APP_DATABASE_HOST)
 func LoadConfig() error {
-	viper.SetEnvPrefix("APP")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
-	viper.SetConfigType("yaml")
-
+	baseName := "config.default.yaml"
 	if isRunningTests() {
-		viper.SetConfigName("config.test")
-	} else {
-		viper.SetConfigName("config.default")
+		baseName = "config.test.yaml"
 	}
 
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("..")
-	viper.AddConfigPath("../..")
-	viper.AddConfigPath("../../..")
-	viper.AddConfigPath("../../../..")
-	viper.AddConfigPath("backend")
-	viper.AddConfigPath("./backend")
-
-	if err := viper.ReadInConfig(); err != nil {
+	basePath, err := findConfigFile(baseName)
+	if err != nil {
+		return err
+	}
+	if err := k.Load(file.Provider(basePath), yaml.Parser()); err != nil {
 		return err
 	}
 
-	viper.SetConfigName("config")
-	_ = viper.MergeInConfig()
+	if overridePath, err := findConfigFile("config.yaml"); err == nil {
+		if err := k.Load(file.Provider(overridePath), yaml.Parser()); err != nil {
+			return err
+		}
+	}
+
+	if err := k.Load(env.Provider(envPrefix, ".", func(s string) string {
+		return strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".")
+	}), nil); err != nil {
+		return err
+	}
+
+	return validate()
+}
+
+func validate() error {
+	if strings.TrimSpace(String("authentication.jwtSecret")) == "" {
+		return fmt.Errorf("authentication.jwtSecret must be set")
+	}
+
+	switch strings.ToUpper(String("authentication.type")) {
+	case "LOCAL":
+	case "OIDC":
+		if strings.TrimSpace(String("authentication.oidc.issuer")) == "" ||
+			strings.TrimSpace(String("authentication.oidc.clientId")) == "" ||
+			strings.TrimSpace(String("authentication.oidc.clientSecret")) == "" {
+			return fmt.Errorf("authentication.oidc.issuer, clientId and clientSecret must be set when authentication.type is OIDC")
+		}
+	default:
+		return fmt.Errorf("unsupported authentication.type %q, must be LOCAL or OIDC", String("authentication.type"))
+	}
 
 	return nil
 }
+
+func findConfigFile(name string) (string, error) {
+	for _, dir := range searchPaths {
+		p := filepath.Join(dir, name)
+		if _, err := os.Stat(p); err == nil {
+			return p, nil
+		}
+	}
+	return "", fmt.Errorf("config file %q not found", name)
+}
+
 func isRunningTests() bool {
 	return flag.Lookup("test.v") != nil
+}
+
+// String, Bool, Int and Strings read a config value at the given dotted path (e.g. "database.host").
+func String(path string) string    { return k.String(path) }
+func Bool(path string) bool        { return k.Bool(path) }
+func Int(path string) int          { return k.Int(path) }
+func Strings(path string) []string { return k.Strings(path) }
+
+// Set overrides a single config value, mainly used by tests.
+func Set(path string, val any) {
+	_ = k.Set(path, val)
+}
+
+// Reset clears all loaded configuration, mainly used by tests.
+func Reset() {
+	k = koanf.New(".")
 }

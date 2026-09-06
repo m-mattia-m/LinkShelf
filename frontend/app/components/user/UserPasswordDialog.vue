@@ -38,10 +38,20 @@ const schema = v.pipe(
   )
 )
 
-const formRef = ref<{ setErrors: (errs: { name?: string, message: string }[]) => void } | null>(null)
+const formRef = ref<{
+  validate: () => Promise<unknown>
+  setErrors: (errs: { name?: string, message: string }[]) => void
+} | null>(null)
 
 async function save(close: () => void) {
   if (!props.user) return
+
+  try {
+    await formRef.value?.validate()
+  } catch {
+    return
+  }
+
   saving.value = true
   try {
     await userStore.patchPassword(props.user.id, {

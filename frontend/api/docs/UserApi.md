@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost:8085*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**deleteUser**](UserApi.md#deleteuser) | **DELETE** /v1/users/{userId} | Delete user |
+| [**getCurrentUser**](UserApi.md#getcurrentuser) | **GET** /v1/users/me | Get current user |
 | [**getUserById**](UserApi.md#getuserbyid) | **GET** /v1/users/{userId} | Get user by ID |
 | [**listUsers**](UserApi.md#listusers) | **GET** /v1/users | List users |
 | [**patchUserPassword**](UserApi.md#patchuserpassword) | **PATCH** /v1/users/{userId}/password | Patch user password |
@@ -32,7 +33,11 @@ import type { DeleteUserRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new UserApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
 
   const body = {
     // string | The identifier of the chosen form you want.
@@ -64,7 +69,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -76,6 +81,70 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getCurrentUser
+
+> User getCurrentUser()
+
+Get current user
+
+Get the authenticated caller\&#39;s own profile.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  UserApi,
+} from '';
+import type { GetCurrentUserRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
+
+  try {
+    const data = await api.getCurrentUser();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**User**](User.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -100,7 +169,11 @@ import type { GetUserByIdRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new UserApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
 
   const body = {
     // string | The identifier of the chosen form you want.
@@ -132,7 +205,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -168,7 +241,11 @@ import type { ListUsersRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new UserApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
 
   try {
     const data = await api.listUsers();
@@ -192,7 +269,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -215,7 +292,7 @@ No authorization required
 
 Patch user password
 
-Patch a user\&#39;s password.
+Patch your own password. Only the account owner may do this - not even an admin can patch another user\&#39;s password through this endpoint.
 
 ### Example
 
@@ -228,7 +305,11 @@ import type { PatchUserPasswordRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new UserApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
 
   const body = {
     // string | The identifier of the chosen form you want.
@@ -263,7 +344,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -282,11 +363,11 @@ No authorization required
 
 ## postCreateUser
 
-> User postCreateUser(userCreate)
+> User postCreateUser(userCreate, authorization)
 
 Create user
 
-Create a new user.
+Register a new local user. When called with a valid admin Bearer token, the role field may also be set - ignored otherwise, so self-registration always creates a \&#39;user\&#39; role account.
 
 ### Example
 
@@ -304,6 +385,8 @@ async function example() {
   const body = {
     // UserCreate
     userCreate: ...,
+    // string (optional)
+    authorization: authorization_example,
   } satisfies PostCreateUserRequest;
 
   try {
@@ -324,6 +407,7 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **userCreate** | [UserCreate](UserCreate.md) |  | |
+| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -354,7 +438,7 @@ No authorization required
 
 Update user
 
-Update an existing user. Consider that password updates are not handled here.
+Update your own profile, or (as an admin) anyone\&#39;s. Only an admin caller may change the role field. Password updates are not handled here.
 
 ### Example
 
@@ -367,7 +451,11 @@ import type { PutUpdateUserRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new UserApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
 
   const body = {
     // string | The identifier of the chosen form you want.
@@ -402,7 +490,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 

@@ -17,7 +17,7 @@ All URIs are relative to *http://localhost:8085*
 
 Delete section
 
-Delete a section by ID.
+Delete a section by ID. Only the owner of its shelf or an admin may delete it.
 
 ### Example
 
@@ -30,7 +30,11 @@ import type { DeleteSectionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new SectionApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SectionApi(config);
 
   const body = {
     // string
@@ -62,7 +66,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -85,7 +89,7 @@ No authorization required
 
 Get sections by shelf ID
 
-Get sections by shelf ID.
+Get sections by shelf ID. Used to render a shelf\&#39;s public link page and requires no authentication.
 
 ### Example
 
@@ -153,7 +157,7 @@ No authorization required
 
 Create section
 
-Create a new section.
+Create a new section on a shelf owned by the caller.
 
 ### Example
 
@@ -166,7 +170,11 @@ import type { PostCreateSectionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new SectionApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SectionApi(config);
 
   const body = {
     // SectionBase
@@ -198,7 +206,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -221,7 +229,7 @@ No authorization required
 
 Update section
 
-Update an existing section.
+Update an existing section. Only the owner of its shelf or an admin may update it.
 
 ### Example
 
@@ -234,7 +242,11 @@ import type { PutUpdateSectionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new SectionApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SectionApi(config);
 
   const body = {
     // string
@@ -269,7 +281,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 

@@ -1,6 +1,43 @@
 {
+  "auth.signIn.title": "Sign in",
+  "auth.signIn.email": "Email",
+  "auth.signIn.password": "Password",
+  "auth.signIn.submit": "Sign in",
+  "auth.signIn.or": "or",
+  "auth.signIn.sso": "Continue with SSO",
+  "auth.signIn.noAccount": "Don't have an account?",
+  "auth.signIn.signUpLink": "Sign up",
+  "auth.signIn.success": "Signed in.",
+  "auth.signIn.failedTitle": "Sign in failed",
+
+  "auth.signUp.title": "Create an account",
+  "auth.signUp.firstName": "First name",
+  "auth.signUp.lastName": "Last name",
+  "auth.signUp.email": "Email",
+  "auth.signUp.password": "Password",
+  "auth.signUp.submit": "Create account",
+  "auth.signUp.haveAccount": "Already have an account?",
+  "auth.signUp.signInLink": "Sign in",
+  "auth.signUp.success": "Account created.",
+  "auth.signUp.failedTitle": "Sign up failed",
+
+  "auth.callback.completing": "Completing sign-in...",
+  "auth.callback.failed": "Sign-in could not be completed.",
+  "auth.callback.backToSignIn": "Back to sign in",
+
+  "auth.userMenu.signOut": "Sign out",
+
   "home.welcome.title": "Getting started sharing links.",
   "home.welcome.description": "LinkShelf is an Open Source Linktree alternative. You can host it yourself on your server or use a cloud hosted solution.",
+
+  "app.profile.title": "Profile",
+  "app.profile.firstName": "First name",
+  "app.profile.lastName": "Last name",
+  "app.profile.email": "Email",
+  "app.profile.role": "Role",
+  "app.profile.save": "Save",
+  "app.profile.saveSuccess": "Profile updated.",
+  "app.profile.changePassword": "Change password",
 
   "app.dashboard.title": "Dashboard",
   "app.dashboard.shelfCount": "Shelves",
@@ -23,6 +60,7 @@
   "app.shelf.deleteConfirm.descriptionWithCounts": "Delete \"{title}\"? This also deletes {sections} section(s) and {links} link(s). This cannot be undone.",
   "app.shelf.detail.notFound": "This shelf could not be found.",
   "app.shelf.detail.backToList": "Back to shelves",
+  "app.shelf.detail.open": "Open",
   "app.shelf.detail.edit": "Edit",
   "app.shelf.detail.delete": "Delete",
 

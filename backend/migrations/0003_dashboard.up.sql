@@ -10,5 +10,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_shelf_domain
     WHERE domain <> '';
 
 INSERT INTO "user" (id, email, first_name, last_name, role, password)
-VALUES ('018f1a3e-0000-7000-8000-000000000001', 'dev@linkshelf.local', 'Dev', 'User', 'user', '')
+VALUES ('018f1a3e-0000-7000-8000-000000000001', 'dev@linkshelf.local', 'Dev', 'User', 'user', 'mypassword')
 ON CONFLICT (id) DO NOTHING;

@@ -49,6 +49,12 @@ export interface User {
      * @memberof User
      */
     lastName: string;
+    /**
+     * The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise.
+     * @type {string}
+     * @memberof User
+     */
+    role?: string;
 }
 
 /**
@@ -77,6 +83,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'firstName': json['first_name'],
         'id': json['id'],
         'lastName': json['last_name'],
+        'role': json['role'] == null ? undefined : json['role'],
     };
 }
 
@@ -95,6 +102,7 @@ export function UserToJSONTyped(value?: Omit<User, '$schema'> | null, ignoreDisc
         'first_name': value['firstName'],
         'id': value['id'],
         'last_name': value['lastName'],
+        'role': value['role'],
     };
 }
 

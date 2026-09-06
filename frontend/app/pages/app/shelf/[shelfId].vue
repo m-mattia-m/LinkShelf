@@ -104,6 +104,7 @@ async function createSection() {
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
+        <UButton :label="t('app.shelf.detail.open')" icon="i-lucide-external-link" color="neutral" variant="outline" :href="'/' + shelf.path" target="_blank" />
         <UButton :label="t('app.shelf.detail.edit')" icon="i-lucide-pencil" color="neutral" variant="outline" @click="editOpen = true" />
         <UButton :label="t('app.shelf.detail.delete')" icon="i-lucide-trash-2" color="error" variant="outline" @click="deleteOpen = true" />
       </div>

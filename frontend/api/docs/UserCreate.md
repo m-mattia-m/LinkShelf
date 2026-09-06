@@ -11,6 +11,7 @@ Name | Type
 `firstName` | string
 `lastName` | string
 `password` | string
+`role` | string
 
 ## Example
 
@@ -24,6 +25,7 @@ const example = {
   "firstName": null,
   "lastName": null,
   "password": null,
+  "role": null,
 } satisfies UserCreate
 
 console.log(example)

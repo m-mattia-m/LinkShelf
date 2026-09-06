@@ -26,7 +26,7 @@ func Test_API_CreateLink_Success(t *testing.T) {
 
 	svc.LinkService.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&model.Link{
 			Id: "link-uuid-test",
 			LinkBase: model.LinkBase{
@@ -60,7 +60,7 @@ func Test_API_CreateLink_Failure(t *testing.T) {
 
 	svc.LinkService.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to create link"))
 
 	resp, err := handler(context.Background(), input)
@@ -145,7 +145,7 @@ func Test_API_UpdateLink_Success(t *testing.T) {
 
 	svc.LinkService.
 		EXPECT().
-		Update(gomock.Any(), gomock.Any()).
+		Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&model.Link{
 			Id: "link-uuid-test",
 			LinkBase: model.LinkBase{
@@ -184,7 +184,7 @@ func Test_API_UpdateLink_Failure(t *testing.T) {
 
 	svc.LinkService.
 		EXPECT().
-		Update(gomock.Any(), gomock.Any()).
+		Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to update link"))
 
 	resp, err := handler(context.Background(), input)
@@ -202,7 +202,7 @@ func Test_API_DeleteLink_Success(t *testing.T) {
 
 	svc.LinkService.
 		EXPECT().
-		Delete(gomock.Any()).
+		Delete(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 
 	resp, err := handler(context.Background(), &model.LinkRequestFilter{
@@ -221,7 +221,7 @@ func Test_API_DeleteLink_Failure(t *testing.T) {
 
 	svc.LinkService.
 		EXPECT().
-		Delete(gomock.Any()).
+		Delete(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("failed to delete link"))
 
 	resp, err := handler(context.Background(), &model.LinkRequestFilter{

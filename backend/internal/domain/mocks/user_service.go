@@ -41,18 +41,18 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserService) Create(u *model.UserCreate) (*model.User, error) {
+func (m *MockUserService) Create(u *model.UserCreate, callerIsAdmin bool) (*model.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u)
+	ret := m.ctrl.Call(m, "Create", u, callerIsAdmin)
 	ret0, _ := ret[0].(*model.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserServiceMockRecorder) Create(u any) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) Create(u, callerIsAdmin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserService)(nil).Create), u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserService)(nil).Create), u, callerIsAdmin)
 }
 
 // Delete mocks base method.
@@ -114,16 +114,16 @@ func (mr *MockUserServiceMockRecorder) PatchPassword(userId, u any) *gomock.Call
 }
 
 // Update mocks base method.
-func (m *MockUserService) Update(userId string, userRequest *model.User) (*model.User, error) {
+func (m *MockUserService) Update(userId string, userRequest *model.User, callerIsAdmin bool) (*model.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", userId, userRequest)
+	ret := m.ctrl.Call(m, "Update", userId, userRequest, callerIsAdmin)
 	ret0, _ := ret[0].(*model.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockUserServiceMockRecorder) Update(userId, userRequest any) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) Update(userId, userRequest, callerIsAdmin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserService)(nil).Update), userId, userRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserService)(nil).Update), userId, userRequest, callerIsAdmin)
 }

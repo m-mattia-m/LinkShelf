@@ -43,6 +43,12 @@ export interface UserBase {
      * @memberof UserBase
      */
     lastName: string;
+    /**
+     * The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise.
+     * @type {string}
+     * @memberof UserBase
+     */
+    role?: string;
 }
 
 /**
@@ -69,6 +75,7 @@ export function UserBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'email': json['email'],
         'firstName': json['first_name'],
         'lastName': json['last_name'],
+        'role': json['role'] == null ? undefined : json['role'],
     };
 }
 
@@ -86,6 +93,7 @@ export function UserBaseToJSONTyped(value?: Omit<UserBase, '$schema'> | null, ig
         'email': value['email'],
         'first_name': value['firstName'],
         'last_name': value['lastName'],
+        'role': value['role'],
     };
 }
 

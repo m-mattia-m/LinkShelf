@@ -4,56 +4,52 @@ import (
 	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/controller"
+	"backend/internal/infrastructure/oidcclient"
 	"backend/internal/infrastructure/repository"
+	"backend/internal/logger"
+	"context"
 	"fmt"
-	"log/slog"
 	"os"
+	"strings"
 
-	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 func main() {
 	err := config.LoadConfig()
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	loadLogger()
+	logger.Init(config.String("logging.level"))
 
 	repo, err := repository.NewRepository()
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		zap.L().Fatal(err.Error())
 	}
 
-	svc := domain.NewService(repo)
+	if err := domain.EnsureBootstrapAdmin(repo); err != nil {
+		zap.L().Fatal(err.Error())
+	}
+
+	var oidcClient *oidcclient.Client
+	if strings.EqualFold(config.String("authentication.type"), "OIDC") {
+		oidcClient, err = oidcclient.New(context.Background(), repo.OidcStateRepository)
+		if err != nil {
+			zap.L().Fatal(err.Error())
+		}
+	}
+
+	svc := domain.NewService(repo, oidcClient)
 
 	router, err := controller.Router(svc)
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		zap.L().Fatal(err.Error())
 	}
 
-	err = router.Run(fmt.Sprintf(":%s", viper.GetString("server.port")))
+	err = router.Run(fmt.Sprintf(":%s", config.String("server.port")))
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		zap.L().Fatal(err.Error())
 	}
-}
-
-func loadLogger() {
-
-	fmt.Println(viper.GetString("database.name"))
-	fmt.Println(viper.GetString("logging.level"))
-	fmt.Println("---")
-	level := config.ParseLevel(viper.GetString("logging.level"))
-
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: level,
-	}))
-
-	slog.SetDefault(logger)
-
-	slog.Info("Logger initialized", slog.String("level", level.String()))
 }

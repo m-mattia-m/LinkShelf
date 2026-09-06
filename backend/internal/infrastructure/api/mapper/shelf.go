@@ -14,7 +14,6 @@ func MapShelfBaseToShelfPointer(base model.ShelfBase) *model.Shelf {
 		},
 		Domain: base.Domain,
 		Theme:  base.Theme,
-		UserId: base.UserId,
 	}
 }
 

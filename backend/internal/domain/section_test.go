@@ -78,7 +78,7 @@ func Test_Unit_Section_Get_Failure(t *testing.T) {
 	require.Nil(t, section)
 }
 
-func Test_Unit_Section_Create_Success(t *testing.T) {
+func Test_Unit_Section_Create_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
@@ -88,6 +88,11 @@ func Test_Unit_Section_Create_Success(t *testing.T) {
 			ShelfId: "shelf-uuid-test",
 		},
 	}
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.SectionRepository.
 		EXPECT().
@@ -105,7 +110,7 @@ func Test_Unit_Section_Create_Success(t *testing.T) {
 			},
 		}, nil)
 
-	section, err := svc.Service.SectionService.Create(sectionRequest)
+	section, err := svc.Service.SectionService.Create("user-uuid-test", false, sectionRequest)
 
 	require.NoError(t, err)
 	require.NotNil(t, section)
@@ -113,42 +118,67 @@ func Test_Unit_Section_Create_Success(t *testing.T) {
 	require.Equal(t, "section-title-test", section.Title)
 }
 
+func Test_Unit_Section_Create_Forbidden_NotOwner(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	sectionRequest := &model.Section{
+		SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"},
+	}
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
+
+	section, err := svc.Service.SectionService.Create("someone-else-uuid-test", false, sectionRequest)
+
+	require.ErrorIs(t, err, ErrForbidden)
+	require.Nil(t, section)
+}
+
+func Test_Unit_Section_Create_NotFound_Shelf(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	sectionRequest := &model.Section{
+		SectionBase: model.SectionBase{ShelfId: "missing-shelf"},
+	}
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("missing-shelf").
+		Return(nil, nil)
+
+	section, err := svc.Service.SectionService.Create("user-uuid-test", false, sectionRequest)
+
+	require.ErrorIs(t, err, ErrNotFound)
+	require.Nil(t, section)
+}
+
 func Test_Unit_Section_Create_Failure_Create(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
+
+	sectionRequest := &model.Section{SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.SectionRepository.
 		EXPECT().
 		Create(gomock.Any()).
 		Return("", errors.New("an error occurred"))
 
-	section, err := svc.Service.SectionService.Create(&model.Section{})
+	section, err := svc.Service.SectionService.Create("user-uuid-test", false, sectionRequest)
 
 	require.ErrorContains(t, err, "an error occurred")
 	require.Nil(t, section)
 }
 
-func Test_Unit_Section_Create_Failure_Get(t *testing.T) {
-	svc := NewMockService(t)
-	defer svc.Ctrl.Finish()
-
-	svc.SectionRepository.
-		EXPECT().
-		Create(gomock.Any()).
-		Return("section-uuid-test", nil)
-
-	svc.SectionRepository.
-		EXPECT().
-		Get("section-uuid-test").
-		Return(nil, errors.New("an error occurred"))
-
-	section, err := svc.Service.SectionService.Create(&model.Section{})
-
-	require.ErrorContains(t, err, "an error occurred")
-	require.Nil(t, section)
-}
-
-func Test_Unit_Section_Update_Success(t *testing.T) {
+func Test_Unit_Section_Update_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
@@ -160,6 +190,16 @@ func Test_Unit_Section_Update_Success(t *testing.T) {
 			ShelfId: "shelf-uuid-test",
 		},
 	}
+
+	svc.SectionRepository.
+		EXPECT().
+		Get(sectionId).
+		Return(&model.Section{Id: sectionId, SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.SectionRepository.
 		EXPECT().
@@ -180,72 +220,89 @@ func Test_Unit_Section_Update_Success(t *testing.T) {
 			},
 		}, nil)
 
-	section, err := svc.Service.SectionService.Update(sectionId, updateRequest)
+	section, err := svc.Service.SectionService.Update(sectionId, "user-uuid-test", false, updateRequest)
 
 	require.NoError(t, err)
 	require.NotNil(t, section)
 	require.Equal(t, "updated-title", section.Title)
 }
 
-func Test_Unit_Section_Update_Failure_Update(t *testing.T) {
+func Test_Unit_Section_Update_Forbidden_NotOwner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
+	sectionId := "section-uuid-test"
+
 	svc.SectionRepository.
 		EXPECT().
-		Update(gomock.Any()).
-		Return(errors.New("an error occurred"))
+		Get(sectionId).
+		Return(&model.Section{Id: sectionId, SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
 
-	section, err := svc.Service.SectionService.Update("section-uuid-test", &model.Section{})
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
 
-	require.ErrorContains(t, err, "an error occurred")
+	section, err := svc.Service.SectionService.Update(sectionId, "someone-else-uuid-test", false, &model.Section{})
+
+	require.ErrorIs(t, err, ErrForbidden)
 	require.Nil(t, section)
 }
 
-func Test_Unit_Section_Update_Failure_Get(t *testing.T) {
+func Test_Unit_Section_Update_NotFound(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
-
-	svc.SectionRepository.
-		EXPECT().
-		Update(gomock.Any()).
-		Return(nil)
 
 	svc.SectionRepository.
 		EXPECT().
 		Get("section-uuid-test").
-		Return(nil, errors.New("an error occurred"))
+		Return(nil, nil)
 
-	section, err := svc.Service.SectionService.Update("section-uuid-test", &model.Section{})
+	section, err := svc.Service.SectionService.Update("section-uuid-test", "user-uuid-test", false, &model.Section{})
 
-	require.ErrorContains(t, err, "an error occurred")
+	require.ErrorIs(t, err, ErrNotFound)
 	require.Nil(t, section)
 }
 
-func Test_Unit_Section_Delete_Success(t *testing.T) {
+func Test_Unit_Section_Delete_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.SectionRepository.
 		EXPECT().
 		Delete(&model.Section{Id: "section-uuid-test"}).
 		Return(nil)
 
-	err := svc.Service.SectionService.Delete("section-uuid-test")
+	err := svc.Service.SectionService.Delete("section-uuid-test", "user-uuid-test", false)
 
 	require.NoError(t, err)
 }
 
-func Test_Unit_Section_Delete_Failure(t *testing.T) {
+func Test_Unit_Section_Delete_Forbidden_NotOwner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
 	svc.SectionRepository.
 		EXPECT().
-		Delete(&model.Section{Id: "section-uuid-test"}).
-		Return(errors.New("an error occurred"))
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
 
-	err := svc.Service.SectionService.Delete("section-uuid-test")
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
 
-	require.ErrorContains(t, err, "an error occurred")
+	err := svc.Service.SectionService.Delete("section-uuid-test", "someone-else-uuid-test", false)
+
+	require.ErrorIs(t, err, ErrForbidden)
 }

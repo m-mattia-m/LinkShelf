@@ -24,7 +24,6 @@ type ShelfBase struct {
 	Description string `json:"description" bson:"description" required:"false"`
 	Theme       string `json:"theme" bson:"theme" required:"false"`
 	Icon        string `json:"icon" bson:"icon" required:"false"`
-	UserId      string `json:"userId" bson:"userId" required:"true"`
 }
 
 type ShelfRequestBody struct {
