@@ -6,7 +6,15 @@ import (
 
 func MapShelfBaseToShelfPointer(base model.ShelfBase) *model.Shelf {
 	return &model.Shelf{
-		ShelfBase: base,
+		PublicShelf: model.PublicShelf{
+			Title:       base.Title,
+			Description: base.Description,
+			Icon:        base.Icon,
+			Path:        base.Path,
+		},
+		Domain: base.Domain,
+		Theme:  base.Theme,
+		UserId: base.UserId,
 	}
 }
 
@@ -19,5 +27,11 @@ func MapShelfToShelfResponse(body model.Shelf) *model.ShelfResponse {
 func MapShelfToShelfListResponse(body []model.Shelf) *model.ShelfListResponse {
 	return &model.ShelfListResponse{
 		Body: body,
+	}
+}
+
+func MapShelfToPublicShelfResponse(shelf model.Shelf) *model.PublicShelfResponse {
+	return &model.PublicShelfResponse{
+		Body: shelf.PublicShelf,
 	}
 }

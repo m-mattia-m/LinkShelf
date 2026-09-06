@@ -4,6 +4,7 @@ import {
   SectionApi,
   SettingApi,
   ShelfApi,
+  StatisticApi,
   UserApi
 } from '~~/api'
 
@@ -25,6 +26,7 @@ export function useApi() {
     section: new SectionApi(config),
     link: new LinkApi(config),
     setting: new SettingApi(config),
-    user: new UserApi(config)
+    user: new UserApi(config),
+    statistic: new StatisticApi(config)
   }
 }

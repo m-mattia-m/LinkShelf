@@ -1,5 +1,5 @@
 
-# User
+# Statistic
 
 
 ## Properties
@@ -7,24 +7,22 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
-`email` | string
-`firstName` | string
-`id` | string
-`lastName` | string
+`linkNumber` | number
+`sectionNumber` | number
+`shelfNumber` | number
 
 ## Example
 
 ```typescript
-import type { User } from ''
+import type { Statistic } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "$schema": null,
-  "email": null,
-  "firstName": null,
-  "id": null,
-  "lastName": null,
-} satisfies User
+  "linkNumber": null,
+  "sectionNumber": null,
+  "shelfNumber": null,
+} satisfies Statistic
 
 console.log(example)
 
@@ -33,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as User
+const exampleParsed = JSON.parse(exampleJSON) as Statistic
 console.log(exampleParsed)
 ```
 

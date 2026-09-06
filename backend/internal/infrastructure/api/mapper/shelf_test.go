@@ -22,11 +22,11 @@ func Test_MapShelfBaseToShelfPointer(t *testing.T) {
 
 func Test_MapShelfToShelfResponse(t *testing.T) {
 	shelf := model.Shelf{
-		Id: "shelf-uuid-test",
-		ShelfBase: model.ShelfBase{
-			Title:  "test-shelf",
-			UserId: "user-uuid-test",
+		PublicShelf: model.PublicShelf{
+			Id:    "shelf-uuid-test",
+			Title: "test-shelf",
 		},
+		UserId: "user-uuid-test",
 	}
 
 	resp := MapShelfToShelfResponse(shelf)
@@ -35,4 +35,28 @@ func Test_MapShelfToShelfResponse(t *testing.T) {
 	require.Equal(t, shelf.Id, resp.Body.Id)
 	require.Equal(t, shelf.Title, resp.Body.Title)
 	require.Equal(t, shelf.UserId, resp.Body.UserId)
+}
+
+func Test_MapShelfToPublicShelfResponse(t *testing.T) {
+	shelf := model.Shelf{
+		PublicShelf: model.PublicShelf{
+			Id:          "shelf-uuid-test",
+			Title:       "test-shelf",
+			Description: "a description",
+			Icon:        "i-lucide-book-open",
+			Path:        "test-path",
+		},
+		Domain: "example.com",
+		Theme:  "some-theme",
+		UserId: "user-uuid-test",
+	}
+
+	resp := MapShelfToPublicShelfResponse(shelf)
+
+	require.NotNil(t, resp)
+	require.Equal(t, shelf.Id, resp.Body.Id)
+	require.Equal(t, shelf.Title, resp.Body.Title)
+	require.Equal(t, shelf.Description, resp.Body.Description)
+	require.Equal(t, shelf.Icon, resp.Body.Icon)
+	require.Equal(t, shelf.Path, resp.Body.Path)
 }

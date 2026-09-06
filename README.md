@@ -38,6 +38,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 - [x] Write unit tests
 - [ ] tests for repository → incl. verify if it works for mysql and postgres (also in the pipeline)
 - [x] Add Dependabot
+- [ ] Add No-Index Option for Search Engine like Google, ... -> Not crawlable
 - [ ] Color themes (green
   - https://coolors.co/palette/020202-0d2818-04471c-058c42-16db65
   - https://coolors.co/palette/040f0f-248232-2ba84a-2d3a3a-fcfffc

@@ -200,15 +200,15 @@ func Test_ShelfRepository_Create_Success(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	shelf := &model.Shelf{
-		ShelfBase: model.ShelfBase{
+		PublicShelf: model.PublicShelf{
 			Title:       "test-shelf",
 			Path:        "/test",
-			Domain:      "example.com",
 			Description: "description-test",
-			Theme:       "dark",
 			Icon:        "icon-test",
-			UserId:      "user-uuid-test",
 		},
+		Domain: "example.com",
+		Theme:  "dark",
+		UserId: "user-uuid-test",
 	}
 
 	id, err := repo.Create(shelf)
@@ -240,15 +240,15 @@ func Test_ShelfRepository_Update_Success(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err = repo.Update(&model.Shelf{
-		Id: "shelf-uuid-test",
-		ShelfBase: model.ShelfBase{
+		PublicShelf: model.PublicShelf{
+			Id:          "shelf-uuid-test",
 			Title:       "updated-title",
 			Path:        "/updated",
-			Domain:      "updated.com",
 			Description: "updated-desc",
-			Theme:       "light",
 			Icon:        "updated-icon",
 		},
+		Domain: "updated.com",
+		Theme:  "light",
 	})
 
 	require.NoError(t, err)
@@ -265,7 +265,7 @@ func Test_ShelfRepository_Update_ExecError(t *testing.T) {
 	mock.ExpectExec("UPDATE shelf").
 		WillReturnError(errors.New("update failed"))
 
-	err = repo.Update(&model.Shelf{Id: "shelf-uuid-test"})
+	err = repo.Update(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}})
 
 	require.Error(t, err)
 }
@@ -281,7 +281,7 @@ func Test_ShelfRepository_Delete_Success(t *testing.T) {
 		WithArgs("shelf-uuid-test").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.Delete(&model.Shelf{Id: "shelf-uuid-test"})
+	err = repo.Delete(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}})
 
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -297,7 +297,64 @@ func Test_ShelfRepository_Delete_ExecError(t *testing.T) {
 	mock.ExpectExec("DELETE FROM shelf").
 		WillReturnError(errors.New("delete failed"))
 
-	err = repo.Delete(&model.Shelf{Id: "shelf-uuid-test"})
+	err = repo.Delete(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}})
 
 	require.Error(t, err)
+}
+
+func Test_ShelfRepository_GetByPath_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	rows := sqlmock.NewRows([]string{
+		"id",
+		"title",
+		"path",
+		"domain",
+		"description",
+		"theme",
+		"icon",
+		"user_id",
+	}).AddRow(
+		"shelf-uuid-test",
+		"test-shelf",
+		"my-path",
+		"",
+		"description-test",
+		"",
+		"icon-test",
+		"user-uuid-test",
+	)
+
+	mock.ExpectQuery(`FROM\s+shelf`).
+		WithArgs("my-path").
+		WillReturnRows(rows)
+
+	shelf, err := repo.GetByPath("my-path")
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.Equal(t, "my-path", shelf.Path)
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_ShelfRepository_GetByPath_NoRows(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`FROM\s+shelf`).
+		WithArgs("missing-path").
+		WillReturnError(sql.ErrNoRows)
+
+	shelf, err := repo.GetByPath("missing-path")
+
+	require.NoError(t, err)
+	require.Nil(t, shelf)
 }

@@ -4,6 +4,8 @@
 
   "app.dashboard.title": "Dashboard",
   "app.dashboard.shelfCount": "Shelves",
+  "app.dashboard.sectionCount": "Sections",
+  "app.dashboard.linkCount": "Links",
   "app.dashboard.recentShelves": "Recent shelves",
   "app.dashboard.noShelves": "You don't have any shelves yet.",
 
@@ -52,5 +54,11 @@
   "app.settings.users.actions.changePassword": "Change password",
   "app.settings.users.actions.delete": "Delete",
   "app.settings.users.deleteConfirm.title": "Delete user?",
-  "app.settings.users.deleteConfirm.description": "Delete \"{email}\"? This cannot be undone."
+  "app.settings.users.deleteConfirm.description": "Delete \"{email}\"? This cannot be undone.",
+
+  "linkpage.poweredBy": "Powered by LinkShelf",
+  "linkpage.empty": "Nothing here yet.",
+  "linkpage.notFound.title": "This page doesn't exist.",
+  "linkpage.notFound.description": "The link you followed may be broken, or the page may have been removed.",
+  "linkpage.notFound.backHome": "Go to LinkShelf"
 }

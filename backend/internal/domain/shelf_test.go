@@ -14,10 +14,10 @@ func Test_Unit_Shelf_Creation_Success(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	shelfRequest := &model.Shelf{
-		ShelfBase: model.ShelfBase{
-			Title:  "shelf-title-test",
-			UserId: "user-uuid-test",
+		PublicShelf: model.PublicShelf{
+			Title: "shelf-title-test",
 		},
+		UserId: "user-uuid-test",
 	}
 
 	svc.ShelfRepository.
@@ -36,10 +36,10 @@ func Test_Unit_Shelf_Creation_Failure(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	shelfRequest := &model.Shelf{
-		ShelfBase: model.ShelfBase{
-			Title:  "shelf-title-test",
-			UserId: "user-uuid-test",
+		PublicShelf: model.PublicShelf{
+			Title: "shelf-title-test",
 		},
+		UserId: "user-uuid-test",
 	}
 
 	svc.ShelfRepository.
@@ -60,18 +60,21 @@ func Test_Unit_Shelf_Update_Success(t *testing.T) {
 	shelfId := "shelf-uuid-test"
 
 	updateRequest := &model.Shelf{
-		ShelfBase: model.ShelfBase{
-			Title:  "updated-title",
-			UserId: "user-uuid-test",
+		PublicShelf: model.PublicShelf{
+			Title: "updated-title",
 		},
+		UserId: "user-uuid-test",
 	}
 
 	// Update must be called with ID set by service
 	svc.ShelfRepository.
 		EXPECT().
 		Update(&model.Shelf{
-			Id:        shelfId,
-			ShelfBase: updateRequest.ShelfBase,
+			PublicShelf: model.PublicShelf{
+				Id:    shelfId,
+				Title: "updated-title",
+			},
+			UserId: "user-uuid-test",
 		}).
 		Return(nil)
 
@@ -79,11 +82,11 @@ func Test_Unit_Shelf_Update_Success(t *testing.T) {
 		EXPECT().
 		Get(shelfId).
 		Return(&model.Shelf{
-			Id: shelfId,
-			ShelfBase: model.ShelfBase{
-				Title:  "updated-title",
-				UserId: "user-uuid-test",
+			PublicShelf: model.PublicShelf{
+				Id:    shelfId,
+				Title: "updated-title",
 			},
+			UserId: "user-uuid-test",
 		}, nil)
 
 	shelf, err := svc.Service.ShelfService.Update(shelfId, updateRequest)
@@ -103,10 +106,10 @@ func Test_Unit_Shelf_Update_Failure_Update(t *testing.T) {
 	shelfId := "shelf-uuid-test"
 
 	updateRequest := &model.Shelf{
-		ShelfBase: model.ShelfBase{
-			Title:  "updated-title",
-			UserId: "user-uuid-test",
+		PublicShelf: model.PublicShelf{
+			Title: "updated-title",
 		},
+		UserId: "user-uuid-test",
 	}
 
 	svc.ShelfRepository.
@@ -127,10 +130,10 @@ func Test_Unit_Shelf_Update_Failure_Get(t *testing.T) {
 	shelfId := "shelf-uuid-test"
 
 	updateRequest := &model.Shelf{
-		ShelfBase: model.ShelfBase{
-			Title:  "updated-title",
-			UserId: "user-uuid-test",
+		PublicShelf: model.PublicShelf{
+			Title: "updated-title",
 		},
+		UserId: "user-uuid-test",
 	}
 
 	svc.ShelfRepository.
@@ -157,7 +160,9 @@ func Test_Unit_Shelf_Get_Success(t *testing.T) {
 		EXPECT().
 		Get("shelf-uuid-test").
 		Return(&model.Shelf{
-			Id: "shelf-uuid-test",
+			PublicShelf: model.PublicShelf{
+				Id: "shelf-uuid-test",
+			},
 		}, nil)
 
 	shelf, err := svc.Service.ShelfService.Get("shelf-uuid-test")
@@ -182,11 +187,62 @@ func Test_Unit_Shelf_Get_Failure(t *testing.T) {
 	require.Nil(t, shelf)
 }
 
+func Test_Unit_Shelf_GetByPath_Success(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		GetByPath("my-path").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{
+				Id:   "shelf-uuid-test",
+				Path: "my-path",
+			},
+		}, nil)
+
+	shelf, err := svc.Service.ShelfService.GetByPath("my-path")
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.Equal(t, "shelf-uuid-test", shelf.Id)
+}
+
+func Test_Unit_Shelf_GetByPath_NotFound(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		GetByPath("missing-path").
+		Return(nil, nil)
+
+	shelf, err := svc.Service.ShelfService.GetByPath("missing-path")
+
+	require.NoError(t, err)
+	require.Nil(t, shelf)
+}
+
+func Test_Unit_Shelf_GetByPath_Failure(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		GetByPath("my-path").
+		Return(nil, errors.New("an error occurred"))
+
+	shelf, err := svc.Service.ShelfService.GetByPath("my-path")
+
+	require.ErrorContains(t, err, "an error occurred")
+	require.Nil(t, shelf)
+}
+
 func Test_Unit_Shelf_Delete_Success(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
-	shelf := &model.Shelf{Id: "shelf-uuid-test"}
+	shelf := &model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}}
 
 	svc.ShelfRepository.
 		EXPECT().
@@ -203,7 +259,7 @@ func Test_Unit_Shelf_Delete_Failure(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	shelf := &model.Shelf{
-		Id: "shelf-uuid-test",
+		PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"},
 	}
 
 	svc.ShelfRepository.

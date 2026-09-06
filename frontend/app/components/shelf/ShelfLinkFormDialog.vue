@@ -39,7 +39,7 @@ watch(open, (isOpen) => {
 const schema = v.object({
   title: v.pipe(v.string(), v.nonEmpty('Required')),
   link: v.pipe(v.string(), v.nonEmpty('Required')),
-  icon: v.pipe(v.string(), v.nonEmpty('Required')),
+  icon: v.string(),
   color: v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{6}$/, 'Must be a hex color, e.g. #588157'))
 })
 
@@ -80,11 +80,11 @@ async function save(close: () => void) {
   >
     <template #body>
       <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-4">
-        <UFormField label="Title" name="title">
+        <UFormField label="Title" name="title" required>
           <UInput v-model="form.title" class="w-full" />
         </UFormField>
 
-        <UFormField label="URL" name="link">
+        <UFormField label="URL" name="link" required>
           <UInput v-model="form.link" class="w-full" placeholder="https://example.com" />
         </UFormField>
 

@@ -141,7 +141,7 @@ watch(
     :schema="schema"
     :state="form"
   >
-    <UFormField label="Title" name="title">
+    <UFormField label="Title" name="title" required>
       <UInput v-model="form.title" class="w-full" />
     </UFormField>
 

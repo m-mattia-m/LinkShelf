@@ -30,13 +30,13 @@ export interface LinkBase {
      * @type {string}
      * @memberof LinkBase
      */
-    color: string;
+    color?: string;
     /**
      * 
      * @type {string}
      * @memberof LinkBase
      */
-    icon: string;
+    icon?: string;
     /**
      * 
      * @type {string}
@@ -61,8 +61,6 @@ export interface LinkBase {
  * Check if a given object implements the LinkBase interface.
  */
 export function instanceOfLinkBase(value: object): value is LinkBase {
-    if (!('color' in value) || value['color'] === undefined) return false;
-    if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('link' in value) || value['link'] === undefined) return false;
     if (!('sectionId' in value) || value['sectionId'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
@@ -80,8 +78,8 @@ export function LinkBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return {
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
-        'color': json['color'],
-        'icon': json['icon'],
+        'color': json['color'] == null ? undefined : json['color'],
+        'icon': json['icon'] == null ? undefined : json['icon'],
         'link': json['link'],
         'sectionId': json['sectionId'],
         'title': json['title'],

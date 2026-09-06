@@ -67,15 +67,15 @@ async function save(close: () => void) {
   >
     <template #body>
       <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-4">
-        <UFormField label="Current password" name="oldPassword">
+        <UFormField label="Current password" name="oldPassword" required>
           <UInput v-model="form.oldPassword" type="password" class="w-full" />
         </UFormField>
 
-        <UFormField label="New password" name="newPassword">
+        <UFormField label="New password" name="newPassword" required>
           <UInput v-model="form.newPassword" type="password" class="w-full" />
         </UFormField>
 
-        <UFormField label="Confirm new password" name="confirmPassword">
+        <UFormField label="Confirm new password" name="confirmPassword" required>
           <UInput v-model="form.confirmPassword" type="password" class="w-full" />
         </UFormField>
       </UForm>

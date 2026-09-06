@@ -14,6 +14,7 @@ import (
 type ShelfRepository interface {
 	List() ([]model.Shelf, error)
 	Get(id string) (*model.Shelf, error)
+	GetByPath(path string) (*model.Shelf, error)
 	Create(s *model.Shelf) (string, error)
 	Update(s *model.Shelf) error
 	Delete(s *model.Shelf) error
@@ -86,6 +87,35 @@ func (r *shelfRepository) Get(id string) (*model.Shelf, error) {
 
 	var shelf model.Shelf
 	err = r.Engine.QueryRowContext(context.TODO(), query, id).Scan(
+		&shelf.Id,
+		&shelf.Title,
+		&shelf.Path,
+		&shelf.Domain,
+		&shelf.Description,
+		&shelf.Theme,
+		&shelf.Icon,
+		&shelf.UserId,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+
+	return &shelf, err
+}
+
+func (r *shelfRepository) GetByPath(path string) (*model.Shelf, error) {
+	query, err := buildSqlStatements(`
+		SELECT id, title, path, domain, description, theme, icon, user_id
+		FROM shelf
+		WHERE LOWER(path) = LOWER(?)
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	var shelf model.Shelf
+	err = r.Engine.QueryRowContext(context.TODO(), query, path).Scan(
 		&shelf.Id,
 		&shelf.Title,
 		&shelf.Path,

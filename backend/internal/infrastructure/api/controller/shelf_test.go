@@ -33,11 +33,11 @@ func Test_API_CreateShelf_Success(t *testing.T) {
 			EXPECT().
 			Get("shelf-uuid-test").
 			Return(&model.Shelf{
-				Id: "shelf-uuid-test",
-				ShelfBase: model.ShelfBase{
-					Title:  "test-shelf",
-					UserId: "user-uuid-test",
+				PublicShelf: model.PublicShelf{
+					Id:    "shelf-uuid-test",
+					Title: "test-shelf",
 				},
+				UserId: "user-uuid-test",
 			}, nil),
 	)
 
@@ -115,11 +115,11 @@ func Test_API_GetShelfById_Success(t *testing.T) {
 		EXPECT().
 		Get("shelf-uuid-test").
 		Return(&model.Shelf{
-			Id: "shelf-uuid-test",
-			ShelfBase: model.ShelfBase{
-				Title:  "test-shelf",
-				UserId: "user-uuid-test",
+			PublicShelf: model.PublicShelf{
+				Id:    "shelf-uuid-test",
+				Title: "test-shelf",
 			},
+			UserId: "user-uuid-test",
 		}, nil)
 
 	resp, err := handler(context.Background(), &model.ShelfRequestFilter{
@@ -173,11 +173,11 @@ func Test_API_UpdateShelf_Success(t *testing.T) {
 		EXPECT().
 		Update(gomock.Any(), gomock.Any()).
 		Return(&model.Shelf{
-			Id: "shelf-uuid-test",
-			ShelfBase: model.ShelfBase{
-				Title:  "updated-shelf-title",
-				UserId: "user-uuid-test",
+			PublicShelf: model.PublicShelf{
+				Id:    "shelf-uuid-test",
+				Title: "updated-shelf-title",
 			},
+			UserId: "user-uuid-test",
 		}, nil)
 
 	resp, err := handler(context.Background(), input)
@@ -226,9 +226,7 @@ func Test_API_DeleteShelf_Success(t *testing.T) {
 		svc.ShelfService.
 			EXPECT().
 			Get("shelf-uuid-test").
-			Return(&model.Shelf{
-				Id: "shelf-uuid-test",
-			}, nil),
+			Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}}, nil),
 
 		svc.ShelfService.
 			EXPECT().
@@ -273,9 +271,7 @@ func Test_API_DeleteShelf_Failure_Delete(t *testing.T) {
 	svc.ShelfService.
 		EXPECT().
 		Get("shelf-uuid-test").
-		Return(&model.Shelf{
-			Id: "shelf-uuid-test",
-		}, nil)
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}}, nil)
 
 	svc.ShelfService.
 		EXPECT().
@@ -289,4 +285,70 @@ func Test_API_DeleteShelf_Failure_Delete(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to delete shelf")
+}
+
+func Test_API_GetPublicShelfByPath_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := GetPublicShelfByPath(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		GetByPath("my-path").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{
+				Id:   "shelf-uuid-test",
+				Path: "my-path",
+			},
+			UserId: "user-uuid-test",
+		}, nil)
+
+	resp, err := handler(context.Background(), &model.ShelfPathFilter{
+		Path: "my-path",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Equal(t, "shelf-uuid-test", resp.Body.Id)
+	require.Equal(t, "my-path", resp.Body.Path)
+}
+
+func Test_API_GetPublicShelfByPath_NotFound(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := GetPublicShelfByPath(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		GetByPath("missing-path").
+		Return(nil, nil)
+
+	resp, err := handler(context.Background(), &model.ShelfPathFilter{
+		Path: "missing-path",
+	})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+}
+
+func Test_API_GetPublicShelfByPath_Failure(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := GetPublicShelfByPath(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		GetByPath("my-path").
+		Return(nil, errors.New("failed to get shelf"))
+
+	resp, err := handler(context.Background(), &model.ShelfPathFilter{
+		Path: "my-path",
+	})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "failed to get shelf")
 }

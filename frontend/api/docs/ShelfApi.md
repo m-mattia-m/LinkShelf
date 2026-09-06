@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost:8085*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**deleteShelf**](ShelfApi.md#deleteshelf) | **DELETE** /v1/shelves/{shelfId} | Delete shelf |
+| [**getPublicShelfByPath**](ShelfApi.md#getpublicshelfbypath) | **GET** /v1/shelves/by-path/{path} | Get public shelf by path |
 | [**getShelfById**](ShelfApi.md#getshelfbyid) | **GET** /v1/shelves/{shelfId} | Get shelf by ID |
 | [**listShelves**](ShelfApi.md#listshelves) | **GET** /v1/shelves | List shelves |
 | [**postCreateShelf**](ShelfApi.md#postcreateshelf) | **POST** /v1/shelves | Create shelf |
@@ -75,6 +76,74 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getPublicShelfByPath
+
+> PublicShelf getPublicShelfByPath(path)
+
+Get public shelf by path
+
+Get the public-safe view of a shelf by its path. Used to render a shelf\&#39;s public link page and requires no authentication.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ShelfApi,
+} from '';
+import type { GetPublicShelfByPathRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new ShelfApi();
+
+  const body = {
+    // string
+    path: path_example,
+  } satisfies GetPublicShelfByPathRequest;
+
+  try {
+    const data = await api.getPublicShelfByPath(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **path** | `string` |  | [Defaults to `undefined`] |
+
+### Return type
+
+[**PublicShelf**](PublicShelf.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

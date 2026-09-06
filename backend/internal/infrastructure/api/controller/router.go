@@ -153,6 +153,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}, ListShelf(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
+		OperationID: "get-public-shelf-by-path",
+		Summary:     "Get public shelf by path",
+		Description: "Get the public-safe view of a shelf by its path. Used to render a shelf's public link page and requires no authentication.",
+		Path:        "/v1/shelves/by-path/{path}",
+		Tags:        []string{"Shelf"},
+	}, GetPublicShelfByPath(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
 		OperationID: "get-shelf-by-id",
 		Summary:     "Get shelf by ID",
 		Description: "Get a shelf by ID.",
@@ -263,6 +271,15 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/settings",
 		Tags:        []string{"Setting"},
 	}, UpdateSetting(svc))
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-statistic",
+		Summary:     "Get statistic",
+		Description: "Get usage statistics for the current user.",
+		Path:        "/v1/statistics",
+		Tags:        []string{"Statistic"},
+	}, GetStatistic(svc))
 
 	router.GET("/swagger", func(c *gin.Context) {
 		c.Header("Content-Type", "text/html")

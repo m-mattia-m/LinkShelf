@@ -60,15 +60,15 @@ func Test_API_Shelf_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
-		ShelfBase: model.ShelfBase{
+		PublicShelf: model.PublicShelf{
 			Title:       "shelf-title-update",
 			Path:        "shelf-title-update",
-			Domain:      "",
 			Description: "A shelf created during API integration tests",
-			Theme:       "",
 			Icon:        "",
-			UserId:      userId,
 		},
+		Domain: "",
+		Theme:  "",
+		UserId: userId,
 	})
 	require.NoError(t, err)
 
@@ -118,15 +118,15 @@ func Test_API_Shelf_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
-		ShelfBase: model.ShelfBase{
+		PublicShelf: model.PublicShelf{
 			Title:       "shelf-title-delete",
 			Path:        "shelf-title-delete",
-			Domain:      "",
 			Description: "A shelf created during API integration tests",
-			Theme:       "",
 			Icon:        "",
-			UserId:      userId,
 		},
+		Domain: "",
+		Theme:  "",
+		UserId: userId,
 	})
 	require.NoError(t, err)
 
@@ -152,15 +152,15 @@ func Test_API_Shelf_Get(t *testing.T) {
 	require.NoError(t, err)
 
 	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
-		ShelfBase: model.ShelfBase{
+		PublicShelf: model.PublicShelf{
 			Title:       "shelf-title-get",
 			Path:        "shelf-title-get",
-			Domain:      "",
 			Description: "A shelf created during API integration tests",
-			Theme:       "",
 			Icon:        "",
-			UserId:      userId,
 		},
+		Domain: "",
+		Theme:  "",
+		UserId: userId,
 	})
 	require.NoError(t, err)
 
@@ -296,4 +296,83 @@ func Test_API_Shelf_Create_InvalidPath_Validation(t *testing.T) {
 	}(resp.Body)
 
 	require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+}
+
+func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
+	userId, err := getShelfOwnerUser()
+	require.NoError(t, err)
+
+	request := model.ShelfBase{
+		Title:       "shelf-public-path",
+		Path:        "Shelf-Public-Path",
+		Domain:      "",
+		Description: "A public shelf description",
+		Theme:       "",
+		Icon:        "i-lucide-book-open",
+		UserId:      userId,
+	}
+
+	createResp := doRequest(
+		t,
+		http.MethodPost,
+		"/v1/shelves",
+		strings.NewReader(ObjectToJSON(request)),
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(createResp.Body)
+	require.Equal(t, http.StatusCreated, createResp.StatusCode)
+
+	// path lookup is case-insensitive
+	resp := doRequest(
+		t,
+		http.MethodGet,
+		"/v1/shelves/by-path/shelf-public-path",
+		nil,
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var publicShelf model.PublicShelf
+	err = json.Unmarshal(body, &publicShelf)
+	require.NoError(t, err)
+
+	require.Equal(t, "shelf-public-path", publicShelf.Title)
+	require.Equal(t, "A public shelf description", publicShelf.Description)
+	require.Equal(t, "i-lucide-book-open", publicShelf.Icon)
+	require.Equal(t, "Shelf-Public-Path", publicShelf.Path)
+
+	// the public payload must not leak internal fields
+	require.NotContains(t, string(body), "userId")
+	require.NotContains(t, string(body), "domain")
+	require.NotContains(t, string(body), "theme")
+}
+
+func Test_API_Shelf_GetPublicByPath_NotFound(t *testing.T) {
+	resp := doRequest(
+		t,
+		http.MethodGet,
+		"/v1/shelves/by-path/does-not-exist",
+		nil,
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 }

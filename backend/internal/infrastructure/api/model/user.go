@@ -6,14 +6,14 @@ type User struct {
 }
 
 type UserBase struct {
-	Email     string `json:"email" bson:"email"`
-	FirstName string `json:"first_name" bson:"first_name"`
-	LastName  string `json:"last_name" bson:"last_name"`
+	Email     string `json:"email" bson:"email" required:"true"`
+	FirstName string `json:"first_name" bson:"first_name" required:"true"`
+	LastName  string `json:"last_name" bson:"last_name" required:"true"`
 }
 
 type UserCreate struct {
 	UserBase
-	Password string `json:"password" bson:"password"`
+	Password string `json:"password" bson:"password" required:"true"`
 }
 
 type UserRequestBody struct {
@@ -26,8 +26,8 @@ type UserPatchPasswordFilterAndBody struct {
 }
 
 type UserRequestBodyOnlyPassword struct {
-	OldPassword string `json:"old_password" bson:"old_password"`
-	NewPassword string `json:"new_password" bson:"new_password"`
+	OldPassword string `json:"old_password" bson:"old_password" required:"true"`
+	NewPassword string `json:"new_password" bson:"new_password" required:"true"`
 }
 
 type UserRequestFilter struct {

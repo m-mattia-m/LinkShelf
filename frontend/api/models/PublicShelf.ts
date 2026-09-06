@@ -16,100 +16,93 @@ import { mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface Link
+ * @interface PublicShelf
  */
-export interface Link {
+export interface PublicShelf {
     /**
      * A URL to the JSON Schema for this object.
      * @type {string}
-     * @memberof Link
+     * @memberof PublicShelf
      */
     readonly $schema?: string;
     /**
      * 
      * @type {string}
-     * @memberof Link
+     * @memberof PublicShelf
      */
-    color?: string;
+    description: string;
     /**
      * 
      * @type {string}
-     * @memberof Link
+     * @memberof PublicShelf
      */
-    icon?: string;
+    icon: string;
     /**
      * 
      * @type {string}
-     * @memberof Link
+     * @memberof PublicShelf
      */
     id: string;
     /**
      * 
      * @type {string}
-     * @memberof Link
+     * @memberof PublicShelf
      */
-    link: string;
+    path: string;
     /**
      * 
      * @type {string}
-     * @memberof Link
-     */
-    sectionId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Link
+     * @memberof PublicShelf
      */
     title: string;
 }
 
 /**
- * Check if a given object implements the Link interface.
+ * Check if a given object implements the PublicShelf interface.
  */
-export function instanceOfLink(value: object): value is Link {
+export function instanceOfPublicShelf(value: object): value is PublicShelf {
+    if (!('description' in value) || value['description'] === undefined) return false;
+    if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('link' in value) || value['link'] === undefined) return false;
-    if (!('sectionId' in value) || value['sectionId'] === undefined) return false;
+    if (!('path' in value) || value['path'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     return true;
 }
 
-export function LinkFromJSON(json: any): Link {
-    return LinkFromJSONTyped(json, false);
+export function PublicShelfFromJSON(json: any): PublicShelf {
+    return PublicShelfFromJSONTyped(json, false);
 }
 
-export function LinkFromJSONTyped(json: any, ignoreDiscriminator: boolean): Link {
+export function PublicShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean): PublicShelf {
     if (json == null) {
         return json;
     }
     return {
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
-        'color': json['color'] == null ? undefined : json['color'],
-        'icon': json['icon'] == null ? undefined : json['icon'],
+        'description': json['description'],
+        'icon': json['icon'],
         'id': json['id'],
-        'link': json['link'],
-        'sectionId': json['sectionId'],
+        'path': json['path'],
         'title': json['title'],
     };
 }
 
-export function LinkToJSON(json: any): Link {
-    return LinkToJSONTyped(json, false);
+export function PublicShelfToJSON(json: any): PublicShelf {
+    return PublicShelfToJSONTyped(json, false);
 }
 
-export function LinkToJSONTyped(value?: Omit<Link, '$schema'> | null, ignoreDiscriminator: boolean = false): any {
+export function PublicShelfToJSONTyped(value?: Omit<PublicShelf, '$schema'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'color': value['color'],
+        'description': value['description'],
         'icon': value['icon'],
         'id': value['id'],
-        'link': value['link'],
-        'sectionId': value['sectionId'],
+        'path': value['path'],
         'title': value['title'],
     };
 }

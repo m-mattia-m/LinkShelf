@@ -91,19 +91,19 @@ async function save(close: () => void) {
 
     <template #body>
       <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-4">
-        <UFormField label="First name" name="firstName">
+        <UFormField label="First name" name="firstName" required>
           <UInput v-model="form.firstName" class="w-full" />
         </UFormField>
 
-        <UFormField label="Last name" name="lastName">
+        <UFormField label="Last name" name="lastName" required>
           <UInput v-model="form.lastName" class="w-full" />
         </UFormField>
 
-        <UFormField label="Email" name="email">
+        <UFormField label="Email" name="email" required>
           <UInput v-model="form.email" type="email" class="w-full" />
         </UFormField>
 
-        <UFormField v-if="mode === 'create'" label="Password" name="password">
+        <UFormField v-if="mode === 'create'" label="Password" name="password" required>
           <UInput v-model="form.password" type="password" class="w-full" />
         </UFormField>
       </UForm>

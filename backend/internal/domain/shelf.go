@@ -9,6 +9,7 @@ import (
 
 type ShelfService interface {
 	Get(id string) (*model.Shelf, error)
+	GetByPath(path string) (*model.Shelf, error)
 	List() ([]model.Shelf, error)
 	Create(u *model.Shelf) (string, error)
 	Update(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error)
@@ -29,6 +30,10 @@ func NewShelfService(repository *repository.Repository, domain *Service) ShelfSe
 
 func (s *shelfServiceImpl) Get(id string) (*model.Shelf, error) {
 	return s.Repository.ShelfRepository.Get(id)
+}
+
+func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
+	return s.Repository.ShelfRepository.GetByPath(path)
 }
 
 func (s *shelfServiceImpl) List() ([]model.Shelf, error) {

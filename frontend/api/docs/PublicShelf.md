@@ -1,5 +1,5 @@
 
-# User
+# PublicShelf
 
 
 ## Properties
@@ -7,24 +7,26 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
-`email` | string
-`firstName` | string
+`description` | string
+`icon` | string
 `id` | string
-`lastName` | string
+`path` | string
+`title` | string
 
 ## Example
 
 ```typescript
-import type { User } from ''
+import type { PublicShelf } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "$schema": null,
-  "email": null,
-  "firstName": null,
+  "description": null,
+  "icon": null,
   "id": null,
-  "lastName": null,
-} satisfies User
+  "path": null,
+  "title": null,
+} satisfies PublicShelf
 
 console.log(example)
 
@@ -33,7 +35,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as User
+const exampleParsed = JSON.parse(exampleJSON) as PublicShelf
 console.log(exampleParsed)
 ```
 
