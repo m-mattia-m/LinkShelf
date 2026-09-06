@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  runtimeConfig: {
+    public: {
+      apiBase: 'http://localhost:8085'
+    }
+  },
+
   css: ['~/assets/css/main.css'],
 
   routeRules: {

@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost:8085*
 |------------- | ------------- | -------------|
 | [**deleteUser**](UserApi.md#deleteuser) | **DELETE** /v1/users/{userId} | Delete user |
 | [**getUserById**](UserApi.md#getuserbyid) | **GET** /v1/users/{userId} | Get user by ID |
+| [**listUsers**](UserApi.md#listusers) | **GET** /v1/users | List users |
 | [**patchUserPassword**](UserApi.md#patchuserpassword) | **PATCH** /v1/users/{userId}/password | Patch user password |
 | [**postCreateUser**](UserApi.md#postcreateuser) | **POST** /v1/users | Create user |
 | [**putUpdateUser**](UserApi.md#putupdateuser) | **PUT** /v1/users/{userId} | Update user |
@@ -148,6 +149,66 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## listUsers
+
+> Array&lt;User&gt; listUsers()
+
+List users
+
+List all users.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  UserApi,
+} from '';
+import type { ListUsersRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new UserApi();
+
+  try {
+    const data = await api.listUsers();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**Array&lt;User&gt;**](User.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## patchUserPassword
 
 > patchUserPassword(userId, userRequestBodyOnlyPassword)
@@ -221,7 +282,7 @@ No authorization required
 
 ## postCreateUser
 
-> User postCreateUser(userBase)
+> User postCreateUser(userCreate)
 
 Create user
 
@@ -241,8 +302,8 @@ async function example() {
   const api = new UserApi();
 
   const body = {
-    // UserBase
-    userBase: ...,
+    // UserCreate
+    userCreate: ...,
   } satisfies PostCreateUserRequest;
 
   try {
@@ -262,7 +323,7 @@ example().catch(console.error);
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **userBase** | [UserBase](UserBase.md) |  | |
+| **userCreate** | [UserCreate](UserCreate.md) |  | |
 
 ### Return type
 

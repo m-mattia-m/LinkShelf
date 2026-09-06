@@ -6,8 +6,8 @@ type Section struct {
 }
 
 type SectionBase struct {
-	Title   string `json:"title" bson:"title"`
-	ShelfId string `json:"shelfId" bson:"shelfId"`
+	Title   string `json:"title" bson:"title" required:"true"`
+	ShelfId string `json:"shelfId" bson:"shelfId" required:"true"`
 }
 
 type SectionRequestBody struct {

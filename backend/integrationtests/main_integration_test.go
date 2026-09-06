@@ -181,13 +181,13 @@ func getShelfOwnerUser() (string, error) {
 		return "", err
 	}
 
-	userRequest := &model.User{
+	userRequest := &model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     fmt.Sprintf("test-shelf-owner-%s@test.com", ShortUUID(randUuid.String())),
 			FirstName: "test-shelf-owner-firstname",
 			LastName:  "test-shelf-owner-lastname",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 
 	user, err := TestService.UserService.Create(userRequest)
@@ -209,14 +209,16 @@ func getShelfInclusiveItsOwnerUser() (string, error) {
 		return "", err
 	}
 
-	shelfId, err := TestService.ShelfService.Create(&model.Shelf{ShelfBase: model.ShelfBase{
-		Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
-		Path:        "/shelf-for-owner",
-		Description: "A shelf created during API integration tests",
-		Theme:       "",
-		Icon:        "",
-		UserId:      userId,
-	}})
+	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
+		PublicShelf: model.PublicShelf{
+			Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
+			Path:        fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
+			Description: "A shelf created during API integration tests",
+			Icon:        "",
+		},
+		Theme:  "",
+		UserId: userId,
+	})
 	if err != nil {
 		return "", err
 	}

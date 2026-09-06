@@ -10,7 +10,6 @@ Name | Type
 `email` | string
 `firstName` | string
 `lastName` | string
-`password` | string
 
 ## Example
 
@@ -23,7 +22,6 @@ const example = {
   "email": null,
   "firstName": null,
   "lastName": null,
-  "password": null,
 } satisfies UserBase
 
 console.log(example)

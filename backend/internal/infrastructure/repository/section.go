@@ -46,7 +46,7 @@ func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 		return nil, err
 	}
 
-	var sections []model.Section
+	sections := make([]model.Section, 0)
 	for rows.Next() {
 		var section model.Section
 		err := rows.Scan(

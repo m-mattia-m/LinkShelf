@@ -30,19 +30,19 @@ export interface ShelfBase {
      * @type {string}
      * @memberof ShelfBase
      */
-    description: string;
+    description?: string;
     /**
      * 
      * @type {string}
      * @memberof ShelfBase
      */
-    domain: string;
+    domain?: string;
     /**
      * 
      * @type {string}
      * @memberof ShelfBase
      */
-    icon: string;
+    icon?: string;
     /**
      * 
      * @type {string}
@@ -54,7 +54,7 @@ export interface ShelfBase {
      * @type {string}
      * @memberof ShelfBase
      */
-    theme: string;
+    theme?: string;
     /**
      * 
      * @type {string}
@@ -73,11 +73,7 @@ export interface ShelfBase {
  * Check if a given object implements the ShelfBase interface.
  */
 export function instanceOfShelfBase(value: object): value is ShelfBase {
-    if (!('description' in value) || value['description'] === undefined) return false;
-    if (!('domain' in value) || value['domain'] === undefined) return false;
-    if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('path' in value) || value['path'] === undefined) return false;
-    if (!('theme' in value) || value['theme'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     if (!('userId' in value) || value['userId'] === undefined) return false;
     return true;
@@ -94,11 +90,11 @@ export function ShelfBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     return {
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
-        'description': json['description'],
-        'domain': json['domain'],
-        'icon': json['icon'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'domain': json['domain'] == null ? undefined : json['domain'],
+        'icon': json['icon'] == null ? undefined : json['icon'],
         'path': json['path'],
-        'theme': json['theme'],
+        'theme': json['theme'] == null ? undefined : json['theme'],
         'title': json['title'],
         'userId': json['userId'],
     };

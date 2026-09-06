@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   ErrorModel,
+  PublicShelf,
   Shelf,
   ShelfBase,
 } from '../models/index';
 import {
     ErrorModelFromJSON,
     ErrorModelToJSON,
+    PublicShelfFromJSON,
+    PublicShelfToJSON,
     ShelfFromJSON,
     ShelfToJSON,
     ShelfBaseFromJSON,
@@ -30,6 +33,10 @@ import {
 
 export interface DeleteShelfRequest {
     shelfId: string;
+}
+
+export interface GetPublicShelfByPathRequest {
+    path: string;
 }
 
 export interface GetShelfByIdRequest {
@@ -86,6 +93,45 @@ export class ShelfApi extends runtime.BaseAPI {
      */
     async deleteShelf(requestParameters: DeleteShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteShelfRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Get the public-safe view of a shelf by its path. Used to render a shelf\'s public link page and requires no authentication.
+     * Get public shelf by path
+     */
+    async getPublicShelfByPathRaw(requestParameters: GetPublicShelfByPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublicShelf>> {
+        if (requestParameters['path'] == null) {
+            throw new runtime.RequiredError(
+                'path',
+                'Required parameter "path" was null or undefined when calling getPublicShelfByPath().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/shelves/by-path/{path}`;
+        urlPath = urlPath.replace(`{${"path"}}`, encodeURIComponent(String(requestParameters['path'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublicShelfFromJSON(jsonValue));
+    }
+
+    /**
+     * Get the public-safe view of a shelf by its path. Used to render a shelf\'s public link page and requires no authentication.
+     * Get public shelf by path
+     */
+    async getPublicShelfByPath(requestParameters: GetPublicShelfByPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublicShelf> {
+        const response = await this.getPublicShelfByPathRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

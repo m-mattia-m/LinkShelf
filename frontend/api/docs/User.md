@@ -11,7 +11,6 @@ Name | Type
 `firstName` | string
 `id` | string
 `lastName` | string
-`password` | string
 
 ## Example
 
@@ -25,7 +24,6 @@ const example = {
   "firstName": null,
   "id": null,
   "lastName": null,
-  "password": null,
 } satisfies User
 
 console.log(example)

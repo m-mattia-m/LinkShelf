@@ -22,11 +22,12 @@ import (
 )
 
 type Repository struct {
-	UserRepository    UserRepository
-	ShelfRepository   ShelfRepository
-	SectionRepository SectionRepository
-	LinkRepository    LinkRepository
-	SettingRepository SettingRepository
+	UserRepository      UserRepository
+	ShelfRepository     ShelfRepository
+	SectionRepository   SectionRepository
+	LinkRepository      LinkRepository
+	SettingRepository   SettingRepository
+	StatisticRepository StatisticRepository
 }
 
 func NewRepository() (*Repository, error) {
@@ -69,12 +70,18 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
+	statisticRepo, err := NewStatisticRepository(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repository{
-		UserRepository:    userRepo,
-		ShelfRepository:   shelfRepo,
-		SectionRepository: sectionRepo,
-		LinkRepository:    linkRepo,
-		SettingRepository: settingRepo,
+		UserRepository:      userRepo,
+		ShelfRepository:     shelfRepo,
+		SectionRepository:   sectionRepo,
+		LinkRepository:      linkRepo,
+		SettingRepository:   settingRepo,
+		StatisticRepository: statisticRepo,
 	}, nil
 }
 

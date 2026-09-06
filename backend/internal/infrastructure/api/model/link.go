@@ -6,11 +6,11 @@ type Link struct {
 }
 
 type LinkBase struct {
-	Title     string `json:"title" bson:"title"`
-	Link      string `json:"link" bson:"link"`
-	Icon      string `json:"icon" bson:"icon"`
-	Color     string `json:"color" bson:"color"`
-	SectionId string `json:"sectionId" bson:"sectionId"`
+	Title     string `json:"title" bson:"title" required:"true"`
+	Link      string `json:"link" bson:"link" required:"true"`
+	Icon      string `json:"icon" bson:"icon" required:"false"`
+	Color     string `json:"color" bson:"color" required:"false"`
+	SectionId string `json:"sectionId" bson:"sectionId" required:"true"`
 }
 
 type LinkRequestBody struct {

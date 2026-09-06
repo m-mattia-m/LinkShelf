@@ -1,3 +1,4 @@
+#
 frontend/.idea
 frontend/node_modules
 frontend/.gitignore
@@ -16,4 +17,7 @@ frontend/.env.*
 
 
 backend/.idea
+
+
 .idea
+.claude

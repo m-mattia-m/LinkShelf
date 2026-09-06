@@ -3,11 +3,12 @@ package domain
 import "backend/internal/infrastructure/repository"
 
 type Service struct {
-	UserService    UserService
-	ShelfService   ShelfService
-	SectionService SectionService
-	LinkService    LinkService
-	SettingService SettingService
+	UserService      UserService
+	ShelfService     ShelfService
+	SectionService   SectionService
+	LinkService      LinkService
+	SettingService   SettingService
+	StatisticService StatisticService
 }
 
 func NewService(repository *repository.Repository) *Service {
@@ -17,6 +18,7 @@ func NewService(repository *repository.Repository) *Service {
 	service.SectionService = NewSectionService(repository, &service)
 	service.LinkService = NewLinkService(repository, &service)
 	service.SettingService = NewSettingService(repository, &service)
+	service.StatisticService = NewStatisticService(repository, &service)
 
 	return &service
 }

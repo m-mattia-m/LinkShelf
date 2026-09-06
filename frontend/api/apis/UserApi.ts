@@ -18,6 +18,7 @@ import type {
   ErrorModel,
   User,
   UserBase,
+  UserCreate,
   UserRequestBodyOnlyPassword,
 } from '../models/index';
 import {
@@ -27,6 +28,8 @@ import {
     UserToJSON,
     UserBaseFromJSON,
     UserBaseToJSON,
+    UserCreateFromJSON,
+    UserCreateToJSON,
     UserRequestBodyOnlyPasswordFromJSON,
     UserRequestBodyOnlyPasswordToJSON,
 } from '../models/index';
@@ -45,7 +48,7 @@ export interface PatchUserPasswordRequest {
 }
 
 export interface PostCreateUserRequest {
-    userBase: Omit<UserBase, '$schema'>;
+    userCreate: Omit<UserCreate, '$schema'>;
 }
 
 export interface PutUpdateUserRequest {
@@ -136,6 +139,37 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
+     * List all users.
+     * List users
+     */
+    async listUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<User>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/users`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserFromJSON));
+    }
+
+    /**
+     * List all users.
+     * List users
+     */
+    async listUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<User>> {
+        const response = await this.listUsersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Patch a user\'s password.
      * Patch user password
      */
@@ -188,10 +222,10 @@ export class UserApi extends runtime.BaseAPI {
      * Create user
      */
     async postCreateUserRaw(requestParameters: PostCreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
-        if (requestParameters['userBase'] == null) {
+        if (requestParameters['userCreate'] == null) {
             throw new runtime.RequiredError(
-                'userBase',
-                'Required parameter "userBase" was null or undefined when calling postCreateUser().'
+                'userCreate',
+                'Required parameter "userCreate" was null or undefined when calling postCreateUser().'
             );
         }
 
@@ -209,7 +243,7 @@ export class UserApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: UserBaseToJSON(requestParameters['userBase']),
+            body: UserCreateToJSON(requestParameters['userCreate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));

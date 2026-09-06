@@ -30,13 +30,13 @@ export interface Link {
      * @type {string}
      * @memberof Link
      */
-    color: string;
+    color?: string;
     /**
      * 
      * @type {string}
      * @memberof Link
      */
-    icon: string;
+    icon?: string;
     /**
      * 
      * @type {string}
@@ -67,8 +67,6 @@ export interface Link {
  * Check if a given object implements the Link interface.
  */
 export function instanceOfLink(value: object): value is Link {
-    if (!('color' in value) || value['color'] === undefined) return false;
-    if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('link' in value) || value['link'] === undefined) return false;
     if (!('sectionId' in value) || value['sectionId'] === undefined) return false;
@@ -87,8 +85,8 @@ export function LinkFromJSONTyped(json: any, ignoreDiscriminator: boolean): Link
     return {
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
-        'color': json['color'],
-        'icon': json['icon'],
+        'color': json['color'] == null ? undefined : json['color'],
+        'icon': json['icon'] == null ? undefined : json['icon'],
         'id': json['id'],
         'link': json['link'],
         'sectionId': json['sectionId'],

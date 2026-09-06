@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue'
-import type { Shelf } from '~~/api'
+import { reactive, watch, ref, onMounted } from 'vue'
+import type { Shelf, ShelfBase } from '~~/api'
+import type { FormError } from '@nuxt/ui'
 import * as v from 'valibot'
 
 const props = defineProps<{
@@ -8,9 +9,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Shelf): void
-  (e: 'update:validate', value: boolean): void
+  (e: 'update:modelValue', value: ShelfBase): void
 }>()
+
+const { ensureUserId } = useCurrentUser()
 
 const tabItems = [
   {
@@ -24,15 +26,21 @@ const tabItems = [
     slot: 'domain'
   }
 ]
-const form = reactive<Shelf>({
-  id: props.modelValue?.id ?? '',
+
+const form = reactive<ShelfBase>({
   title: props.modelValue?.title ?? '',
   description: props.modelValue?.description ?? '',
   domain: props.modelValue?.domain ?? '',
   path: props.modelValue?.path ?? '',
-  icon: '',
-  theme: '',
-  userId: ''
+  icon: props.modelValue?.icon ?? '',
+  theme: props.modelValue?.theme ?? '',
+  userId: props.modelValue?.userId ?? ''
+})
+
+onMounted(async () => {
+  if (!form.userId) {
+    form.userId = await ensureUserId()
+  }
 })
 
 const schema = v.pipe(
@@ -51,10 +59,11 @@ const schema = v.pipe(
     path: v.pipe(
       v.string(),
       v.regex(
-        /^[a-zA-Z0-9-]+$/,
+        /^[a-zA-Z0-9-]*$/,
         'Path may only contain letters, numbers, and hyphens'
       )
-    )
+    ),
+    icon: v.string()
   }),
   v.forward(
     v.check(
@@ -72,9 +81,6 @@ const schema = v.pipe(
   )
 )
 
-
-
-
 /**
  * UForm ref
  */
@@ -86,15 +92,17 @@ const formRef = ref<any>()
 async function validate(): Promise<boolean> {
   try {
     await formRef.value.validate()
-    emit('update:validate', true)
     return true
   } catch {
-    emit('update:validate', false)
     return false
   }
 }
 
-defineExpose({ validate })
+function setErrors(errs: FormError[]) {
+  formRef.value?.setErrors(errs)
+}
+
+defineExpose({ validate, setErrors })
 
 /**
  * Sync parent → form
@@ -103,7 +111,15 @@ watch(
   () => props.modelValue,
   (newShelf) => {
     if (!newShelf) return
-    Object.assign(form, newShelf)
+    Object.assign(form, {
+      title: newShelf.title,
+      description: newShelf.description,
+      domain: newShelf.domain,
+      path: newShelf.path,
+      icon: newShelf.icon,
+      theme: newShelf.theme,
+      userId: newShelf.userId
+    })
   },
   { immediate: true }
 )
@@ -125,12 +141,19 @@ watch(
     :schema="schema"
     :state="form"
   >
-    <UFormField label="Title" name="title">
+    <UFormField label="Title" name="title" required>
       <UInput v-model="form.title" class="w-full" />
     </UFormField>
 
     <UFormField label="Description" name="description" class="pt-4">
       <UTextarea v-model="form.description" class="w-full" />
+    </UFormField>
+
+    <UFormField label="Icon" name="icon" help="An iconify icon name, e.g. i-lucide-book-open" class="pt-4">
+      <div class="flex items-center gap-2">
+        <UIcon :name="form.icon || 'i-lucide-image'" class="size-5 shrink-0 text-muted" />
+        <UInput v-model="form.icon" class="w-full" placeholder="i-lucide-book-open" />
+      </div>
     </UFormField>
 
     <UTabs :items="tabItems" class="pt-4 w-full">

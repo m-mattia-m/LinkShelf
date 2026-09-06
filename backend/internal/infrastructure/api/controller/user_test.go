@@ -17,10 +17,13 @@ func Test_API_CreateUser_Success(t *testing.T) {
 	handler := CreateUser(svc.Service)
 
 	input := &model.UserRequestBody{
-		Body: model.UserBase{
-			Email:     "test@test.com",
-			FirstName: "firstname",
-			LastName:  "lastname",
+		Body: model.UserCreate{
+			UserBase: model.UserBase{
+				Email:     "test@test.com",
+				FirstName: "firstname",
+				LastName:  "lastname",
+			},
+			Password: "secret",
 		},
 	}
 
@@ -278,4 +281,43 @@ func Test_API_DeleteUser_Failure_Delete(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to delete user")
+}
+
+func Test_API_ListUsers_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := ListUsers(svc.Service)
+
+	svc.UserService.
+		EXPECT().
+		List().
+		Return([]model.User{
+			{Id: "user-uuid-test", UserBase: model.UserBase{Email: "test@test.com"}},
+		}, nil)
+
+	resp, err := handler(context.Background(), &struct{}{})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Len(t, resp.Body, 1)
+	require.Equal(t, "user-uuid-test", resp.Body[0].Id)
+}
+
+func Test_API_ListUsers_Failure(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := ListUsers(svc.Service)
+
+	svc.UserService.
+		EXPECT().
+		List().
+		Return(nil, errors.New("failed to list users"))
+
+	resp, err := handler(context.Background(), &struct{}{})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "failed to list users")
 }

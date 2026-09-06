@@ -69,13 +69,11 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"email",
 		"first_name",
 		"last_name",
-		"password",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
 		"First",
 		"Last",
-		"hashed-password",
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
@@ -86,7 +84,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, user)
-	require.Equal(t, "hashed-password", user.Password)
+	require.Equal(t, "test@test.com", user.Email)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -164,20 +162,16 @@ func Test_UserRepository_Create_Success(t *testing.T) {
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	user := &model.User{
-		UserBase: model.UserBase{
-			Email:     "test@test.com",
-			FirstName: "First",
-			LastName:  "Last",
-			Password:  "hashed-password",
-		},
+	base := model.UserBase{
+		Email:     "test@test.com",
+		FirstName: "First",
+		LastName:  "Last",
 	}
 
-	id, err := repo.Create(user)
+	id, err := repo.Create(base, "hashed-password")
 
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
-	require.Equal(t, id, user.Id)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -192,7 +186,7 @@ func Test_UserRepository_Create_ExecError(t *testing.T) {
 	mock.ExpectExec(`INSERT INTO "user"`).
 		WillReturnError(errors.New("insert failed"))
 
-	id, err := repo.Create(&model.User{})
+	id, err := repo.Create(model.UserBase{}, "hashed-password")
 
 	require.Error(t, err)
 	require.Empty(t, id)
@@ -256,12 +250,7 @@ func Test_UserRepository_PatchPassword_Success(t *testing.T) {
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.PatchPassword(&model.User{
-		Id: "user-uuid-test",
-		UserBase: model.UserBase{
-			Password: "new-password",
-		},
-	})
+	err = repo.PatchPassword("user-uuid-test", "new-password")
 
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -277,7 +266,7 @@ func Test_UserRepository_PatchPassword_ExecError(t *testing.T) {
 	mock.ExpectExec(`UPDATE "user" SET password`).
 		WillReturnError(errors.New("patch failed"))
 
-	err = repo.PatchPassword(&model.User{Id: "user-uuid-test"})
+	err = repo.PatchPassword("user-uuid-test", "new-password")
 
 	require.Error(t, err)
 }

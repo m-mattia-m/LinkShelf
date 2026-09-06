@@ -9,13 +9,46 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func Test_Unit_User_List_Success(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		List().
+		Return([]model.User{
+			{Id: "user-uuid-test", UserBase: model.UserBase{Email: "test@test.com"}},
+		}, nil)
+
+	users, err := svc.Service.UserService.List()
+
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	require.Equal(t, "user-uuid-test", users[0].Id)
+}
+
+func Test_Unit_User_List_Failure(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		List().
+		Return(nil, errors.New("an error occurred"))
+
+	users, err := svc.Service.UserService.List()
+
+	require.ErrorContains(t, err, "an error occurred")
+	require.Nil(t, users)
+}
+
 func Test_Unit_User_Creation_Success(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -30,13 +63,13 @@ func Test_Unit_User_Creation_Success(t *testing.T) {
 			},
 		}, nil)
 
-	userRequest := model.User{
+	userRequest := model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest)
 
@@ -47,7 +80,6 @@ func Test_Unit_User_Creation_Success(t *testing.T) {
 	require.Equal(t, userRequest.FirstName, user.FirstName)
 	require.Equal(t, userRequest.LastName, user.LastName)
 	require.Equal(t, userRequest.Email, user.Email)
-	require.NotEqual(t, userRequest.Password, user.Password)
 
 }
 
@@ -57,16 +89,16 @@ func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any()).
 		Return("", errors.New("an error occurred"))
 
-	userRequest := model.User{
+	userRequest := model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest)
 
@@ -80,7 +112,7 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -88,13 +120,13 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 		Get("user-uuid-test").
 		Return(nil, errors.New("an error occurred"))
 
-	userRequest := model.User{
+	userRequest := model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest)
 
@@ -254,7 +286,7 @@ func Test_Unit_User_PatchPassword_Success(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		PatchPassword(gomock.Any()).
+		PatchPassword(gomock.Any(), gomock.Any()).
 		Return(nil)
 
 	err = svc.Service.UserService.PatchPassword("user-uuid-test", &passwordRequest)
@@ -325,7 +357,7 @@ func Test_Unit_User_PatchPassword_Failure(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		PatchPassword(gomock.Any()).
+		PatchPassword(gomock.Any(), gomock.Any()).
 		Return(errors.New("an error occurred"))
 
 	err = svc.Service.UserService.PatchPassword("user-uuid-test", &passwordRequest)

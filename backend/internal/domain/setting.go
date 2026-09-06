@@ -29,5 +29,5 @@ func (s *settingServiceImpl) List() ([]model.Setting, error) {
 }
 
 func (s *settingServiceImpl) Update(setting model.Setting) error {
-	return s.Repository.SettingRepository.Update(setting.Key, setting.Value)
+	return s.Repository.SettingRepository.Upsert(setting.Key, setting.LanguageCode, setting.Value)
 }

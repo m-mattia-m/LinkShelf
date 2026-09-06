@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type {NavigationMenuItem} from '@nuxt/ui'
+import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
+
+const route = useRoute()
 
 const items = computed<NavigationMenuItem[][]>(() => [
   [
@@ -12,8 +14,8 @@ const items = computed<NavigationMenuItem[][]>(() => [
     {
       label: 'Shelf',
       to: '/app/shelf',
-      exact: true,
-      icon: 'uil-books'
+      icon: 'uil-books',
+      active: route.path.startsWith('/app/shelf')
     },
     {
       label: 'Settings',
@@ -43,61 +45,84 @@ const items = computed<NavigationMenuItem[][]>(() => [
   ]
 ])
 
+const { user, ensureUser } = useCurrentUser()
+
+onMounted(() => {
+  ensureUser()
+})
+
+const userLabel = computed(() => {
+  if (!user.value) return ''
+  const name = `${user.value.firstName} ${user.value.lastName}`.trim()
+  return name || user.value.email
+})
+
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [
+  [
+    {
+      label: 'Account settings',
+      icon: 'i-lucide-user-cog',
+      to: '/app/settings/users'
+    }
+  ]
+])
+
 </script>
 
 <template>
-  <UDashboardGroup class="flex flex-col lg:flex-row">
-    <UDashboardNavbar class="w-full lg:hidden">
-      <UDashboardSidebarToggle />
-    </UDashboardNavbar>
+  <UApp>
+    <UDashboardGroup class="flex flex-col lg:flex-row">
+      <UDashboardNavbar class="w-full lg:hidden">
+        <UDashboardSidebarToggle />
+      </UDashboardNavbar>
 
-    <UDashboardSidebar
-      collapsible
-      resizable
-      :ui="{ footer: 'border-t border-default' }"
-    >
-      <template #header="{ collapsed }">
-        <ULink v-if="!collapsed" href="/">
-          <AppLogo class="h-5 w-auto shrink-0" />
-        </ULink>
-        <UIcon
-          v-else
-          name="i-simple-icons-nuxtdotjs"
-          class="size-5 text-primary mx-auto"
-        />
-      </template>
+      <UDashboardSidebar
+        collapsible
+        resizable
+        :ui="{ footer: 'border-t border-default' }"
+      >
+        <template #header="{ collapsed }">
+          <ULink href="/" :class="collapsed ? 'mx-auto' : ''">
+            <AppLogo :class="collapsed ? 'size-8' : 'h-9 w-auto'" class="shrink-0" />
+          </ULink>
+        </template>
 
-      <template #default="{ collapsed }">
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="items[0]"
-          orientation="vertical"
-        />
+        <template #default="{ collapsed }">
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="items[0]"
+            orientation="vertical"
+          />
 
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="items[1]"
-          orientation="vertical"
-          class="mt-auto"
-        />
-      </template>
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="items[1]"
+            orientation="vertical"
+            class="mt-auto"
+          />
+        </template>
 
-      <template #footer="{ collapsed }">
-        <UButton
-          :avatar="{ src: 'https://github.com/benjamincanac.png' }"
-          :label="collapsed ? undefined : 'Benjamin'"
-          color="neutral"
-          variant="ghost"
-          class="w-full"
-          :block="collapsed"
-        />
-      </template>
-    </UDashboardSidebar>
+        <template #footer="{ collapsed }">
+          <UDropdownMenu :items="userMenuItems" class="w-full">
+            <UButton
+              :avatar="{ icon: 'i-lucide-user' }"
+              :label="collapsed ? undefined : userLabel"
+              color="neutral"
+              variant="ghost"
+              class="w-full"
+              :block="collapsed"
+            />
+          </UDropdownMenu>
+        </template>
+      </UDashboardSidebar>
 
-    <UDashboardPanel class="my-8 mx-4 sm:mx-6 lg:mx-8">
-      <slot />
-    </UDashboardPanel>
-  </UDashboardGroup>
+      <UDashboardPanel :ui="{ body: 'sm:py-8 sm:px-6 lg:px-8' }">
+        <template #body>
+          <slot />
+        </template>
+      </UDashboardPanel>
+    </UDashboardGroup>
+  </UApp>
 </template>
 
 

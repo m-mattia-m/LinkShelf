@@ -63,6 +63,12 @@ export interface SettingPageBody {
     imprintShow: boolean;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof SettingPageBody
+     */
+    loginOptions: Array<string> | null;
+    /**
+     * 
      * @type {string}
      * @memberof SettingPageBody
      */
@@ -103,6 +109,7 @@ export function instanceOfSettingPageBody(value: object): value is SettingPageBo
     if (!('contactShow' in value) || value['contactShow'] === undefined) return false;
     if (!('imprint' in value) || value['imprint'] === undefined) return false;
     if (!('imprintShow' in value) || value['imprintShow'] === undefined) return false;
+    if (!('loginOptions' in value) || value['loginOptions'] === undefined) return false;
     if (!('privacyPolicy' in value) || value['privacyPolicy'] === undefined) return false;
     if (!('privacyPolicyShow' in value) || value['privacyPolicyShow'] === undefined) return false;
     if (!('redirectToDashboard' in value) || value['redirectToDashboard'] === undefined) return false;
@@ -128,6 +135,7 @@ export function SettingPageBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
         'contactShow': json['contact_show'],
         'imprint': json['imprint'],
         'imprintShow': json['imprint_show'],
+        'loginOptions': json['login_options'] == null ? null : json['login_options'],
         'privacyPolicy': json['privacy_policy'],
         'privacyPolicyShow': json['privacy_policy_show'],
         'redirectToDashboard': json['redirect_to_dashboard'],
@@ -153,6 +161,7 @@ export function SettingPageBodyToJSONTyped(value?: Omit<SettingPageBody, '$schem
         'contact_show': value['contactShow'],
         'imprint': value['imprint'],
         'imprint_show': value['imprintShow'],
+        'login_options': value['loginOptions'],
         'privacy_policy': value['privacyPolicy'],
         'privacy_policy_show': value['privacyPolicyShow'],
         'redirect_to_dashboard': value['redirectToDashboard'],

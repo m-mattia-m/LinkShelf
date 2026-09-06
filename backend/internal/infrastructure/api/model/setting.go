@@ -1,9 +1,9 @@
 package model
 
 type Setting struct {
-	Key          string `json:"key" bson:"key"`
-	LanguageCode string `json:"language_code" bson:"language_code"`
-	Value        string `json:"value" bson:"value"`
+	Key          string `json:"key" bson:"key" required:"true"`
+	LanguageCode string `json:"language_code" bson:"language_code" required:"true"`
+	Value        string `json:"value" bson:"value" required:"true"`
 }
 
 type SettingRequest struct {

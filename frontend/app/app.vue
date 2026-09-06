@@ -23,10 +23,15 @@ const description = 'A production-ready starter template powered by Nuxt UI. Bui
 
 useHead({
   meta: [
-    {name: 'viewport', content: 'width=device-width, initial-scale=1'}
+    {name: 'viewport', content: 'width=device-width, initial-scale=1'},
+    {name: 'theme-color', content: '#1c274c'}
   ],
   link: [
-    {rel: 'icon', href: '/favicon.ico'}
+    {rel: 'icon', type: 'image/png', href: '/favicon-96x96.png', sizes: '96x96'},
+    {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
+    {rel: 'shortcut icon', href: '/favicon.ico'},
+    {rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png'},
+    {rel: 'manifest', href: '/site.webmanifest'}
   ],
   htmlAttrs: {
     lang: 'en'
@@ -38,8 +43,8 @@ useSeoMeta({
   description,
   ogTitle: title,
   ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
-  twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
+  ogImage: '/web-app-manifest-512x512.png',
+  twitterImage: '/web-app-manifest-512x512.png',
   twitterCard: 'summary_large_image'
 })
 </script>

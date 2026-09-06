@@ -16,11 +16,13 @@ import (
 )
 
 func Test_API_User_Create(t *testing.T) {
-	request := model.UserBase{
-		Email:     "user-api-creation@test.com",
-		FirstName: "user-api-creation-firstname",
-		LastName:  "user-api-creation-lastname",
-		Password:  "secret",
+	request := model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     "user-api-creation@test.com",
+			FirstName: "user-api-creation-firstname",
+			LastName:  "user-api-creation-lastname",
+		},
+		Password: "secret",
 	}
 
 	resp := doRequest(
@@ -48,27 +50,70 @@ func Test_API_User_Create(t *testing.T) {
 	require.Equal(t, request.Email, userResp.Email)
 	require.Equal(t, request.FirstName, userResp.FirstName)
 	require.Equal(t, request.LastName, userResp.LastName)
-	require.Empty(t, userResp.Password)
 }
 
-func Test_API_User_Get(t *testing.T) {
-	user := &model.User{
+func Test_API_User_List(t *testing.T) {
+	user := &model.UserCreate{
 		UserBase: model.UserBase{
-			Email:     "user-api-get@test.com",
-			FirstName: "user-api-get-firstname",
-			LastName:  "user-api-get-lastname",
-			Password:  "secret",
+			Email:     "user-api-list@test.com",
+			FirstName: "user-api-list-firstname",
+			LastName:  "user-api-list-lastname",
 		},
+		Password: "secret",
 	}
 
-	user, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	resp := doRequest(
 		t,
 		http.MethodGet,
-		fmt.Sprintf("/v1/users/%s", user.Id),
-		strings.NewReader(ObjectToJSON(user.UserBase)),
+		"/v1/users",
+		nil,
+	)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			t.Errorf("Failed to close response body: %v", err)
+		}
+	}(resp.Body)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var usersResp []model.User
+	err = json.Unmarshal(body, &usersResp)
+	require.NoError(t, err)
+
+	found := false
+	for _, u := range usersResp {
+		if u.Id == created.Id {
+			found = true
+		}
+	}
+	require.True(t, found)
+}
+
+func Test_API_User_Get(t *testing.T) {
+	user := &model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     "user-api-get@test.com",
+			FirstName: "user-api-get-firstname",
+			LastName:  "user-api-get-lastname",
+		},
+		Password: "secret",
+	}
+
+	created, err := TestService.UserService.Create(user)
+	require.NoError(t, err)
+
+	resp := doRequest(
+		t,
+		http.MethodGet,
+		fmt.Sprintf("/v1/users/%s", created.Id),
+		nil,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -86,37 +131,34 @@ func Test_API_User_Get(t *testing.T) {
 	err = json.Unmarshal(body, &userResp)
 	require.NoError(t, err)
 
-	require.Equal(t, user.Email, userResp.Email)
-	require.Equal(t, user.FirstName, userResp.FirstName)
-	require.Equal(t, user.LastName, userResp.LastName)
-	require.Empty(t, userResp.Password)
-
+	require.Equal(t, created.Email, userResp.Email)
+	require.Equal(t, created.FirstName, userResp.FirstName)
+	require.Equal(t, created.LastName, userResp.LastName)
 }
 
 func Test_API_User_Update(t *testing.T) {
-	user := &model.User{
+	user := &model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     "user-api-update@test.com",
 			FirstName: "user-api-update-firstname",
 			LastName:  "user-api-update-lastname",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 
-	user, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	updateRequest := model.UserBase{
 		Email:     "",
 		FirstName: "user-api-update-firstname-updated",
 		LastName:  "user-api-update-lastname-updated",
-		Password:  "",
 	}
 
 	resp := doRequest(
 		t,
 		http.MethodPut,
-		fmt.Sprintf("/v1/users/%s", user.Id),
+		fmt.Sprintf("/v1/users/%s", created.Id),
 		strings.NewReader(ObjectToJSON(updateRequest)),
 	)
 	defer func(Body io.ReadCloser) {
@@ -137,21 +179,19 @@ func Test_API_User_Update(t *testing.T) {
 
 	require.Equal(t, updateRequest.FirstName, userResp.FirstName)
 	require.Equal(t, updateRequest.LastName, userResp.LastName)
-	require.Empty(t, userResp.Password)
-
 }
 
 func Test_API_User_PatchPassword(t *testing.T) {
-	user := &model.User{
+	user := &model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     "user-api-patch-password@test.com",
 			FirstName: "user-api-patch-password-firstname",
 			LastName:  "user-api-patch-password-lastname",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 
-	user, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	patchPasswordRequest := model.UserRequestBodyOnlyPassword{
@@ -162,7 +202,7 @@ func Test_API_User_PatchPassword(t *testing.T) {
 	resp := doRequest(
 		t,
 		http.MethodPatch,
-		fmt.Sprintf("/v1/users/%s/password", user.Id),
+		fmt.Sprintf("/v1/users/%s/password", created.Id),
 		strings.NewReader(ObjectToJSON(patchPasswordRequest)),
 	)
 	defer func(Body io.ReadCloser) {
@@ -184,22 +224,22 @@ func Test_API_User_PatchPassword(t *testing.T) {
 }
 
 func Test_API_User_Delete(t *testing.T) {
-	user := &model.User{
+	user := &model.UserCreate{
 		UserBase: model.UserBase{
 			Email:     "user-api-delete-user@test.com",
 			FirstName: "user-api-delete-user-firstname",
 			LastName:  "user-api-delete-user-lastname",
-			Password:  "secret",
 		},
+		Password: "secret",
 	}
 
-	user, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user)
 	require.NoError(t, err)
 
 	resp := doRequest(
 		t,
 		http.MethodDelete,
-		fmt.Sprintf("/v1/users/%s", user.Id),
+		fmt.Sprintf("/v1/users/%s", created.Id),
 		nil,
 	)
 	defer func(Body io.ReadCloser) {

@@ -12,7 +12,7 @@ import (
 type SettingRepository interface {
 	List() ([]model.Setting, error)
 	GetByKey(key string) (*model.Setting, error)
-	Update(key string, value string) error
+	Upsert(key string, language string, value string) error
 }
 
 type settingRepository struct {
@@ -91,17 +91,17 @@ func (r *settingRepository) GetByKey(key string) (*model.Setting, error) {
 	return &setting, nil
 }
 
-func (r *settingRepository) Update(key string, value string) error {
+func (r *settingRepository) Upsert(key string, language string, value string) error {
 	query, err := buildSqlStatements(`
-		UPDATE setting
-		SET value = ?
-		WHERE key = ?
+		INSERT INTO setting (key, language, value)
+		VALUES (?, ?, ?)
+		ON CONFLICT (key, language) DO UPDATE SET value = EXCLUDED.value
 	`)
 	if err != nil {
 		return err
 	}
 
-	_, err = r.Engine.ExecContext(context.TODO(), query, value, key)
+	_, err = r.Engine.ExecContext(context.TODO(), query, key, language, value)
 	if err != nil {
 		return err
 	}

@@ -6,14 +6,18 @@ type User struct {
 }
 
 type UserBase struct {
-	Email     string `json:"email" bson:"email"`
-	FirstName string `json:"first_name" bson:"first_name"`
-	LastName  string `json:"last_name" bson:"last_name"`
-	Password  string `json:"password" bson:"password"`
+	Email     string `json:"email" bson:"email" required:"true"`
+	FirstName string `json:"first_name" bson:"first_name" required:"true"`
+	LastName  string `json:"last_name" bson:"last_name" required:"true"`
+}
+
+type UserCreate struct {
+	UserBase
+	Password string `json:"password" bson:"password" required:"true"`
 }
 
 type UserRequestBody struct {
-	Body UserBase `json:"body" bson:"body"`
+	Body UserCreate `json:"body" bson:"body"`
 }
 
 type UserPatchPasswordFilterAndBody struct {
@@ -22,8 +26,8 @@ type UserPatchPasswordFilterAndBody struct {
 }
 
 type UserRequestBodyOnlyPassword struct {
-	OldPassword string `json:"old_password" bson:"old_password"`
-	NewPassword string `json:"new_password" bson:"new_password"`
+	OldPassword string `json:"old_password" bson:"old_password" required:"true"`
+	NewPassword string `json:"new_password" bson:"new_password" required:"true"`
 }
 
 type UserRequestFilter struct {
@@ -37,4 +41,8 @@ type UserFilterFilterAndBody struct {
 
 type UserResponse struct {
 	Body User `json:"body" bson:"body"`
+}
+
+type UserListResponse struct {
+	Body []User `json:"body" bson:"body"`
 }

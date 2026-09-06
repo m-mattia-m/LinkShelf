@@ -15,9 +15,9 @@ type UserRepository interface {
 	List() ([]model.User, error)
 	Get(id string) (*model.User, error)
 	GetPassword(id string) (string, error)
-	Create(u *model.User) (string, error)
+	Create(u model.UserBase, hashedPassword string) (string, error)
 	Update(u *model.User) error
-	PatchPassword(u *model.User) error
+	PatchPassword(id string, hashedPassword string) error
 	Delete(u *model.User) error
 }
 
@@ -49,7 +49,7 @@ func (r *userRepository) List() ([]model.User, error) {
 	}
 	defer rows.Close()
 
-	var users []model.User
+	users := make([]model.User, 0)
 	for rows.Next() {
 		var user model.User
 		err := rows.Scan(
@@ -69,7 +69,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, password
+		SELECT id, email, first_name, last_name
 		FROM "user"
 		WHERE id = ?
 	`)
@@ -83,7 +83,6 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
-		&user.Password,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -115,7 +114,7 @@ func (r *userRepository) GetPassword(id string) (string, error) {
 	return password, err
 }
 
-func (r *userRepository) Create(u *model.User) (string, error) {
+func (r *userRepository) Create(u model.UserBase, hashedPassword string) (string, error) {
 	query, err := buildSqlStatements(`
 		INSERT INTO "user" (id, email, first_name, last_name, password)
 		VALUES (?, ?, ?, ?, ?)
@@ -128,29 +127,29 @@ func (r *userRepository) Create(u *model.User) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u.Id = generatedUserId.String()
+	id := generatedUserId.String()
 
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
 		query,
-		u.Id,
+		id,
 		u.Email,
 		u.FirstName,
 		u.LastName,
-		u.Password,
+		hashedPassword,
 	)
 	if err != nil {
 		return "", err
 	}
 
-	return u.Id, nil
+	return id, nil
 }
 
 func (r *userRepository) Update(u *model.User) error {
 	query, err := buildSqlStatements(`
 		UPDATE "user"
-		SET email = ?, 
-		 	first_name = ?, 
+		SET email = ?,
+		 	first_name = ?,
 			last_name = ?
 		WHERE id = ?
 	`)
@@ -173,7 +172,7 @@ func (r *userRepository) Update(u *model.User) error {
 	return nil
 }
 
-func (r *userRepository) PatchPassword(u *model.User) error {
+func (r *userRepository) PatchPassword(id string, hashedPassword string) error {
 	query, err := buildSqlStatements(`
 		UPDATE "user"
 		SET password = ?
@@ -186,8 +185,8 @@ func (r *userRepository) PatchPassword(u *model.User) error {
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
 		query,
-		u.Password,
-		u.Id,
+		hashedPassword,
+		id,
 	)
 	if err != nil {
 		return err
