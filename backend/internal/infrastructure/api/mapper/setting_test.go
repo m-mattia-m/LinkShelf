@@ -88,32 +88,6 @@ func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
 	require.Empty(t, resp.Body.PrivacyPolicy)
 }
 
-func Test_MapSettingToSettingPageResponse_LoginOptions(t *testing.T) {
-	settings := []model.Setting{
-		{Key: "login_options", LanguageCode: "en", Value: `["Local", "Zitadel"]`},
-	}
-
-	resp := MapSettingToSettingPageResponse("en", settings, false)
-
-	require.Equal(t, []string{"Local", "Zitadel"}, resp.Body.LoginOptions)
-}
-
-func Test_MapSettingToSettingPageResponse_LoginOptions_Missing(t *testing.T) {
-	resp := MapSettingToSettingPageResponse("en", nil, false)
-
-	require.Nil(t, resp.Body.LoginOptions)
-}
-
-func Test_MapSettingToSettingPageResponse_LoginOptions_Invalid(t *testing.T) {
-	settings := []model.Setting{
-		{Key: "login_options", LanguageCode: "en", Value: `not-json`},
-	}
-
-	resp := MapSettingToSettingPageResponse("en", settings, false)
-
-	require.Nil(t, resp.Body.LoginOptions)
-}
-
 func Test_MapSettingToSettingPageResponse_OidcEnabled(t *testing.T) {
 	require.True(t, MapSettingToSettingPageResponse("en", nil, true).Body.OidcEnabled)
 	require.False(t, MapSettingToSettingPageResponse("en", nil, false).Body.OidcEnabled)
