@@ -39,7 +39,7 @@ func NewRefreshTokenRepository(engine *sql.DB, table string) (RefreshTokenReposi
 
 func (r *refreshTokenRepository) Create(userId, tokenHash string, expiresAt time.Time) error {
 	query, err := buildSqlStatements(`
-		INSERT INTO "refresh_token" (id, user_id, token_hash, expires_at)
+		INSERT INTO refresh_token (id, user_id, token_hash, expires_at)
 		VALUES (?, ?, ?, ?)
 	`)
 	if err != nil {
@@ -51,14 +51,18 @@ func (r *refreshTokenRepository) Create(userId, tokenHash string, expiresAt time
 		return err
 	}
 
-	_, err = r.Engine.ExecContext(context.TODO(), query, id.String(), userId, tokenHash, expiresAt)
+	// Both engines' expires_at column is timezone-naive (Postgres TIMESTAMP,
+	// MySQL DATETIME) - it stores whatever wall-clock fields it's given. A
+	// non-UTC time.Time would round-trip shifted by the server's local UTC
+	// offset, so always normalize to UTC before binding it.
+	_, err = r.Engine.ExecContext(context.TODO(), query, id.String(), userId, tokenHash, expiresAt.UTC())
 	return err
 }
 
 func (r *refreshTokenRepository) GetByHash(tokenHash string) (*RefreshToken, error) {
 	query, err := buildSqlStatements(`
 		SELECT id, user_id, token_hash, expires_at
-		FROM "refresh_token"
+		FROM refresh_token
 		WHERE token_hash = ?
 	`)
 	if err != nil {
@@ -82,7 +86,7 @@ func (r *refreshTokenRepository) GetByHash(tokenHash string) (*RefreshToken, err
 
 func (r *refreshTokenRepository) DeleteByHash(tokenHash string) error {
 	query, err := buildSqlStatements(`
-		DELETE FROM "refresh_token"
+		DELETE FROM refresh_token
 		WHERE token_hash = ?
 	`)
 	if err != nil {
@@ -95,7 +99,7 @@ func (r *refreshTokenRepository) DeleteByHash(tokenHash string) error {
 
 func (r *refreshTokenRepository) DeleteByUserId(userId string) error {
 	query, err := buildSqlStatements(`
-		DELETE FROM "refresh_token"
+		DELETE FROM refresh_token
 		WHERE user_id = ?
 	`)
 	if err != nil {

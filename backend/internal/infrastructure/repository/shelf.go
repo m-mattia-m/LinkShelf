@@ -33,6 +33,45 @@ func NewShelfRepository(engine *sql.DB, table string) (ShelfRepository, error) {
 	}, nil
 }
 
+// nullIfEmpty maps "" to a SQL NULL, since path/domain are stored as NULL
+// (not "") when unset - a plain UNIQUE constraint then allows any number of
+// shelves to leave them unset, on both Postgres and MySQL. See
+// migrations/postgres/0003_dashboard.up.sql for why.
+func nullIfEmpty(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+// scanShelf reads a shelf row where path/domain may be SQL NULL, translating
+// NULL back to "" so nothing above the repository layer has to know about it.
+func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
+	var (
+		shelf  model.Shelf
+		path   sql.NullString
+		domain sql.NullString
+	)
+
+	err := scan(
+		&shelf.Id,
+		&shelf.Title,
+		&path,
+		&domain,
+		&shelf.Description,
+		&shelf.Theme,
+		&shelf.Icon,
+		&shelf.UserId,
+	)
+	if err != nil {
+		return model.Shelf{}, err
+	}
+
+	shelf.Path = path.String
+	shelf.Domain = domain.String
+	return shelf, nil
+}
+
 func (r *shelfRepository) List() ([]model.Shelf, error) {
 	query, err := buildSqlStatements(`
 		SELECT id, title, path, domain, description, theme, icon, user_id
@@ -51,17 +90,7 @@ func (r *shelfRepository) List() ([]model.Shelf, error) {
 	shelves := make([]model.Shelf, 0)
 
 	for rows.Next() {
-		var shelf model.Shelf
-		err := rows.Scan(
-			&shelf.Id,
-			&shelf.Title,
-			&shelf.Path,
-			&shelf.Domain,
-			&shelf.Description,
-			&shelf.Theme,
-			&shelf.Icon,
-			&shelf.UserId,
-		)
+		shelf, err := scanShelf(rows.Scan)
 		if err != nil {
 			return nil, err
 		}
@@ -95,17 +124,7 @@ func (r *shelfRepository) ListByUserId(userId string) ([]model.Shelf, error) {
 	shelves := make([]model.Shelf, 0)
 
 	for rows.Next() {
-		var shelf model.Shelf
-		err := rows.Scan(
-			&shelf.Id,
-			&shelf.Title,
-			&shelf.Path,
-			&shelf.Domain,
-			&shelf.Description,
-			&shelf.Theme,
-			&shelf.Icon,
-			&shelf.UserId,
-		)
+		shelf, err := scanShelf(rows.Scan)
 		if err != nil {
 			return nil, err
 		}
@@ -130,23 +149,17 @@ func (r *shelfRepository) Get(id string) (*model.Shelf, error) {
 		return nil, err
 	}
 
-	var shelf model.Shelf
-	err = r.Engine.QueryRowContext(context.TODO(), query, id).Scan(
-		&shelf.Id,
-		&shelf.Title,
-		&shelf.Path,
-		&shelf.Domain,
-		&shelf.Description,
-		&shelf.Theme,
-		&shelf.Icon,
-		&shelf.UserId,
-	)
+	row := r.Engine.QueryRowContext(context.TODO(), query, id)
+	shelf, err := scanShelf(row.Scan)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &shelf, err
+	return &shelf, nil
 }
 
 func (r *shelfRepository) GetByPath(path string) (*model.Shelf, error) {
@@ -159,23 +172,17 @@ func (r *shelfRepository) GetByPath(path string) (*model.Shelf, error) {
 		return nil, err
 	}
 
-	var shelf model.Shelf
-	err = r.Engine.QueryRowContext(context.TODO(), query, path).Scan(
-		&shelf.Id,
-		&shelf.Title,
-		&shelf.Path,
-		&shelf.Domain,
-		&shelf.Description,
-		&shelf.Theme,
-		&shelf.Icon,
-		&shelf.UserId,
-	)
+	row := r.Engine.QueryRowContext(context.TODO(), query, path)
+	shelf, err := scanShelf(row.Scan)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &shelf, err
+	return &shelf, nil
 }
 
 func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
@@ -198,8 +205,8 @@ func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 		query,
 		s.Id,
 		s.Title,
-		s.Path,
-		s.Domain,
+		nullIfEmpty(s.Path),
+		nullIfEmpty(s.Domain),
 		s.Description,
 		s.Theme,
 		s.Icon,
@@ -231,8 +238,8 @@ func (r *shelfRepository) Update(s *model.Shelf) error {
 		context.TODO(),
 		query,
 		s.Title,
-		s.Path,
-		s.Domain,
+		nullIfEmpty(s.Path),
+		nullIfEmpty(s.Domain),
 		s.Description,
 		s.Theme,
 		s.Icon,

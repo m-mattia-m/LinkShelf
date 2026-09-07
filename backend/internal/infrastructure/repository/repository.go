@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
@@ -49,7 +50,7 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
-	if err := runMigrations(migrateDSN); err != nil {
+	if err := runMigrations(migrateDSN, driver); err != nil {
 		return nil, err
 	}
 
@@ -120,10 +121,25 @@ func connectToDatabase(dsn, driver string) (*sql.DB, error) {
 	return db, nil
 }
 
-func runMigrations(migrateDSN string) error {
-	zap.L().Info("Applying DB migrations...")
+// migrationSource returns the embedded migration set matching the driver
+// returned by getConnectionInformation ("pgx" or "mysql"). The two engines'
+// migrations live in separate directories since their DDL isn't portable
+// line-for-line (see migrations/embed.go).
+func migrationSource(driver string) (source.Driver, error) {
+	switch driver {
+	case "pgx":
+		return iofs.New(migrations.PostgresFS, "postgres")
+	case "mysql":
+		return iofs.New(migrations.MysqlFS, "mysql")
+	default:
+		return nil, fmt.Errorf("no migrations available for driver %q", driver)
+	}
+}
 
-	source, err := iofs.New(migrations.FS, ".")
+func runMigrations(migrateDSN, driver string) error {
+	zap.L().Info("Applying DB migrations...", zap.String("driver", driver))
+
+	source, err := migrationSource(driver)
 	if err != nil {
 		return fmt.Errorf("migration source failed: %w", err)
 	}
@@ -164,10 +180,12 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	case "postgres":
 		driver = "pgx"
 
-		// database/sql DSN (NO scheme)
+		// database/sql DSN (NO scheme). params (e.g. "sslmode=disable") is a
+		// space-separated list of key=value pairs in this keyword/value DSN
+		// style, appended the same way as the other fields.
 		sqlDSN = fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s",
-			host, port, username, password, dbname,
+			"host=%s port=%s user=%s password=%s dbname=%s %s",
+			host, port, username, password, dbname, params,
 		)
 
 		// Migrate DB URL DSN
@@ -178,9 +196,12 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	case "mysql":
 		driver = "mysql"
 
-		// database/sql DSN (NO scheme)
-		sqlDSN = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-			username, password, host, port, dbname)
+		// database/sql DSN (NO scheme). params (e.g. "charset=utf8mb4&parseTime=true")
+		// must reach this DSN, not just migrateDSN below - without
+		// parseTime=true here, the mysql driver can't scan DATETIME/TIMESTAMP
+		// columns into time.Time at all.
+		sqlDSN = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?%s",
+			username, password, host, port, dbname, params)
 
 		migrateDSN = fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s?%s",
 			username, password, host, port, dbname, params)
@@ -189,11 +210,18 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 		os.Exit(1)
 	}
 
-	sqlDSN = strings.TrimSuffix(sqlDSN, "?")
+	sqlDSN = strings.TrimSpace(strings.TrimSuffix(sqlDSN, "?"))
 	migrateDSN = strings.TrimSuffix(migrateDSN, "?")
 
 	return sqlDSN, driver, migrateDSN, nil
 }
+
+// pgQuotedIdentifiers lists identifiers that are quoted Postgres-style (e.g.
+// "user") in the source query text because they're reserved words there (
+// "user" collides with Postgres's USER/CURRENT_USER keyword). MySQL reserves
+// the same words but quotes identifiers with backticks instead, so
+// buildSqlStatements rewrites them for that driver.
+var pgQuotedIdentifiers = strings.NewReplacer(`"user"`, "`user`")
 
 func buildSqlStatements(query string) (string, error) {
 	_, driver, _, err := getConnectionInformation()
@@ -202,7 +230,7 @@ func buildSqlStatements(query string) (string, error) {
 	}
 
 	if driver != "pgx" {
-		return query, nil
+		return pgQuotedIdentifiers.Replace(query), nil
 	}
 
 	next := 1

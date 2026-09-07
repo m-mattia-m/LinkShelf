@@ -86,6 +86,10 @@ func (r *sectionRepository) Get(id string) (*model.Section, error) {
 		&section.Title,
 		&section.ShelfId,
 	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

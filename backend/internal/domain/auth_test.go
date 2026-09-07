@@ -209,6 +209,15 @@ func Test_Unit_Auth_Oidc_NotConfigured(t *testing.T) {
 
 	_, err = svc.Service.AuthService.OidcCallback(context.Background(), "code", "state", nil)
 	require.ErrorIs(t, err, ErrOidcNotConfigured)
+
+	require.False(t, svc.Service.AuthService.IsOidcEnabled())
+}
+
+func Test_Unit_Auth_IsOidcEnabled_True(t *testing.T) {
+	repo := &repository.Repository{}
+	service := NewService(repo, &oidcclient.Client{})
+
+	require.True(t, service.AuthService.IsOidcEnabled())
 }
 
 func Test_Unit_Auth_ResolveOidcIdentity_LinkMode_Success(t *testing.T) {
