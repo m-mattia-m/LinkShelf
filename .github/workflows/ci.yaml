@@ -56,14 +56,12 @@ jobs:
       - name: Run unit tests
         working-directory: backend
         run: |
-          PKGS=$(go list ./... | grep -Ev '/(mocks|config|cmd|migrations)')
-          go test $PKGS -coverprofile=coverage.unit.out
+          go list ./... | grep -Ev '/(mocks|config|cmd|migrations)' | xargs go test -coverprofile=coverage.unit.out
 
       - name: Run integration tests
         working-directory: backend
         run: |
-          PKGS=$(go list -tags=integration ./... | grep -Ev '/(mocks|config|cmd|migrations)')
-          go test -tags=integration $PKGS -coverprofile=coverage.integration.out
+          go list -tags=integration ./... | grep -Ev '/(mocks|config|cmd|migrations)' | xargs go test -tags=integration -coverprofile=coverage.integration.out
 
       - name: Merge coverage
         working-directory: backend
