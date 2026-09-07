@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   routeRules: {
-    '/': { prerender: true }
+    '/': {prerender: true}
   },
 
   compatibilityDate: '2025-01-15',
@@ -42,9 +42,9 @@ export default defineNuxtConfig({
   i18n: {
     defaultLocale: 'en',
     locales: [
-      { code: 'en', name: 'English', file: 'en.json' },
-      { code: 'de', name: 'Deutsch', file: 'de.json' },
-      { code: 'de-CH', name: 'Schwiizerdütsch', file: 'de-CH.json' }
+      {code: 'en', name: 'English', file: 'en.json'},
+      {code: 'de', name: 'Deutsch', file: 'de.json'},
+      {code: 'de-CH', name: 'Schwiizerdütsch', file: 'de-CH.json'}
     ]
   },
 
@@ -52,6 +52,12 @@ export default defineNuxtConfig({
     database: {
       type: 'sqlite',
       filename: ':memory:'
+    }
+  },
+
+  ui: {
+    theme: {
+      colors: ['primary', 'secondary', 'tertiary', 'success', 'info', 'warning', 'error']
     }
   }
 })
