@@ -26,11 +26,14 @@ import (
 // extended the way Test_API_Shelf_GetPublicByPath_Success is: create known
 // shelves/sections/links for a user and assert the exact numbers.
 func Test_API_Statistic_Get(t *testing.T) {
-	resp := doRequest(
+	_, token := createTestUser(t)
+
+	resp := doAuthedRequest(
 		t,
 		http.MethodGet,
 		"/v1/statistics",
 		nil,
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()

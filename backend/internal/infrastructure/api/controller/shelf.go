@@ -11,14 +11,14 @@ import (
 
 func CreateShelf(svc *domain.Service) func(c context.Context, input *model.ShelfRequestBody) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfRequestBody) (*model.ShelfResponse, error) {
-		shelfId, err := svc.ShelfService.Create(mapper.MapShelfBaseToShelfPointer(input.Body))
+		shelfId, err := svc.ShelfService.Create(UserIdFromContext(c), mapper.MapShelfBaseToShelfPointer(input.Body))
 		if err != nil {
 			return nil, mapper.MapWriteError("failed to create shelf", err)
 		}
 
-		shelf, err := svc.ShelfService.Get(shelfId)
+		shelf, err := svc.ShelfService.Get(shelfId, UserIdFromContext(c), IsAdminFromContext(c))
 		if err != nil {
-			return nil, huma.Error400BadRequest("failed to get shelf", err)
+			return nil, mapper.MapOwnershipError("failed to get shelf", err)
 		}
 
 		return mapper.MapShelfToShelfResponse(*shelf), nil
@@ -27,7 +27,7 @@ func CreateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 
 func ListShelf(svc *domain.Service) func(c context.Context, input *struct{}) (*model.ShelfListResponse, error) {
 	return func(c context.Context, input *struct{}) (*model.ShelfListResponse, error) {
-		shelves, err := svc.ShelfService.List()
+		shelves, err := svc.ShelfService.List(UserIdFromContext(c), IsAdminFromContext(c))
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to list shelves", err)
 		}
@@ -38,9 +38,12 @@ func ListShelf(svc *domain.Service) func(c context.Context, input *struct{}) (*m
 
 func GetShelfById(svc *domain.Service) func(c context.Context, input *model.ShelfRequestFilter) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfRequestFilter) (*model.ShelfResponse, error) {
-		shelf, err := svc.ShelfService.Get(input.ShelfId)
+		shelf, err := svc.ShelfService.Get(input.ShelfId, UserIdFromContext(c), IsAdminFromContext(c))
 		if err != nil {
-			return nil, huma.Error400BadRequest("failed to get shelf", err)
+			return nil, mapper.MapOwnershipError("failed to get shelf", err)
+		}
+		if shelf == nil {
+			return nil, huma.Error404NotFound("shelf not found")
 		}
 
 		return mapper.MapShelfToShelfResponse(*shelf), nil
@@ -64,9 +67,12 @@ func GetPublicShelfByPath(svc *domain.Service) func(c context.Context, input *mo
 
 func UpdateShelf(svc *domain.Service) func(c context.Context, input *model.ShelfFilterFilterAndBody) (*model.ShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfFilterFilterAndBody) (*model.ShelfResponse, error) {
-		shelf, err := svc.ShelfService.Update(input.ShelfId, mapper.MapShelfBaseToShelfPointer(input.Body))
+		shelf, err := svc.ShelfService.Update(input.ShelfId, UserIdFromContext(c), IsAdminFromContext(c), mapper.MapShelfBaseToShelfPointer(input.Body))
 		if err != nil {
-			return nil, mapper.MapWriteError("failed to update shelf", err)
+			return nil, mapper.MapOwnershipError("failed to update shelf", err)
+		}
+		if shelf == nil {
+			return nil, huma.Error404NotFound("shelf not found")
 		}
 
 		return mapper.MapShelfToShelfResponse(*shelf), nil
@@ -75,9 +81,12 @@ func UpdateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 
 func DeleteShelf(svc *domain.Service) func(c context.Context, input *model.ShelfRequestFilter) (*struct{}, error) {
 	return func(c context.Context, input *model.ShelfRequestFilter) (*struct{}, error) {
-		shelf, err := svc.ShelfService.Get(input.ShelfId)
+		shelf, err := svc.ShelfService.Get(input.ShelfId, UserIdFromContext(c), IsAdminFromContext(c))
 		if err != nil {
-			return nil, huma.Error400BadRequest("failed to get shelf", err)
+			return nil, mapper.MapOwnershipError("failed to get shelf", err)
+		}
+		if shelf == nil {
+			return nil, huma.Error404NotFound("shelf not found")
 		}
 
 		err = svc.ShelfService.Delete(shelf)

@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"backend/internal/domain"
 	"errors"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -19,4 +20,17 @@ func MapWriteError(fallbackMessage string, err error) error {
 	}
 
 	return huma.Error400BadRequest(fallbackMessage, err)
+}
+
+// MapOwnershipError turns the domain package's ownership-related sentinel
+// errors into the right HTTP status, falling back to a 400 Bad Request.
+func MapOwnershipError(fallbackMessage string, err error) error {
+	switch {
+	case errors.Is(err, domain.ErrForbidden):
+		return huma.Error403Forbidden("you do not have access to this resource", err)
+	case errors.Is(err, domain.ErrNotFound):
+		return huma.Error404NotFound("resource not found", err)
+	default:
+		return huma.Error400BadRequest(fallbackMessage, err)
+	}
 }

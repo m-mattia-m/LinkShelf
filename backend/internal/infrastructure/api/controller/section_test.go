@@ -25,7 +25,7 @@ func Test_API_CreateSection_Success(t *testing.T) {
 
 	svc.SectionService.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&model.Section{
 			Id: "section-uuid-test",
 			SectionBase: model.SectionBase{
@@ -58,7 +58,7 @@ func Test_API_CreateSection_Failure(t *testing.T) {
 
 	svc.SectionService.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to create section"))
 
 	resp, err := handler(context.Background(), input)
@@ -151,7 +151,7 @@ func Test_API_UpdateSection_Success(t *testing.T) {
 
 	svc.SectionService.
 		EXPECT().
-		Update(gomock.Any(), gomock.Any()).
+		Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&model.Section{
 			Id: "section-uuid-test",
 			SectionBase: model.SectionBase{
@@ -208,7 +208,7 @@ func Test_API_UpdateSection_Failure_Service(t *testing.T) {
 
 	svc.SectionService.
 		EXPECT().
-		Update(gomock.Any(), gomock.Any()).
+		Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to update section"))
 
 	resp, err := handler(context.Background(), input)
@@ -226,7 +226,7 @@ func Test_API_DeleteSection_Success(t *testing.T) {
 
 	svc.SectionService.
 		EXPECT().
-		Delete("section-uuid-test").
+		Delete(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 
 	resp, err := handler(context.Background(), &model.SectionRequestSectionFilter{
@@ -245,7 +245,7 @@ func Test_API_DeleteSection_Failure(t *testing.T) {
 
 	svc.SectionService.
 		EXPECT().
-		Delete("section-uuid-test").
+		Delete(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("failed to delete section"))
 
 	resp, err := handler(context.Background(), &model.SectionRequestSectionFilter{

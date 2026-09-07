@@ -41,32 +41,32 @@ func (m *MockSectionService) EXPECT() *MockSectionServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockSectionService) Create(u *model.Section) (*model.Section, error) {
+func (m *MockSectionService) Create(callerUserId string, isAdmin bool, u *model.Section) (*model.Section, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u)
+	ret := m.ctrl.Call(m, "Create", callerUserId, isAdmin, u)
 	ret0, _ := ret[0].(*model.Section)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockSectionServiceMockRecorder) Create(u any) *gomock.Call {
+func (mr *MockSectionServiceMockRecorder) Create(callerUserId, isAdmin, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockSectionService)(nil).Create), u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockSectionService)(nil).Create), callerUserId, isAdmin, u)
 }
 
 // Delete mocks base method.
-func (m *MockSectionService) Delete(sectionId string) error {
+func (m *MockSectionService) Delete(sectionId, callerUserId string, isAdmin bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", sectionId)
+	ret := m.ctrl.Call(m, "Delete", sectionId, callerUserId, isAdmin)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockSectionServiceMockRecorder) Delete(sectionId any) *gomock.Call {
+func (mr *MockSectionServiceMockRecorder) Delete(sectionId, callerUserId, isAdmin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSectionService)(nil).Delete), sectionId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSectionService)(nil).Delete), sectionId, callerUserId, isAdmin)
 }
 
 // Get mocks base method.
@@ -100,16 +100,16 @@ func (mr *MockSectionServiceMockRecorder) List(shelfId any) *gomock.Call {
 }
 
 // Update mocks base method.
-func (m *MockSectionService) Update(sectionId string, u *model.Section) (*model.Section, error) {
+func (m *MockSectionService) Update(sectionId, callerUserId string, isAdmin bool, u *model.Section) (*model.Section, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", sectionId, u)
+	ret := m.ctrl.Call(m, "Update", sectionId, callerUserId, isAdmin, u)
 	ret0, _ := ret[0].(*model.Section)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockSectionServiceMockRecorder) Update(sectionId, u any) *gomock.Call {
+func (mr *MockSectionServiceMockRecorder) Update(sectionId, callerUserId, isAdmin, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSectionService)(nil).Update), sectionId, u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSectionService)(nil).Update), sectionId, callerUserId, isAdmin, u)
 }

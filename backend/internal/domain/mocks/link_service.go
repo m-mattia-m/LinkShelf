@@ -41,32 +41,32 @@ func (m *MockLinkService) EXPECT() *MockLinkServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockLinkService) Create(u *model.Link) (*model.Link, error) {
+func (m *MockLinkService) Create(callerUserId string, isAdmin bool, u *model.Link) (*model.Link, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u)
+	ret := m.ctrl.Call(m, "Create", callerUserId, isAdmin, u)
 	ret0, _ := ret[0].(*model.Link)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockLinkServiceMockRecorder) Create(u any) *gomock.Call {
+func (mr *MockLinkServiceMockRecorder) Create(callerUserId, isAdmin, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockLinkService)(nil).Create), u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockLinkService)(nil).Create), callerUserId, isAdmin, u)
 }
 
 // Delete mocks base method.
-func (m *MockLinkService) Delete(linkId string) error {
+func (m *MockLinkService) Delete(linkId, callerUserId string, isAdmin bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", linkId)
+	ret := m.ctrl.Call(m, "Delete", linkId, callerUserId, isAdmin)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockLinkServiceMockRecorder) Delete(linkId any) *gomock.Call {
+func (mr *MockLinkServiceMockRecorder) Delete(linkId, callerUserId, isAdmin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLinkService)(nil).Delete), linkId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLinkService)(nil).Delete), linkId, callerUserId, isAdmin)
 }
 
 // Get mocks base method.
@@ -100,16 +100,16 @@ func (mr *MockLinkServiceMockRecorder) List(shelfId any) *gomock.Call {
 }
 
 // Update mocks base method.
-func (m *MockLinkService) Update(linkId string, linkRequest *model.Link) (*model.Link, error) {
+func (m *MockLinkService) Update(linkId, callerUserId string, isAdmin bool, linkRequest *model.Link) (*model.Link, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", linkId, linkRequest)
+	ret := m.ctrl.Call(m, "Update", linkId, callerUserId, isAdmin, linkRequest)
 	ret0, _ := ret[0].(*model.Link)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockLinkServiceMockRecorder) Update(linkId, linkRequest any) *gomock.Call {
+func (mr *MockLinkServiceMockRecorder) Update(linkId, callerUserId, isAdmin, linkRequest any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockLinkService)(nil).Update), linkId, linkRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockLinkService)(nil).Update), linkId, callerUserId, isAdmin, linkRequest)
 }

@@ -13,7 +13,6 @@ Name | Type
 `path` | string
 `theme` | string
 `title` | string
-`userId` | string
 
 ## Example
 
@@ -29,7 +28,6 @@ const example = {
   "path": null,
   "theme": null,
   "title": null,
-  "userId": null,
 } satisfies ShelfBase
 
 console.log(example)

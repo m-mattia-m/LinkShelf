@@ -37,15 +37,24 @@ watch(open, (isOpen) => {
 })
 
 const schema = v.object({
-  title: v.pipe(v.string(), v.nonEmpty('Required')),
-  link: v.pipe(v.string(), v.nonEmpty('Required')),
+  title: v.pipe(v.string('Title is required'), v.nonEmpty('Title is required')),
+  link: v.pipe(v.string('URL is required'), v.nonEmpty('URL is required')),
   icon: v.string(),
   color: v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{6}$/, 'Must be a hex color, e.g. #588157'))
 })
 
-const formRef = ref<{ setErrors: (errs: { name?: string, message: string }[]) => void } | null>(null)
+const formRef = ref<{
+  validate: () => Promise<unknown>
+  setErrors: (errs: { name?: string, message: string }[]) => void
+} | null>(null)
 
 async function save(close: () => void) {
+  try {
+    await formRef.value?.validate()
+  } catch {
+    return
+  }
+
   saving.value = true
   try {
     const linkBase = {
@@ -88,11 +97,8 @@ async function save(close: () => void) {
           <UInput v-model="form.link" class="w-full" placeholder="https://example.com" />
         </UFormField>
 
-        <UFormField label="Icon" name="icon" help="An iconify icon name, e.g. i-lucide-link">
-          <div class="flex items-center gap-2">
-            <UIcon :name="form.icon || 'i-lucide-image'" class="size-5 shrink-0 text-muted" />
-            <UInput v-model="form.icon" class="w-full" placeholder="i-lucide-link" />
-          </div>
+        <UFormField label="Icon" name="icon">
+          <IconPicker v-model="form.icon" placeholder="i-lucide-link" />
         </UFormField>
 
         <UFormField label="Color" name="color">

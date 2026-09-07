@@ -50,6 +50,7 @@ func Test_API_User_Create(t *testing.T) {
 	require.Equal(t, request.Email, userResp.Email)
 	require.Equal(t, request.FirstName, userResp.FirstName)
 	require.Equal(t, request.LastName, userResp.LastName)
+	require.Equal(t, model.RoleUser, userResp.Role)
 }
 
 func Test_API_User_List(t *testing.T) {
@@ -62,14 +63,17 @@ func Test_API_User_List(t *testing.T) {
 		Password: "secret",
 	}
 
-	created, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user, false)
 	require.NoError(t, err)
 
-	resp := doRequest(
+	_, adminToken := createTestAdmin(t)
+
+	resp := doAuthedRequest(
 		t,
 		http.MethodGet,
 		"/v1/users",
 		nil,
+		adminToken,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -106,14 +110,17 @@ func Test_API_User_Get(t *testing.T) {
 		Password: "secret",
 	}
 
-	created, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user, false)
 	require.NoError(t, err)
 
-	resp := doRequest(
+	_, adminToken := createTestAdmin(t)
+
+	resp := doAuthedRequest(
 		t,
 		http.MethodGet,
 		fmt.Sprintf("/v1/users/%s", created.Id),
 		nil,
+		adminToken,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -146,20 +153,25 @@ func Test_API_User_Update(t *testing.T) {
 		Password: "secret",
 	}
 
-	created, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user, false)
 	require.NoError(t, err)
 
+	// Only the account owner (or an admin) may update a profile - log in as
+	// the user itself to exercise the realistic self-update path.
+	token := loginAndGetToken(t, user.Email, user.Password)
+
 	updateRequest := model.UserBase{
-		Email:     "",
+		Email:     "user-api-update@test.com",
 		FirstName: "user-api-update-firstname-updated",
 		LastName:  "user-api-update-lastname-updated",
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPut,
 		fmt.Sprintf("/v1/users/%s", created.Id),
 		strings.NewReader(ObjectToJSON(updateRequest)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -191,19 +203,23 @@ func Test_API_User_PatchPassword(t *testing.T) {
 		Password: "secret",
 	}
 
-	created, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user, false)
 	require.NoError(t, err)
+
+	// Only the account owner may patch their own password.
+	token := loginAndGetToken(t, user.Email, user.Password)
 
 	patchPasswordRequest := model.UserRequestBodyOnlyPassword{
 		OldPassword: "secret",
 		NewPassword: "newSecret",
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPatch,
 		fmt.Sprintf("/v1/users/%s/password", created.Id),
 		strings.NewReader(ObjectToJSON(patchPasswordRequest)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -233,14 +249,17 @@ func Test_API_User_Delete(t *testing.T) {
 		Password: "secret",
 	}
 
-	created, err := TestService.UserService.Create(user)
+	created, err := TestService.UserService.Create(user, false)
 	require.NoError(t, err)
 
-	resp := doRequest(
+	_, adminToken := createTestAdmin(t)
+
+	resp := doAuthedRequest(
 		t,
 		http.MethodDelete,
 		fmt.Sprintf("/v1/users/%s", created.Id),
 		nil,
+		adminToken,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()

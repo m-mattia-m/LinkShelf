@@ -21,7 +21,7 @@ func UpdateSetting(svc *domain.Service) func(c context.Context, input *model.Set
 			return nil, huma.Error400BadRequest("failed to get setting", err)
 		}
 
-		return mapper.MapSettingToSettingPageResponse(input.Body.LanguageCode, settings), nil
+		return mapper.MapSettingToSettingPageResponse(input.Body.LanguageCode, settings, svc.AuthService.IsOidcEnabled()), nil
 	}
 }
 
@@ -32,6 +32,6 @@ func GetPageSettings(svc *domain.Service) func(c context.Context, input *model.S
 			return nil, huma.Error400BadRequest("failed to get settings", err)
 		}
 
-		return mapper.MapSettingToSettingPageResponse(input.LanguageCode, settings), nil
+		return mapper.MapSettingToSettingPageResponse(input.LanguageCode, settings, svc.AuthService.IsOidcEnabled()), nil
 	}
 }

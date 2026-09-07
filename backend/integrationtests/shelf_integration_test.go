@@ -16,9 +16,7 @@ import (
 )
 
 func Test_API_Shelf_Create(t *testing.T) {
-
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	_, token := createTestUser(t)
 
 	request := model.ShelfBase{
 		Title:       "shelf-title-creation",
@@ -27,14 +25,14 @@ func Test_API_Shelf_Create(t *testing.T) {
 		Description: "A shelf created during API integration tests",
 		Theme:       "",
 		Icon:        "",
-		UserId:      userId,
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPost,
 		"/v1/shelves",
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -56,10 +54,9 @@ func Test_API_Shelf_Create(t *testing.T) {
 }
 
 func Test_API_Shelf_Update(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	userId, token := createTestUser(t)
 
-	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
+	shelfId, err := TestService.ShelfService.Create(userId, &model.Shelf{
 		PublicShelf: model.PublicShelf{
 			Title:       "shelf-title-update",
 			Path:        "shelf-title-update",
@@ -68,7 +65,6 @@ func Test_API_Shelf_Update(t *testing.T) {
 		},
 		Domain: "",
 		Theme:  "",
-		UserId: userId,
 	})
 	require.NoError(t, err)
 
@@ -79,14 +75,14 @@ func Test_API_Shelf_Update(t *testing.T) {
 		Description: "A shelf updated during API integration tests",
 		Theme:       "",
 		Icon:        "",
-		UserId:      userId,
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPut,
 		fmt.Sprintf("/v1/shelves/%s", shelfId),
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -114,10 +110,9 @@ func Test_API_Shelf_Update(t *testing.T) {
 }
 
 func Test_API_Shelf_Delete(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	userId, token := createTestUser(t)
 
-	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
+	shelfId, err := TestService.ShelfService.Create(userId, &model.Shelf{
 		PublicShelf: model.PublicShelf{
 			Title:       "shelf-title-delete",
 			Path:        "shelf-title-delete",
@@ -126,15 +121,15 @@ func Test_API_Shelf_Delete(t *testing.T) {
 		},
 		Domain: "",
 		Theme:  "",
-		UserId: userId,
 	})
 	require.NoError(t, err)
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodDelete,
 		fmt.Sprintf("/v1/shelves/%s", shelfId),
 		nil,
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -148,10 +143,9 @@ func Test_API_Shelf_Delete(t *testing.T) {
 }
 
 func Test_API_Shelf_Get(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	userId, token := createTestUser(t)
 
-	shelfId, err := TestService.ShelfService.Create(&model.Shelf{
+	shelfId, err := TestService.ShelfService.Create(userId, &model.Shelf{
 		PublicShelf: model.PublicShelf{
 			Title:       "shelf-title-get",
 			Path:        "shelf-title-get",
@@ -160,15 +154,15 @@ func Test_API_Shelf_Get(t *testing.T) {
 		},
 		Domain: "",
 		Theme:  "",
-		UserId: userId,
 	})
 	require.NoError(t, err)
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodGet,
 		fmt.Sprintf("/v1/shelves/%s", shelfId),
 		nil,
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -195,8 +189,7 @@ func Test_API_Shelf_Get(t *testing.T) {
 }
 
 func Test_API_Shelf_Create_DuplicatePath_Conflict(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	_, token := createTestUser(t)
 
 	request := model.ShelfBase{
 		Title:       "shelf-title-duplicate-path",
@@ -205,14 +198,14 @@ func Test_API_Shelf_Create_DuplicatePath_Conflict(t *testing.T) {
 		Description: "A shelf created during API integration tests",
 		Theme:       "",
 		Icon:        "",
-		UserId:      userId,
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPost,
 		"/v1/shelves",
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -222,11 +215,12 @@ func Test_API_Shelf_Create_DuplicatePath_Conflict(t *testing.T) {
 	}(resp.Body)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
-	respConflict := doRequest(
+	respConflict := doAuthedRequest(
 		t,
 		http.MethodPost,
 		"/v1/shelves",
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -239,8 +233,7 @@ func Test_API_Shelf_Create_DuplicatePath_Conflict(t *testing.T) {
 }
 
 func Test_API_Shelf_Create_MissingTitle_Validation(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	_, token := createTestUser(t)
 
 	request := model.ShelfBase{
 		Title:       "",
@@ -249,14 +242,14 @@ func Test_API_Shelf_Create_MissingTitle_Validation(t *testing.T) {
 		Description: "A shelf created during API integration tests",
 		Theme:       "",
 		Icon:        "",
-		UserId:      userId,
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPost,
 		"/v1/shelves",
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -269,8 +262,7 @@ func Test_API_Shelf_Create_MissingTitle_Validation(t *testing.T) {
 }
 
 func Test_API_Shelf_Create_InvalidPath_Validation(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	_, token := createTestUser(t)
 
 	request := model.ShelfBase{
 		Title:       "shelf-invalid-path",
@@ -279,14 +271,14 @@ func Test_API_Shelf_Create_InvalidPath_Validation(t *testing.T) {
 		Description: "A shelf created during API integration tests",
 		Theme:       "",
 		Icon:        "",
-		UserId:      userId,
 	}
 
-	resp := doRequest(
+	resp := doAuthedRequest(
 		t,
 		http.MethodPost,
 		"/v1/shelves",
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -299,8 +291,7 @@ func Test_API_Shelf_Create_InvalidPath_Validation(t *testing.T) {
 }
 
 func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
-	userId, err := getShelfOwnerUser()
-	require.NoError(t, err)
+	_, token := createTestUser(t)
 
 	request := model.ShelfBase{
 		Title:       "shelf-public-path",
@@ -309,14 +300,14 @@ func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
 		Description: "A public shelf description",
 		Theme:       "",
 		Icon:        "i-lucide-book-open",
-		UserId:      userId,
 	}
 
-	createResp := doRequest(
+	createResp := doAuthedRequest(
 		t,
 		http.MethodPost,
 		"/v1/shelves",
 		strings.NewReader(ObjectToJSON(request)),
+		token,
 	)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -326,7 +317,7 @@ func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
 	}(createResp.Body)
 	require.Equal(t, http.StatusCreated, createResp.StatusCode)
 
-	// path lookup is case-insensitive
+	// path lookup is case-insensitive, and requires no authentication
 	resp := doRequest(
 		t,
 		http.MethodGet,

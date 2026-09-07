@@ -11,6 +11,7 @@ package mocks
 
 import (
 	model "backend/internal/infrastructure/api/model"
+	repository "backend/internal/infrastructure/repository"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -41,18 +42,33 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(u model.UserBase, hashedPassword string) (string, error) {
+func (m *MockUserRepository) Create(u model.UserBase, hashedPassword, role string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u, hashedPassword)
+	ret := m.ctrl.Call(m, "Create", u, hashedPassword, role)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserRepositoryMockRecorder) Create(u, hashedPassword any) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Create(u, hashedPassword, role any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), u, hashedPassword)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), u, hashedPassword, role)
+}
+
+// CreateExternal mocks base method.
+func (m *MockUserRepository) CreateExternal(email, firstName, lastName, provider, providerId string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateExternal", email, firstName, lastName, provider, providerId)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateExternal indicates an expected call of CreateExternal.
+func (mr *MockUserRepositoryMockRecorder) CreateExternal(email, firstName, lastName, provider, providerId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExternal", reflect.TypeOf((*MockUserRepository)(nil).CreateExternal), email, firstName, lastName, provider, providerId)
 }
 
 // Delete mocks base method.
@@ -67,6 +83,36 @@ func (m *MockUserRepository) Delete(u *model.User) error {
 func (mr *MockUserRepositoryMockRecorder) Delete(u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUserRepository)(nil).Delete), u)
+}
+
+// FindByEmail mocks base method.
+func (m *MockUserRepository) FindByEmail(email string) (*repository.AuthRecord, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByEmail", email)
+	ret0, _ := ret[0].(*repository.AuthRecord)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByEmail indicates an expected call of FindByEmail.
+func (mr *MockUserRepositoryMockRecorder) FindByEmail(email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindByEmail), email)
+}
+
+// FindByProviderId mocks base method.
+func (m *MockUserRepository) FindByProviderId(providerId string) (*repository.AuthRecord, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByProviderId", providerId)
+	ret0, _ := ret[0].(*repository.AuthRecord)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByProviderId indicates an expected call of FindByProviderId.
+func (mr *MockUserRepositoryMockRecorder) FindByProviderId(providerId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByProviderId", reflect.TypeOf((*MockUserRepository)(nil).FindByProviderId), providerId)
 }
 
 // Get mocks base method.
@@ -99,6 +145,20 @@ func (mr *MockUserRepositoryMockRecorder) GetPassword(id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassword", reflect.TypeOf((*MockUserRepository)(nil).GetPassword), id)
 }
 
+// LinkProvider mocks base method.
+func (m *MockUserRepository) LinkProvider(userId, provider, providerId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LinkProvider", userId, provider, providerId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LinkProvider indicates an expected call of LinkProvider.
+func (mr *MockUserRepositoryMockRecorder) LinkProvider(userId, provider, providerId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LinkProvider", reflect.TypeOf((*MockUserRepository)(nil).LinkProvider), userId, provider, providerId)
+}
+
 // List mocks base method.
 func (m *MockUserRepository) List() ([]model.User, error) {
 	m.ctrl.T.Helper()
@@ -126,6 +186,20 @@ func (m *MockUserRepository) PatchPassword(id, hashedPassword string) error {
 func (mr *MockUserRepositoryMockRecorder) PatchPassword(id, hashedPassword any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPassword", reflect.TypeOf((*MockUserRepository)(nil).PatchPassword), id, hashedPassword)
+}
+
+// SetPasswordAndRole mocks base method.
+func (m *MockUserRepository) SetPasswordAndRole(userId, hashedPassword, role string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPasswordAndRole", userId, hashedPassword, role)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPasswordAndRole indicates an expected call of SetPasswordAndRole.
+func (mr *MockUserRepositoryMockRecorder) SetPasswordAndRole(userId, hashedPassword, role any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPasswordAndRole", reflect.TypeOf((*MockUserRepository)(nil).SetPasswordAndRole), userId, hashedPassword, role)
 }
 
 // Update mocks base method.

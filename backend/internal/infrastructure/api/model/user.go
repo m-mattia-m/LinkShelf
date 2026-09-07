@@ -9,6 +9,10 @@ type UserBase struct {
 	Email     string `json:"email" bson:"email" required:"true"`
 	FirstName string `json:"first_name" bson:"first_name" required:"true"`
 	LastName  string `json:"last_name" bson:"last_name" required:"true"`
+	// Role is only ever applied when the caller is an authenticated admin -
+	// silently ignored (self-registration, self profile-update) otherwise.
+	// Enforced in the domain layer, not by this schema.
+	Role string `json:"role" bson:"role" doc:"The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise." required:"false"`
 }
 
 type UserCreate struct {
@@ -17,7 +21,11 @@ type UserCreate struct {
 }
 
 type UserRequestBody struct {
-	Body UserCreate `json:"body" bson:"body"`
+	// Optional: when present and valid for an admin, the create request may
+	// also set the new user's role. Absent (self-registration), the role is
+	// always "user".
+	Authorization string     `header:"Authorization"`
+	Body          UserCreate `json:"body" bson:"body"`
 }
 
 type UserPatchPasswordFilterAndBody struct {

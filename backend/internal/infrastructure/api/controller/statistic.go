@@ -11,10 +11,7 @@ import (
 
 func GetStatistic(svc *domain.Service) func(c context.Context, input *struct{}) (*model.StatisticResponse, error) {
 	return func(c context.Context, input *struct{}) (*model.StatisticResponse, error) {
-
-		// TODO get userId from context/header
-
-		statistic, err := svc.StatisticService.Get("TODO")
+		statistic, err := svc.StatisticService.Get(UserIdFromContext(c))
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get statistic", err)
 		}

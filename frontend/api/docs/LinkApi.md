@@ -17,7 +17,7 @@ All URIs are relative to *http://localhost:8085*
 
 Delete link
 
-Delete a link by ID.
+Delete a link by ID. Only the owner of its shelf or an admin may delete it.
 
 ### Example
 
@@ -30,7 +30,11 @@ import type { DeleteLinkRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new LinkApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new LinkApi(config);
 
   const body = {
     // string
@@ -65,7 +69,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -88,7 +92,7 @@ No authorization required
 
 Get links by shelf ID
 
-Get links by shelf ID.
+Get links by shelf ID. Used to render a shelf\&#39;s public link page and requires no authentication.
 
 ### Example
 
@@ -156,7 +160,7 @@ No authorization required
 
 Create link
 
-Create a new link.
+Create a new link in a section owned by the caller.
 
 ### Example
 
@@ -169,7 +173,11 @@ import type { PostCreateLinkRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new LinkApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new LinkApi(config);
 
   const body = {
     // LinkBase
@@ -201,7 +209,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -224,7 +232,7 @@ No authorization required
 
 Update link
 
-Update an existing link.
+Update an existing link. Only the owner of its shelf or an admin may update it.
 
 ### Example
 
@@ -237,7 +245,11 @@ import type { PutUpdateLinkRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new LinkApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new LinkApi(config);
 
   const body = {
     // string
@@ -275,7 +287,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 

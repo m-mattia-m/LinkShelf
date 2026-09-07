@@ -13,9 +13,16 @@ export const useUserStore = defineStore('userStore', {
       this.loaded = true
     },
 
+    // Only used from the admin "manage users" page, so the caller's own
+    // token is always attached - it's what lets the backend honor a
+    // requested role instead of silently defaulting to "user".
     async create(userCreate: UserCreate): Promise<User> {
       const api = useApi()
-      const created = await api.user.postCreateUser({ userCreate })
+      const authStore = useAuthStore()
+      const created = await api.user.postCreateUser({
+        userCreate,
+        authorization: authStore.accessToken ? `Bearer ${authStore.accessToken}` : undefined
+      })
       await this.fetch()
       return created
     },

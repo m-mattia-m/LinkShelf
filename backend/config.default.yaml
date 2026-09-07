@@ -1,7 +1,7 @@
 app:
   name: LinkShelf
   description: LinkShelf is an OpenSource alternative to linktree.
-  environment: prod
+  environment: production
   logo: <base64-encoded-logo-or-path>
 server:
   scheme: http
@@ -18,9 +18,34 @@ database:
   name: linkshelf
   params: "sslmode=disable" # "charset=utf8mb4&parseTime=true" # "sslmode=disable" # optional
 logging:
-  level: debug
+  level: info
 domain:
   openapi:
-    usePort: true
-  authentication:
-    skipAuthentication: true
+    usePort: false
+authentication:
+  type: LOCAL # LOCAL # OIDC
+  # jwtSecret signs the access tokens this backend issues itself, no matter
+  # which auth type is active below. Override this in production via the
+  # APP_AUTHENTICATION_JWTSECRET environment variable - never ship the
+  # default value.
+  jwtSecret: "change-me-to-a-long-random-value-in-production"
+  accessTokenExpiryMinutes: 5
+  refreshTokenExpiryMinutes: 1440 # 24h
+  bootstrapAdmin:
+    # Idempotently created/refreshed on every startup with role=admin.
+    # Leave both empty to skip bootstrapping an admin account.
+    email: admin@example.com
+    password: "change-me"
+  oidc:
+    # issuer and clientId are required when authentication.type is OIDC.
+    # Works with any standards-compliant OIDC issuer (Keycloak, Zitadel,
+    # Auth0, Google, ...).
+    issuer: ""
+    clientId: ""
+    # clientSecret is optional: the login flow always runs PKCE, so a public
+    # client registered without a secret works fine - leave this empty in
+    # that case.
+    clientSecret: ""
+    # Must match the frontend's OIDC callback page, which completes the
+    # login by POSTing the code+state here to /v1/auth/oidc/callback.
+    redirectUrl: "http://localhost:3000/auth/callback"

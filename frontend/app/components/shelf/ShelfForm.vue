@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, ref, onMounted } from 'vue'
+import { reactive, watch, ref } from 'vue'
 import type { Shelf, ShelfBase } from '~~/api'
 import type { FormError } from '@nuxt/ui'
 import * as v from 'valibot'
@@ -11,8 +11,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: ShelfBase): void
 }>()
-
-const { ensureUserId } = useCurrentUser()
 
 const tabItems = [
   {
@@ -33,14 +31,7 @@ const form = reactive<ShelfBase>({
   domain: props.modelValue?.domain ?? '',
   path: props.modelValue?.path ?? '',
   icon: props.modelValue?.icon ?? '',
-  theme: props.modelValue?.theme ?? '',
-  userId: props.modelValue?.userId ?? ''
-})
-
-onMounted(async () => {
-  if (!form.userId) {
-    form.userId = await ensureUserId()
-  }
+  theme: props.modelValue?.theme ?? ''
 })
 
 const schema = v.pipe(
@@ -117,8 +108,7 @@ watch(
       domain: newShelf.domain,
       path: newShelf.path,
       icon: newShelf.icon,
-      theme: newShelf.theme,
-      userId: newShelf.userId
+      theme: newShelf.theme
     })
   },
   { immediate: true }
@@ -149,11 +139,8 @@ watch(
       <UTextarea v-model="form.description" class="w-full" />
     </UFormField>
 
-    <UFormField label="Icon" name="icon" help="An iconify icon name, e.g. i-lucide-book-open" class="pt-4">
-      <div class="flex items-center gap-2">
-        <UIcon :name="form.icon || 'i-lucide-image'" class="size-5 shrink-0 text-muted" />
-        <UInput v-model="form.icon" class="w-full" placeholder="i-lucide-book-open" />
-      </div>
+    <UFormField label="Icon" name="icon" class="pt-4">
+      <IconPicker v-model="form.icon" placeholder="i-lucide-book-open" />
     </UFormField>
 
     <UTabs :items="tabItems" class="pt-4 w-full">

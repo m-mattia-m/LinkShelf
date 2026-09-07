@@ -58,7 +58,7 @@ export interface PutUpdateShelfRequest {
 export class ShelfApi extends runtime.BaseAPI {
 
     /**
-     * Delete a shelf by ID.
+     * Delete a shelf by ID. Only its owner or an admin may delete it.
      * Delete shelf
      */
     async deleteShelfRaw(requestParameters: DeleteShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -73,6 +73,14 @@ export class ShelfApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/shelves/{shelfId}`;
         urlPath = urlPath.replace(`{${"shelfId"}}`, encodeURIComponent(String(requestParameters['shelfId'])));
@@ -88,7 +96,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a shelf by ID.
+     * Delete a shelf by ID. Only its owner or an admin may delete it.
      * Delete shelf
      */
     async deleteShelf(requestParameters: DeleteShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -135,7 +143,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get a shelf by ID.
+     * Get a shelf by ID. Only its owner or an admin may access it.
      * Get shelf by ID
      */
     async getShelfByIdRaw(requestParameters: GetShelfByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Shelf>> {
@@ -150,6 +158,14 @@ export class ShelfApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/shelves/{shelfId}`;
         urlPath = urlPath.replace(`{${"shelfId"}}`, encodeURIComponent(String(requestParameters['shelfId'])));
@@ -165,7 +181,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get a shelf by ID.
+     * Get a shelf by ID. Only its owner or an admin may access it.
      * Get shelf by ID
      */
     async getShelfById(requestParameters: GetShelfByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Shelf> {
@@ -174,7 +190,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * List all shelves.
+     * List shelves - the caller\'s own, or every shelf for an admin.
      * List shelves
      */
     async listShelvesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Shelf>>> {
@@ -182,6 +198,14 @@ export class ShelfApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/shelves`;
 
@@ -196,7 +220,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * List all shelves.
+     * List shelves - the caller\'s own, or every shelf for an admin.
      * List shelves
      */
     async listShelves(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Shelf>> {
@@ -205,7 +229,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new shelf.
+     * Create a new shelf, owned by the authenticated caller.
      * Create shelf
      */
     async postCreateShelfRaw(requestParameters: PostCreateShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Shelf>> {
@@ -222,6 +246,14 @@ export class ShelfApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/shelves`;
 
@@ -237,7 +269,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new shelf.
+     * Create a new shelf, owned by the authenticated caller.
      * Create shelf
      */
     async postCreateShelf(requestParameters: PostCreateShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Shelf> {
@@ -246,7 +278,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing shelf.
+     * Update an existing shelf. Only its owner or an admin may update it.
      * Update shelf
      */
     async putUpdateShelfRaw(requestParameters: PutUpdateShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Shelf>> {
@@ -270,6 +302,14 @@ export class ShelfApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/shelves/{shelfId}`;
         urlPath = urlPath.replace(`{${"shelfId"}}`, encodeURIComponent(String(requestParameters['shelfId'])));
@@ -286,7 +326,7 @@ export class ShelfApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing shelf.
+     * Update an existing shelf. Only its owner or an admin may update it.
      * Update shelf
      */
     async putUpdateShelf(requestParameters: PutUpdateShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Shelf> {

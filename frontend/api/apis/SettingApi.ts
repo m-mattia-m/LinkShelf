@@ -42,7 +42,7 @@ export interface PutUpdateSettingRequest {
 export class SettingApi extends runtime.BaseAPI {
 
     /**
-     * Get page settings by language code.
+     * Get page settings by language code. Used to render the public site shell (title, contact info, legal pages, ...) and requires no authentication.
      * Get page settings
      */
     async getPageSettingsRaw(requestParameters: GetPageSettingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SettingPageBody>> {
@@ -68,7 +68,7 @@ export class SettingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get page settings by language code.
+     * Get page settings by language code. Used to render the public site shell (title, contact info, legal pages, ...) and requires no authentication.
      * Get page settings
      */
     async getPageSettings(requestParameters: GetPageSettingsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SettingPageBody> {
@@ -94,6 +94,14 @@ export class SettingApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/settings`;
 

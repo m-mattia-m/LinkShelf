@@ -53,7 +53,7 @@ export interface PutUpdateLinkRequest {
 export class LinkApi extends runtime.BaseAPI {
 
     /**
-     * Delete a link by ID.
+     * Delete a link by ID. Only the owner of its shelf or an admin may delete it.
      * Delete link
      */
     async deleteLinkRaw(requestParameters: DeleteLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -72,6 +72,14 @@ export class LinkApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/links/{linkId}`;
         urlPath = urlPath.replace(`{${"linkId"}}`, encodeURIComponent(String(requestParameters['linkId'])));
@@ -87,7 +95,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a link by ID.
+     * Delete a link by ID. Only the owner of its shelf or an admin may delete it.
      * Delete link
      */
     async deleteLink(requestParameters: DeleteLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -95,7 +103,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get links by shelf ID.
+     * Get links by shelf ID. Used to render a shelf\'s public link page and requires no authentication.
      * Get links by shelf ID
      */
     async getLinksRaw(requestParameters: GetLinksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Link>>> {
@@ -121,7 +129,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get links by shelf ID.
+     * Get links by shelf ID. Used to render a shelf\'s public link page and requires no authentication.
      * Get links by shelf ID
      */
     async getLinks(requestParameters: GetLinksRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Link>> {
@@ -130,7 +138,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new link.
+     * Create a new link in a section owned by the caller.
      * Create link
      */
     async postCreateLinkRaw(requestParameters: PostCreateLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Link>> {
@@ -147,6 +155,14 @@ export class LinkApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/links`;
 
@@ -162,7 +178,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new link.
+     * Create a new link in a section owned by the caller.
      * Create link
      */
     async postCreateLink(requestParameters: PostCreateLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Link> {
@@ -171,7 +187,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing link.
+     * Update an existing link. Only the owner of its shelf or an admin may update it.
      * Update link
      */
     async putUpdateLinkRaw(requestParameters: PutUpdateLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Link>> {
@@ -199,6 +215,14 @@ export class LinkApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/links/{linkId}`;
         urlPath = urlPath.replace(`{${"linkId"}}`, encodeURIComponent(String(requestParameters['linkId'])));
@@ -215,7 +239,7 @@ export class LinkApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing link.
+     * Update an existing link. Only the owner of its shelf or an admin may update it.
      * Update link
      */
     async putUpdateLink(requestParameters: PutUpdateLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Link> {

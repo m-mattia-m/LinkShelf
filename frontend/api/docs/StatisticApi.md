@@ -27,7 +27,11 @@ import type { GetStatisticRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new StatisticApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new StatisticApi(config);
 
   try {
     const data = await api.getStatistic();
@@ -51,7 +55,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 

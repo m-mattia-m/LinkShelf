@@ -21,7 +21,7 @@ func Test_MapSettingToSettingPageResponse_Success(t *testing.T) {
 		{Key: "privacy_policy", LanguageCode: "en", Value: "Privacy EN"},
 	}
 
-	resp := MapSettingToSettingPageResponse("en", settings)
+	resp := MapSettingToSettingPageResponse("en", settings, false)
 
 	require.NotNil(t, resp)
 
@@ -49,7 +49,7 @@ func Test_MapSettingToSettingPageResponse_LanguageIsolation(t *testing.T) {
 		{Key: "about", LanguageCode: "de", Value: "Über DE"},
 	}
 
-	resp := MapSettingToSettingPageResponse("de", settings)
+	resp := MapSettingToSettingPageResponse("de", settings, false)
 
 	require.False(t, resp.Body.AboutShow)
 	require.Equal(t, "Über DE", resp.Body.About)
@@ -61,14 +61,14 @@ func Test_MapSettingToSettingPageResponse_BooleanParsing(t *testing.T) {
 		{Key: "about", LanguageCode: "en", Value: "About"},
 	}
 
-	resp := MapSettingToSettingPageResponse("en", settings)
+	resp := MapSettingToSettingPageResponse("en", settings, false)
 
 	// Only exact "true" is treated as true
 	require.False(t, resp.Body.AboutShow)
 }
 
 func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
-	resp := MapSettingToSettingPageResponse("en", nil)
+	resp := MapSettingToSettingPageResponse("en", nil, false)
 
 	require.NotNil(t, resp)
 
@@ -88,28 +88,7 @@ func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
 	require.Empty(t, resp.Body.PrivacyPolicy)
 }
 
-func Test_MapSettingToSettingPageResponse_LoginOptions(t *testing.T) {
-	settings := []model.Setting{
-		{Key: "login_options", LanguageCode: "en", Value: `["Local", "Zitadel"]`},
-	}
-
-	resp := MapSettingToSettingPageResponse("en", settings)
-
-	require.Equal(t, []string{"Local", "Zitadel"}, resp.Body.LoginOptions)
-}
-
-func Test_MapSettingToSettingPageResponse_LoginOptions_Missing(t *testing.T) {
-	resp := MapSettingToSettingPageResponse("en", nil)
-
-	require.Nil(t, resp.Body.LoginOptions)
-}
-
-func Test_MapSettingToSettingPageResponse_LoginOptions_Invalid(t *testing.T) {
-	settings := []model.Setting{
-		{Key: "login_options", LanguageCode: "en", Value: `not-json`},
-	}
-
-	resp := MapSettingToSettingPageResponse("en", settings)
-
-	require.Nil(t, resp.Body.LoginOptions)
+func Test_MapSettingToSettingPageResponse_OidcEnabled(t *testing.T) {
+	require.True(t, MapSettingToSettingPageResponse("en", nil, true).Body.OidcEnabled)
+	require.False(t, MapSettingToSettingPageResponse("en", nil, false).Body.OidcEnabled)
 }

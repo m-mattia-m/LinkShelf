@@ -2,7 +2,8 @@
 import { useSettingStore } from '~/stores/setting'
 
 definePageMeta({
-  layout: 'app'
+  layout: 'app',
+  middleware: 'admin'
 })
 
 const { t, locales } = useI18n()
@@ -13,8 +14,6 @@ const saving = ref(false)
 
 const languageCode = ref('en')
 const availableLocales = computed(() => locales.value.map((l) => ({ label: l.name ?? l.code, value: l.code })))
-
-const loginOptionChoices = ['Local', 'Zitadel', 'Microsoft', 'Google']
 
 const form = reactive({
   about: '',
@@ -27,8 +26,7 @@ const form = reactive({
   termsOfUseShow: false,
   privacyPolicy: '',
   privacyPolicyShow: false,
-  redirectToDashboard: false,
-  loginOptions: [] as string[]
+  redirectToDashboard: false
 })
 
 function applyPageToForm() {
@@ -45,7 +43,6 @@ function applyPageToForm() {
   form.privacyPolicy = page.privacyPolicy
   form.privacyPolicyShow = page.privacyPolicyShow
   form.redirectToDashboard = page.redirectToDashboard
-  form.loginOptions = page.loginOptions ?? []
 }
 
 async function loadLanguage(code: string) {
@@ -77,8 +74,7 @@ async function save() {
       { key: 'terms_of_use_show', value: String(form.termsOfUseShow) },
       { key: 'privacy_policy', value: form.privacyPolicy },
       { key: 'privacy_policy_show', value: String(form.privacyPolicyShow) },
-      { key: 'redirect_to_dashboard', value: String(form.redirectToDashboard) },
-      { key: 'login_options', value: JSON.stringify(form.loginOptions) }
+      { key: 'redirect_to_dashboard', value: String(form.redirectToDashboard) }
     ])
 
     applyPageToForm()
@@ -149,10 +145,6 @@ async function save() {
       <template #hint>
         <USwitch v-model="form.privacyPolicyShow" :label="t('app.settings.showOnSite')" />
       </template>
-    </UFormField>
-
-    <UFormField :label="t('app.settings.loginOptions.label')" :help="t('app.settings.loginOptions.help')">
-      <USelectMenu v-model="form.loginOptions" :items="loginOptionChoices" multiple class="w-full" />
     </UFormField>
 
     <UFormField :label="t('app.settings.redirectToDashboard.label')" :help="t('app.settings.redirectToDashboard.help')">

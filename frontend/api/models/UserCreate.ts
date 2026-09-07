@@ -49,6 +49,12 @@ export interface UserCreate {
      * @memberof UserCreate
      */
     password: string;
+    /**
+     * The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise.
+     * @type {string}
+     * @memberof UserCreate
+     */
+    role?: string;
 }
 
 /**
@@ -77,6 +83,7 @@ export function UserCreateFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'firstName': json['first_name'],
         'lastName': json['last_name'],
         'password': json['password'],
+        'role': json['role'] == null ? undefined : json['role'],
     };
 }
 
@@ -95,6 +102,7 @@ export function UserCreateToJSONTyped(value?: Omit<UserCreate, '$schema'> | null
         'first_name': value['firstName'],
         'last_name': value['lastName'],
         'password': value['password'],
+        'role': value['role'],
     };
 }
 

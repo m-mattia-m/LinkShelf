@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 )
 
 func Test_Unit_Link_List_Success(t *testing.T) {
@@ -85,20 +84,27 @@ func Test_Unit_Link_Get_Failure(t *testing.T) {
 	require.Nil(t, link)
 }
 
-func Test_Unit_Link_Create_Success(t *testing.T) {
+func Test_Unit_Link_Create_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
 	linkRequest := &model.Link{
-		Id: "link-uuid-test",
 		LinkBase: model.LinkBase{
 			Title:     "link-title-test",
 			Link:      "https://example.com",
-			Icon:      "my-base64-encoded-icon",
-			Color:     "#FFFFFF",
-			SectionId: "c5f3738e-668e-409e-bccd-c5c1b31de0da",
+			SectionId: "section-uuid-test",
 		},
 	}
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.LinkRepository.
 		EXPECT().
@@ -113,13 +119,11 @@ func Test_Unit_Link_Create_Success(t *testing.T) {
 			LinkBase: model.LinkBase{
 				Title:     "link-title-test",
 				Link:      "https://example.com",
-				Icon:      "my-base64-encoded-icon",
-				Color:     "#FFFFFF",
-				SectionId: "c5f3738e-668e-409e-bccd-c5c1b31de0da",
+				SectionId: "section-uuid-test",
 			},
 		}, nil)
 
-	link, err := svc.Service.LinkService.Create(linkRequest)
+	link, err := svc.Service.LinkService.Create("user-uuid-test", false, linkRequest)
 
 	require.NoError(t, err)
 	require.NotNil(t, link)
@@ -127,57 +131,56 @@ func Test_Unit_Link_Create_Success(t *testing.T) {
 	require.Equal(t, "link-title-test", link.Title)
 }
 
-func Test_Unit_Link_Create_Failure_Create(t *testing.T) {
+func Test_Unit_Link_Create_Forbidden_NotOwner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
-	svc.LinkRepository.
+	linkRequest := &model.Link{LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}
+
+	svc.SectionRepository.
 		EXPECT().
-		Create(gomock.Any()).
-		Return("", errors.New("an error occurred"))
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
 
-	link, err := svc.Service.LinkService.Create(&model.Link{})
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
 
-	require.ErrorContains(t, err, "an error occurred")
+	link, err := svc.Service.LinkService.Create("someone-else-uuid-test", false, linkRequest)
+
+	require.ErrorIs(t, err, ErrForbidden)
 	require.Nil(t, link)
 }
 
-func Test_Unit_Link_Create_Failure_Get(t *testing.T) {
-	svc := NewMockService(t)
-	defer svc.Ctrl.Finish()
-
-	svc.LinkRepository.
-		EXPECT().
-		Create(gomock.Any()).
-		Return("link-uuid-test", nil)
-
-	svc.LinkRepository.
-		EXPECT().
-		Get("link-uuid-test").
-		Return(nil, errors.New("an error occurred"))
-
-	link, err := svc.Service.LinkService.Create(&model.Link{})
-
-	require.ErrorContains(t, err, "an error occurred")
-	require.Nil(t, link)
-}
-
-func Test_Unit_Link_Update_Success(t *testing.T) {
+func Test_Unit_Link_Update_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
 	linkId := "link-uuid-test"
 
 	updateRequest := &model.Link{
-		Id: "link-uuid-test",
 		LinkBase: model.LinkBase{
 			Title:     "link-title-test-updated",
 			Link:      "https://updated.example.com",
-			Icon:      "my-base64-encoded-icon-updated",
-			Color:     "#000000",
-			SectionId: "c5f3738e-668e-409e-bccd-c5c1b31ma9da",
+			SectionId: "section-uuid-test",
 		},
 	}
+
+	svc.LinkRepository.
+		EXPECT().
+		Get(linkId).
+		Return(&model.Link{Id: linkId, LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.LinkRepository.
 		EXPECT().
@@ -191,81 +194,97 @@ func Test_Unit_Link_Update_Success(t *testing.T) {
 		EXPECT().
 		Get(linkId).
 		Return(&model.Link{
-			Id: "link-uuid-test",
+			Id: linkId,
 			LinkBase: model.LinkBase{
 				Title:     "link-title-test-updated",
 				Link:      "https://updated.example.com",
-				Icon:      "my-base64-encoded-icon-updated",
-				Color:     "#000000",
-				SectionId: "c5f3738e-668e-409e-bccd-c5c1b31ma9da",
+				SectionId: "section-uuid-test",
 			},
 		}, nil)
 
-	link, err := svc.Service.LinkService.Update(linkId, updateRequest)
+	link, err := svc.Service.LinkService.Update(linkId, "user-uuid-test", false, updateRequest)
 
 	require.NoError(t, err)
 	require.NotNil(t, link)
 	require.Equal(t, "link-title-test-updated", link.Title)
 }
 
-func Test_Unit_Link_Update_Failure_Update(t *testing.T) {
+func Test_Unit_Link_Update_Forbidden_NotOwner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
+	linkId := "link-uuid-test"
+
 	svc.LinkRepository.
 		EXPECT().
-		Update(gomock.Any()).
-		Return(errors.New("an error occurred"))
+		Get(linkId).
+		Return(&model.Link{Id: linkId, LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}, nil)
 
-	link, err := svc.Service.LinkService.Update("link-uuid-test", &model.Link{})
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
 
-	require.ErrorContains(t, err, "an error occurred")
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
+
+	link, err := svc.Service.LinkService.Update(linkId, "someone-else-uuid-test", false, &model.Link{})
+
+	require.ErrorIs(t, err, ErrForbidden)
 	require.Nil(t, link)
 }
-func Test_Unit_Link_Update_Failure_Get(t *testing.T) {
+
+func Test_Unit_Link_Delete_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
-
-	svc.LinkRepository.
-		EXPECT().
-		Update(gomock.Any()).
-		Return(nil)
 
 	svc.LinkRepository.
 		EXPECT().
 		Get("link-uuid-test").
-		Return(nil, errors.New("an error occurred"))
+		Return(&model.Link{Id: "link-uuid-test", LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}, nil)
 
-	link, err := svc.Service.LinkService.Update("link-uuid-test", &model.Link{})
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
 
-	require.ErrorContains(t, err, "an error occurred")
-	require.Nil(t, link)
-}
-
-func Test_Unit_Link_Delete_Success(t *testing.T) {
-	svc := NewMockService(t)
-	defer svc.Ctrl.Finish()
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
 
 	svc.LinkRepository.
 		EXPECT().
 		Delete(&model.Link{Id: "link-uuid-test"}).
 		Return(nil)
 
-	err := svc.Service.LinkService.Delete("link-uuid-test")
+	err := svc.Service.LinkService.Delete("link-uuid-test", "user-uuid-test", false)
 
 	require.NoError(t, err)
 }
 
-func Test_Unit_Link_Delete_Failure(t *testing.T) {
+func Test_Unit_Link_Delete_Forbidden_NotOwner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
 	svc.LinkRepository.
 		EXPECT().
-		Delete(&model.Link{Id: "link-uuid-test"}).
-		Return(errors.New("an error occurred"))
+		Get("link-uuid-test").
+		Return(&model.Link{Id: "link-uuid-test", LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}, nil)
 
-	err := svc.Service.LinkService.Delete("link-uuid-test")
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
 
-	require.ErrorContains(t, err, "an error occurred")
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
+
+	err := svc.Service.LinkService.Delete("link-uuid-test", "someone-else-uuid-test", false)
+
+	require.ErrorIs(t, err, ErrForbidden)
 }

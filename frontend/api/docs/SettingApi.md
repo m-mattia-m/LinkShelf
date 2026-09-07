@@ -15,7 +15,7 @@ All URIs are relative to *http://localhost:8085*
 
 Get page settings
 
-Get page settings by language code.
+Get page settings by language code. Used to render the public site shell (title, contact info, legal pages, ...) and requires no authentication.
 
 ### Example
 
@@ -96,7 +96,11 @@ import type { PutUpdateSettingRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new SettingApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SettingApi(config);
 
   const body = {
     // Setting
@@ -128,7 +132,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 

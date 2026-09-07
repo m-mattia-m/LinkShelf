@@ -41,18 +41,18 @@ func (m *MockShelfService) EXPECT() *MockShelfServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockShelfService) Create(u *model.Shelf) (string, error) {
+func (m *MockShelfService) Create(callerUserId string, u *model.Shelf) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u)
+	ret := m.ctrl.Call(m, "Create", callerUserId, u)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockShelfServiceMockRecorder) Create(u any) *gomock.Call {
+func (mr *MockShelfServiceMockRecorder) Create(callerUserId, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockShelfService)(nil).Create), u)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockShelfService)(nil).Create), callerUserId, u)
 }
 
 // Delete mocks base method.
@@ -70,18 +70,18 @@ func (mr *MockShelfServiceMockRecorder) Delete(u any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockShelfService) Get(id string) (*model.Shelf, error) {
+func (m *MockShelfService) Get(id, callerUserId string, isAdmin bool) (*model.Shelf, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", id)
+	ret := m.ctrl.Call(m, "Get", id, callerUserId, isAdmin)
 	ret0, _ := ret[0].(*model.Shelf)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockShelfServiceMockRecorder) Get(id any) *gomock.Call {
+func (mr *MockShelfServiceMockRecorder) Get(id, callerUserId, isAdmin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockShelfService)(nil).Get), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockShelfService)(nil).Get), id, callerUserId, isAdmin)
 }
 
 // GetByPath mocks base method.
@@ -100,31 +100,31 @@ func (mr *MockShelfServiceMockRecorder) GetByPath(path any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockShelfService) List() ([]model.Shelf, error) {
+func (m *MockShelfService) List(callerUserId string, isAdmin bool) ([]model.Shelf, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List")
+	ret := m.ctrl.Call(m, "List", callerUserId, isAdmin)
 	ret0, _ := ret[0].([]model.Shelf)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockShelfServiceMockRecorder) List() *gomock.Call {
+func (mr *MockShelfServiceMockRecorder) List(callerUserId, isAdmin any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockShelfService)(nil).List))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockShelfService)(nil).List), callerUserId, isAdmin)
 }
 
 // Update mocks base method.
-func (m *MockShelfService) Update(shelfId string, shelfRequest *model.Shelf) (*model.Shelf, error) {
+func (m *MockShelfService) Update(shelfId, callerUserId string, isAdmin bool, shelfRequest *model.Shelf) (*model.Shelf, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", shelfId, shelfRequest)
+	ret := m.ctrl.Call(m, "Update", shelfId, callerUserId, isAdmin, shelfRequest)
 	ret0, _ := ret[0].(*model.Shelf)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockShelfServiceMockRecorder) Update(shelfId, shelfRequest any) *gomock.Call {
+func (mr *MockShelfServiceMockRecorder) Update(shelfId, callerUserId, isAdmin, shelfRequest any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockShelfService)(nil).Update), shelfId, shelfRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockShelfService)(nil).Update), shelfId, callerUserId, isAdmin, shelfRequest)
 }

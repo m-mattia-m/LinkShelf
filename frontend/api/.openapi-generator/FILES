@@ -1,3 +1,4 @@
+apis/AuthApi.ts
 apis/LinkApi.ts
 apis/SectionApi.ts
 apis/SettingApi.ts
@@ -5,12 +6,17 @@ apis/ShelfApi.ts
 apis/StatisticApi.ts
 apis/UserApi.ts
 apis/index.ts
+docs/AuthApi.md
 docs/ErrorDetail.md
 docs/ErrorModel.md
 docs/Link.md
 docs/LinkApi.md
 docs/LinkBase.md
+docs/LoginRequest.md
+docs/OidcCallbackRequest.md
+docs/OidcLoginResponseBody.md
 docs/PublicShelf.md
+docs/RefreshRequest.md
 docs/Section.md
 docs/SectionApi.md
 docs/SectionBase.md
@@ -22,6 +28,7 @@ docs/ShelfApi.md
 docs/ShelfBase.md
 docs/Statistic.md
 docs/StatisticApi.md
+docs/TokenPair.md
 docs/User.md
 docs/UserApi.md
 docs/UserBase.md
@@ -32,7 +39,11 @@ models/ErrorDetail.ts
 models/ErrorModel.ts
 models/Link.ts
 models/LinkBase.ts
+models/LoginRequest.ts
+models/OidcCallbackRequest.ts
+models/OidcLoginResponseBody.ts
 models/PublicShelf.ts
+models/RefreshRequest.ts
 models/Section.ts
 models/SectionBase.ts
 models/Setting.ts
@@ -40,6 +51,7 @@ models/SettingPageBody.ts
 models/Shelf.ts
 models/ShelfBase.ts
 models/Statistic.ts
+models/TokenPair.ts
 models/User.ts
 models/UserBase.ts
 models/UserCreate.ts

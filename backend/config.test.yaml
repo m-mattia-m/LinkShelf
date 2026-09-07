@@ -1,7 +1,7 @@
 app:
   name: LinkShelfTest
   description: LinkShelf is an OpenSource alternative to linktree.
-  environment: test
+  environment: development
   logo: <base64-encoded-logo-or-path>
 server:
   scheme: http
@@ -22,5 +22,16 @@ logging:
 domain:
   openapi:
     usePort: true
-  authentication:
-    skipAuthentication: true
+authentication:
+  type: LOCAL
+  jwtSecret: "test-secret"
+  accessTokenExpiryMinutes: 5
+  refreshTokenExpiryMinutes: 1440
+  bootstrapAdmin:
+    email: ""
+    password: ""
+  oidc:
+    issuer: ""
+    clientId: ""
+    clientSecret: ""
+    redirectUrl: ""

@@ -19,7 +19,7 @@ All URIs are relative to *http://localhost:8085*
 
 Delete shelf
 
-Delete a shelf by ID.
+Delete a shelf by ID. Only its owner or an admin may delete it.
 
 ### Example
 
@@ -32,7 +32,11 @@ import type { DeleteShelfRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new ShelfApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ShelfApi(config);
 
   const body = {
     // string
@@ -64,7 +68,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -155,7 +159,7 @@ No authorization required
 
 Get shelf by ID
 
-Get a shelf by ID.
+Get a shelf by ID. Only its owner or an admin may access it.
 
 ### Example
 
@@ -168,7 +172,11 @@ import type { GetShelfByIdRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new ShelfApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ShelfApi(config);
 
   const body = {
     // string
@@ -200,7 +208,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -223,7 +231,7 @@ No authorization required
 
 List shelves
 
-List all shelves.
+List shelves - the caller\&#39;s own, or every shelf for an admin.
 
 ### Example
 
@@ -236,7 +244,11 @@ import type { ListShelvesRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new ShelfApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ShelfApi(config);
 
   try {
     const data = await api.listShelves();
@@ -260,7 +272,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -283,7 +295,7 @@ No authorization required
 
 Create shelf
 
-Create a new shelf.
+Create a new shelf, owned by the authenticated caller.
 
 ### Example
 
@@ -296,7 +308,11 @@ import type { PostCreateShelfRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new ShelfApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ShelfApi(config);
 
   const body = {
     // ShelfBase
@@ -328,7 +344,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 
@@ -351,7 +367,7 @@ No authorization required
 
 Update shelf
 
-Update an existing shelf.
+Update an existing shelf. Only its owner or an admin may update it.
 
 ### Example
 
@@ -364,7 +380,11 @@ import type { PutUpdateShelfRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new ShelfApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new ShelfApi(config);
 
   const body = {
     // string
@@ -399,7 +419,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[bearer](../README.md#bearer)
 
 ### HTTP request headers
 

@@ -18,20 +18,19 @@ func Test_API_CreateShelf_Success(t *testing.T) {
 
 	input := &model.ShelfRequestBody{
 		Body: model.ShelfBase{
-			Title:  "test-shelf",
-			UserId: "user-uuid-test",
+			Title: "test-shelf",
 		},
 	}
 
 	gomock.InOrder(
 		svc.ShelfService.
 			EXPECT().
-			Create(gomock.Any()).
+			Create(gomock.Any(), gomock.Any()).
 			Return("shelf-uuid-test", nil),
 
 		svc.ShelfService.
 			EXPECT().
-			Get("shelf-uuid-test").
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(&model.Shelf{
 				PublicShelf: model.PublicShelf{
 					Id:    "shelf-uuid-test",
@@ -58,14 +57,13 @@ func Test_API_CreateShelf_Failure_Create(t *testing.T) {
 
 	input := &model.ShelfRequestBody{
 		Body: model.ShelfBase{
-			Title:  "test-shelf",
-			UserId: "user-uuid-test",
+			Title: "test-shelf",
 		},
 	}
 
 	svc.ShelfService.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any()).
 		Return("", errors.New("failed to create shelf"))
 
 	resp, err := handler(context.Background(), input)
@@ -83,19 +81,18 @@ func Test_API_CreateShelf_Failure_Get(t *testing.T) {
 
 	input := &model.ShelfRequestBody{
 		Body: model.ShelfBase{
-			Title:  "test-shelf",
-			UserId: "user-uuid-test",
+			Title: "test-shelf",
 		},
 	}
 
 	svc.ShelfService.
 		EXPECT().
-		Create(gomock.Any()).
+		Create(gomock.Any(), gomock.Any()).
 		Return("shelf-uuid-test", nil)
 
 	svc.ShelfService.
 		EXPECT().
-		Get("shelf-uuid-test").
+		Get(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to get shelf"))
 
 	resp, err := handler(context.Background(), input)
@@ -113,7 +110,7 @@ func Test_API_GetShelfById_Success(t *testing.T) {
 
 	svc.ShelfService.
 		EXPECT().
-		Get("shelf-uuid-test").
+		Get("shelf-uuid-test", gomock.Any(), gomock.Any()).
 		Return(&model.Shelf{
 			PublicShelf: model.PublicShelf{
 				Id:    "shelf-uuid-test",
@@ -141,7 +138,7 @@ func Test_API_GetShelfById_Failure(t *testing.T) {
 
 	svc.ShelfService.
 		EXPECT().
-		Get("shelf-uuid-test").
+		Get("shelf-uuid-test", gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to get shelf"))
 
 	resp, err := handler(context.Background(), &model.ShelfRequestFilter{
@@ -164,14 +161,13 @@ func Test_API_UpdateShelf_Success(t *testing.T) {
 			ShelfId: "shelf-uuid-test",
 		},
 		Body: model.ShelfBase{
-			Title:  "updated-shelf-title",
-			UserId: "user-uuid-test",
+			Title: "updated-shelf-title",
 		},
 	}
 
 	svc.ShelfService.
 		EXPECT().
-		Update(gomock.Any(), gomock.Any()).
+		Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&model.Shelf{
 			PublicShelf: model.PublicShelf{
 				Id:    "shelf-uuid-test",
@@ -206,7 +202,7 @@ func Test_API_UpdateShelf_Failure(t *testing.T) {
 
 	svc.ShelfService.
 		EXPECT().
-		Update(gomock.Any(), gomock.Any()).
+		Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to update shelf"))
 
 	resp, err := handler(context.Background(), input)
@@ -225,7 +221,7 @@ func Test_API_DeleteShelf_Success(t *testing.T) {
 	gomock.InOrder(
 		svc.ShelfService.
 			EXPECT().
-			Get("shelf-uuid-test").
+			Get("shelf-uuid-test", gomock.Any(), gomock.Any()).
 			Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}}, nil),
 
 		svc.ShelfService.
@@ -250,7 +246,7 @@ func Test_API_DeleteShelf_Failure_Get(t *testing.T) {
 
 	svc.ShelfService.
 		EXPECT().
-		Get("shelf-uuid-test").
+		Get("shelf-uuid-test", gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("failed to get shelf"))
 
 	resp, err := handler(context.Background(), &model.ShelfRequestFilter{
@@ -270,7 +266,7 @@ func Test_API_DeleteShelf_Failure_Delete(t *testing.T) {
 
 	svc.ShelfService.
 		EXPECT().
-		Get("shelf-uuid-test").
+		Get("shelf-uuid-test", gomock.Any(), gomock.Any()).
 		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}}, nil)
 
 	svc.ShelfService.

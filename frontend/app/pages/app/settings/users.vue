@@ -6,7 +6,8 @@ import UserFormDialog from '~/components/user/UserFormDialog.vue'
 import UserPasswordDialog from '~/components/user/UserPasswordDialog.vue'
 
 definePageMeta({
-  layout: 'app'
+  layout: 'app',
+  middleware: 'admin'
 })
 
 const { t } = useI18n()
@@ -16,8 +17,13 @@ const userStore = useUserStore()
 const loading = ref(true)
 
 onMounted(async () => {
-  await callOnce(userStore.fetch)
-  loading.value = false
+  try {
+    await callOnce(userStore.fetch)
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    loading.value = false
+  }
 })
 
 const editOpen = ref(false)
@@ -60,11 +66,14 @@ async function confirmDelete() {
 
 function actionItems(user: User) {
   const items = [
-    [{ label: t('app.settings.users.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(user) }],
-    [{ label: t('app.settings.users.actions.changePassword'), icon: 'i-lucide-key-round', onSelect: () => openPassword(user) }]
+    [{ label: t('app.settings.users.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(user) }]
   ]
 
-  if (user.id !== currentUserId.value) {
+  // Only the account owner may change their own password - the backend
+  // rejects this for anyone else, admins included.
+  if (user.id === currentUserId.value) {
+    items.push([{ label: t('app.settings.users.actions.changePassword'), icon: 'i-lucide-key-round', onSelect: () => openPassword(user) }])
+  } else {
     items.push([{ label: t('app.settings.users.actions.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(user) }])
   }
 

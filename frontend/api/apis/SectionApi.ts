@@ -51,7 +51,7 @@ export interface PutUpdateSectionRequest {
 export class SectionApi extends runtime.BaseAPI {
 
     /**
-     * Delete a section by ID.
+     * Delete a section by ID. Only the owner of its shelf or an admin may delete it.
      * Delete section
      */
     async deleteSectionRaw(requestParameters: DeleteSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -66,6 +66,14 @@ export class SectionApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/sections/{sectionId}`;
         urlPath = urlPath.replace(`{${"sectionId"}}`, encodeURIComponent(String(requestParameters['sectionId'])));
@@ -81,7 +89,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a section by ID.
+     * Delete a section by ID. Only the owner of its shelf or an admin may delete it.
      * Delete section
      */
     async deleteSection(requestParameters: DeleteSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -89,7 +97,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get sections by shelf ID.
+     * Get sections by shelf ID. Used to render a shelf\'s public link page and requires no authentication.
      * Get sections by shelf ID
      */
     async getSectionsRaw(requestParameters: GetSectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Section>>> {
@@ -115,7 +123,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get sections by shelf ID.
+     * Get sections by shelf ID. Used to render a shelf\'s public link page and requires no authentication.
      * Get sections by shelf ID
      */
     async getSections(requestParameters: GetSectionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Section>> {
@@ -124,7 +132,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new section.
+     * Create a new section on a shelf owned by the caller.
      * Create section
      */
     async postCreateSectionRaw(requestParameters: PostCreateSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Section>> {
@@ -141,6 +149,14 @@ export class SectionApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/sections`;
 
@@ -156,7 +172,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new section.
+     * Create a new section on a shelf owned by the caller.
      * Create section
      */
     async postCreateSection(requestParameters: PostCreateSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Section> {
@@ -165,7 +181,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing section.
+     * Update an existing section. Only the owner of its shelf or an admin may update it.
      * Update section
      */
     async putUpdateSectionRaw(requestParameters: PutUpdateSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Section>> {
@@ -189,6 +205,14 @@ export class SectionApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/v1/sections/{sectionId}`;
         urlPath = urlPath.replace(`{${"sectionId"}}`, encodeURIComponent(String(requestParameters['sectionId'])));
@@ -205,7 +229,7 @@ export class SectionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing section.
+     * Update an existing section. Only the owner of its shelf or an admin may update it.
      * Update section
      */
     async putUpdateSection(requestParameters: PutUpdateSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Section> {
