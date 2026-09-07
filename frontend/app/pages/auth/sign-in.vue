@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import type { SettingPageBody } from '~~/api'
 
 definePageMeta({
   layout: false
@@ -10,6 +11,7 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
 const schema = v.object({
   email: v.pipe(
@@ -38,16 +40,18 @@ async function startOidc() {
   }
 }
 
-const providers = [
-  {
-    label: t('auth.signIn.sso'),
-    icon: 'i-lucide-key-round',
-    color: 'neutral' as const,
-    variant: 'subtle' as const,
-    block: true,
-    onClick: startOidc
-  }
-]
+const providers = computed(() => websiteSettings.value?.oidcEnabled
+  ? [
+      {
+        label: t('auth.signIn.sso'),
+        icon: 'i-lucide-key-round',
+        color: 'neutral' as const,
+        variant: 'subtle' as const,
+        block: true,
+        onClick: startOidc
+      }
+    ]
+  : [])
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
   loading.value = true

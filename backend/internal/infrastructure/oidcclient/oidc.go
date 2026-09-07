@@ -113,23 +113,38 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 		return nil, fmt.Errorf("id_token verification failed: %w", err)
 	}
 
-	var claims struct {
-		Subject       string `json:"sub"`
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-		GivenName     string `json:"given_name"`
-		FamilyName    string `json:"family_name"`
+	// The ID token is only guaranteed to carry 'sub' - whether it also
+	// carries profile/email claims depends on provider-specific
+	// configuration (e.g. Zitadel only embeds them in the ID token when the
+	// application is explicitly set up to do so; by default they are only
+	// available from the userinfo endpoint). The userinfo endpoint is the
+	// standards-based way to get them regardless of that setting, so it is
+	// always used as the source of truth for anything beyond the subject.
+	userInfo, err := c.provider.UserInfo(ctx, oauth2.StaticTokenSource(token))
+	if err != nil {
+		return nil, fmt.Errorf("fetching userinfo failed: %w", err)
 	}
-	if err := idToken.Claims(&claims); err != nil {
-		return nil, fmt.Errorf("failed to parse id_token claims: %w", err)
+	// Per the OIDC spec, the userinfo subject must match the ID token's -
+	// otherwise a malicious provider (or a compromised userinfo endpoint)
+	// could attach a different identity's profile to this token exchange.
+	if userInfo.Subject != idToken.Subject {
+		return nil, fmt.Errorf("userinfo subject %q does not match id_token subject %q", userInfo.Subject, idToken.Subject)
+	}
+
+	var profile struct {
+		GivenName  string `json:"given_name"`
+		FamilyName string `json:"family_name"`
+	}
+	if err := userInfo.Claims(&profile); err != nil {
+		return nil, fmt.Errorf("failed to parse userinfo claims: %w", err)
 	}
 
 	return &Identity{
-		Subject:       claims.Subject,
-		Email:         claims.Email,
-		EmailVerified: claims.EmailVerified,
-		FirstName:     claims.GivenName,
-		LastName:      claims.FamilyName,
+		Subject:       idToken.Subject,
+		Email:         userInfo.Email,
+		EmailVerified: userInfo.EmailVerified,
+		FirstName:     profile.GivenName,
+		LastName:      profile.FamilyName,
 	}, nil
 }
 

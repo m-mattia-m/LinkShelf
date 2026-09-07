@@ -17,6 +17,12 @@ frontend/.env.*
 
 
 backend/.idea
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/config.*.yaml
+!backend/config.default.yaml
+!backend/config.test.yaml
 
 
 .idea

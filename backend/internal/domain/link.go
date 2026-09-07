@@ -72,12 +72,7 @@ func (s *linkServiceImpl) Create(callerUserId string, isAdmin bool, u *model.Lin
 		return nil, err
 	}
 
-	link, err := s.Repository.LinkRepository.Get(linkId)
-	if err != nil {
-		return nil, err
-	}
-
-	return link, nil
+	return s.Get(linkId)
 }
 
 func (s *linkServiceImpl) Update(linkId, callerUserId string, isAdmin bool, linkRequest *model.Link) (*model.Link, error) {
@@ -106,12 +101,7 @@ func (s *linkServiceImpl) Update(linkId, callerUserId string, isAdmin bool, link
 		return nil, err
 	}
 
-	link, err := s.Repository.LinkRepository.Get(linkId)
-	if err != nil {
-		return nil, err
-	}
-
-	return link, nil
+	return s.Get(linkId)
 }
 
 func (s *linkServiceImpl) Delete(linkId, callerUserId string, isAdmin bool) error {

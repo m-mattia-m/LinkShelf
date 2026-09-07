@@ -89,7 +89,6 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
 </script>
 
 <template>
-  <UApp>
     <UDashboardGroup class="flex flex-col lg:flex-row">
       <UDashboardNavbar class="w-full lg:hidden">
         <UDashboardSidebarToggle />
@@ -141,7 +140,6 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
         </template>
       </UDashboardPanel>
     </UDashboardGroup>
-  </UApp>
 </template>
 
 

@@ -38,6 +38,12 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
+	// Debug log with masked password
+	safePassword := "***"
+	password := config.String("database.password")
+	zap.L().Debug("SQL DSN: " + strings.Replace(sqlDSN, password, safePassword, -1))
+	zap.L().Debug("Migration DSN: " + strings.Replace(migrateDSN, password, safePassword, -1))
+
 	db, err := connectToDatabase(sqlDSN, driver)
 	if err != nil {
 		return nil, err
@@ -154,8 +160,6 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	password := config.String("database.password")
 	params := config.String("database.params")
 
-	safePassword := "***"
-
 	switch engine {
 	case "postgres":
 		driver = "pgx"
@@ -187,10 +191,6 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 
 	sqlDSN = strings.TrimSuffix(sqlDSN, "?")
 	migrateDSN = strings.TrimSuffix(migrateDSN, "?")
-
-	// Debug log with masked password
-	zap.L().Debug("SQL DSN: " + strings.Replace(sqlDSN, password, safePassword, -1))
-	zap.L().Debug("Migration DSN: " + strings.Replace(migrateDSN, password, safePassword, -1))
 
 	return sqlDSN, driver, migrateDSN, nil
 }

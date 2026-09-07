@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"go.uber.org/zap"
 )
@@ -136,10 +137,35 @@ func waitForDatabase(ctx context.Context, db *sql.DB, timeout time.Duration) err
 	}
 }
 
+// doRequest performs an unauthenticated request - fine for public endpoints,
+// or for exercising a protected one's 401 path. Use doAuthedRequest for
+// anything that needs a real caller identity.
 func doRequest(
 	t *testing.T,
 	method, path string,
 	body io.Reader,
+) *http.Response {
+	t.Helper()
+	return doRequestWithToken(t, method, path, body, "")
+}
+
+// doAuthedRequest performs a request with the given access token attached as
+// a Bearer Authorization header.
+func doAuthedRequest(
+	t *testing.T,
+	method, path string,
+	body io.Reader,
+	token string,
+) *http.Response {
+	t.Helper()
+	return doRequestWithToken(t, method, path, body, token)
+}
+
+func doRequestWithToken(
+	t *testing.T,
+	method, path string,
+	body io.Reader,
+	token string,
 ) *http.Response {
 	t.Helper()
 
@@ -149,6 +175,9 @@ func doRequest(
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -173,42 +202,76 @@ func ObjectToJSON(object any) string {
 	return string(bytes)
 }
 
-func getShelfOwnerUser() (string, error) {
+// loginAndGetToken exercises the real login endpoint and returns the access
+// token, so tests act as a genuine authenticated caller rather than reaching
+// around auth entirely.
+func loginAndGetToken(t *testing.T, email, password string) string {
+	t.Helper()
 
-	randUuid, err := uuid.NewV7()
-	if err != nil {
-		return "", err
-	}
+	resp := doRequest(t, http.MethodPost, "/v1/auth/login", strings.NewReader(ObjectToJSON(model.LoginRequest{
+		Email:    email,
+		Password: password,
+	})))
+	defer func() { _ = resp.Body.Close() }()
 
-	userRequest := &model.UserCreate{
-		UserBase: model.UserBase{
-			Email:     fmt.Sprintf("test-shelf-owner-%s@test.com", ShortUUID(randUuid.String())),
-			FirstName: "test-shelf-owner-firstname",
-			LastName:  "test-shelf-owner-lastname",
-		},
-		Password: "secret",
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	user, err := TestService.UserService.Create(userRequest)
-	if err != nil {
-		return "", err
-	}
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
 
-	return user.Id, nil
+	var tokens model.TokenPair
+	require.NoError(t, json.Unmarshal(body, &tokens))
+	require.NotEmpty(t, tokens.AccessToken)
+
+	return tokens.AccessToken
 }
 
-func getShelfInclusiveItsOwnerUser() (string, error) {
-	userId, err := getShelfOwnerUser()
-	if err != nil {
-		return "", err
-	}
+// createUserWithRole creates a user directly via the service layer (bypassing
+// HTTP, since self-registration can never grant a role), then logs in over
+// the real HTTP API so the test gets back a genuine bearer token to act as
+// that user.
+func createUserWithRole(t *testing.T, role string) (userId, token string) {
+	t.Helper()
 
 	randUuid, err := uuid.NewV7()
-	if err != nil {
-		return "", err
-	}
+	require.NoError(t, err)
 
-	shelfId, err := TestService.ShelfService.Create(userId, &model.Shelf{
+	email := fmt.Sprintf("test-user-%s@test.com", ShortUUID(randUuid.String()))
+	const password = "secret"
+
+	user, err := TestService.UserService.Create(&model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     email,
+			FirstName: "test-firstname",
+			LastName:  "test-lastname",
+			Role:      role,
+		},
+		Password: password,
+	}, true)
+	require.NoError(t, err)
+
+	return user.Id, loginAndGetToken(t, email, password)
+}
+
+func createTestUser(t *testing.T) (userId, token string) {
+	t.Helper()
+	return createUserWithRole(t, model.RoleUser)
+}
+
+func createTestAdmin(t *testing.T) (userId, token string) {
+	t.Helper()
+	return createUserWithRole(t, model.RoleAdmin)
+}
+
+func getShelfInclusiveItsOwnerUser(t *testing.T) (shelfId, token string) {
+	t.Helper()
+
+	userId, token := createTestUser(t)
+
+	randUuid, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	shelfId, err = TestService.ShelfService.Create(userId, &model.Shelf{
 		PublicShelf: model.PublicShelf{
 			Title:       fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
 			Path:        fmt.Sprintf("shelf-for-owner-%s", ShortUUID(randUuid.String())),
@@ -217,19 +280,15 @@ func getShelfInclusiveItsOwnerUser() (string, error) {
 		},
 		Theme: "",
 	})
-	if err != nil {
-		return "", err
-	}
+	require.NoError(t, err)
 
-	return shelfId, nil
-
+	return shelfId, token
 }
 
-func getSectionAndShelfInclusiveItsOwnerUser() (string, error) {
-	shelfId, err := getShelfInclusiveItsOwnerUser()
-	if err != nil {
-		return "", err
-	}
+func getSectionAndShelfInclusiveItsOwnerUser(t *testing.T) (sectionId, token string) {
+	t.Helper()
+
+	shelfId, token := getShelfInclusiveItsOwnerUser(t)
 
 	section, err := TestService.SectionService.Create("", true, &model.Section{
 		SectionBase: model.SectionBase{
@@ -237,8 +296,9 @@ func getSectionAndShelfInclusiveItsOwnerUser() (string, error) {
 			ShelfId: shelfId,
 		},
 	})
+	require.NoError(t, err)
 
-	return section.Id, nil
+	return section.Id, token
 }
 
 func ShortUUID(u string) string {

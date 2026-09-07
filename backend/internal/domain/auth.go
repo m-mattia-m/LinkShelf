@@ -14,8 +14,17 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrEmailNotVerified   = errors.New("the identity provider did not confirm this email address is verified")
-	ErrOidcNotConfigured  = errors.New("OIDC login is not enabled")
+	// ErrEmailNotVerified is returned when a brand-new external identity
+	// can't be auto-provisioned because the provider did not vouch for the
+	// email - without that, anyone could sign up claiming an email they
+	// don't own.
+	ErrEmailNotVerified = errors.New("the identity provider did not confirm this email address is verified")
+	// ErrEmailNotVerifiedForLinking is returned instead of ErrEmailNotVerified
+	// when a local account with that email already exists - the two are
+	// kept distinct so the caller can tell an unverifiable signup apart from
+	// a refused auto-link to an existing account.
+	ErrEmailNotVerifiedForLinking = errors.New("an account with this email already exists, but the identity provider did not confirm this email address is verified, so it can't be linked automatically")
+	ErrOidcNotConfigured          = errors.New("OIDC login is not enabled")
 )
 
 type AuthService interface {
@@ -27,6 +36,9 @@ type AuthService interface {
 	// the caller was already authenticated and this is a link-to-my-account
 	// request rather than a login/auto-provision one.
 	OidcCallback(ctx context.Context, code, state string, currentUserId *string) (*model.TokenPair, error)
+	// IsOidcEnabled reports whether authentication.type is OIDC, so callers
+	// (e.g. the settings endpoint) can tell clients whether to offer SSO.
+	IsOidcEnabled() bool
 }
 
 type authServiceImpl struct {
@@ -89,6 +101,10 @@ func (s *authServiceImpl) Logout(rawRefreshToken string) error {
 	return s.Repository.RefreshTokenRepository.DeleteByHash(hashRefreshToken(rawRefreshToken))
 }
 
+func (s *authServiceImpl) IsOidcEnabled() bool {
+	return s.oidc != nil
+}
+
 func (s *authServiceImpl) OidcAuthorizationURL() (*model.OidcLoginResponseBody, error) {
 	if s.oidc == nil {
 		return nil, ErrOidcNotConfigured
@@ -112,6 +128,13 @@ func (s *authServiceImpl) OidcCallback(ctx context.Context, code, state string, 
 		return nil, err
 	}
 
+	return s.resolveOidcIdentity(identity, currentUserId)
+}
+
+// resolveOidcIdentity turns a verified OIDC identity into a session, split out
+// of OidcCallback so it can be unit tested without a real/mocked OIDC
+// exchange.
+func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, currentUserId *string) (*model.TokenPair, error) {
 	// Link mode: attach this external identity to the already-authenticated user.
 	if currentUserId != nil {
 		if err := s.Repository.UserRepository.LinkProvider(*currentUserId, model.ProviderOIDC, identity.Subject); err != nil {
@@ -133,21 +156,30 @@ func (s *authServiceImpl) OidcCallback(ctx context.Context, code, state string, 
 		return s.issueTokenPair(record.Id, record.Role)
 	}
 
-	// First-time external login: auto-link to an existing local user by
-	// verified email, or auto-provision a brand-new one.
-	if !identity.EmailVerified {
-		return nil, ErrEmailNotVerified
-	}
-
+	// First-time external login: auto-link to an existing local user matched
+	// by email, or auto-provision a brand-new one. Both paths require the
+	// provider to vouch for the email - without it, auto-linking would let
+	// anyone claim another user's account just by typing their email at the
+	// provider, and auto-provisioning would let anyone sign up with an email
+	// they don't own. The two failure cases are kept as distinct errors so
+	// the message doesn't claim an account exists when it doesn't.
 	existing, err := s.Repository.UserRepository.FindByEmail(identity.Email)
 	if err != nil {
 		return nil, err
 	}
+
 	if existing != nil {
+		if !identity.EmailVerified {
+			return nil, ErrEmailNotVerifiedForLinking
+		}
 		if err := s.Repository.UserRepository.LinkProvider(existing.Id, model.ProviderOIDC, identity.Subject); err != nil {
 			return nil, err
 		}
 		return s.issueTokenPair(existing.Id, existing.Role)
+	}
+
+	if !identity.EmailVerified {
+		return nil, ErrEmailNotVerified
 	}
 
 	userId, err := s.Repository.UserRepository.CreateExternal(identity.Email, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject)

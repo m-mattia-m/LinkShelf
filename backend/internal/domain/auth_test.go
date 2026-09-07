@@ -8,6 +8,7 @@ import (
 
 	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
+	"backend/internal/infrastructure/oidcclient"
 	"backend/internal/infrastructure/repository"
 
 	"github.com/stretchr/testify/require"
@@ -208,4 +209,191 @@ func Test_Unit_Auth_Oidc_NotConfigured(t *testing.T) {
 
 	_, err = svc.Service.AuthService.OidcCallback(context.Background(), "code", "state", nil)
 	require.ErrorIs(t, err, ErrOidcNotConfigured)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_LinkMode_Success(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	currentUserId := "current-user-id"
+	identity := &oidcclient.Identity{Subject: "provider-subject"}
+
+	svc.UserRepository.
+		EXPECT().
+		LinkProvider(currentUserId, model.ProviderOIDC, identity.Subject).
+		Return(nil)
+
+	svc.UserRepository.
+		EXPECT().
+		Get(currentUserId).
+		Return(&model.User{Id: currentUserId, UserBase: model.UserBase{Role: model.RoleUser}}, nil)
+
+	svc.RefreshTokenRepository.
+		EXPECT().
+		Create(currentUserId, gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, &currentUserId)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tokens.AccessToken)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_ReturningUser_MatchesByProviderId(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	identity := &oidcclient.Identity{Subject: "provider-subject", Email: "user@test.com", EmailVerified: true}
+
+	svc.UserRepository.
+		EXPECT().
+		FindByProviderId(identity.Subject).
+		Return(&repository.AuthRecord{Id: "existing-user-id", Role: model.RoleUser}, nil)
+
+	svc.RefreshTokenRepository.
+		EXPECT().
+		Create("existing-user-id", gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tokens.AccessToken)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_VerifiedEmail_Success(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	identity := &oidcclient.Identity{Subject: "provider-subject", Email: "user@test.com", EmailVerified: true}
+
+	svc.UserRepository.
+		EXPECT().
+		FindByProviderId(identity.Subject).
+		Return(nil, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail(identity.Email).
+		Return(&repository.AuthRecord{Id: "existing-user-id", Role: model.RoleUser}, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		LinkProvider("existing-user-id", model.ProviderOIDC, identity.Subject).
+		Return(nil)
+
+	svc.RefreshTokenRepository.
+		EXPECT().
+		Create("existing-user-id", gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tokens.AccessToken)
+}
+
+// Test_Unit_Auth_ResolveOidcIdentity_AutoLink_UnverifiedEmail_Fails covers the
+// exact scenario reported as confusing: an account with this email DOES
+// exist, so the "already exists" wording is accurate here - see the sibling
+// AutoProvision_UnverifiedEmail_Fails test for the case where it isn't.
+func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_UnverifiedEmail_Fails(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	identity := &oidcclient.Identity{Subject: "provider-subject", Email: "user@test.com", EmailVerified: false}
+
+	svc.UserRepository.
+		EXPECT().
+		FindByProviderId(identity.Subject).
+		Return(nil, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail(identity.Email).
+		Return(&repository.AuthRecord{Id: "existing-user-id", Role: model.RoleUser}, nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.ErrorIs(t, err, ErrEmailNotVerifiedForLinking)
+	require.Nil(t, tokens)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_VerifiedEmail_Success(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	identity := &oidcclient.Identity{
+		Subject: "provider-subject", Email: "new-user@test.com", EmailVerified: true,
+		FirstName: "First", LastName: "Last",
+	}
+
+	svc.UserRepository.
+		EXPECT().
+		FindByProviderId(identity.Subject).
+		Return(nil, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail(identity.Email).
+		Return(nil, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		CreateExternal(identity.Email, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject).
+		Return("new-user-id", nil)
+
+	svc.RefreshTokenRepository.
+		EXPECT().
+		Create("new-user-id", gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tokens.AccessToken)
+}
+
+// Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UnverifiedEmail_Fails
+// covers the case that was reported as confusing: no account with this email
+// exists at all (e.g. it was just deleted), yet the provider's unverified
+// email still refuses the login. ErrEmailNotVerified (not
+// ErrEmailNotVerifiedForLinking) must be returned here so the caller isn't
+// told an account exists when it doesn't, and CreateExternal must never be
+// called for an unverified identity.
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UnverifiedEmail_Fails(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	identity := &oidcclient.Identity{Subject: "provider-subject", Email: "nobody@test.com", EmailVerified: false}
+
+	svc.UserRepository.
+		EXPECT().
+		FindByProviderId(identity.Subject).
+		Return(nil, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail(identity.Email).
+		Return(nil, nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.ErrorIs(t, err, ErrEmailNotVerified)
+	require.NotErrorIs(t, err, ErrEmailNotVerifiedForLinking)
+	require.Nil(t, tokens)
 }

@@ -64,8 +64,11 @@ func OidcCallback(svc *domain.Service) func(c context.Context, input *model.Oidc
 
 		tokens, err := svc.AuthService.OidcCallback(c, input.Body.Code, input.Body.State, currentUserId)
 		if err != nil {
+			if errors.Is(err, domain.ErrEmailNotVerifiedForLinking) {
+				return nil, huma.Error409Conflict("an account with this email already exists and could not be auto-linked because the identity provider did not confirm this email address is verified", err)
+			}
 			if errors.Is(err, domain.ErrEmailNotVerified) {
-				return nil, huma.Error409Conflict("an account with this email already exists and could not be auto-linked because the identity provider did not report a verified email", err)
+				return nil, huma.Error409Conflict("a new account could not be created because the identity provider did not confirm this email address is verified", err)
 			}
 			return nil, huma.Error400BadRequest("failed to complete OIDC login", err)
 		}

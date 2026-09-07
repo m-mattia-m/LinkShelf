@@ -18,10 +18,10 @@ database:
   name: linkshelf
   params: "sslmode=disable" # "charset=utf8mb4&parseTime=true" # "sslmode=disable" # optional
 logging:
-  level: debug
+  level: info
 domain:
   openapi:
-    usePort: true
+    usePort: false
 authentication:
   type: LOCAL # LOCAL # OIDC
   # jwtSecret signs the access tokens this backend issues itself, no matter
@@ -37,10 +37,14 @@ authentication:
     email: admin@example.com
     password: "change-me"
   oidc:
-    # Only required when authentication.type is OIDC. Works with any
-    # standards-compliant OIDC issuer (Keycloak, Zitadel, Auth0, Google, ...).
+    # issuer and clientId are required when authentication.type is OIDC.
+    # Works with any standards-compliant OIDC issuer (Keycloak, Zitadel,
+    # Auth0, Google, ...).
     issuer: ""
     clientId: ""
+    # clientSecret is optional: the login flow always runs PKCE, so a public
+    # client registered without a secret works fine - leave this empty in
+    # that case.
     clientSecret: ""
     # Must match the frontend's OIDC callback page, which completes the
     # login by POSTing the code+state here to /v1/auth/oidc/callback.

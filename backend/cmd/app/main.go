@@ -24,6 +24,8 @@ func main() {
 
 	logger.Init(config.String("logging.level"))
 
+	zap.L().Debug("Following configuration is used: ", zap.Any("config", config.Get()))
+
 	repo, err := repository.NewRepository()
 	if err != nil {
 		zap.L().Fatal(err.Error())
@@ -34,6 +36,7 @@ func main() {
 	}
 
 	var oidcClient *oidcclient.Client
+	// TODO: bad practice -> do not open the repository directly -> add it behind the domain layer
 	if strings.EqualFold(config.String("authentication.type"), "OIDC") {
 		oidcClient, err = oidcclient.New(context.Background(), repo.OidcStateRepository)
 		if err != nil {

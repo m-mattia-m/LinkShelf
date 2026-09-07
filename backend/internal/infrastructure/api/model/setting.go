@@ -27,6 +27,7 @@ type SettingPageBody struct {
 	PrivacyPolicy       string   `json:"privacy_policy" bson:"privacy_policy"`
 	RedirectToDashboard bool     `json:"redirect_to_dashboard" bson:"redirect_to_dashboard"`
 	LoginOptions        []string `json:"login_options" bson:"login_options"`
+	OidcEnabled         bool     `json:"oidc_enabled" bson:"oidc_enabled"`
 }
 
 type SettingRequestFiler struct {

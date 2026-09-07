@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting) *model.SettingPageResponse {
+func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, oidcEnabled bool) *model.SettingPageResponse {
 	settingsMap := make(map[string]model.Setting)
 
 	for _, setting := range settings {
@@ -27,6 +27,7 @@ func MapSettingToSettingPageResponse(languageCode string, settings []model.Setti
 			PrivacyPolicy:       getSettingValue(settingsMap, "privacy_policy", languageCode),
 			RedirectToDashboard: getSettingValue(settingsMap, "redirect_to_dashboard", languageCode) == "true",
 			LoginOptions:        getSettingArrayValue(settingsMap, "login_options", languageCode),
+			OidcEnabled:         oidcEnabled,
 		},
 	}
 }
