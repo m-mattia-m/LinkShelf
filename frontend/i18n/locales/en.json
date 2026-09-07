@@ -78,8 +78,6 @@
   "app.settings.imprint.label": "Imprint",
   "app.settings.termsOfUse.label": "Terms of use",
   "app.settings.privacyPolicy.label": "Privacy policy",
-  "app.settings.loginOptions.label": "Login options",
-  "app.settings.loginOptions.help": "Authentication providers offered on the sign-in page.",
   "app.settings.redirectToDashboard.label": "Redirect to dashboard",
   "app.settings.redirectToDashboard.help": "Send visitors straight to the dashboard instead of the homepage.",
 
