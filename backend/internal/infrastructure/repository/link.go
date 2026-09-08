@@ -64,11 +64,11 @@ func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 		links = append(links, link)
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	return links, err
+	return links, nil
 }
 
 func (r *linkRepository) Get(id string) (*model.Link, error) {

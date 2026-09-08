@@ -23,6 +23,7 @@ backend/.env.*
 backend/config.*.yaml
 !backend/config.default.yaml
 !backend/config.test.yaml
+backend/coverage*.out
 
 
 .idea

@@ -73,11 +73,11 @@ func (r *settingRepository) List() ([]model.Setting, error) {
 		settings = append(settings, setting)
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	return settings, err
+	return settings, nil
 }
 
 func (r *settingRepository) GetByKey(key string) (*model.Setting, error) {

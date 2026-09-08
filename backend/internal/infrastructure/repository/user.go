@@ -110,8 +110,11 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &user, err
+	return &user, nil
 }
 
 func (r *userRepository) GetPassword(id string) (string, error) {
@@ -266,8 +269,11 @@ func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &record, err
+	return &record, nil
 }
 
 func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error) {
@@ -295,8 +301,11 @@ func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &record, err
+	return &record, nil
 }
 
 // CreateExternal creates a user with no local password, provisioned from an

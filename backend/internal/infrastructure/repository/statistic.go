@@ -42,8 +42,11 @@ func (r *statisticRepository) GetShelfAmount(userId string) (*int, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &count, err
+	return &count, nil
 }
 
 func (r *statisticRepository) GetSectionAmount(userId string) (*int, error) {
@@ -62,8 +65,11 @@ func (r *statisticRepository) GetSectionAmount(userId string) (*int, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &count, err
+	return &count, nil
 }
 
 func (r *statisticRepository) GetLinkAmount(userId string) (*int, error) {
@@ -82,6 +88,9 @@ func (r *statisticRepository) GetLinkAmount(userId string) (*int, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &count, err
+	return &count, nil
 }

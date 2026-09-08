@@ -80,8 +80,11 @@ func (r *refreshTokenRepository) GetByHash(tokenHash string) (*RefreshToken, err
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &token, err
+	return &token, nil
 }
 
 func (r *refreshTokenRepository) DeleteByHash(tokenHash string) error {

@@ -71,8 +71,11 @@ func (r *oidcStateRepository) GetByState(state string) (*OidcState, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &result, err
+	return &result, nil
 }
 
 func (r *oidcStateRepository) DeleteByState(state string) error {
