@@ -63,11 +63,36 @@ jobs:
         run: |
           go list -tags=integration ./... | grep -Ev '/(mocks|config|cmd|migrations)' | xargs go test -tags=integration -coverprofile=coverage.integration.out
 
+      # These two run every repository function against a real, throwaway
+      # Postgres/MySQL container (via testcontainers-go) instead of sqlmock,
+      # so a change that only breaks one engine's actual SQL dialect is
+      # caught here rather than shipped. database.engine is picked up from
+      # APP_DATABASE_ENGINE by config.LoadConfig().
+      #
+      # -run RealDB restricts execution to this tier's own tests (all named
+      # Test_RealDB_*) - the package's other (untagged) sqlmock tests still
+      # compile here too, but must NOT run under this env's database.engine:
+      # they assume the default test config's engine (Postgres) regardless
+      # of which real one is under test in a given leg.
+      - name: Run repository tests against real Postgres
+        working-directory: backend
+        env:
+          APP_DATABASE_ENGINE: postgres
+        run: |
+          go test -tags=realdb -run RealDB -coverprofile=coverage.realdb.postgres.out backend/internal/infrastructure/repository
+
+      - name: Run repository tests against real MySQL
+        working-directory: backend
+        env:
+          APP_DATABASE_ENGINE: mysql
+        run: |
+          go test -tags=realdb -run RealDB -coverprofile=coverage.realdb.mysql.out backend/internal/infrastructure/repository
+
       - name: Merge coverage
         working-directory: backend
         run: |
           echo "mode: atomic" > ../coverage.out
-          grep -h -v "^mode:" coverage.unit.out coverage.integration.out >> ../coverage.out
+          grep -h -v "^mode:" coverage.unit.out coverage.integration.out coverage.realdb.postgres.out coverage.realdb.mysql.out >> ../coverage.out
 
       - name: Coverage summary
         working-directory: backend
@@ -81,7 +106,7 @@ jobs:
         uses: vladopajic/go-test-coverage@v2
         with:
           profile: coverage.out
-          threshold-total: 0
+          threshold-total: 80
           debug: true
 
           # On pull_request, github.ref_name is the merge ref ("47/merge"), not a

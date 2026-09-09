@@ -358,3 +358,45 @@ func Test_ShelfRepository_GetByPath_NoRows(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, shelf)
 }
+
+func Test_ShelfRepository_ListByUserId_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	rows := sqlmock.NewRows([]string{
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id",
+	}).AddRow(
+		"shelf-uuid-test", "test-shelf", "/test", "example.com", "description-test", "dark", "icon-test", "user-uuid-test",
+	)
+
+	mock.ExpectQuery(`FROM\s+shelf\s+WHERE user_id =`).
+		WithArgs("user-uuid-test").
+		WillReturnRows(rows)
+
+	shelves, err := repo.ListByUserId("user-uuid-test")
+
+	require.NoError(t, err)
+	require.Len(t, shelves, 1)
+	require.Equal(t, "user-uuid-test", shelves[0].UserId)
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_ShelfRepository_ListByUserId_QueryError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`FROM\s+shelf\s+WHERE user_id =`).
+		WillReturnError(errors.New("query failed"))
+
+	shelves, err := repo.ListByUserId("user-uuid-test")
+
+	require.Error(t, err)
+	require.Nil(t, shelves)
+}

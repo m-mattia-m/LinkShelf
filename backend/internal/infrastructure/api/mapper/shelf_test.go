@@ -35,6 +35,27 @@ func Test_MapShelfToShelfResponse(t *testing.T) {
 	require.Equal(t, shelf.UserId, resp.Body.UserId)
 }
 
+func Test_MapShelfToShelfListResponse(t *testing.T) {
+	shelves := []model.Shelf{
+		{PublicShelf: model.PublicShelf{Id: "shelf-1", Title: "First"}},
+		{PublicShelf: model.PublicShelf{Id: "shelf-2", Title: "Second"}},
+	}
+
+	resp := MapShelfToShelfListResponse(shelves)
+
+	require.NotNil(t, resp)
+	require.Len(t, resp.Body, 2)
+	require.Equal(t, "shelf-1", resp.Body[0].Id)
+	require.Equal(t, "shelf-2", resp.Body[1].Id)
+}
+
+func Test_MapShelfToShelfListResponse_Empty(t *testing.T) {
+	resp := MapShelfToShelfListResponse([]model.Shelf{})
+
+	require.NotNil(t, resp)
+	require.Empty(t, resp.Body)
+}
+
 func Test_MapShelfToPublicShelfResponse(t *testing.T) {
 	shelf := model.Shelf{
 		PublicShelf: model.PublicShelf{

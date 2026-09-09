@@ -245,3 +245,24 @@ func Test_SectionRepository_Delete_ExecError(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+func Test_SectionRepository_ListByShelfId_RowsIterationError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &sectionRepository{Engine: db}
+
+	rows := sqlmock.NewRows([]string{"id", "title", "shelf_id"}).
+		AddRow("section-uuid-test", "title-test", "shelf-uuid-test").
+		RowError(0, errors.New("connection dropped mid-stream"))
+
+	mock.ExpectQuery(`FROM\s+section`).
+		WithArgs("shelf-uuid-test").
+		WillReturnRows(rows)
+
+	sections, err := repo.ListByShelfId("shelf-uuid-test")
+
+	require.Error(t, err, "an error surfacing only via rows.Err() after iteration must not be silently dropped")
+	require.Nil(t, sections)
+}

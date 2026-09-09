@@ -38,21 +38,23 @@ func NewOidcStateRepository(engine *sql.DB, table string) (OidcStateRepository, 
 
 func (r *oidcStateRepository) Create(state, codeVerifier string, expiresAt time.Time) error {
 	query, err := buildSqlStatements(`
-		INSERT INTO "oidc_state" (state, code_verifier, expires_at)
+		INSERT INTO oidc_state (state, code_verifier, expires_at)
 		VALUES (?, ?, ?)
 	`)
 	if err != nil {
 		return err
 	}
 
-	_, err = r.Engine.ExecContext(context.TODO(), query, state, codeVerifier, expiresAt)
+	// See refresh_token.go's Create for why expiresAt is normalized to UTC:
+	// both engines' column type is timezone-naive.
+	_, err = r.Engine.ExecContext(context.TODO(), query, state, codeVerifier, expiresAt.UTC())
 	return err
 }
 
 func (r *oidcStateRepository) GetByState(state string) (*OidcState, error) {
 	query, err := buildSqlStatements(`
 		SELECT state, code_verifier, expires_at
-		FROM "oidc_state"
+		FROM oidc_state
 		WHERE state = ?
 	`)
 	if err != nil {
@@ -69,13 +71,16 @@ func (r *oidcStateRepository) GetByState(state string) (*OidcState, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
 
-	return &result, err
+	return &result, nil
 }
 
 func (r *oidcStateRepository) DeleteByState(state string) error {
 	query, err := buildSqlStatements(`
-		DELETE FROM "oidc_state"
+		DELETE FROM oidc_state
 		WHERE state = ?
 	`)
 	if err != nil {

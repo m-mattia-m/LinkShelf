@@ -27,9 +27,27 @@ func NewSettingRepository(engine *sql.DB, table string) (SettingRepository, erro
 	}, nil
 }
 
+// settingKeyColumn is "key" quoted for whichever engine is configured - MySQL
+// reserves KEY (rejects it as a bare column reference), Postgres doesn't.
+func settingKeyColumn() (string, error) {
+	_, driver, _, err := getConnectionInformation()
+	if err != nil {
+		return "", err
+	}
+	if driver == "mysql" {
+		return "`key`", nil
+	}
+	return "key", nil
+}
+
 func (r *settingRepository) List() ([]model.Setting, error) {
+	keyColumn, err := settingKeyColumn()
+	if err != nil {
+		return nil, err
+	}
+
 	query, err := buildSqlStatements(`
-		SELECT key, language, value
+		SELECT ` + keyColumn + `, language, value
 		FROM setting
 	`)
 	if err != nil {
@@ -55,19 +73,23 @@ func (r *settingRepository) List() ([]model.Setting, error) {
 		settings = append(settings, setting)
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	return settings, err
+	return settings, nil
 }
 
 func (r *settingRepository) GetByKey(key string) (*model.Setting, error) {
+	keyColumn, err := settingKeyColumn()
+	if err != nil {
+		return nil, err
+	}
 
 	query, err := buildSqlStatements(`
-		SELECT key, language, value
+		SELECT ` + keyColumn + `, language, value
 		FROM setting
-		WHERE key = ?
+		WHERE ` + keyColumn + ` = ?
 	`)
 	if err != nil {
 		return nil, err
@@ -91,14 +113,21 @@ func (r *settingRepository) GetByKey(key string) (*model.Setting, error) {
 	return &setting, nil
 }
 
+// Upsert's conflict-handling clause has no shared syntax between engines
+// (Postgres's ON CONFLICT/EXCLUDED vs MySQL's ON DUPLICATE KEY UPDATE), so
+// this builds the two dialects' queries directly rather than going through
+// buildSqlStatements's generic ?-to-$N conversion.
 func (r *settingRepository) Upsert(key string, language string, value string) error {
-	query, err := buildSqlStatements(`
-		INSERT INTO setting (key, language, value)
-		VALUES (?, ?, ?)
-		ON CONFLICT (key, language) DO UPDATE SET value = EXCLUDED.value
-	`)
+	_, driver, _, err := getConnectionInformation()
 	if err != nil {
 		return err
+	}
+
+	var query string
+	if driver == "mysql" {
+		query = "INSERT INTO setting (`key`, language, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)"
+	} else {
+		query = "INSERT INTO setting (key, language, value) VALUES ($1, $2, $3) ON CONFLICT (key, language) DO UPDATE SET value = EXCLUDED.value"
 	}
 
 	_, err = r.Engine.ExecContext(context.TODO(), query, key, language, value)

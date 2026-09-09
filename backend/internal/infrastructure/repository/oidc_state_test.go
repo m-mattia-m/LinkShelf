@@ -17,7 +17,7 @@ func Test_OidcStateRepository_Create_Success(t *testing.T) {
 
 	repo := &oidcStateRepository{Engine: db}
 
-	mock.ExpectExec(`INSERT INTO "oidc_state"`).
+	mock.ExpectExec(`INSERT INTO oidc_state`).
 		WithArgs("state-test", "verifier-test", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -38,7 +38,7 @@ func Test_OidcStateRepository_GetByState_Success(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"state", "code_verifier", "expires_at"}).
 		AddRow("state-test", "verifier-test", expiry)
 
-	mock.ExpectQuery(`FROM\s+"oidc_state"\s+WHERE state =`).
+	mock.ExpectQuery(`FROM\s+oidc_state\s+WHERE state =`).
 		WithArgs("state-test").
 		WillReturnRows(rows)
 
@@ -56,7 +56,7 @@ func Test_OidcStateRepository_GetByState_NoRows(t *testing.T) {
 
 	repo := &oidcStateRepository{Engine: db}
 
-	mock.ExpectQuery(`FROM\s+"oidc_state"\s+WHERE state =`).
+	mock.ExpectQuery(`FROM\s+oidc_state\s+WHERE state =`).
 		WithArgs("missing-state").
 		WillReturnError(sql.ErrNoRows)
 
@@ -73,7 +73,7 @@ func Test_OidcStateRepository_DeleteByState_Success(t *testing.T) {
 
 	repo := &oidcStateRepository{Engine: db}
 
-	mock.ExpectExec(`DELETE FROM "oidc_state"`).
+	mock.ExpectExec(`DELETE FROM oidc_state`).
 		WithArgs("state-test").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -90,7 +90,7 @@ func Test_OidcStateRepository_DeleteByState_ExecError(t *testing.T) {
 
 	repo := &oidcStateRepository{Engine: db}
 
-	mock.ExpectExec(`DELETE FROM "oidc_state"`).
+	mock.ExpectExec(`DELETE FROM oidc_state`).
 		WillReturnError(errors.New("delete failed"))
 
 	err = repo.DeleteByState("state-test")

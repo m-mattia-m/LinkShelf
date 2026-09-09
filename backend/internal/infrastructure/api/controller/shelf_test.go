@@ -348,3 +348,42 @@ func Test_API_GetPublicShelfByPath_Failure(t *testing.T) {
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to get shelf")
 }
+
+func Test_API_ListShelf_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := ListShelf(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		List(gomock.Any(), gomock.Any()).
+		Return([]model.Shelf{
+			{PublicShelf: model.PublicShelf{Id: "shelf-1", Title: "First"}},
+			{PublicShelf: model.PublicShelf{Id: "shelf-2", Title: "Second"}},
+		}, nil)
+
+	resp, err := handler(context.Background(), &struct{}{})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Len(t, resp.Body, 2)
+}
+
+func Test_API_ListShelf_Failure(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := ListShelf(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		List(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("db unavailable"))
+
+	resp, err := handler(context.Background(), &struct{}{})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "failed to list shelves")
+}

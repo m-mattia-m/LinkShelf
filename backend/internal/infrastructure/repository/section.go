@@ -60,11 +60,11 @@ func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 		sections = append(sections, section)
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	return sections, err
+	return sections, nil
 }
 
 func (r *sectionRepository) Get(id string) (*model.Section, error) {
@@ -86,6 +86,10 @@ func (r *sectionRepository) Get(id string) (*model.Section, error) {
 		&section.Title,
 		&section.ShelfId,
 	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

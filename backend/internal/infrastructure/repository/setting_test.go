@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package repository
 
 import (
@@ -177,4 +174,24 @@ func Test_SettingRepository_Upsert_ExecError(t *testing.T) {
 	err = repo.Upsert("theme", "en", "dark")
 
 	require.Error(t, err)
+}
+
+func Test_SettingRepository_List_RowsIterationError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &settingRepository{Engine: db}
+
+	rows := sqlmock.NewRows([]string{"key", "language", "value"}).
+		AddRow("theme", "en", "dark").
+		RowError(0, errors.New("connection dropped mid-stream"))
+
+	mock.ExpectQuery(`FROM\s+setting`).
+		WillReturnRows(rows)
+
+	settings, err := repo.List()
+
+	require.Error(t, err, "an error surfacing only via rows.Err() after iteration must not be silently dropped")
+	require.Nil(t, settings)
 }

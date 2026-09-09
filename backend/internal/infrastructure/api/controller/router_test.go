@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/domain/mocks"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -17,6 +19,8 @@ type MockService struct {
 	SectionService   *mocks.MockSectionService
 	LinkService      *mocks.MockLinkService
 	StatisticService *mocks.MockStatisticService
+	SettingService   *mocks.MockSettingService
+	AuthService      *mocks.MockAuthService
 }
 
 func NewMockDomainService(t *testing.T) *MockService {
@@ -29,6 +33,8 @@ func NewMockDomainService(t *testing.T) *MockService {
 	sectionService := mocks.NewMockSectionService(ctrl)
 	linkService := mocks.NewMockLinkService(ctrl)
 	statisticService := mocks.NewMockStatisticService(ctrl)
+	settingService := mocks.NewMockSettingService(ctrl)
+	authService := mocks.NewMockAuthService(ctrl)
 
 	domainService := &domain.Service{
 		UserService:      userService,
@@ -36,6 +42,8 @@ func NewMockDomainService(t *testing.T) *MockService {
 		SectionService:   sectionService,
 		LinkService:      linkService,
 		StatisticService: statisticService,
+		SettingService:   settingService,
+		AuthService:      authService,
 	}
 
 	return &MockService{
@@ -46,5 +54,20 @@ func NewMockDomainService(t *testing.T) *MockService {
 		SectionService:   sectionService,
 		LinkService:      linkService,
 		StatisticService: statisticService,
+		SettingService:   settingService,
+		AuthService:      authService,
 	}
+}
+
+func Test_Router_BuildsWithoutError(t *testing.T) {
+	config.Reset()
+	require.NoError(t, config.LoadConfig())
+
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	router, err := Router(svc.Service)
+
+	require.NoError(t, err)
+	require.NotNil(t, router)
 }
