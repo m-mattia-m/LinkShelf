@@ -28,3 +28,4 @@ backend/coverage*.out
 
 .idea
 .claude
+.DS_Store
