@@ -1,13 +1,20 @@
 # =========================
 # Build Go backend
 # =========================
-FROM golang:1.27-alpine AS go-builder
+# --platform=$BUILDPLATFORM keeps the Go compiler running natively on the
+# build host even when cross-building for another target (Go cross-compiles
+# via GOOS/GOARCH without needing QEMU), which is much faster than emulating
+# the whole build stage.
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS go-builder
 
 ARG IMAGE_NAME
 ARG IMAGE_TAG
+ARG TARGETOS
+ARG TARGETARCH
 
 ENV CGO_ENABLED=0
-ENV GOOS=linux
+ENV GOOS=$TARGETOS
+ENV GOARCH=$TARGETARCH
 
 WORKDIR /app
 
@@ -27,7 +34,7 @@ RUN go build \
 # =========================
 # Build Nuxt frontend
 # =========================
-FROM node:26-alpine AS nuxt-builder
+FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS nuxt-builder
 
 # better-sqlite3 has no musl prebuilds, so it is compiled from source here
 RUN apk add --no-cache python3 make g++
@@ -40,28 +47,53 @@ RUN npm ci
 COPY frontend .
 RUN npm run build
 
+# better-sqlite3 bundles prebuilt native addons for every platform it
+# supports (~16MB across 8 files); the runtime image only ever loads the one
+# matching its own musl/arch combination, so drop the rest.
+ARG TARGETARCH
+RUN NODE_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
+  find .output/server/node_modules/better-sqlite3/prebuilds -type f \
+    ! -name "linuxmusl-${NODE_ARCH}.node" -delete
+
 # =========================
 # Runtime (ONE IMAGE)
 # =========================
-FROM node:26-alpine
+# Plain alpine + the bare `nodejs` package (no npm/corepack, which node:alpine
+# always bundles and which the pre-built .output never needs at runtime) is
+# roughly 100MB smaller than node:alpine for the same Node.js runtime.
+FROM alpine:3.21@sha256:48b0309ca019d89d40f670aa1bc06e426dc0931948452e8491e3d65087abc07d
 
 # tini = tiny init, nothing more
-RUN apk add --no-cache tini ca-certificates
+RUN apk add --no-cache nodejs tini ca-certificates
+
+# Non-root, and compatible with OpenShift's restricted SCC: OpenShift ignores
+# the USER below and assigns its own arbitrary UID at runtime, but that UID
+# is always a member of group 0 - so files below are group-owned by 0 and
+# given group read/execute (via --chmod on each COPY) rather than relying on
+# a fixed UID.
+RUN adduser -D -u 1001 -G root app
 
 WORKDIR /app
 
-COPY --from=go-builder /out/linkshelf /app/linkshelf
-COPY ./backend/migrations /app/migrations
-COPY --from=nuxt-builder /frontend/.output /app/.output
+# --chown/--chmod set ownership and permissions inline instead of a separate
+# `RUN chown -R` step, which would duplicate every file it touches into a new
+# layer on top of the COPY layer that already has them.
+COPY --from=go-builder --chown=1001:0 --chmod=755 /out/linkshelf /app/linkshelf
+COPY --chown=1001:0 --chmod=644 ./backend/config.default.yaml /app/config.default.yaml
+COPY --chown=1001:0 --chmod=755 ./backend/migrations /app/migrations
+COPY --from=nuxt-builder --chown=1001:0 --chmod=755 /frontend/.output /app/.output
 
 ENV NODE_ENV=production
 ENV GIN_MODE=release
 ENV PORT=8085
 ENV NITRO_PORT=3000
 ENV NITRO_HOST=0.0.0.0
+ENV HOME=/app
 
 EXPOSE 8085
 EXPOSE 3000
+
+USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
 

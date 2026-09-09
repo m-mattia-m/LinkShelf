@@ -31,7 +31,7 @@ documentation, your help is appreciated. Please follow the guidelines below to e
 
 ```bash
 # start the whole stack (DB + app) in detached mode
-docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
+docker compose -f compose.yaml -f compose.dev.yaml up -d
 # if you only want to start the DBs (for development):
 docker compose up -d
 
