@@ -13,7 +13,6 @@ on:
       - 'refactor/**'
       - 'style/**'
       - 'test/**'
-  pull_request:
 
 env:
   IMAGE_NAME: linkshelf
@@ -109,7 +108,5 @@ jobs:
           threshold-total: 80
           debug: true
 
-          # On pull_request, github.ref_name is the merge ref ("47/merge"), not a
-          # branch, so skip the badge and only publish it on push.
-          git-token: ${{ github.event_name == 'push' && secrets.GITHUB_TOKEN || '' }}
+          git-token: ${{ secrets.GITHUB_TOKEN }}
           git-branch: ${{ github.ref_name }}

@@ -1,13 +1,16 @@
 # =========================
 # Build Go backend
 # =========================
-FROM golang:1.27-alpine AS go-builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS go-builder
 
 ARG IMAGE_NAME
 ARG IMAGE_TAG
+ARG TARGETOS
+ARG TARGETARCH
 
 ENV CGO_ENABLED=0
-ENV GOOS=linux
+ENV GOOS=$TARGETOS
+ENV GOARCH=$TARGETARCH
 
 WORKDIR /app
 
@@ -27,9 +30,8 @@ RUN go build \
 # =========================
 # Build Nuxt frontend
 # =========================
-FROM node:26-alpine AS nuxt-builder
+FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS nuxt-builder
 
-# better-sqlite3 has no musl prebuilds, so it is compiled from source here
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /frontend
@@ -40,28 +42,37 @@ RUN npm ci
 COPY frontend .
 RUN npm run build
 
+ARG TARGETARCH
+RUN NODE_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
+  find .output/server/node_modules/better-sqlite3/prebuilds -type f \
+    ! -name "linuxmusl-${NODE_ARCH}.node" -delete
+
 # =========================
-# Runtime (ONE IMAGE)
+# Runtime
 # =========================
-FROM node:26-alpine
+FROM alpine:3.21@sha256:48b0309ca019d89d40f670aa1bc06e426dc0931948452e8491e3d65087abc07d
 
 # tini = tiny init, nothing more
-RUN apk add --no-cache tini ca-certificates
+RUN apk add --no-cache nodejs tini ca-certificates
+
+RUN adduser -D -u 1001 -G root app
 
 WORKDIR /app
 
-COPY --from=go-builder /out/linkshelf /app/linkshelf
-COPY ./backend/migrations /app/migrations
-COPY --from=nuxt-builder /frontend/.output /app/.output
+COPY --from=go-builder --chown=1001:0 --chmod=755 /out/linkshelf /app/linkshelf
+COPY --chown=1001:0 --chmod=644 ./backend/config.default.yaml /app/config.default.yaml
+COPY --chown=1001:0 --chmod=755 ./backend/migrations /app/migrations
+COPY --from=nuxt-builder --chown=1001:0 --chmod=755 /frontend/.output /app/.output
 
 ENV NODE_ENV=production
-ENV GIN_MODE=release
-ENV PORT=8085
 ENV NITRO_PORT=3000
 ENV NITRO_HOST=0.0.0.0
+ENV HOME=/app
 
 EXPOSE 8085
 EXPOSE 3000
+
+USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--"]
 

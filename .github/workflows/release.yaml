@@ -91,6 +91,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -101,32 +104,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build and push Docker image (multi-arch)
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
             -f .container/Containerfile \
-            -t $IMAGE_NAME \
             --build-arg IMAGE_NAME=$IMAGE_NAME \
             --build-arg IMAGE_TAG=$IMAGE_TAG \
             --label org.opencontainers.image.version=$IMAGE_TAG \
+            -t $REGISTRY/$OWNER/$IMAGE_NAME:$IMAGE_TAG \
+            -t $REGISTRY/$OWNER/$IMAGE_NAME:latest \
+            --push \
             .
-
-      - name: Tag image (release)
-        run: |
-          docker tag \
-            $IMAGE_NAME \
-            $REGISTRY/$OWNER/$IMAGE_NAME:$IMAGE_TAG
-
-      - name: Push image (release)
-        run: |
-          docker push $REGISTRY/$OWNER/$IMAGE_NAME:$IMAGE_TAG
-
-      - name: Tag image (latest)
-        run: |
-          docker tag \
-            $IMAGE_NAME \
-            $REGISTRY/$OWNER/$IMAGE_NAME:latest
-
-      - name: Push image (latest)
-        run: |
-          docker push $REGISTRY/$OWNER/$IMAGE_NAME:latest
