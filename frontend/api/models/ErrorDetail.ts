@@ -32,7 +32,7 @@ export interface ErrorDetail {
      */
     message?: string;
     /**
-     * 
+     * The value at the given location
      * @type {any}
      * @memberof ErrorDetail
      */

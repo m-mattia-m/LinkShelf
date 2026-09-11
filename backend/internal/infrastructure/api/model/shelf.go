@@ -19,7 +19,7 @@ type Shelf struct {
 
 type ShelfBase struct {
 	Title       string `json:"title" bson:"title" required:"true" minLength:"1"`
-	Path        string `json:"path" bson:"path" required:"true" pattern:"^[a-zA-Z0-9-]*$" patternDescription:"letters, numbers, and hyphens only"`
+	Path        string `json:"path" bson:"path" required:"true" pattern:"^[a-zA-Z0-9-]+$" patternDescription:"letters, numbers, and hyphens only"`
 	Domain      string `json:"domain" bson:"domain" required:"false"`
 	Description string `json:"description" bson:"description" required:"false"`
 	Theme       string `json:"theme" bson:"theme" required:"false"`

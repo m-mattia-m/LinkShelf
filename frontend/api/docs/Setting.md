@@ -18,7 +18,7 @@ import type { Setting } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": null,
+  "$schema": http://localhost:8085/schemas/Setting.json,
   "key": null,
   "languageCode": null,
   "value": null,

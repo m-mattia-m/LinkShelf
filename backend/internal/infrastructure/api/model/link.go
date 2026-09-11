@@ -6,7 +6,7 @@ type Link struct {
 }
 
 type LinkBase struct {
-	Title     string `json:"title" bson:"title" required:"true"`
+	Title     string `json:"title" bson:"title" required:"true" minLength:"1"`
 	Link      string `json:"link" bson:"link" required:"true"`
 	Icon      string `json:"icon" bson:"icon" required:"false"`
 	Color     string `json:"color" bson:"color" required:"false"`

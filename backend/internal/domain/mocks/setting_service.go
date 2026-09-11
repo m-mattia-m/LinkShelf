@@ -68,3 +68,17 @@ func (mr *MockSettingServiceMockRecorder) Update(setting any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSettingService)(nil).Update), setting)
 }
+
+// UpdateMany mocks base method.
+func (m *MockSettingService) UpdateMany(settings []model.Setting) []model.SettingUpdateFailure {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMany", settings)
+	ret0, _ := ret[0].([]model.SettingUpdateFailure)
+	return ret0
+}
+
+// UpdateMany indicates an expected call of UpdateMany.
+func (mr *MockSettingServiceMockRecorder) UpdateMany(settings any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMany", reflect.TypeOf((*MockSettingService)(nil).UpdateMany), settings)
+}

@@ -6,7 +6,7 @@ type Section struct {
 }
 
 type SectionBase struct {
-	Title   string `json:"title" bson:"title" required:"true"`
+	Title   string `json:"title" bson:"title" required:"true" minLength:"1"`
 	ShelfId string `json:"shelfId" bson:"shelfId" required:"true"`
 }
 

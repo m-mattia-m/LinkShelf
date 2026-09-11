@@ -17,6 +17,8 @@ import * as runtime from '../runtime';
 import type {
   ErrorModel,
   Setting,
+  SettingBatchRequestBody,
+  SettingBatchResponseBody,
   SettingPageBody,
 } from '../models/index';
 import {
@@ -24,6 +26,10 @@ import {
     ErrorModelToJSON,
     SettingFromJSON,
     SettingToJSON,
+    SettingBatchRequestBodyFromJSON,
+    SettingBatchRequestBodyToJSON,
+    SettingBatchResponseBodyFromJSON,
+    SettingBatchResponseBodyToJSON,
     SettingPageBodyFromJSON,
     SettingPageBodyToJSON,
 } from '../models/index';
@@ -34,6 +40,10 @@ export interface GetPageSettingsRequest {
 
 export interface PutUpdateSettingRequest {
     setting: Omit<Setting, '$schema'>;
+}
+
+export interface PutUpdateSettingsBatchRequest {
+    settingBatchRequestBody: Omit<SettingBatchRequestBody, '$schema'>;
 }
 
 /**
@@ -122,6 +132,55 @@ export class SettingApi extends runtime.BaseAPI {
      */
     async putUpdateSetting(requestParameters: PutUpdateSettingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SettingPageBody> {
         const response = await this.putUpdateSettingRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update many page settings in a single request. Invalid items are rejected individually (reported in the response\'s failures list) without aborting the rest of the batch.
+     * Update settings in batch
+     */
+    async putUpdateSettingsBatchRaw(requestParameters: PutUpdateSettingsBatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SettingBatchResponseBody>> {
+        if (requestParameters['settingBatchRequestBody'] == null) {
+            throw new runtime.RequiredError(
+                'settingBatchRequestBody',
+                'Required parameter "settingBatchRequestBody" was null or undefined when calling putUpdateSettingsBatch().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/settings/batch`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SettingBatchRequestBodyToJSON(requestParameters['settingBatchRequestBody']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SettingBatchResponseBodyFromJSON(jsonValue));
+    }
+
+    /**
+     * Update many page settings in a single request. Invalid items are rejected individually (reported in the response\'s failures list) without aborting the rest of the batch.
+     * Update settings in batch
+     */
+    async putUpdateSettingsBatch(requestParameters: PutUpdateSettingsBatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SettingBatchResponseBody> {
+        const response = await this.putUpdateSettingsBatchRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

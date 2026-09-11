@@ -5,6 +5,7 @@ import (
 	"backend/internal/infrastructure/api/mapper"
 	"backend/internal/infrastructure/api/model"
 	"context"
+	"errors"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -13,6 +14,9 @@ func CreateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 	return func(c context.Context, input *model.ShelfRequestBody) (*model.ShelfResponse, error) {
 		shelfId, err := svc.ShelfService.Create(UserIdFromContext(c), mapper.MapShelfBaseToShelfPointer(input.Body))
 		if err != nil {
+			if errors.Is(err, domain.ErrNotFound) {
+				return nil, huma.Error404NotFound("user not found", err)
+			}
 			return nil, mapper.MapWriteError("failed to create shelf", err)
 		}
 
