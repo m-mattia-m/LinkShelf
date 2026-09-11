@@ -19,7 +19,7 @@ import type { UserBase } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": null,
+  "$schema": http://localhost:8085/schemas/UserBase.json,
   "email": null,
   "firstName": null,
   "lastName": null,

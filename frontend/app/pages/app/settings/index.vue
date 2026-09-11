@@ -85,7 +85,7 @@ async function save() {
     } else {
       toast.add({
         title: t('app.settings.savePartialFailure'),
-        description: failures.map((f) => `${f.key}: ${f.message}`).join(', '),
+        description: failures.map(f => `${f.key}: ${f.reason}`).join(', '),
         color: 'error'
       })
     }

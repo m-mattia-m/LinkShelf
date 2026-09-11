@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost:8085*
 |------------- | ------------- | -------------|
 | [**getPageSettings**](SettingApi.md#getpagesettings) | **GET** /v1/settings | Get page settings |
 | [**putUpdateSetting**](SettingApi.md#putupdatesetting) | **PUT** /v1/settings | Update setting |
+| [**putUpdateSettingsBatch**](SettingApi.md#putupdatesettingsbatch) | **PUT** /v1/settings/batch | Update settings in batch |
 
 
 
@@ -129,6 +130,78 @@ example().catch(console.error);
 ### Return type
 
 [**SettingPageBody**](SettingPageBody.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## putUpdateSettingsBatch
+
+> SettingBatchResponseBody putUpdateSettingsBatch(settingBatchRequestBody)
+
+Update settings in batch
+
+Update many page settings in a single request. Invalid items are rejected individually (reported in the response\&#39;s failures list) without aborting the rest of the batch.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  SettingApi,
+} from '';
+import type { PutUpdateSettingsBatchRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SettingApi(config);
+
+  const body = {
+    // SettingBatchRequestBody
+    settingBatchRequestBody: ...,
+  } satisfies PutUpdateSettingsBatchRequest;
+
+  try {
+    const data = await api.putUpdateSettingsBatch(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **settingBatchRequestBody** | [SettingBatchRequestBody](SettingBatchRequestBody.md) |  | |
+
+### Return type
+
+[**SettingBatchResponseBody**](SettingBatchResponseBody.md)
 
 ### Authorization
 

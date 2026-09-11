@@ -5,8 +5,43 @@ package domain
 import (
 	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/repository"
+	"fmt"
+	"net/url"
+	"regexp"
 	"strings"
 )
+
+// linkHostPattern matches a domain.tld-shaped host: at least two
+// dot-separated labels (letters/digits/hyphens, no leading/trailing hyphen)
+// with the last one (the TLD) being at least 2 letters. Deliberately not
+// restricted to a fixed TLD allowlist, since custom/non-standard TLDs may be
+// valid here too.
+var linkHostPattern = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`)
+
+// validateLinkURL accepts a URL with or without a scheme (defaulting to
+// https), but if a scheme is present it must be http/https, and the host
+// must look like a real domain.
+func validateLinkURL(value string) error {
+	candidate := value
+	if !strings.Contains(candidate, "://") {
+		candidate = "https://" + candidate
+	}
+
+	parsed, err := url.Parse(candidate)
+	if err != nil {
+		return fmt.Errorf("%w: %q is not a valid URL", ErrInvalidInput, value)
+	}
+
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("%w: scheme must be \"http\" or \"https\", got %q", ErrInvalidInput, parsed.Scheme)
+	}
+
+	if !linkHostPattern.MatchString(parsed.Hostname()) {
+		return fmt.Errorf("%w: %q is not a valid domain", ErrInvalidInput, value)
+	}
+
+	return nil
+}
 
 type LinkService interface {
 	List(shelfId string) ([]model.Link, error)
@@ -67,6 +102,10 @@ func (s *linkServiceImpl) Create(callerUserId string, isAdmin bool, u *model.Lin
 		return nil, ErrForbidden
 	}
 
+	if err := validateLinkURL(u.Link); err != nil {
+		return nil, err
+	}
+
 	linkId, err := s.Repository.LinkRepository.Create(u)
 	if err != nil {
 		return nil, err
@@ -93,6 +132,10 @@ func (s *linkServiceImpl) Update(linkId, callerUserId string, isAdmin bool, link
 	}
 	if !isAdmin && shelf.UserId != callerUserId {
 		return nil, ErrForbidden
+	}
+
+	if err := validateLinkURL(linkRequest.Link); err != nil {
+		return nil, err
 	}
 
 	linkRequest.Id = linkId

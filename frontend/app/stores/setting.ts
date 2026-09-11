@@ -1,13 +1,29 @@
-import type { SettingPageBody } from '~~/api'
+import type { SettingPageBody, SettingUpdateFailure } from '~~/api'
 
 export interface SettingKeyValue {
   key: string
   value: string
 }
 
-export interface SettingUpdateFailure {
-  key: string
-  message: string
+export type { SettingUpdateFailure }
+
+// Maps a setting key back to its current value on the last-loaded page, so a
+// save only sends the keys that actually changed.
+function currentValue(page: SettingPageBody | null, key: string): string {
+  switch (key) {
+    case 'about': return page?.about ?? ''
+    case 'about_show': return String(page?.aboutShow ?? false)
+    case 'contact': return page?.contact ?? ''
+    case 'contact_show': return String(page?.contactShow ?? false)
+    case 'imprint': return page?.imprint ?? ''
+    case 'imprint_show': return String(page?.imprintShow ?? false)
+    case 'terms_of_use': return page?.termsOfUse ?? ''
+    case 'terms_of_use_show': return String(page?.termsOfUseShow ?? false)
+    case 'privacy_policy': return page?.privacyPolicy ?? ''
+    case 'privacy_policy_show': return String(page?.privacyPolicyShow ?? false)
+    case 'redirect_to_dashboard': return String(page?.redirectToDashboard ?? false)
+    default: return ''
+  }
 }
 
 export const useSettingStore = defineStore('settingStore', {
@@ -25,31 +41,34 @@ export const useSettingStore = defineStore('settingStore', {
       this.loaded = true
     },
 
-    // Settings are stored one key/language row at a time on the backend, so a
-    // single "Save" here fires one PUT per changed key sequentially and
-    // collects any failures instead of aborting on the first one.
+    // Only the keys that actually changed since the last load are sent, all
+    // in a single batched request - skipped entirely if nothing changed.
+    // Never throws: a request-level failure (network/5xx) is reported the
+    // same way a per-item validation failure is, so the caller only has one
+    // path to handle.
     async updateMany(languageCode: string, entries: SettingKeyValue[]): Promise<SettingUpdateFailure[]> {
       const api = useApi()
-      const failures: SettingUpdateFailure[] = []
 
-      for (const entry of entries) {
-        try {
-          this.page = await api.setting.putUpdateSetting({
-            setting: {
-              key: entry.key,
-              languageCode,
-              value: entry.value
-            }
-          })
-        } catch (err) {
-          const { message } = await parseApiError(err)
-          failures.push({ key: entry.key, message })
-        }
+      const changed = entries.filter(entry => currentValue(this.page, entry.key) !== entry.value)
+      if (changed.length === 0) {
+        return []
       }
 
-      await this.fetch(languageCode)
+      try {
+        const result = await api.setting.putUpdateSettingsBatch({
+          settingBatchRequestBody: {
+            settings: changed.map(entry => ({ key: entry.key, languageCode, value: entry.value }))
+          }
+        })
 
-      return failures
+        this.page = result.settings
+        this.languageCode = languageCode
+
+        return result.failures ?? []
+      } catch (err) {
+        const { message } = await parseApiError(err)
+        return changed.map(entry => ({ key: entry.key, languageCode, reason: message }))
+      }
     }
   }
 })

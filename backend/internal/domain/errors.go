@@ -10,4 +10,7 @@ var (
 	ErrNotFound = errors.New("not found")
 	// ErrInvalidRole means a caller tried to set a role other than "user" or "admin".
 	ErrInvalidRole = errors.New("invalid role")
+	// ErrInvalidInput means a request field failed a business-rule validation
+	// (as opposed to the basic required/type checks huma already enforces).
+	ErrInvalidInput = errors.New("invalid input")
 )

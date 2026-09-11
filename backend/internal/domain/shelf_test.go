@@ -19,6 +19,11 @@ func Test_Unit_Shelf_Creation_Success(t *testing.T) {
 		},
 	}
 
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
 	svc.ShelfRepository.
 		EXPECT().
 		Create(&model.Shelf{
@@ -41,12 +46,47 @@ func Test_Unit_Shelf_Creation_Failure(t *testing.T) {
 		PublicShelf: model.PublicShelf{Title: "shelf-title-test"},
 	}
 
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
 	svc.ShelfRepository.
 		EXPECT().
 		Create(gomock.Any()).
 		Return("", errors.New("an error occurred"))
 
 	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", shelfRequest)
+
+	require.ErrorContains(t, err, "an error occurred")
+	require.Empty(t, shelfId)
+}
+
+func Test_Unit_Shelf_Creation_UserNotFound(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(nil, nil)
+
+	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", &model.Shelf{})
+
+	require.ErrorIs(t, err, ErrNotFound)
+	require.Empty(t, shelfId)
+}
+
+func Test_Unit_Shelf_Creation_UserLookupFailure(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(nil, errors.New("an error occurred"))
+
+	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", &model.Shelf{})
 
 	require.ErrorContains(t, err, "an error occurred")
 	require.Empty(t, shelfId)
@@ -61,6 +101,11 @@ func Test_Unit_Shelf_Update_Success_Owner(t *testing.T) {
 	updateRequest := &model.Shelf{
 		PublicShelf: model.PublicShelf{Title: "updated-title"},
 	}
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
 
 	svc.ShelfRepository.
 		EXPECT().
@@ -99,6 +144,11 @@ func Test_Unit_Shelf_Update_Forbidden_NotOwner(t *testing.T) {
 
 	shelfId := "shelf-uuid-test"
 
+	svc.UserRepository.
+		EXPECT().
+		Get("someone-else-uuid-test").
+		Return(&model.User{Id: "someone-else-uuid-test"}, nil)
+
 	svc.ShelfRepository.
 		EXPECT().
 		Get(shelfId).
@@ -118,6 +168,11 @@ func Test_Unit_Shelf_Update_Success_Admin_NotOwner(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	shelfId := "shelf-uuid-test"
+
+	svc.UserRepository.
+		EXPECT().
+		Get("admin-uuid-test").
+		Return(&model.User{Id: "admin-uuid-test"}, nil)
 
 	svc.ShelfRepository.
 		EXPECT().
@@ -151,6 +206,11 @@ func Test_Unit_Shelf_Update_NotFound(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
 	svc.ShelfRepository.
 		EXPECT().
 		Get("shelf-uuid-test").
@@ -166,9 +226,44 @@ func Test_Unit_Shelf_Update_Failure_Get(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
 	svc.ShelfRepository.
 		EXPECT().
 		Get("shelf-uuid-test").
+		Return(nil, errors.New("an error occurred"))
+
+	shelf, err := svc.Service.ShelfService.Update("shelf-uuid-test", "user-uuid-test", false, &model.Shelf{})
+
+	require.ErrorContains(t, err, "an error occurred")
+	require.Nil(t, shelf)
+}
+
+func Test_Unit_Shelf_Update_UserNotFound(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(nil, nil)
+
+	shelf, err := svc.Service.ShelfService.Update("shelf-uuid-test", "user-uuid-test", false, &model.Shelf{})
+
+	require.ErrorIs(t, err, ErrNotFound)
+	require.Nil(t, shelf)
+}
+
+func Test_Unit_Shelf_Update_UserLookupFailure(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
 		Return(nil, errors.New("an error occurred"))
 
 	shelf, err := svc.Service.ShelfService.Update("shelf-uuid-test", "user-uuid-test", false, &model.Shelf{})

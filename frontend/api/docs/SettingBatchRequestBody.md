@@ -1,5 +1,5 @@
 
-# Link
+# SettingBatchRequestBody
 
 
 ## Properties
@@ -7,28 +7,18 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
-`color` | string
-`icon` | string
-`id` | string
-`link` | string
-`sectionId` | string
-`title` | string
+`settings` | [Array&lt;Setting&gt;](Setting.md)
 
 ## Example
 
 ```typescript
-import type { Link } from ''
+import type { SettingBatchRequestBody } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/Link.json,
-  "color": null,
-  "icon": null,
-  "id": null,
-  "link": null,
-  "sectionId": null,
-  "title": null,
-} satisfies Link
+  "$schema": http://localhost:8085/schemas/SettingBatchRequestBody.json,
+  "settings": null,
+} satisfies SettingBatchRequestBody
 
 console.log(example)
 
@@ -37,7 +27,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Link
+const exampleParsed = JSON.parse(exampleJSON) as SettingBatchRequestBody
 console.log(exampleParsed)
 ```
 

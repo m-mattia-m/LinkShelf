@@ -23,7 +23,7 @@ import type { Shelf } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": null,
+  "$schema": http://localhost:8085/schemas/Shelf.json,
   "description": null,
   "domain": null,
   "icon": null,

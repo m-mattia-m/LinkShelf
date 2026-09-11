@@ -22,7 +22,10 @@ docs/SectionApi.md
 docs/SectionBase.md
 docs/Setting.md
 docs/SettingApi.md
+docs/SettingBatchRequestBody.md
+docs/SettingBatchResponseBody.md
 docs/SettingPageBody.md
+docs/SettingUpdateFailure.md
 docs/Shelf.md
 docs/ShelfApi.md
 docs/ShelfBase.md
@@ -47,7 +50,10 @@ models/RefreshRequest.ts
 models/Section.ts
 models/SectionBase.ts
 models/Setting.ts
+models/SettingBatchRequestBody.ts
+models/SettingBatchResponseBody.ts
 models/SettingPageBody.ts
+models/SettingUpdateFailure.ts
 models/Shelf.ts
 models/ShelfBase.ts
 models/Statistic.ts

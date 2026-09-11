@@ -153,6 +153,50 @@ func Test_Unit_Link_Create_Forbidden_NotOwner(t *testing.T) {
 	require.Nil(t, link)
 }
 
+func Test_Unit_Link_Create_NotFound_Section(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkRequest := &model.Link{LinkBase: model.LinkBase{SectionId: "missing-section"}}
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("missing-section").
+		Return(nil, nil)
+
+	link, err := svc.Service.LinkService.Create("user-uuid-test", false, linkRequest)
+
+	require.ErrorIs(t, err, ErrNotFound)
+	require.Nil(t, link)
+}
+
+func Test_Unit_Link_Create_InvalidURL(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkRequest := &model.Link{
+		LinkBase: model.LinkBase{
+			Link:      "not a url",
+			SectionId: "section-uuid-test",
+		},
+	}
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	link, err := svc.Service.LinkService.Create("user-uuid-test", false, linkRequest)
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+	require.Nil(t, link)
+}
+
 func Test_Unit_Link_Update_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -236,6 +280,62 @@ func Test_Unit_Link_Update_Forbidden_NotOwner(t *testing.T) {
 	require.Nil(t, link)
 }
 
+func Test_Unit_Link_Update_NotFound_Section(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkId := "link-uuid-test"
+
+	svc.LinkRepository.
+		EXPECT().
+		Get(linkId).
+		Return(&model.Link{Id: linkId, LinkBase: model.LinkBase{SectionId: "missing-section"}}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("missing-section").
+		Return(nil, nil)
+
+	link, err := svc.Service.LinkService.Update(linkId, "user-uuid-test", false, &model.Link{})
+
+	require.ErrorIs(t, err, ErrNotFound)
+	require.Nil(t, link)
+}
+
+func Test_Unit_Link_Update_InvalidURL(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkId := "link-uuid-test"
+
+	updateRequest := &model.Link{
+		LinkBase: model.LinkBase{
+			Link:      "ftp://example.com",
+			SectionId: "section-uuid-test",
+		},
+	}
+
+	svc.LinkRepository.
+		EXPECT().
+		Get(linkId).
+		Return(&model.Link{Id: linkId, LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	link, err := svc.Service.LinkService.Update(linkId, "user-uuid-test", false, updateRequest)
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+	require.Nil(t, link)
+}
+
 func Test_Unit_Link_Delete_Success_Owner(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -263,6 +363,34 @@ func Test_Unit_Link_Delete_Success_Owner(t *testing.T) {
 	err := svc.Service.LinkService.Delete("link-uuid-test", "user-uuid-test", false)
 
 	require.NoError(t, err)
+}
+
+func Test_Unit_ValidateLinkURL(t *testing.T) {
+	valid := []string{
+		"example.com",
+		"https://example.com",
+		"http://example.com",
+		"sub.example.co.uk/path?x=1",
+		"example.com:8080/path",
+	}
+	for _, value := range valid {
+		t.Run(value, func(t *testing.T) {
+			require.NoError(t, validateLinkURL(value))
+		})
+	}
+
+	invalid := []string{
+		"ftp://example.com",
+		"not a url",
+		"example",
+		"",
+	}
+	for _, value := range invalid {
+		t.Run(value, func(t *testing.T) {
+			err := validateLinkURL(value)
+			require.ErrorIs(t, err, ErrInvalidInput)
+		})
+	}
 }
 
 func Test_Unit_Link_Delete_Forbidden_NotOwner(t *testing.T) {

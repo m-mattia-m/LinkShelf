@@ -336,6 +336,16 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Security:    bearerSecurity(),
 		Metadata:    requireAdmin(),
 	}, UpdateSetting(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "put-update-settings-batch",
+		Summary:     "Update settings in batch",
+		Description: "Update many page settings in a single request. Invalid items are rejected individually (reported in the response's failures list) without aborting the rest of the batch.",
+		Path:        "/v1/settings/batch",
+		Tags:        []string{"Setting"},
+		Security:    bearerSecurity(),
+		Metadata:    requireAdmin(),
+	}, UpdateSettingsBatch(svc))
 
 	// --- Statistics (any authenticated user, scoped to their own data) ---
 	huma.Register(api, huma.Operation{

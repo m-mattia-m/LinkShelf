@@ -32,3 +32,29 @@ type SettingPageBody struct {
 type SettingRequestFiler struct {
 	LanguageCode string `json:"language_code" bson:"language_code" query:"language_code"`
 }
+
+type SettingBatchRequestBody struct {
+	Settings []Setting `json:"settings" bson:"settings" required:"true"`
+}
+
+type SettingBatchRequest struct {
+	Body SettingBatchRequestBody `json:"body" bson:"body"`
+}
+
+// SettingUpdateFailure reports why one item of a batch update was not saved -
+// either it failed validation (never reached the database) or the upsert
+// itself errored.
+type SettingUpdateFailure struct {
+	Key          string `json:"key" bson:"key"`
+	LanguageCode string `json:"language_code" bson:"language_code"`
+	Reason       string `json:"reason" bson:"reason"`
+}
+
+type SettingBatchResponseBody struct {
+	Settings SettingPageBody        `json:"settings" bson:"settings"`
+	Failures []SettingUpdateFailure `json:"failures" bson:"failures"`
+}
+
+type SettingBatchResponse struct {
+	Body SettingBatchResponseBody `json:"body" bson:"body"`
+}

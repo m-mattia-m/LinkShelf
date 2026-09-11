@@ -55,13 +55,32 @@ func (s *shelfServiceImpl) List(callerUserId string, isAdmin bool) ([]model.Shel
 }
 
 // Create always assigns ownership to the caller - a client can never create a
-// shelf on someone else's behalf.
+// shelf on someone else's behalf. It first re-verifies the caller's user
+// still exists, guarding the rare case of a still-valid JWT for a since-
+// deleted user (the DB's user_id foreign key would otherwise surface as a
+// raw constraint-violation error instead of a clean 404).
 func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf) (string, error) {
+	user, err := s.Repository.UserRepository.Get(callerUserId)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", ErrNotFound
+	}
+
 	shelfRequest.UserId = callerUserId
 	return s.Repository.ShelfRepository.Create(shelfRequest)
 }
 
 func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, shelfRequest *model.Shelf) (*model.Shelf, error) {
+	user, err := s.Repository.UserRepository.Get(callerUserId)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrNotFound
+	}
+
 	existing, err := s.Repository.ShelfRepository.Get(shelfId)
 	if err != nil {
 		return nil, err

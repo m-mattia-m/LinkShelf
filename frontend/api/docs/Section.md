@@ -18,7 +18,7 @@ import type { Section } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": null,
+  "$schema": http://localhost:8085/schemas/Section.json,
   "id": null,
   "shelfId": null,
   "title": null,
