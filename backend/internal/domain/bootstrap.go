@@ -27,8 +27,14 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return err
 	}
 
+	// The bootstrap admin is always exempt from email verification - it's
+	// the one account an operator needs to be able to log in with
+	// immediately, including before SMTP is configured or reachable.
 	if existing != nil {
-		return repo.UserRepository.SetPasswordAndRole(existing.Id, hashedPassword, model.RoleAdmin)
+		if err := repo.UserRepository.SetPasswordAndRole(existing.Id, hashedPassword, model.RoleAdmin); err != nil {
+			return err
+		}
+		return repo.UserRepository.MarkVerified(existing.Id)
 	}
 
 	userId, err := repo.UserRepository.Create(model.UserBase{
@@ -40,5 +46,8 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return err
 	}
 
-	return repo.UserRepository.SetPasswordAndRole(userId, hashedPassword, model.RoleAdmin)
+	if err := repo.UserRepository.SetPasswordAndRole(userId, hashedPassword, model.RoleAdmin); err != nil {
+		return err
+	}
+	return repo.UserRepository.MarkVerified(userId)
 }

@@ -8,7 +8,9 @@ Name | Type
 ------------ | -------------
 `$schema` | string
 `email` | string
+`emailVerified` | boolean
 `firstName` | string
+`hasPassword` | boolean
 `id` | string
 `lastName` | string
 `role` | string
@@ -22,7 +24,9 @@ import type { User } from ''
 const example = {
   "$schema": http://localhost:8085/schemas/User.json,
   "email": null,
+  "emailVerified": null,
   "firstName": null,
+  "hasPassword": null,
   "id": null,
   "lastName": null,
   "role": null,

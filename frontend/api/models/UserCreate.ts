@@ -48,7 +48,7 @@ export interface UserCreate {
      * @type {string}
      * @memberof UserCreate
      */
-    password: string;
+    password?: string;
     /**
      * The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise.
      * @type {string}
@@ -64,7 +64,6 @@ export function instanceOfUserCreate(value: object): value is UserCreate {
     if (!('email' in value) || value['email'] === undefined) return false;
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
-    if (!('password' in value) || value['password'] === undefined) return false;
     return true;
 }
 
@@ -82,7 +81,7 @@ export function UserCreateFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'email': json['email'],
         'firstName': json['first_name'],
         'lastName': json['last_name'],
-        'password': json['password'],
+        'password': json['password'] == null ? undefined : json['password'],
         'role': json['role'] == null ? undefined : json['role'],
     };
 }

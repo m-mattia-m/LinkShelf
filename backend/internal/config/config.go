@@ -37,6 +37,9 @@ type Configuration struct {
 		Description string `yaml:"description"`
 		Environment string `yaml:"environment"`
 		Logo        string `yaml:"logo"`
+		// FrontendUrl is where verification/invite emails point their links
+		// (e.g. "<FrontendUrl>/auth/verify-email?token=...").
+		FrontendUrl string `yaml:"frontendUrl"`
 	} `yaml:"app"`
 	Server struct {
 		Scheme         string   `yaml:"scheme"`
@@ -78,7 +81,27 @@ type Configuration struct {
 			ClientSecret string `yaml:"clientSecret" json:"-"`
 			RedirectUrl  string `yaml:"redirectUrl"`
 		} `yaml:"oidc"`
+		// RegistrationEnabled gates public self-registration (POST /v1/users
+		// called without an admin token). Admin-created accounts and OIDC
+		// auto-provisioning are never affected by this.
+		RegistrationEnabled bool `yaml:"registrationEnabled"`
+		EmailVerification   struct {
+			Enabled bool `yaml:"enabled"`
+			// TokenExpiryHours is how long a verification/invite link stays valid.
+			TokenExpiryHours int `yaml:"tokenExpiryHours"`
+		} `yaml:"emailVerification"`
 	} `yaml:"authentication"`
+	Smtp struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password" json:"-"`
+		From     string `yaml:"from"`
+		// TlsMode is "none", "starttls", or "tls" (implicit TLS). Anything
+		// else (including blank/unset) is treated as "tls" - the secure
+		// choice - by the mailer, not silently as "none".
+		TlsMode string `yaml:"tlsMode"`
+	} `yaml:"smtp"`
 }
 
 // LoadConfig loads configuration in three layers, each overriding the previous one:
@@ -139,6 +162,12 @@ func validate() error {
 		}
 	default:
 		return fmt.Errorf("unsupported authentication.type %q, must be LOCAL or OIDC", String("authentication.type"))
+	}
+
+	if Bool("authentication.emailVerification.enabled") {
+		if strings.TrimSpace(String("smtp.host")) == "" || strings.TrimSpace(String("smtp.from")) == "" {
+			return fmt.Errorf("smtp.host and smtp.from must be set when authentication.emailVerification.enabled is true")
+		}
 	}
 
 	return nil

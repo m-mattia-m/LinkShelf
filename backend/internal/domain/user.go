@@ -3,9 +3,11 @@
 package domain
 
 import (
+	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/repository"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -42,7 +44,18 @@ func (s *userServiceImpl) Get(id string) (*model.User, error) {
 // Create always registers a "user" role account unless the caller is an
 // authenticated admin explicitly requesting a different one - self
 // registration can never grant itself elevated access.
+//
+// Self-registration always requires a password and is rejected outright when
+// authentication.registrationEnabled is false (admin-created accounts and
+// OIDC auto-provisioning are unaffected by that toggle). An admin, however,
+// may create a passwordless "invited" account when email verification is
+// enabled - completing registration by setting a password is then the only
+// way in, via the emailed set-password link.
 func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*model.User, error) {
+	if !callerIsAdmin && !config.Bool("authentication.registrationEnabled") {
+		return nil, ErrRegistrationDisabled
+	}
+
 	role := model.RoleUser
 	if callerIsAdmin && u.Role != "" {
 		validated, err := validateRole(u.Role)
@@ -52,9 +65,19 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 		role = validated
 	}
 
-	hashedPassword, err := hashPassword(u.Password)
-	if err != nil {
-		return nil, err
+	verificationEnabled := config.Bool("authentication.emailVerification.enabled")
+	passwordRequired := !callerIsAdmin || !verificationEnabled
+	if passwordRequired && strings.TrimSpace(u.Password) == "" {
+		return nil, fmt.Errorf("%w: password is required", ErrInvalidInput)
+	}
+
+	var hashedPassword string
+	if u.Password != "" {
+		var err error
+		hashedPassword, err = hashPassword(u.Password)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	userId, err := s.Repository.UserRepository.Create(u.UserBase, hashedPassword, role)
@@ -66,6 +89,13 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 	if err != nil {
 		return nil, err
 	}
+
+	if verificationEnabled {
+		// Best-effort: a failed send shouldn't undo an already-created
+		// account - "resend" is the recovery path.
+		_ = s.Domain.EmailVerificationService.SendInitial(user)
+	}
+
 	return user, nil
 }
 

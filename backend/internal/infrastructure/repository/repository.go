@@ -23,14 +23,15 @@ import (
 )
 
 type Repository struct {
-	UserRepository         UserRepository
-	ShelfRepository        ShelfRepository
-	SectionRepository      SectionRepository
-	LinkRepository         LinkRepository
-	SettingRepository      SettingRepository
-	StatisticRepository    StatisticRepository
-	RefreshTokenRepository RefreshTokenRepository
-	OidcStateRepository    OidcStateRepository
+	UserRepository             UserRepository
+	ShelfRepository            ShelfRepository
+	SectionRepository          SectionRepository
+	LinkRepository             LinkRepository
+	SettingRepository          SettingRepository
+	StatisticRepository        StatisticRepository
+	RefreshTokenRepository     RefreshTokenRepository
+	OidcStateRepository        OidcStateRepository
+	EmailActionTokenRepository EmailActionTokenRepository
 }
 
 func NewRepository() (*Repository, error) {
@@ -94,15 +95,21 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
+	emailActionTokenRepo, err := NewEmailActionTokenRepository(db, "email_action_token")
+	if err != nil {
+		return nil, err
+	}
+
 	return &Repository{
-		UserRepository:         userRepo,
-		ShelfRepository:        shelfRepo,
-		SectionRepository:      sectionRepo,
-		LinkRepository:         linkRepo,
-		SettingRepository:      settingRepo,
-		StatisticRepository:    statisticRepo,
-		RefreshTokenRepository: refreshTokenRepo,
-		OidcStateRepository:    oidcStateRepo,
+		UserRepository:             userRepo,
+		ShelfRepository:            shelfRepo,
+		SectionRepository:          sectionRepo,
+		LinkRepository:             linkRepo,
+		SettingRepository:          settingRepo,
+		StatisticRepository:        statisticRepo,
+		RefreshTokenRepository:     refreshTokenRepo,
+		OidcStateRepository:        oidcStateRepo,
+		EmailActionTokenRepository: emailActionTokenRepo,
 	}, nil
 }
 

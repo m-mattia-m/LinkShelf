@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
 	"context"
 	"errors"
@@ -169,6 +170,24 @@ func Test_API_UpdateSettingsBatch_ListFails(t *testing.T) {
 
 	require.Error(t, err)
 	require.ErrorContains(t, err, "failed to get settings")
+}
+
+func Test_API_GetEmailDeliveryInfo_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	config.Reset()
+	config.Set("authentication.emailVerification.enabled", true)
+	config.Set("smtp.host", "smtp.example.com")
+	config.Set("smtp.from", "no-reply@example.com")
+
+	handler := GetEmailDeliveryInfo(svc.Service)
+	resp, err := handler(context.Background(), &struct{}{})
+
+	require.NoError(t, err)
+	require.True(t, resp.Body.Enabled)
+	require.Equal(t, "smtp.example.com", resp.Body.Host)
+	require.Equal(t, "no-reply@example.com", resp.Body.From)
 }
 
 func Test_API_GetPageSettings_Success(t *testing.T) {

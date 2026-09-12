@@ -20,7 +20,10 @@ import type {
   OidcCallbackRequest,
   OidcLoginResponseBody,
   RefreshRequest,
+  ResendVerificationRequest,
+  SetPasswordRequest,
   TokenPair,
+  VerifyEmailRequest,
 } from '../models/index';
 import {
     ErrorModelFromJSON,
@@ -33,8 +36,14 @@ import {
     OidcLoginResponseBodyToJSON,
     RefreshRequestFromJSON,
     RefreshRequestToJSON,
+    ResendVerificationRequestFromJSON,
+    ResendVerificationRequestToJSON,
+    SetPasswordRequestFromJSON,
+    SetPasswordRequestToJSON,
     TokenPairFromJSON,
     TokenPairToJSON,
+    VerifyEmailRequestFromJSON,
+    VerifyEmailRequestToJSON,
 } from '../models/index';
 
 export interface PostLoginRequest {
@@ -52,6 +61,18 @@ export interface PostOidcCallbackRequest {
 
 export interface PostRefreshRequest {
     refreshRequest: Omit<RefreshRequest, '$schema'>;
+}
+
+export interface PostResendVerificationRequest {
+    resendVerificationRequest: Omit<ResendVerificationRequest, '$schema'>;
+}
+
+export interface PostSetPasswordRequest {
+    setPasswordRequest: Omit<SetPasswordRequest, '$schema'>;
+}
+
+export interface PostVerifyEmailRequest {
+    verifyEmailRequest: Omit<VerifyEmailRequest, '$schema'>;
 }
 
 /**
@@ -255,6 +276,126 @@ export class AuthApi extends runtime.BaseAPI {
     async postRefresh(requestParameters: PostRefreshRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPair> {
         const response = await this.postRefreshRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Re-sends whatever verification/invite link is still pending for the given email, rate-limited. Always responds the same way regardless of whether the address exists, is already verified, or was rate-limited.
+     * Resend verification email
+     */
+    async postResendVerificationRaw(requestParameters: PostResendVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['resendVerificationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'resendVerificationRequest',
+                'Required parameter "resendVerificationRequest" was null or undefined when calling postResendVerification().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/auth/resend-verification`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ResendVerificationRequestToJSON(requestParameters['resendVerificationRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Re-sends whatever verification/invite link is still pending for the given email, rate-limited. Always responds the same way regardless of whether the address exists, is already verified, or was rate-limited.
+     * Resend verification email
+     */
+    async postResendVerification(requestParameters: PostResendVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.postResendVerificationRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Completes the admin-invite flow: sets an account\'s first password and marks it verified, using the token from the emailed link.
+     * Set password
+     */
+    async postSetPasswordRaw(requestParameters: PostSetPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['setPasswordRequest'] == null) {
+            throw new runtime.RequiredError(
+                'setPasswordRequest',
+                'Required parameter "setPasswordRequest" was null or undefined when calling postSetPassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/auth/set-password`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SetPasswordRequestToJSON(requestParameters['setPasswordRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Completes the admin-invite flow: sets an account\'s first password and marks it verified, using the token from the emailed link.
+     * Set password
+     */
+    async postSetPassword(requestParameters: PostSetPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.postSetPasswordRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Completes email verification for an account that already has a password, using the token from the emailed link.
+     * Verify email
+     */
+    async postVerifyEmailRaw(requestParameters: PostVerifyEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['verifyEmailRequest'] == null) {
+            throw new runtime.RequiredError(
+                'verifyEmailRequest',
+                'Required parameter "verifyEmailRequest" was null or undefined when calling postVerifyEmail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/auth/verify-email`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VerifyEmailRequestToJSON(requestParameters['verifyEmailRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Completes email verification for an account that already has a password, using the token from the emailed link.
+     * Verify email
+     */
+    async postVerifyEmail(requestParameters: PostVerifyEmailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.postVerifyEmailRaw(requestParameters, initOverrides);
     }
 
 }

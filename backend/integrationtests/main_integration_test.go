@@ -76,7 +76,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	TestService = domain.NewService(TestRepository, nil)
+	TestService = domain.NewService(TestRepository, nil, nil)
 
 	// Build router
 	router, err := controller.Router(TestService)

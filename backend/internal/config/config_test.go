@@ -126,3 +126,45 @@ func Test_Validate_FailsForUnknownAuthType(t *testing.T) {
 
 	require.ErrorContains(t, validate(), "unsupported authentication.type")
 }
+
+func Test_Validate_FailsForEmailVerificationEnabledWithoutSmtpHost(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.emailVerification.enabled", true)
+	Set("smtp.host", "")
+	Set("smtp.from", "no-reply@example.com")
+
+	require.ErrorContains(t, validate(), "smtp.host")
+}
+
+func Test_Validate_FailsForEmailVerificationEnabledWithoutSmtpFrom(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.emailVerification.enabled", true)
+	Set("smtp.host", "smtp.example.com")
+	Set("smtp.from", "")
+
+	require.ErrorContains(t, validate(), "smtp.from")
+}
+
+func Test_Validate_SucceedsForEmailVerificationEnabledWithSmtpConfigured(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.emailVerification.enabled", true)
+	Set("smtp.host", "smtp.example.com")
+	Set("smtp.from", "no-reply@example.com")
+
+	require.NoError(t, validate())
+}
+
+func Test_Validate_SucceedsForEmailVerificationDisabledWithoutSmtp(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.emailVerification.enabled", false)
+
+	require.NoError(t, validate())
+}

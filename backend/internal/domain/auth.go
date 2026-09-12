@@ -60,11 +60,30 @@ func (s *authServiceImpl) Login(email, password string) (*model.TokenPair, error
 	if err != nil {
 		return nil, err
 	}
-	if record == nil || record.Password == "" {
+	if record == nil {
 		return nil, ErrInvalidCredentials
 	}
+
+	verificationEnabled := config.Bool("authentication.emailVerification.enabled")
+
+	// No password yet means an admin-invited account that hasn't completed
+	// registration - it can never match any password check below, so bail
+	// out here instead of running checkPassword against an empty hash.
+	if record.Password == "" {
+		if verificationEnabled {
+			_ = s.Domain.EmailVerificationService.Resend(email)
+			return nil, ErrEmailVerificationPending
+		}
+		return nil, ErrInvalidCredentials
+	}
+
 	if err := checkPassword(record.Password, password); err != nil {
 		return nil, ErrInvalidCredentials
+	}
+
+	if verificationEnabled && !record.EmailVerified {
+		_ = s.Domain.EmailVerificationService.Resend(email)
+		return nil, ErrEmailVerificationPending
 	}
 
 	return s.issueTokenPair(record.Id, record.Role)

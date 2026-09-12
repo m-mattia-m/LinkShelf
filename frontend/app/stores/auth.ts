@@ -1,3 +1,4 @@
+import { ResponseError } from '~~/api'
 import type { TokenPair, User, UserCreate } from '~~/api'
 
 const ACCESS_TOKEN_KEY = 'linkshelf.accessToken'
@@ -82,10 +83,31 @@ export const useAuthStore = defineStore('authStore', {
       await this.fetchUser()
     },
 
-    async register(userCreate: UserCreate): Promise<void> {
+    // Registration always creates the account, but logging straight in
+    // afterward only works if email verification is off (or the account
+    // happens to already be verified) - when it's on, the fresh account
+    // can't log in yet, so that specific 403 is reported back as
+    // "pendingVerification" instead of being thrown like any other failure.
+    async register(userCreate: UserCreate): Promise<{ pendingVerification: boolean }> {
       const api = useApi()
       await api.user.postCreateUser({ userCreate })
-      await this.login(userCreate.email, userCreate.password)
+
+      try {
+        await this.login(userCreate.email, userCreate.password ?? '')
+        return { pendingVerification: false }
+      } catch (err) {
+        if (err instanceof ResponseError && err.response.status === 403) {
+          return { pendingVerification: true }
+        }
+        throw err
+      }
+    },
+
+    // Always resolves - the backend never reveals whether the address
+    // exists, is already verified, or was rate-limited.
+    async resendVerification(email: string): Promise<void> {
+      const api = useApi()
+      await api.auth.postResendVerification({ resendVerificationRequest: { email } })
     },
 
     async fetchUser(): Promise<void> {

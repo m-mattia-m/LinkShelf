@@ -27,8 +27,11 @@ func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRe
 
 		user, err := svc.UserService.Create(&input.Body, isAdmin)
 		if err != nil {
-			if errors.Is(err, domain.ErrInvalidRole) {
+			if errors.Is(err, domain.ErrInvalidRole) || errors.Is(err, domain.ErrInvalidInput) {
 				return nil, huma.Error400BadRequest(err.Error())
+			}
+			if errors.Is(err, domain.ErrRegistrationDisabled) {
+				return nil, huma.Error403Forbidden(err.Error())
 			}
 			return nil, mapper.MapWriteError("failed to create user", err)
 		}
@@ -112,6 +115,27 @@ func PatchUserPassword(svc *domain.Service) func(c context.Context, input *model
 		}
 
 		return nil, nil
+	}
+}
+
+// MarkUserVerified is an admin-only override: it forces a user's email to
+// verified without requiring the emailed link at all - a safety valve for
+// when SMTP delivery is broken or blocked.
+func MarkUserVerified(svc *domain.Service) func(c context.Context, input *model.UserRequestFilter) (*model.UserResponse, error) {
+	return func(c context.Context, input *model.UserRequestFilter) (*model.UserResponse, error) {
+		if err := svc.EmailVerificationService.MarkVerified(input.UserId); err != nil {
+			return nil, huma.Error400BadRequest("failed to mark user as verified", err)
+		}
+
+		user, err := svc.UserService.Get(input.UserId)
+		if err != nil {
+			return nil, huma.Error400BadRequest("failed to get user", err)
+		}
+		if user == nil {
+			return nil, huma.Error404NotFound("user not found")
+		}
+
+		return mapper.MapUserToUserResponse(*user), nil
 	}
 }
 

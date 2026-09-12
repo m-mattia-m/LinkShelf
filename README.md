@@ -61,10 +61,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 - the image is about 225MB shrink it down to a much smaller image
 - if i save the settings for each element a single request is made → group them as one request and create a new endpoint which can handle many settings update at once. also add tests (unit and integration) for this.
 
----
-
 - add SMTP to send emails to verify the users email-address
 - add option to turn off the user registration for example for self-hosted instances (admin should still be able to create a user which then can finisht the registration via the email-link)
+
+---
 
 - add functionallity to order links in a section and sections in a shelf
 - add themeing functioanllity (color, icon, theme, custom css, ...)

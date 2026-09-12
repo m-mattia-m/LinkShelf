@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  EmailDeliveryInfo,
   ErrorModel,
   Setting,
   SettingBatchRequestBody,
@@ -22,6 +23,8 @@ import type {
   SettingPageBody,
 } from '../models/index';
 import {
+    EmailDeliveryInfoFromJSON,
+    EmailDeliveryInfoToJSON,
     ErrorModelFromJSON,
     ErrorModelToJSON,
     SettingFromJSON,
@@ -50,6 +53,45 @@ export interface PutUpdateSettingsBatchRequest {
  * 
  */
 export class SettingApi extends runtime.BaseAPI {
+
+    /**
+     * Admin-only, read-only: the SMTP host and from-address currently configured. SMTP itself is configured exclusively via config, not through this API.
+     * Get email delivery info
+     */
+    async getEmailDeliveryInfoRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmailDeliveryInfo>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/settings/email-delivery`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EmailDeliveryInfoFromJSON(jsonValue));
+    }
+
+    /**
+     * Admin-only, read-only: the SMTP host and from-address currently configured. SMTP itself is configured exclusively via config, not through this API.
+     * Get email delivery info
+     */
+    async getEmailDeliveryInfo(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmailDeliveryInfo> {
+        const response = await this.getEmailDeliveryInfoRaw(initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get page settings by language code. Used to render the public site shell (title, contact info, legal pages, ...) and requires no authentication.

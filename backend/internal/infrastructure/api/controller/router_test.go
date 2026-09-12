@@ -14,13 +14,14 @@ type MockService struct {
 	Ctrl    *gomock.Controller
 	Service *domain.Service
 
-	UserService      *mocks.MockUserService
-	ShelfService     *mocks.MockShelfService
-	SectionService   *mocks.MockSectionService
-	LinkService      *mocks.MockLinkService
-	StatisticService *mocks.MockStatisticService
-	SettingService   *mocks.MockSettingService
-	AuthService      *mocks.MockAuthService
+	UserService              *mocks.MockUserService
+	ShelfService             *mocks.MockShelfService
+	SectionService           *mocks.MockSectionService
+	LinkService              *mocks.MockLinkService
+	StatisticService         *mocks.MockStatisticService
+	SettingService           *mocks.MockSettingService
+	AuthService              *mocks.MockAuthService
+	EmailVerificationService *mocks.MockEmailVerificationService
 }
 
 func NewMockDomainService(t *testing.T) *MockService {
@@ -35,27 +36,30 @@ func NewMockDomainService(t *testing.T) *MockService {
 	statisticService := mocks.NewMockStatisticService(ctrl)
 	settingService := mocks.NewMockSettingService(ctrl)
 	authService := mocks.NewMockAuthService(ctrl)
+	emailVerificationService := mocks.NewMockEmailVerificationService(ctrl)
 
 	domainService := &domain.Service{
-		UserService:      userService,
-		ShelfService:     shelfService,
-		SectionService:   sectionService,
-		LinkService:      linkService,
-		StatisticService: statisticService,
-		SettingService:   settingService,
-		AuthService:      authService,
+		UserService:              userService,
+		ShelfService:             shelfService,
+		SectionService:           sectionService,
+		LinkService:              linkService,
+		StatisticService:         statisticService,
+		SettingService:           settingService,
+		AuthService:              authService,
+		EmailVerificationService: emailVerificationService,
 	}
 
 	return &MockService{
-		Ctrl:             ctrl,
-		Service:          domainService,
-		UserService:      userService,
-		ShelfService:     shelfService,
-		SectionService:   sectionService,
-		LinkService:      linkService,
-		StatisticService: statisticService,
-		SettingService:   settingService,
-		AuthService:      authService,
+		Ctrl:                     ctrl,
+		Service:                  domainService,
+		UserService:              userService,
+		ShelfService:             shelfService,
+		SectionService:           sectionService,
+		LinkService:              linkService,
+		StatisticService:         statisticService,
+		SettingService:           settingService,
+		AuthService:              authService,
+		EmailVerificationService: emailVerificationService,
 	}
 }
 

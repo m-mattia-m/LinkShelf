@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, oidcEnabled bool) *model.SettingPageResponse {
+func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, oidcEnabled, registrationEnabled, emailVerificationEnabled bool) *model.SettingPageResponse {
 	settingsMap := make(map[string]model.Setting)
 
 	for _, setting := range settings {
@@ -14,18 +14,20 @@ func MapSettingToSettingPageResponse(languageCode string, settings []model.Setti
 
 	return &model.SettingPageResponse{
 		Body: model.SettingPageBody{
-			AboutShow:           getSettingValue(settingsMap, "about_show", languageCode) == "true",
-			About:               getSettingValue(settingsMap, "about", languageCode),
-			ContactShow:         getSettingValue(settingsMap, "contact_show", languageCode) == "true",
-			Contact:             getSettingValue(settingsMap, "contact", languageCode),
-			ImprintShow:         getSettingValue(settingsMap, "imprint_show", languageCode) == "true",
-			Imprint:             getSettingValue(settingsMap, "imprint", languageCode),
-			TermsOfUseShow:      getSettingValue(settingsMap, "terms_of_use_show", languageCode) == "true",
-			TermsOfUse:          getSettingValue(settingsMap, "terms_of_use", languageCode),
-			PrivacyPolicyShow:   getSettingValue(settingsMap, "privacy_policy_show", languageCode) == "true",
-			PrivacyPolicy:       getSettingValue(settingsMap, "privacy_policy", languageCode),
-			RedirectToDashboard: getSettingValue(settingsMap, "redirect_to_dashboard", languageCode) == "true",
-			OidcEnabled:         oidcEnabled,
+			AboutShow:                getSettingValue(settingsMap, "about_show", languageCode) == "true",
+			About:                    getSettingValue(settingsMap, "about", languageCode),
+			ContactShow:              getSettingValue(settingsMap, "contact_show", languageCode) == "true",
+			Contact:                  getSettingValue(settingsMap, "contact", languageCode),
+			ImprintShow:              getSettingValue(settingsMap, "imprint_show", languageCode) == "true",
+			Imprint:                  getSettingValue(settingsMap, "imprint", languageCode),
+			TermsOfUseShow:           getSettingValue(settingsMap, "terms_of_use_show", languageCode) == "true",
+			TermsOfUse:               getSettingValue(settingsMap, "terms_of_use", languageCode),
+			PrivacyPolicyShow:        getSettingValue(settingsMap, "privacy_policy_show", languageCode) == "true",
+			PrivacyPolicy:            getSettingValue(settingsMap, "privacy_policy", languageCode),
+			RedirectToDashboard:      getSettingValue(settingsMap, "redirect_to_dashboard", languageCode) == "true",
+			OidcEnabled:              oidcEnabled,
+			RegistrationEnabled:      registrationEnabled,
+			EmailVerificationEnabled: emailVerificationEnabled,
 		},
 	}
 }

@@ -14,9 +14,48 @@ func Login(svc *domain.Service) func(c context.Context, input *model.LoginReques
 	return func(c context.Context, input *model.LoginRequestBody) (*model.TokenResponse, error) {
 		tokens, err := svc.AuthService.Login(input.Body.Email, input.Body.Password)
 		if err != nil {
+			if errors.Is(err, domain.ErrEmailVerificationPending) {
+				return nil, huma.Error403Forbidden("please verify your email address - we've sent a new link", err)
+			}
 			return nil, huma.Error401Unauthorized("invalid email or password")
 		}
 		return &model.TokenResponse{Body: *tokens}, nil
+	}
+}
+
+// ResendVerification is intentionally silent about whether the address
+// exists, is already verified, or was rate-limited - all look identical to
+// the caller, so it can never be used to enumerate accounts.
+func ResendVerification(svc *domain.Service) func(c context.Context, input *model.ResendVerificationRequestBody) (*struct{}, error) {
+	return func(c context.Context, input *model.ResendVerificationRequestBody) (*struct{}, error) {
+		_ = svc.EmailVerificationService.Resend(input.Body.Email)
+		return nil, nil
+	}
+}
+
+func VerifyEmail(svc *domain.Service) func(c context.Context, input *model.VerifyEmailRequestBody) (*struct{}, error) {
+	return func(c context.Context, input *model.VerifyEmailRequestBody) (*struct{}, error) {
+		if err := svc.EmailVerificationService.VerifyEmail(input.Body.Token); err != nil {
+			if errors.Is(err, domain.ErrInvalidToken) {
+				return nil, huma.Error400BadRequest("invalid or expired verification link", err)
+			}
+			return nil, huma.Error400BadRequest("failed to verify email", err)
+		}
+		return nil, nil
+	}
+}
+
+// SetPassword completes the admin-invite flow: consumes a set-password token
+// and sets the account's first password, marking it verified in the process.
+func SetPassword(svc *domain.Service) func(c context.Context, input *model.SetPasswordRequestBody) (*struct{}, error) {
+	return func(c context.Context, input *model.SetPasswordRequestBody) (*struct{}, error) {
+		if err := svc.EmailVerificationService.SetPassword(input.Body.Token, input.Body.NewPassword); err != nil {
+			if errors.Is(err, domain.ErrInvalidToken) {
+				return nil, huma.Error400BadRequest("invalid or expired invite link", err)
+			}
+			return nil, huma.Error400BadRequest("failed to set password", err)
+		}
+		return nil, nil
 	}
 }
 

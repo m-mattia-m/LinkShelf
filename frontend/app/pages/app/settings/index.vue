@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { EmailDeliveryInfo } from '~~/api'
 import { useSettingStore } from '~/stores/setting'
 
 definePageMeta({
@@ -11,6 +12,16 @@ const { t, locales } = useI18n()
 const settingStore = useSettingStore()
 const loading = ref(true)
 const saving = ref(false)
+const emailDeliveryInfo = ref<EmailDeliveryInfo | null>(null)
+
+onMounted(async () => {
+  try {
+    emailDeliveryInfo.value = await useApi().setting.getEmailDeliveryInfo()
+  } catch {
+    // Non-critical - the rest of the settings page still works without it.
+    emailDeliveryInfo.value = null
+  }
+})
 
 const languageCode = ref('en')
 const availableLocales = computed(() => locales.value.map((l) => ({ label: l.name ?? l.code, value: l.code })))
@@ -153,6 +164,18 @@ async function save() {
 
     <div>
       <UButton :label="t('app.settings.save')" color="neutral" :loading="saving" @click="save" />
+    </div>
+
+    <div class="border-t border-default pt-6 flex flex-col gap-2">
+      <h2 class="text-lg text-highlighted">{{ t('app.settings.emailDelivery.title') }}</h2>
+      <p v-if="!emailDeliveryInfo?.enabled" class="text-muted text-sm">{{ t('app.settings.emailDelivery.disabled') }}</p>
+      <dl v-else class="text-sm grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        <dt class="text-muted">{{ t('app.settings.emailDelivery.host') }}</dt>
+        <dd>{{ emailDeliveryInfo.host }}</dd>
+        <dt class="text-muted">{{ t('app.settings.emailDelivery.from') }}</dt>
+        <dd>{{ emailDeliveryInfo.from }}</dd>
+      </dl>
+      <p class="text-muted text-xs">{{ t('app.settings.emailDelivery.hint') }}</p>
     </div>
   </div>
 </template>

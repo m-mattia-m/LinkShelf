@@ -61,6 +61,10 @@ func Test_Unit_EnsureBootstrapAdmin_CreatesNewAdmin(t *testing.T) {
 		SetPasswordAndRole("new-admin-id", gomock.Any(), model.RoleAdmin).
 		Return(nil)
 
+	userRepository.EXPECT().
+		MarkVerified("new-admin-id").
+		Return(nil)
+
 	require.NoError(t, EnsureBootstrapAdmin(repo))
 }
 
@@ -78,6 +82,10 @@ func Test_Unit_EnsureBootstrapAdmin_RefreshesExistingAdmin(t *testing.T) {
 
 	userRepository.EXPECT().
 		SetPasswordAndRole("existing-admin-id", gomock.Any(), model.RoleAdmin).
+		Return(nil)
+
+	userRepository.EXPECT().
+		MarkVerified("existing-admin-id").
 		Return(nil)
 
 	require.NoError(t, EnsureBootstrapAdmin(repo))

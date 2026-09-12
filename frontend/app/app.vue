@@ -1,15 +1,12 @@
 <script setup>
-import {SettingApi} from "~~/api/index.ts";
-
 const route = useRoute();
 const {locale} = useI18n()
-const settingApi = new SettingApi();
 
 const websiteSettings = useState('settings')
 
 await callOnce(async () => {
   try {
-    websiteSettings.value = await settingApi.getPageSettings({languageCode: locale.value})
+    websiteSettings.value = await useApi().setting.getPageSettings({languageCode: locale.value})
   } catch (error) {
     // The backend is not reachable while prerendering during the build, and may
     // be down at runtime; render without settings instead of failing the page.
