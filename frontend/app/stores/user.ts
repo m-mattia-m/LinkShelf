@@ -43,6 +43,17 @@ export const useUserStore = defineStore('userStore', {
       const api = useApi()
       await api.user.deleteUser({ userId })
       await this.fetch()
+    },
+
+    async resendVerification(email: string): Promise<void> {
+      const api = useApi()
+      await api.auth.postResendVerification({ resendVerificationRequest: { email } })
+    },
+
+    async markVerified(userId: string): Promise<void> {
+      const api = useApi()
+      await api.user.patchUserVerify({ userId })
+      await this.fetch()
     }
   }
 })

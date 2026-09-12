@@ -112,6 +112,30 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/auth/oidc/callback",
 		Tags:        []string{"Auth"},
 	}, OidcCallback(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		OperationID: "post-resend-verification",
+		Summary:     "Resend verification email",
+		Description: "Re-sends whatever verification/invite link is still pending for the given email, rate-limited. Always responds the same way regardless of whether the address exists, is already verified, or was rate-limited.",
+		Path:        "/v1/auth/resend-verification",
+		Tags:        []string{"Auth"},
+	}, ResendVerification(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		OperationID: "post-verify-email",
+		Summary:     "Verify email",
+		Description: "Completes email verification for an account that already has a password, using the token from the emailed link.",
+		Path:        "/v1/auth/verify-email",
+		Tags:        []string{"Auth"},
+	}, VerifyEmail(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		OperationID: "post-set-password",
+		Summary:     "Set password",
+		Description: "Completes the admin-invite flow: sets an account's first password and marks it verified, using the token from the emailed link.",
+		Path:        "/v1/auth/set-password",
+		Tags:        []string{"Auth"},
+	}, SetPassword(svc))
 
 	// --- Users (admin only, except self-registration, own profile, and own password) ---
 	huma.Register(api, huma.Operation{
@@ -170,6 +194,16 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Tags:        []string{"User"},
 		Security:    bearerSecurity(),
 	}, PatchUserPassword(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPatch,
+		OperationID: "patch-user-verify",
+		Summary:     "Mark user verified",
+		Description: "Admin override: forces a user's email to verified without requiring the emailed link - a safety valve for when SMTP delivery is broken.",
+		Path:        "/v1/users/{userId}/verify",
+		Tags:        []string{"User"},
+		Security:    bearerSecurity(),
+		Metadata:    requireAdmin(),
+	}, MarkUserVerified(svc))
 	huma.Register(api, huma.Operation{
 		Method:        http.MethodDelete,
 		OperationID:   "delete-user",
@@ -346,6 +380,16 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Security:    bearerSecurity(),
 		Metadata:    requireAdmin(),
 	}, UpdateSettingsBatch(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-email-delivery-info",
+		Summary:     "Get email delivery info",
+		Description: "Admin-only, read-only: the SMTP host and from-address currently configured. SMTP itself is configured exclusively via config, not through this API.",
+		Path:        "/v1/settings/email-delivery",
+		Tags:        []string{"Setting"},
+		Security:    bearerSecurity(),
+		Metadata:    requireAdmin(),
+	}, GetEmailDeliveryInfo(svc))
 
 	// --- Statistics (any authenticated user, scoped to their own data) ---
 	huma.Register(api, huma.Operation{

@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './EmailDeliveryInfo';
 export * from './ErrorDetail';
 export * from './ErrorModel';
 export * from './Link';
@@ -9,8 +10,10 @@ export * from './OidcCallbackRequest';
 export * from './OidcLoginResponseBody';
 export * from './PublicShelf';
 export * from './RefreshRequest';
+export * from './ResendVerificationRequest';
 export * from './Section';
 export * from './SectionBase';
+export * from './SetPasswordRequest';
 export * from './Setting';
 export * from './SettingBatchRequestBody';
 export * from './SettingBatchResponseBody';
@@ -24,3 +27,4 @@ export * from './User';
 export * from './UserBase';
 export * from './UserCreate';
 export * from './UserRequestBodyOnlyPassword';
+export * from './VerifyEmailRequest';

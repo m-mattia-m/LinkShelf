@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { ResponseError } from '~~/api'
 import type { SettingPageBody } from '~~/api'
 
 definePageMeta({
@@ -31,6 +32,8 @@ const fields = [
 
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
+const pendingVerificationEmail = ref<string | null>(null)
+const resending = ref(false)
 
 async function startOidc() {
   try {
@@ -56,6 +59,7 @@ const providers = computed(() => websiteSettings.value?.oidcEnabled
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
   loading.value = true
   errorMessage.value = null
+  pendingVerificationEmail.value = null
   try {
     await authStore.login(payload.data.email, payload.data.password)
     const toast = useToast()
@@ -63,10 +67,28 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/app'
     await router.push(redirect)
   } catch (err) {
-    const result = await parseApiError(err)
-    errorMessage.value = result.message
+    if (err instanceof ResponseError && err.response.status === 403) {
+      pendingVerificationEmail.value = payload.data.email
+    } else {
+      const result = await parseApiError(err)
+      errorMessage.value = result.message
+    }
   } finally {
     loading.value = false
+  }
+}
+
+async function resend() {
+  if (!pendingVerificationEmail.value) return
+  resending.value = true
+  try {
+    await authStore.resendVerification(pendingVerificationEmail.value)
+    const toast = useToast()
+    toast.add({ title: t('auth.signIn.pendingVerification.resendSuccess'), color: 'success' })
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    resending.value = false
   }
 }
 </script>
@@ -84,6 +106,26 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         :close="{ onClick: () => (errorMessage = null) }"
       />
 
+      <UAlert
+        v-if="pendingVerificationEmail"
+        color="warning"
+        variant="subtle"
+        icon="i-lucide-mail-warning"
+        :title="t('auth.signIn.pendingVerification.title')"
+        :description="t('auth.signIn.pendingVerification.description')"
+        :close="{ onClick: () => (pendingVerificationEmail = null) }"
+      >
+        <template #actions>
+          <UButton
+            :label="t('auth.signIn.pendingVerification.resend')"
+            color="warning"
+            variant="subtle"
+            :loading="resending"
+            @click="resend"
+          />
+        </template>
+      </UAlert>
+
       <UAuthForm
         :schema="schema"
         :fields="fields"
@@ -93,7 +135,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         :separator="t('auth.signIn.or')"
         @submit="onSubmit"
       >
-        <template #footer>
+        <template v-if="websiteSettings?.registrationEnabled" #footer>
           {{ t('auth.signIn.noAccount') }}
           <ULink to="/auth/sign-up" class="text-primary font-medium">{{ t('auth.signIn.signUpLink') }}</ULink>
         </template>

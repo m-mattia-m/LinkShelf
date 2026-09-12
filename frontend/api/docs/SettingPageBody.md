@@ -11,12 +11,14 @@ Name | Type
 `aboutShow` | boolean
 `contact` | string
 `contactShow` | boolean
+`emailVerificationEnabled` | boolean
 `imprint` | string
 `imprintShow` | boolean
 `oidcEnabled` | boolean
 `privacyPolicy` | string
 `privacyPolicyShow` | boolean
 `redirectToDashboard` | boolean
+`registrationEnabled` | boolean
 `termsOfUse` | string
 `termsOfUseShow` | boolean
 
@@ -32,12 +34,14 @@ const example = {
   "aboutShow": null,
   "contact": null,
   "contactShow": null,
+  "emailVerificationEnabled": null,
   "imprint": null,
   "imprintShow": null,
   "oidcEnabled": null,
   "privacyPolicy": null,
   "privacyPolicyShow": null,
   "redirectToDashboard": null,
+  "registrationEnabled": null,
   "termsOfUse": null,
   "termsOfUseShow": null,
 } satisfies SettingPageBody

@@ -9,6 +9,9 @@ All URIs are relative to *http://localhost:8085*
 | [**postLogout**](AuthApi.md#postlogout) | **POST** /v1/auth/logout | Logout |
 | [**postOidcCallback**](AuthApi.md#postoidccallback) | **POST** /v1/auth/oidc/callback | Complete OIDC login |
 | [**postRefresh**](AuthApi.md#postrefresh) | **POST** /v1/auth/refresh | Refresh token |
+| [**postResendVerification**](AuthApi.md#postresendverification) | **POST** /v1/auth/resend-verification | Resend verification email |
+| [**postSetPassword**](AuthApi.md#postsetpassword) | **POST** /v1/auth/set-password | Set password |
+| [**postVerifyEmail**](AuthApi.md#postverifyemail) | **POST** /v1/auth/verify-email | Verify email |
 
 
 
@@ -342,6 +345,210 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postResendVerification
+
+> postResendVerification(resendVerificationRequest)
+
+Resend verification email
+
+Re-sends whatever verification/invite link is still pending for the given email, rate-limited. Always responds the same way regardless of whether the address exists, is already verified, or was rate-limited.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '';
+import type { PostResendVerificationRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // ResendVerificationRequest
+    resendVerificationRequest: ...,
+  } satisfies PostResendVerificationRequest;
+
+  try {
+    const data = await api.postResendVerification(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **resendVerificationRequest** | [ResendVerificationRequest](ResendVerificationRequest.md) |  | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postSetPassword
+
+> postSetPassword(setPasswordRequest)
+
+Set password
+
+Completes the admin-invite flow: sets an account\&#39;s first password and marks it verified, using the token from the emailed link.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '';
+import type { PostSetPasswordRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // SetPasswordRequest
+    setPasswordRequest: ...,
+  } satisfies PostSetPasswordRequest;
+
+  try {
+    const data = await api.postSetPassword(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **setPasswordRequest** | [SetPasswordRequest](SetPasswordRequest.md) |  | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postVerifyEmail
+
+> postVerifyEmail(verifyEmailRequest)
+
+Verify email
+
+Completes email verification for an account that already has a password, using the token from the emailed link.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '';
+import type { PostVerifyEmailRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // VerifyEmailRequest
+    verifyEmailRequest: ...,
+  } satisfies PostVerifyEmailRequest;
+
+  try {
+    const data = await api.postVerifyEmail(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **verifyEmailRequest** | [VerifyEmailRequest](VerifyEmailRequest.md) |  | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

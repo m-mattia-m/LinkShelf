@@ -76,6 +76,101 @@ func Test_Unit_Auth_Login_NoLocalPassword(t *testing.T) {
 	require.Nil(t, tokens)
 }
 
+func Test_Unit_Auth_Login_Success_VerificationEnabledAndVerified(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+	config.Set("authentication.emailVerification.enabled", true)
+
+	hashed, err := hashPassword("correct-password")
+	require.NoError(t, err)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail("user@test.com").
+		Return(&repository.AuthRecord{Id: "user-uuid-test", Role: model.RoleUser, Password: hashed, EmailVerified: true}, nil)
+
+	svc.RefreshTokenRepository.
+		EXPECT().
+		Create("user-uuid-test", gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	tokens, err := svc.Service.AuthService.Login("user@test.com", "correct-password")
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tokens.AccessToken)
+}
+
+func Test_Unit_Auth_Login_Pending_VerificationEnabledButNotVerified(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.emailVerification.enabled", true)
+	config.Set("authentication.emailVerification.tokenExpiryHours", 24)
+
+	hashed, err := hashPassword("correct-password")
+	require.NoError(t, err)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail("user@test.com").
+		Return(&repository.AuthRecord{Id: "user-uuid-test", Email: "user@test.com", Role: model.RoleUser, Password: hashed, EmailVerified: false}, nil).
+		Times(2) // once by Login, once by the auto-triggered Resend
+
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		GetLatestByUserIdAndAction("user-uuid-test", repository.EmailActionVerify).
+		Return(nil, nil)
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		DeleteByUserIdAndAction("user-uuid-test", repository.EmailActionVerify).
+		Return(nil)
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		Create("user-uuid-test", gomock.Any(), repository.EmailActionVerify, gomock.Any()).
+		Return(nil)
+	svc.Mailer.EXPECT().Send(gomock.Any()).Return(nil)
+
+	tokens, err := svc.Service.AuthService.Login("user@test.com", "correct-password")
+
+	require.ErrorIs(t, err, ErrEmailVerificationPending)
+	require.Nil(t, tokens)
+}
+
+func Test_Unit_Auth_Login_Pending_InvitedAccountNoPassword(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.emailVerification.enabled", true)
+	config.Set("authentication.emailVerification.tokenExpiryHours", 24)
+
+	svc.UserRepository.
+		EXPECT().
+		FindByEmail("invited@test.com").
+		Return(&repository.AuthRecord{Id: "user-uuid-test", Email: "invited@test.com", Role: model.RoleUser, Password: ""}, nil).
+		Times(2)
+
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		GetLatestByUserIdAndAction("user-uuid-test", repository.EmailActionSetPassword).
+		Return(nil, nil)
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		DeleteByUserIdAndAction("user-uuid-test", repository.EmailActionSetPassword).
+		Return(nil)
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		Create("user-uuid-test", gomock.Any(), repository.EmailActionSetPassword, gomock.Any()).
+		Return(nil)
+	svc.Mailer.EXPECT().Send(gomock.Any()).Return(nil)
+
+	tokens, err := svc.Service.AuthService.Login("invited@test.com", "anything")
+
+	require.ErrorIs(t, err, ErrEmailVerificationPending)
+	require.Nil(t, tokens)
+}
+
 func Test_Unit_Auth_Login_UnknownEmail(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -215,7 +310,7 @@ func Test_Unit_Auth_Oidc_NotConfigured(t *testing.T) {
 
 func Test_Unit_Auth_IsOidcEnabled_True(t *testing.T) {
 	repo := &repository.Repository{}
-	service := NewService(repo, &oidcclient.Client{})
+	service := NewService(repo, &oidcclient.Client{}, nil)
 
 	require.True(t, service.AuthService.IsOidcEnabled())
 }

@@ -4,10 +4,75 @@ All URIs are relative to *http://localhost:8085*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**getEmailDeliveryInfo**](SettingApi.md#getemaildeliveryinfo) | **GET** /v1/settings/email-delivery | Get email delivery info |
 | [**getPageSettings**](SettingApi.md#getpagesettings) | **GET** /v1/settings | Get page settings |
 | [**putUpdateSetting**](SettingApi.md#putupdatesetting) | **PUT** /v1/settings | Update setting |
 | [**putUpdateSettingsBatch**](SettingApi.md#putupdatesettingsbatch) | **PUT** /v1/settings/batch | Update settings in batch |
 
+
+
+## getEmailDeliveryInfo
+
+> EmailDeliveryInfo getEmailDeliveryInfo()
+
+Get email delivery info
+
+Admin-only, read-only: the SMTP host and from-address currently configured. SMTP itself is configured exclusively via config, not through this API.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  SettingApi,
+} from '';
+import type { GetEmailDeliveryInfoRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SettingApi(config);
+
+  try {
+    const data = await api.getEmailDeliveryInfo();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**EmailDeliveryInfo**](EmailDeliveryInfo.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
 ## getPageSettings

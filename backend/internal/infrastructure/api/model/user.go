@@ -3,6 +3,12 @@ package model
 type User struct {
 	Id string `json:"id" bson:"id"`
 	UserBase
+	EmailVerified bool `json:"email_verified" bson:"email_verified"`
+	// HasPassword is false for an admin-invited account that hasn't
+	// completed registration yet (set-password link not used) - the
+	// frontend uses this plus EmailVerified to show an Active/Pending
+	// verification/Invited status.
+	HasPassword bool `json:"has_password" bson:"has_password"`
 }
 
 type UserBase struct {
@@ -17,7 +23,11 @@ type UserBase struct {
 
 type UserCreate struct {
 	UserBase
-	Password string `json:"password" bson:"password" required:"true"`
+	// Password is required for self-registration, but may be omitted when an
+	// admin creates the account - it's then created passwordless/"invited",
+	// and the invite email's link is the only way to set one. Enforced in
+	// the domain layer, not by this schema.
+	Password string `json:"password" bson:"password" required:"false"`
 }
 
 type UserRequestBody struct {
@@ -53,4 +63,29 @@ type UserResponse struct {
 
 type UserListResponse struct {
 	Body []User `json:"body" bson:"body"`
+}
+
+type ResendVerificationRequest struct {
+	Email string `json:"email" bson:"email" required:"true"`
+}
+
+type ResendVerificationRequestBody struct {
+	Body ResendVerificationRequest `json:"body" bson:"body"`
+}
+
+type VerifyEmailRequest struct {
+	Token string `json:"token" bson:"token" required:"true"`
+}
+
+type VerifyEmailRequestBody struct {
+	Body VerifyEmailRequest `json:"body" bson:"body"`
+}
+
+type SetPasswordRequest struct {
+	Token       string `json:"token" bson:"token" required:"true"`
+	NewPassword string `json:"new_password" bson:"new_password" required:"true"`
+}
+
+type SetPasswordRequestBody struct {
+	Body SetPasswordRequest `json:"body" bson:"body"`
 }

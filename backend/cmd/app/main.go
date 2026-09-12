@@ -4,6 +4,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/controller"
+	"backend/internal/infrastructure/mailer"
 	"backend/internal/infrastructure/oidcclient"
 	"backend/internal/infrastructure/repository"
 	"backend/internal/logger"
@@ -44,7 +45,12 @@ func main() {
 		}
 	}
 
-	svc := domain.NewService(repo, oidcClient)
+	var m mailer.Mailer
+	if config.Bool("authentication.emailVerification.enabled") {
+		m = mailer.New()
+	}
+
+	svc := domain.NewService(repo, oidcClient, m)
 
 	router, err := controller.Router(svc)
 	if err != nil {

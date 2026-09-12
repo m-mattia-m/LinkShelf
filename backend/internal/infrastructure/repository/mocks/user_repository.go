@@ -174,6 +174,20 @@ func (mr *MockUserRepositoryMockRecorder) List() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockUserRepository)(nil).List))
 }
 
+// MarkVerified mocks base method.
+func (m *MockUserRepository) MarkVerified(userId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkVerified", userId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkVerified indicates an expected call of MarkVerified.
+func (mr *MockUserRepositoryMockRecorder) MarkVerified(userId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkVerified", reflect.TypeOf((*MockUserRepository)(nil).MarkVerified), userId)
+}
+
 // PatchPassword mocks base method.
 func (m *MockUserRepository) PatchPassword(id, hashedPassword string) error {
 	m.ctrl.T.Helper()
@@ -186,6 +200,20 @@ func (m *MockUserRepository) PatchPassword(id, hashedPassword string) error {
 func (mr *MockUserRepositoryMockRecorder) PatchPassword(id, hashedPassword any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPassword", reflect.TypeOf((*MockUserRepository)(nil).PatchPassword), id, hashedPassword)
+}
+
+// SetPassword mocks base method.
+func (m *MockUserRepository) SetPassword(userId, hashedPassword string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPassword", userId, hashedPassword)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPassword indicates an expected call of SetPassword.
+func (mr *MockUserRepositoryMockRecorder) SetPassword(userId, hashedPassword any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPassword", reflect.TypeOf((*MockUserRepository)(nil).SetPassword), userId, hashedPassword)
 }
 
 // SetPasswordAndRole mocks base method.

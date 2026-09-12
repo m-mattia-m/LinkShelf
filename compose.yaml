@@ -31,3 +31,18 @@ services:
     restart: unless-stopped
     ports:
       - "8086:8080"
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      # 1025: SMTP - config.default.yaml's smtp.host/port point here so email
+      # verification works locally out of the box, same as postgres above.
+      - "1025:1025"
+      # 8025: web UI for reading the emails this app sends.
+      - "8025:8025"
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8025/readyz" ]
+      interval: 2s
+      timeout: 3s
+      retries: 30

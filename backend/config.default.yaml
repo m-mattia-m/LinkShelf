@@ -3,6 +3,7 @@ app:
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: production
   logo: <base64-encoded-logo-or-path>
+  frontendUrl: "http://localhost:3000"
 server:
   scheme: http
   host: localhost
@@ -49,3 +50,24 @@ authentication:
     # Must match the frontend's OIDC callback page, which completes the
     # login by POSTing the code+state here to /v1/auth/oidc/callback.
     redirectUrl: "http://localhost:3000/auth/callback"
+  # Set to false to disable public self-registration (POST /v1/users without
+  # an admin token). Admins can still create accounts, and OIDC
+  # auto-provisioning is unaffected either way.
+  registrationEnabled: true
+  emailVerification:
+    # When true, smtp.host and smtp.from must be set (checked at startup) and
+    # local/password accounts must verify their email before they can log in.
+    # OIDC accounts are always exempt.
+    enabled: true
+    tokenExpiryHours: 24
+smtp:
+  # Defaults to the Mailpit dev container (see compose.yaml) for local
+  # development - matches the pattern of database.host/port also pointing at
+  # its published compose port.
+  host: localhost
+  port: 1025
+  username: ""
+  password: ""
+  from: "no-reply@linkshelf.local"
+  # none | starttls | tls - Mailpit speaks plain SMTP with no TLS at all.
+  tlsMode: none

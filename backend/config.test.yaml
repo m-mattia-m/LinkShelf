@@ -3,6 +3,7 @@ app:
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: development
   logo: <base64-encoded-logo-or-path>
+  frontendUrl: "http://localhost:3000"
 server:
   scheme: http
   host: localhost
@@ -35,3 +36,14 @@ authentication:
     clientId: ""
     clientSecret: ""
     redirectUrl: ""
+  registrationEnabled: true
+  emailVerification:
+    enabled: false
+    tokenExpiryHours: 24
+smtp:
+  host: ""
+  port: 1025
+  username: ""
+  password: ""
+  from: ""
+  tlsMode: none

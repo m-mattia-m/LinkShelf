@@ -47,6 +47,10 @@ export interface PatchUserPasswordRequest {
     userRequestBodyOnlyPassword: Omit<UserRequestBodyOnlyPassword, '$schema'>;
 }
 
+export interface PatchUserVerifyRequest {
+    userId: string;
+}
+
 export interface PostCreateUserRequest {
     userCreate: Omit<UserCreate, '$schema'>;
     authorization?: string;
@@ -287,6 +291,53 @@ export class UserApi extends runtime.BaseAPI {
      */
     async patchUserPassword(requestParameters: PatchUserPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.patchUserPasswordRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Admin override: forces a user\'s email to verified without requiring the emailed link - a safety valve for when SMTP delivery is broken.
+     * Mark user verified
+     */
+    async patchUserVerifyRaw(requestParameters: PatchUserVerifyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<User>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling patchUserVerify().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/users/{userId}/verify`;
+        urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    }
+
+    /**
+     * Admin override: forces a user\'s email to verified without requiring the emailed link - a safety valve for when SMTP delivery is broken.
+     * Mark user verified
+     */
+    async patchUserVerify(requestParameters: PatchUserVerifyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<User> {
+        const response = await this.patchUserVerifyRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

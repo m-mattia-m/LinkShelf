@@ -50,6 +50,131 @@ func Test_API_Login_InvalidCredentials(t *testing.T) {
 	require.Error(t, err)
 }
 
+func Test_API_Login_EmailVerificationPending(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.AuthService.
+		EXPECT().
+		Login("user@test.com", "correct-password").
+		Return(nil, domain.ErrEmailVerificationPending)
+
+	handler := Login(svc.Service)
+	_, err := handler(context.Background(), &model.LoginRequestBody{
+		Body: model.LoginRequest{Email: "user@test.com", Password: "correct-password"},
+	})
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "verify your email")
+}
+
+func Test_API_ResendVerification_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.
+		EXPECT().
+		Resend("user@test.com").
+		Return(nil)
+
+	handler := ResendVerification(svc.Service)
+	_, err := handler(context.Background(), &model.ResendVerificationRequestBody{
+		Body: model.ResendVerificationRequest{Email: "user@test.com"},
+	})
+
+	require.NoError(t, err)
+}
+
+// Test_API_ResendVerification_SwallowsError proves the endpoint never leaks
+// whether the address exists (or anything else) even if the domain layer
+// itself errors - always the same response either way.
+func Test_API_ResendVerification_SwallowsError(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.
+		EXPECT().
+		Resend("user@test.com").
+		Return(errors.New("db unavailable"))
+
+	handler := ResendVerification(svc.Service)
+	_, err := handler(context.Background(), &model.ResendVerificationRequestBody{
+		Body: model.ResendVerificationRequest{Email: "user@test.com"},
+	})
+
+	require.NoError(t, err)
+}
+
+func Test_API_VerifyEmail_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.
+		EXPECT().
+		VerifyEmail("raw-token").
+		Return(nil)
+
+	handler := VerifyEmail(svc.Service)
+	_, err := handler(context.Background(), &model.VerifyEmailRequestBody{
+		Body: model.VerifyEmailRequest{Token: "raw-token"},
+	})
+
+	require.NoError(t, err)
+}
+
+func Test_API_VerifyEmail_InvalidToken(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.
+		EXPECT().
+		VerifyEmail("bad-token").
+		Return(domain.ErrInvalidToken)
+
+	handler := VerifyEmail(svc.Service)
+	_, err := handler(context.Background(), &model.VerifyEmailRequestBody{
+		Body: model.VerifyEmailRequest{Token: "bad-token"},
+	})
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "invalid or expired verification link")
+}
+
+func Test_API_SetPassword_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.
+		EXPECT().
+		SetPassword("raw-token", "new-secret-password").
+		Return(nil)
+
+	handler := SetPassword(svc.Service)
+	_, err := handler(context.Background(), &model.SetPasswordRequestBody{
+		Body: model.SetPasswordRequest{Token: "raw-token", NewPassword: "new-secret-password"},
+	})
+
+	require.NoError(t, err)
+}
+
+func Test_API_SetPassword_InvalidToken(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.
+		EXPECT().
+		SetPassword("bad-token", "new-secret-password").
+		Return(domain.ErrInvalidToken)
+
+	handler := SetPassword(svc.Service)
+	_, err := handler(context.Background(), &model.SetPasswordRequestBody{
+		Body: model.SetPasswordRequest{Token: "bad-token", NewPassword: "new-secret-password"},
+	})
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "invalid or expired invite link")
+}
+
 func Test_API_Refresh_Success(t *testing.T) {
 	svc := NewMockDomainService(t)
 	defer svc.Ctrl.Finish()

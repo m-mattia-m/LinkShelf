@@ -7,6 +7,7 @@ apis/StatisticApi.ts
 apis/UserApi.ts
 apis/index.ts
 docs/AuthApi.md
+docs/EmailDeliveryInfo.md
 docs/ErrorDetail.md
 docs/ErrorModel.md
 docs/Link.md
@@ -17,9 +18,11 @@ docs/OidcCallbackRequest.md
 docs/OidcLoginResponseBody.md
 docs/PublicShelf.md
 docs/RefreshRequest.md
+docs/ResendVerificationRequest.md
 docs/Section.md
 docs/SectionApi.md
 docs/SectionBase.md
+docs/SetPasswordRequest.md
 docs/Setting.md
 docs/SettingApi.md
 docs/SettingBatchRequestBody.md
@@ -37,7 +40,9 @@ docs/UserApi.md
 docs/UserBase.md
 docs/UserCreate.md
 docs/UserRequestBodyOnlyPassword.md
+docs/VerifyEmailRequest.md
 index.ts
+models/EmailDeliveryInfo.ts
 models/ErrorDetail.ts
 models/ErrorModel.ts
 models/Link.ts
@@ -47,8 +52,10 @@ models/OidcCallbackRequest.ts
 models/OidcLoginResponseBody.ts
 models/PublicShelf.ts
 models/RefreshRequest.ts
+models/ResendVerificationRequest.ts
 models/Section.ts
 models/SectionBase.ts
+models/SetPasswordRequest.ts
 models/Setting.ts
 models/SettingBatchRequestBody.ts
 models/SettingBatchResponseBody.ts
@@ -62,5 +69,6 @@ models/User.ts
 models/UserBase.ts
 models/UserCreate.ts
 models/UserRequestBodyOnlyPassword.ts
+models/VerifyEmailRequest.ts
 models/index.ts
 runtime.ts

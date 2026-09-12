@@ -9,6 +9,7 @@ All URIs are relative to *http://localhost:8085*
 | [**getUserById**](UserApi.md#getuserbyid) | **GET** /v1/users/{userId} | Get user by ID |
 | [**listUsers**](UserApi.md#listusers) | **GET** /v1/users | List users |
 | [**patchUserPassword**](UserApi.md#patchuserpassword) | **PATCH** /v1/users/{userId}/password | Patch user password |
+| [**patchUserVerify**](UserApi.md#patchuserverify) | **PATCH** /v1/users/{userId}/verify | Mark user verified |
 | [**postCreateUser**](UserApi.md#postcreateuser) | **POST** /v1/users | Create user |
 | [**putUpdateUser**](UserApi.md#putupdateuser) | **PUT** /v1/users/{userId} | Update user |
 
@@ -356,6 +357,78 @@ example().catch(console.error);
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## patchUserVerify
+
+> User patchUserVerify(userId)
+
+Mark user verified
+
+Admin override: forces a user\&#39;s email to verified without requiring the emailed link - a safety valve for when SMTP delivery is broken.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  UserApi,
+} from '';
+import type { PatchUserVerifyRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
+
+  const body = {
+    // string | The identifier of the chosen form you want.
+    userId: userId_example,
+  } satisfies PatchUserVerifyRequest;
+
+  try {
+    const data = await api.patchUserVerify(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **userId** | `string` | The identifier of the chosen form you want. | [Defaults to `undefined`] |
+
+### Return type
+
+[**User**](User.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

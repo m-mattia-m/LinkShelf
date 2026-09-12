@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"backend/internal/infrastructure/mailer"
+	mailerMocks "backend/internal/infrastructure/mailer/mocks"
 	"backend/internal/infrastructure/repository"
 	"backend/internal/infrastructure/repository/mocks"
 	"testing"
@@ -12,13 +14,15 @@ type MockService struct {
 	Ctrl    *gomock.Controller
 	Service *Service
 
-	UserRepository         *mocks.MockUserRepository
-	ShelfRepository        *mocks.MockShelfRepository
-	SectionRepository      *mocks.MockSectionRepository
-	LinkRepository         *mocks.MockLinkRepository
-	SettingRepository      *mocks.MockSettingRepository
-	StatisticRepository    *mocks.MockStatisticRepository
-	RefreshTokenRepository *mocks.MockRefreshTokenRepository
+	UserRepository             *mocks.MockUserRepository
+	ShelfRepository            *mocks.MockShelfRepository
+	SectionRepository          *mocks.MockSectionRepository
+	LinkRepository             *mocks.MockLinkRepository
+	SettingRepository          *mocks.MockSettingRepository
+	StatisticRepository        *mocks.MockStatisticRepository
+	RefreshTokenRepository     *mocks.MockRefreshTokenRepository
+	EmailActionTokenRepository *mocks.MockEmailActionTokenRepository
+	Mailer                     *mailerMocks.MockMailer
 }
 
 func NewMockService(t *testing.T) *MockService {
@@ -33,28 +37,35 @@ func NewMockService(t *testing.T) *MockService {
 	settingRepository := mocks.NewMockSettingRepository(ctrl)
 	statisticRepository := mocks.NewMockStatisticRepository(ctrl)
 	refreshTokenRepository := mocks.NewMockRefreshTokenRepository(ctrl)
+	emailActionTokenRepository := mocks.NewMockEmailActionTokenRepository(ctrl)
+	mailerMock := mailerMocks.NewMockMailer(ctrl)
 
 	repo := &repository.Repository{
-		UserRepository:         userRepository,
-		ShelfRepository:        shelfRepository,
-		SectionRepository:      sectionRepository,
-		LinkRepository:         linkRepository,
-		SettingRepository:      settingRepository,
-		StatisticRepository:    statisticRepository,
-		RefreshTokenRepository: refreshTokenRepository,
+		UserRepository:             userRepository,
+		ShelfRepository:            shelfRepository,
+		SectionRepository:          sectionRepository,
+		LinkRepository:             linkRepository,
+		SettingRepository:          settingRepository,
+		StatisticRepository:        statisticRepository,
+		RefreshTokenRepository:     refreshTokenRepository,
+		EmailActionTokenRepository: emailActionTokenRepository,
 	}
 
-	service := NewService(repo, nil)
+	var m mailer.Mailer = mailerMock
+
+	service := NewService(repo, nil, m)
 
 	return &MockService{
-		Ctrl:                   ctrl,
-		Service:                service,
-		UserRepository:         userRepository,
-		ShelfRepository:        shelfRepository,
-		SectionRepository:      sectionRepository,
-		LinkRepository:         linkRepository,
-		SettingRepository:      settingRepository,
-		StatisticRepository:    statisticRepository,
-		RefreshTokenRepository: refreshTokenRepository,
+		Ctrl:                       ctrl,
+		Service:                    service,
+		UserRepository:             userRepository,
+		ShelfRepository:            shelfRepository,
+		SectionRepository:          sectionRepository,
+		LinkRepository:             linkRepository,
+		SettingRepository:          settingRepository,
+		StatisticRepository:        statisticRepository,
+		RefreshTokenRepository:     refreshTokenRepository,
+		EmailActionTokenRepository: emailActionTokenRepository,
+		Mailer:                     mailerMock,
 	}
 }

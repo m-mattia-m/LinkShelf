@@ -4,6 +4,7 @@
 package integrationtests
 
 import (
+	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
 	"encoding/json"
 	"io"
@@ -142,6 +143,39 @@ func Test_API_Setting_UpdateSettingsBatch_PartialFailureStillSavesValidItems(t *
 	var reloaded model.SettingPageBody
 	require.NoError(t, json.Unmarshal(getBody, &reloaded))
 	require.Equal(t, "Imprint text", reloaded.Imprint)
+}
+
+func Test_API_Setting_GetEmailDeliveryInfo_RequiresAdmin(t *testing.T) {
+	_, userToken := createTestUser(t)
+
+	resp := doAuthedRequest(t, http.MethodGet, "/v1/settings/email-delivery", nil, userToken)
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+}
+
+func Test_API_Setting_GetEmailDeliveryInfo_Success(t *testing.T) {
+	config.Set("smtp.host", "smtp.example.com")
+	config.Set("smtp.from", "no-reply@example.com")
+	defer func() {
+		config.Set("smtp.host", "")
+		config.Set("smtp.from", "")
+	}()
+
+	_, adminToken := createTestAdmin(t)
+
+	resp := doAuthedRequest(t, http.MethodGet, "/v1/settings/email-delivery", nil, adminToken)
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var info model.EmailDeliveryInfo
+	require.NoError(t, json.Unmarshal(body, &info))
+	require.Equal(t, "smtp.example.com", info.Host)
+	require.Equal(t, "no-reply@example.com", info.From)
 }
 
 func Test_API_Setting_UpdateSettingsBatch_EmptyBatchRejected(t *testing.T) {

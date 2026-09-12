@@ -23,12 +23,16 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"first_name",
 		"last_name",
 		"role",
+		"password",
+		"email_verified",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
 		"First",
 		"Last",
 		"user",
+		"hashed-password",
+		true,
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"`).
@@ -39,6 +43,8 @@ func Test_UserRepository_List_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, users, 1)
 	require.Equal(t, "test@test.com", users[0].Email)
+	require.True(t, users[0].EmailVerified)
+	require.True(t, users[0].HasPassword)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -72,12 +78,16 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"first_name",
 		"last_name",
 		"role",
+		"password",
+		"email_verified",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
 		"First",
 		"Last",
 		"user",
+		"",
+		false,
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
@@ -89,6 +99,8 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, user)
 	require.Equal(t, "test@test.com", user.Email)
+	require.False(t, user.EmailVerified)
+	require.False(t, user.HasPassword)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -318,9 +330,9 @@ func Test_UserRepository_FindByEmail_Success(t *testing.T) {
 	repo := &userRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "email", "first_name", "last_name", "role", "password", "provider", "provider_id",
+		"id", "email", "first_name", "last_name", "role", "password", "provider", "provider_id", "email_verified",
 	}).AddRow(
-		"user-uuid-test", "test@test.com", "First", "Last", "user", "hashed", "LOCAL", nil,
+		"user-uuid-test", "test@test.com", "First", "Last", "user", "hashed", "LOCAL", nil, true,
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE LOWER\(email\)`).
@@ -334,6 +346,7 @@ func Test_UserRepository_FindByEmail_Success(t *testing.T) {
 	require.Equal(t, "user-uuid-test", record.Id)
 	require.Equal(t, "LOCAL", record.Provider)
 	require.Nil(t, record.ProviderId)
+	require.True(t, record.EmailVerified)
 }
 
 func Test_UserRepository_FindByEmail_NoRows(t *testing.T) {
@@ -378,9 +391,9 @@ func Test_UserRepository_FindByProviderId_Success(t *testing.T) {
 
 	providerId := "oidc-subject-test"
 	rows := sqlmock.NewRows([]string{
-		"id", "email", "first_name", "last_name", "role", "password", "provider", "provider_id",
+		"id", "email", "first_name", "last_name", "role", "password", "provider", "provider_id", "email_verified",
 	}).AddRow(
-		"user-uuid-test", "test@test.com", "First", "Last", "user", "", "OIDC", providerId,
+		"user-uuid-test", "test@test.com", "First", "Last", "user", "", "OIDC", providerId, false,
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE provider_id =`).
@@ -522,6 +535,70 @@ func Test_UserRepository_SetPasswordAndRole_ExecError(t *testing.T) {
 		WillReturnError(errors.New("update failed"))
 
 	err = repo.SetPasswordAndRole("user-uuid-test", "new-hashed-password", "admin")
+
+	require.Error(t, err)
+}
+
+func Test_UserRepository_MarkVerified_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"\s+SET email_verified`).
+		WithArgs(sqlmock.AnyArg(), "user-uuid-test").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err = repo.MarkVerified("user-uuid-test")
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_MarkVerified_ExecError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"\s+SET email_verified`).
+		WillReturnError(errors.New("update failed"))
+
+	err = repo.MarkVerified("user-uuid-test")
+
+	require.Error(t, err)
+}
+
+func Test_UserRepository_SetPassword_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"\s+SET password`).
+		WithArgs("new-hashed-password", sqlmock.AnyArg(), "user-uuid-test").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err = repo.SetPassword("user-uuid-test", "new-hashed-password")
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_SetPassword_ExecError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"\s+SET password`).
+		WillReturnError(errors.New("update failed"))
+
+	err = repo.SetPassword("user-uuid-test", "new-hashed-password")
 
 	require.Error(t, err)
 }

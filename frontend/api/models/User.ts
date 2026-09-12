@@ -33,10 +33,22 @@ export interface User {
     email: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof User
+     */
+    emailVerified: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof User
      */
     firstName: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof User
+     */
+    hasPassword: boolean;
     /**
      * 
      * @type {string}
@@ -62,7 +74,9 @@ export interface User {
  */
 export function instanceOfUser(value: object): value is User {
     if (!('email' in value) || value['email'] === undefined) return false;
+    if (!('emailVerified' in value) || value['emailVerified'] === undefined) return false;
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
+    if (!('hasPassword' in value) || value['hasPassword'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
     return true;
@@ -80,7 +94,9 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
         'email': json['email'],
+        'emailVerified': json['email_verified'],
         'firstName': json['first_name'],
+        'hasPassword': json['has_password'],
         'id': json['id'],
         'lastName': json['last_name'],
         'role': json['role'] == null ? undefined : json['role'],
@@ -99,7 +115,9 @@ export function UserToJSONTyped(value?: Omit<User, '$schema'> | null, ignoreDisc
     return {
         
         'email': value['email'],
+        'email_verified': value['emailVerified'],
         'first_name': value['firstName'],
+        'has_password': value['hasPassword'],
         'id': value['id'],
         'last_name': value['lastName'],
         'role': value['role'],

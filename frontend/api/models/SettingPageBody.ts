@@ -51,6 +51,12 @@ export interface SettingPageBody {
     contactShow: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof SettingPageBody
+     */
+    emailVerificationEnabled: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SettingPageBody
      */
@@ -87,6 +93,12 @@ export interface SettingPageBody {
     redirectToDashboard: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof SettingPageBody
+     */
+    registrationEnabled: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SettingPageBody
      */
@@ -107,12 +119,14 @@ export function instanceOfSettingPageBody(value: object): value is SettingPageBo
     if (!('aboutShow' in value) || value['aboutShow'] === undefined) return false;
     if (!('contact' in value) || value['contact'] === undefined) return false;
     if (!('contactShow' in value) || value['contactShow'] === undefined) return false;
+    if (!('emailVerificationEnabled' in value) || value['emailVerificationEnabled'] === undefined) return false;
     if (!('imprint' in value) || value['imprint'] === undefined) return false;
     if (!('imprintShow' in value) || value['imprintShow'] === undefined) return false;
     if (!('oidcEnabled' in value) || value['oidcEnabled'] === undefined) return false;
     if (!('privacyPolicy' in value) || value['privacyPolicy'] === undefined) return false;
     if (!('privacyPolicyShow' in value) || value['privacyPolicyShow'] === undefined) return false;
     if (!('redirectToDashboard' in value) || value['redirectToDashboard'] === undefined) return false;
+    if (!('registrationEnabled' in value) || value['registrationEnabled'] === undefined) return false;
     if (!('termsOfUse' in value) || value['termsOfUse'] === undefined) return false;
     if (!('termsOfUseShow' in value) || value['termsOfUseShow'] === undefined) return false;
     return true;
@@ -133,12 +147,14 @@ export function SettingPageBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
         'aboutShow': json['about_show'],
         'contact': json['contact'],
         'contactShow': json['contact_show'],
+        'emailVerificationEnabled': json['email_verification_enabled'],
         'imprint': json['imprint'],
         'imprintShow': json['imprint_show'],
         'oidcEnabled': json['oidc_enabled'],
         'privacyPolicy': json['privacy_policy'],
         'privacyPolicyShow': json['privacy_policy_show'],
         'redirectToDashboard': json['redirect_to_dashboard'],
+        'registrationEnabled': json['registration_enabled'],
         'termsOfUse': json['terms_of_use'],
         'termsOfUseShow': json['terms_of_use_show'],
     };
@@ -159,12 +175,14 @@ export function SettingPageBodyToJSONTyped(value?: Omit<SettingPageBody, '$schem
         'about_show': value['aboutShow'],
         'contact': value['contact'],
         'contact_show': value['contactShow'],
+        'email_verification_enabled': value['emailVerificationEnabled'],
         'imprint': value['imprint'],
         'imprint_show': value['imprintShow'],
         'oidc_enabled': value['oidcEnabled'],
         'privacy_policy': value['privacyPolicy'],
         'privacy_policy_show': value['privacyPolicyShow'],
         'redirect_to_dashboard': value['redirectToDashboard'],
+        'registration_enabled': value['registrationEnabled'],
         'terms_of_use': value['termsOfUse'],
         'terms_of_use_show': value['termsOfUseShow'],
     };

@@ -1,13 +1,25 @@
 package domain
 
 import (
+	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
+	"backend/internal/infrastructure/repository"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
+
+// allowSelfRegistration is needed by every test that creates a user as a
+// non-admin caller, since Create() checks
+// authentication.registrationEnabled for that path.
+func allowSelfRegistration(t *testing.T) {
+	t.Helper()
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("authentication.registrationEnabled", true)
+}
 
 func Test_Unit_User_List_Success(t *testing.T) {
 	svc := NewMockService(t)
@@ -45,6 +57,7 @@ func Test_Unit_User_List_Failure(t *testing.T) {
 func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
 
 	svc.UserRepository.
 		EXPECT().
@@ -81,9 +94,133 @@ func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *test
 	require.Equal(t, model.RoleUser, user.Role)
 }
 
+func Test_Unit_User_Creation_Failure_RegistrationDisabled(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("authentication.registrationEnabled", false)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		Password: "secret",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, false)
+
+	require.ErrorIs(t, err, ErrRegistrationDisabled)
+	require.Nil(t, user)
+}
+
+func Test_Unit_User_Creation_Success_AdminBypassesRegistrationDisabled(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("authentication.registrationEnabled", false)
+
+	svc.UserRepository.
+		EXPECT().
+		Create(gomock.Any(), gomock.Any(), model.RoleUser).
+		Return("user-uuid-test", nil)
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		Password: "secret",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, true)
+
+	require.NoError(t, err)
+	require.NotNil(t, user)
+}
+
+func Test_Unit_User_Creation_Failure_SelfRegistrationRequiresPassword(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		Password: "",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, false)
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+	require.Nil(t, user)
+}
+
+func Test_Unit_User_Creation_Failure_AdminRequiresPasswordWhenVerificationDisabled(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("authentication.emailVerification.enabled", false)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		Password: "",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, true)
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+	require.Nil(t, user)
+}
+
+func Test_Unit_User_Creation_Success_AdminInvitesPasswordlessAccount(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("authentication.emailVerification.enabled", true)
+	config.Set("authentication.emailVerification.tokenExpiryHours", 24)
+
+	svc.UserRepository.
+		EXPECT().
+		Create(gomock.Any(), "", model.RoleUser).
+		Return("invited-uuid-test", nil)
+
+	svc.UserRepository.
+		EXPECT().
+		Get("invited-uuid-test").
+		Return(&model.User{
+			Id:          "invited-uuid-test",
+			UserBase:    model.UserBase{Email: "invited@test.com", Role: model.RoleUser},
+			HasPassword: false,
+		}, nil)
+
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		GetLatestByUserIdAndAction("invited-uuid-test", repository.EmailActionSetPassword).
+		Return(nil, nil)
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		DeleteByUserIdAndAction("invited-uuid-test", repository.EmailActionSetPassword).
+		Return(nil)
+	svc.EmailActionTokenRepository.
+		EXPECT().
+		Create("invited-uuid-test", gomock.Any(), repository.EmailActionSetPassword, gomock.Any()).
+		Return(nil)
+	svc.Mailer.EXPECT().Send(gomock.Any()).Return(nil)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Email: "invited@test.com", FirstName: "First", LastName: "Last"},
+		Password: "",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, true)
+
+	require.NoError(t, err)
+	require.NotNil(t, user)
+	require.False(t, user.HasPassword)
+}
+
 func Test_Unit_User_Creation_Success_AdminSetsRole(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
+	config.Reset()
 
 	svc.UserRepository.
 		EXPECT().
@@ -125,6 +262,7 @@ func Test_Unit_User_Creation_Failure_AdminSetsInvalidRole(t *testing.T) {
 func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
 
 	svc.UserRepository.
 		EXPECT().
@@ -148,6 +286,7 @@ func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
 
 	svc.UserRepository.
 		EXPECT().

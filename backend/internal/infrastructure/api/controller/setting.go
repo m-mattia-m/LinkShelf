@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/mapper"
 	"backend/internal/infrastructure/api/model"
@@ -21,7 +22,7 @@ func UpdateSetting(svc *domain.Service) func(c context.Context, input *model.Set
 			return nil, huma.Error400BadRequest("failed to get setting", err)
 		}
 
-		return mapper.MapSettingToSettingPageResponse(input.Body.LanguageCode, settings, svc.AuthService.IsOidcEnabled()), nil
+		return mapper.MapSettingToSettingPageResponse(input.Body.LanguageCode, settings, svc.AuthService.IsOidcEnabled(), config.Bool("authentication.registrationEnabled"), config.Bool("authentication.emailVerification.enabled")), nil
 	}
 }
 
@@ -47,7 +48,7 @@ func UpdateSettingsBatch(svc *domain.Service) func(c context.Context, input *mod
 		// to decide which language's page to render back.
 		languageCode := input.Body.Settings[0].LanguageCode
 
-		page := mapper.MapSettingToSettingPageResponse(languageCode, settings, svc.AuthService.IsOidcEnabled())
+		page := mapper.MapSettingToSettingPageResponse(languageCode, settings, svc.AuthService.IsOidcEnabled(), config.Bool("authentication.registrationEnabled"), config.Bool("authentication.emailVerification.enabled"))
 
 		return &model.SettingBatchResponse{
 			Body: model.SettingBatchResponseBody{
@@ -65,6 +66,21 @@ func GetPageSettings(svc *domain.Service) func(c context.Context, input *model.S
 			return nil, huma.Error400BadRequest("failed to get settings", err)
 		}
 
-		return mapper.MapSettingToSettingPageResponse(input.LanguageCode, settings, svc.AuthService.IsOidcEnabled()), nil
+		return mapper.MapSettingToSettingPageResponse(input.LanguageCode, settings, svc.AuthService.IsOidcEnabled(), config.Bool("authentication.registrationEnabled"), config.Bool("authentication.emailVerification.enabled")), nil
+	}
+}
+
+// GetEmailDeliveryInfo is admin-only and deliberately minimal (host + from
+// address only) - SMTP itself is configured exclusively via config, never
+// through the UI, so there's nothing here to edit.
+func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *struct{}) (*model.EmailDeliveryInfoResponse, error) {
+	return func(c context.Context, input *struct{}) (*model.EmailDeliveryInfoResponse, error) {
+		return &model.EmailDeliveryInfoResponse{
+			Body: model.EmailDeliveryInfo{
+				Enabled: config.Bool("authentication.emailVerification.enabled"),
+				Host:    config.String("smtp.host"),
+				From:    config.String("smtp.from"),
+			},
+		}, nil
 	}
 }

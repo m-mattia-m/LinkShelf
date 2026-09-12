@@ -6,6 +6,7 @@ import (
 	"backend/internal/infrastructure/api/model"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -180,6 +181,108 @@ func Test_API_CreateUser_Failure(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to create user")
+}
+
+func Test_API_CreateUser_RegistrationDisabled(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := CreateUser(svc.Service)
+
+	svc.UserService.
+		EXPECT().
+		Create(gomock.Any(), false).
+		Return(nil, domain.ErrRegistrationDisabled)
+
+	resp, err := handler(context.Background(), &model.UserRequestBody{})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "registration is currently disabled")
+}
+
+func Test_API_CreateUser_InvalidInput(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := CreateUser(svc.Service)
+
+	svc.UserService.
+		EXPECT().
+		Create(gomock.Any(), false).
+		Return(nil, fmt.Errorf("%w: password is required", domain.ErrInvalidInput))
+
+	resp, err := handler(context.Background(), &model.UserRequestBody{})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "password is required")
+}
+
+func Test_API_MarkUserVerified_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := MarkUserVerified(svc.Service)
+
+	gomock.InOrder(
+		svc.EmailVerificationService.
+			EXPECT().
+			MarkVerified("user-uuid-test").
+			Return(nil),
+
+		svc.UserService.
+			EXPECT().
+			Get("user-uuid-test").
+			Return(&model.User{Id: "user-uuid-test", EmailVerified: true}, nil),
+	)
+
+	resp, err := handler(context.Background(), &model.UserRequestFilter{UserId: "user-uuid-test"})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.True(t, resp.Body.EmailVerified)
+}
+
+func Test_API_MarkUserVerified_Failure_MarkVerified(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := MarkUserVerified(svc.Service)
+
+	svc.EmailVerificationService.
+		EXPECT().
+		MarkVerified("user-uuid-test").
+		Return(errors.New("db unavailable"))
+
+	resp, err := handler(context.Background(), &model.UserRequestFilter{UserId: "user-uuid-test"})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+}
+
+func Test_API_MarkUserVerified_NotFound(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := MarkUserVerified(svc.Service)
+
+	gomock.InOrder(
+		svc.EmailVerificationService.
+			EXPECT().
+			MarkVerified("user-uuid-test").
+			Return(nil),
+
+		svc.UserService.
+			EXPECT().
+			Get("user-uuid-test").
+			Return(nil, nil),
+	)
+
+	resp, err := handler(context.Background(), &model.UserRequestFilter{UserId: "user-uuid-test"})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
 }
 
 func Test_API_GetUserById_Success(t *testing.T) {

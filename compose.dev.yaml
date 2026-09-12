@@ -8,13 +8,18 @@ services:
       - "8085:8085"
     environment:
       - APP_DATABASE_HOST=postgres
-      # Inside the compose network postgres listens on its container port, not
-      # the port published to the host in docker-compose.yaml.
+      # Inside the compose network postgres/mailpit listen on their container
+      # ports, not the ports published to the host above.
       - APP_DATABASE_PORT=5432
+      - APP_SMTP_HOST=mailpit
+      - APP_SMTP_PORT=1025
+      - APP_SMTP_TLSMODE=none
     volumes:
       - ./backend/config.default.yaml:/app/config.default.yaml
     depends_on:
       # Wait until postgres accepts connections: the backend exits if its first
       # DB ping fails, which happens on a fresh volume without this gate.
       postgres:
+        condition: service_healthy
+      mailpit:
         condition: service_healthy

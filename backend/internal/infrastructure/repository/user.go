@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -15,14 +16,15 @@ import (
 // It intentionally lives outside the API model package since it must never be
 // serialized back to a client (it carries the password hash).
 type AuthRecord struct {
-	Id         string
-	Email      string
-	FirstName  string
-	LastName   string
-	Role       string
-	Password   string
-	Provider   string
-	ProviderId *string
+	Id            string
+	Email         string
+	FirstName     string
+	LastName      string
+	Role          string
+	Password      string
+	Provider      string
+	ProviderId    *string
+	EmailVerified bool
 }
 
 type UserRepository interface {
@@ -39,6 +41,14 @@ type UserRepository interface {
 	CreateExternal(email, firstName, lastName, provider, providerId string) (string, error)
 	LinkProvider(userId, provider, providerId string) error
 	SetPasswordAndRole(userId, hashedPassword, role string) error
+
+	// MarkVerified sets email_verified/verified_at, used both when a
+	// verification/invite link is completed and for an admin's manual
+	// override.
+	MarkVerified(userId string) error
+	// SetPassword sets a user's password hash and marks it verified in one
+	// step - completing the admin-invite ("set your password") flow.
+	SetPassword(userId, hashedPassword string) error
 }
 
 type userRepository struct {
@@ -56,7 +66,7 @@ func NewUserRepository(engine *sql.DB, table string) (UserRepository, error) {
 
 func (r *userRepository) List() ([]model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role
+		SELECT id, email, first_name, last_name, role, password, email_verified
 		FROM "user"
 	`)
 	if err != nil {
@@ -72,16 +82,20 @@ func (r *userRepository) List() ([]model.User, error) {
 	users := make([]model.User, 0)
 	for rows.Next() {
 		var user model.User
+		var password string
 		err := rows.Scan(
 			&user.Id,
 			&user.Email,
 			&user.FirstName,
 			&user.LastName,
 			&user.Role,
+			&password,
+			&user.EmailVerified,
 		)
 		if err != nil {
 			return nil, err
 		}
+		user.HasPassword = password != ""
 		users = append(users, user)
 	}
 
@@ -90,7 +104,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role
+		SELECT id, email, first_name, last_name, role, password, email_verified
 		FROM "user"
 		WHERE id = ?
 	`)
@@ -99,12 +113,15 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 	}
 
 	var user model.User
+	var password string
 	err = r.Engine.QueryRowContext(context.TODO(), query, id).Scan(
 		&user.Id,
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
 		&user.Role,
+		&password,
+		&user.EmailVerified,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -113,6 +130,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	user.HasPassword = password != ""
 
 	return &user, nil
 }
@@ -246,7 +264,7 @@ func (r *userRepository) Delete(u *model.User) error {
 
 func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role, password, provider, provider_id
+		SELECT id, email, first_name, last_name, role, password, provider, provider_id, email_verified
 		FROM "user"
 		WHERE LOWER(email) = LOWER(?)
 	`)
@@ -264,6 +282,7 @@ func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 		&record.Password,
 		&record.Provider,
 		&record.ProviderId,
+		&record.EmailVerified,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -278,7 +297,7 @@ func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 
 func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role, password, provider, provider_id
+		SELECT id, email, first_name, last_name, role, password, provider, provider_id, email_verified
 		FROM "user"
 		WHERE provider_id = ?
 	`)
@@ -296,6 +315,7 @@ func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error
 		&record.Password,
 		&record.Provider,
 		&record.ProviderId,
+		&record.EmailVerified,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -385,5 +405,36 @@ func (r *userRepository) SetPasswordAndRole(userId, hashedPassword, role string)
 		role,
 		userId,
 	)
+	return err
+}
+
+func (r *userRepository) MarkVerified(userId string) error {
+	query, err := buildSqlStatements(`
+		UPDATE "user"
+		SET email_verified = true,
+			verified_at = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Engine.ExecContext(context.TODO(), query, time.Now().UTC(), userId)
+	return err
+}
+
+func (r *userRepository) SetPassword(userId, hashedPassword string) error {
+	query, err := buildSqlStatements(`
+		UPDATE "user"
+		SET password = ?,
+			email_verified = true,
+			verified_at = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Engine.ExecContext(context.TODO(), query, hashedPassword, time.Now().UTC(), userId)
 	return err
 }

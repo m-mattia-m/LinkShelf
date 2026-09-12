@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import type { SettingPageBody } from '~~/api'
 
 definePageMeta({
   layout: false
@@ -9,6 +10,7 @@ definePageMeta({
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
+const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
 const schema = v.object({
   firstName: v.pipe(v.string('First name is required'), v.nonEmpty('First name is required')),
@@ -36,17 +38,24 @@ const fields = [
 
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
+const pendingVerification = ref(false)
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
   loading.value = true
   errorMessage.value = null
   try {
-    await authStore.register({
+    const result = await authStore.register({
       email: payload.data.email,
       firstName: payload.data.firstName,
       lastName: payload.data.lastName,
       password: payload.data.password
     })
+
+    if (result.pendingVerification) {
+      pendingVerification.value = true
+      return
+    }
+
     const toast = useToast()
     toast.add({ title: t('auth.signUp.success'), color: 'success' })
     await router.push('/app')
@@ -72,7 +81,45 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         :close="{ onClick: () => (errorMessage = null) }"
       />
 
+      <div
+        v-if="pendingVerification"
+        class="flex flex-col items-center gap-4 text-center py-8"
+      >
+        <UIcon
+          name="i-lucide-mail-check"
+          class="size-12 text-primary"
+        />
+        <h1 class="text-xl text-highlighted">
+          {{ t('auth.signUp.checkEmail.title') }}
+        </h1>
+        <p class="text-muted">
+          {{ t('auth.signUp.checkEmail.description') }}
+        </p>
+        <ULink
+          to="/auth/sign-in"
+          class="text-primary font-medium"
+        >{{ t('auth.signUp.signInLink') }}</ULink>
+      </div>
+
+      <div
+        v-else-if="websiteSettings && !websiteSettings.registrationEnabled"
+        class="flex flex-col items-center gap-4 text-center py-8"
+      >
+        <UIcon
+          name="i-lucide-lock"
+          class="size-12 text-muted"
+        />
+        <p class="text-muted">
+          {{ t('auth.signUp.registrationDisabled') }}
+        </p>
+        <ULink
+          to="/auth/sign-in"
+          class="text-primary font-medium"
+        >{{ t('auth.signUp.signInLink') }}</ULink>
+      </div>
+
       <UAuthForm
+        v-else
         :schema="schema"
         :fields="fields"
         :title="t('auth.signUp.title')"
@@ -81,7 +128,10 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       >
         <template #footer>
           {{ t('auth.signUp.haveAccount') }}
-          <ULink to="/auth/sign-in" class="text-primary font-medium">{{ t('auth.signUp.signInLink') }}</ULink>
+          <ULink
+            to="/auth/sign-in"
+            class="text-primary font-medium"
+          >{{ t('auth.signUp.signInLink') }}</ULink>
         </template>
       </UAuthForm>
     </div>

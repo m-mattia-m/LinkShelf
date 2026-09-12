@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import * as v from 'valibot'
-import type { User } from '~~/api'
+import type { SettingPageBody, User } from '~~/api'
 import { useUserStore } from '~/stores/user'
+
+const { t } = useI18n()
+const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
 const props = withDefaults(defineProps<{
   mode?: 'create' | 'edit'
@@ -42,13 +45,18 @@ watch(open, (isOpen) => {
   form.role = props.user?.role ?? 'user'
 })
 
-const createSchema = v.object({
+// Password can be left blank on create only when email verification is on -
+// the account is then created "invited" and the emailed link is the only
+// way to set one (matches the backend's own requirement exactly).
+const canInviteWithoutPassword = computed(() => websiteSettings.value?.emailVerificationEnabled ?? false)
+
+const createSchema = computed(() => v.object({
   firstName: v.pipe(v.string(), v.nonEmpty('Required')),
   lastName: v.pipe(v.string(), v.nonEmpty('Required')),
   email: v.pipe(v.string(), v.nonEmpty('Required'), v.email('Must be a valid email address')),
-  password: v.pipe(v.string(), v.nonEmpty('Required')),
+  password: canInviteWithoutPassword.value ? v.string() : v.pipe(v.string(), v.nonEmpty('Required')),
   role: v.picklist(['user', 'admin'])
-})
+}))
 
 const editSchema = v.object({
   firstName: v.pipe(v.string(), v.nonEmpty('Required')),
@@ -58,7 +66,7 @@ const editSchema = v.object({
   role: v.picklist(['user', 'admin'])
 })
 
-const schema = computed(() => (props.mode === 'create' ? createSchema : editSchema))
+const schema = computed(() => (props.mode === 'create' ? createSchema.value : editSchema))
 
 const formRef = ref<{
   validate: () => Promise<unknown>
@@ -123,7 +131,13 @@ async function save(close: () => void) {
           <UInput v-model="form.email" type="email" class="w-full" />
         </UFormField>
 
-        <UFormField v-if="mode === 'create'" label="Password" name="password" required>
+        <UFormField
+          v-if="mode === 'create'"
+          :label="t('app.settings.users.form.password')"
+          name="password"
+          :required="!canInviteWithoutPassword"
+          :hint="canInviteWithoutPassword ? t('app.settings.users.form.passwordInviteHint') : undefined"
+        >
           <UInput v-model="form.password" type="password" class="w-full" />
         </UFormField>
 

@@ -4,6 +4,7 @@
 package integrationtests
 
 import (
+	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
 	"encoding/json"
 	"fmt"
@@ -270,4 +271,94 @@ func Test_API_User_Delete(t *testing.T) {
 
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 
+}
+
+func Test_API_User_Create_RegistrationDisabled_Rejected(t *testing.T) {
+	config.Set("authentication.registrationEnabled", false)
+	defer config.Set("authentication.registrationEnabled", true)
+
+	request := model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     "user-api-registration-disabled@test.com",
+			FirstName: "First",
+			LastName:  "Last",
+		},
+		Password: "secret",
+	}
+
+	resp := doRequest(t, http.MethodPost, "/v1/users", strings.NewReader(ObjectToJSON(request)))
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+}
+
+func Test_API_User_Create_RegistrationDisabled_AdminStillCanCreate(t *testing.T) {
+	config.Set("authentication.registrationEnabled", false)
+	defer config.Set("authentication.registrationEnabled", true)
+
+	_, adminToken := createTestAdmin(t)
+
+	request := model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     "user-api-admin-bypasses-registration-disabled@test.com",
+			FirstName: "First",
+			LastName:  "Last",
+		},
+		Password: "secret",
+	}
+
+	resp := doAuthedRequest(t, http.MethodPost, "/v1/users", strings.NewReader(ObjectToJSON(request)), adminToken)
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+}
+
+func Test_API_User_MarkVerified_AdminOverride(t *testing.T) {
+	user := &model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     "user-api-mark-verified@test.com",
+			FirstName: "First",
+			LastName:  "Last",
+		},
+		Password: "secret",
+	}
+
+	created, err := TestService.UserService.Create(user, false)
+	require.NoError(t, err)
+	require.False(t, created.EmailVerified)
+
+	_, adminToken := createTestAdmin(t)
+
+	resp := doAuthedRequest(t, http.MethodPatch, fmt.Sprintf("/v1/users/%s/verify", created.Id), nil, adminToken)
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var userResp model.User
+	require.NoError(t, json.Unmarshal(body, &userResp))
+	require.True(t, userResp.EmailVerified)
+}
+
+func Test_API_User_MarkVerified_RequiresAdmin(t *testing.T) {
+	user := &model.UserCreate{
+		UserBase: model.UserBase{
+			Email:     "user-api-mark-verified-forbidden@test.com",
+			FirstName: "First",
+			LastName:  "Last",
+		},
+		Password: "secret",
+	}
+
+	created, err := TestService.UserService.Create(user, false)
+	require.NoError(t, err)
+
+	_, userToken := createTestUser(t)
+
+	resp := doAuthedRequest(t, http.MethodPatch, fmt.Sprintf("/v1/users/%s/verify", created.Id), nil, userToken)
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
