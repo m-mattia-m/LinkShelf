@@ -1,5 +1,5 @@
 
-# SetPasswordRequest
+# SectionOrderResponseBody
 
 
 ## Properties
@@ -7,20 +7,18 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
-`newPassword` | string
-`token` | string
+`failures` | [Array&lt;SectionOrderFailure&gt;](SectionOrderFailure.md)
 
 ## Example
 
 ```typescript
-import type { SetPasswordRequest } from ''
+import type { SectionOrderResponseBody } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "$schema": null,
-  "newPassword": null,
-  "token": null,
-} satisfies SetPasswordRequest
+  "failures": null,
+} satisfies SectionOrderResponseBody
 
 console.log(example)
 
@@ -29,7 +27,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as SetPasswordRequest
+const exampleParsed = JSON.parse(exampleJSON) as SectionOrderResponseBody
 console.log(exampleParsed)
 ```
 

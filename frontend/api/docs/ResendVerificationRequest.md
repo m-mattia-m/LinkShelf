@@ -16,7 +16,7 @@ import type { ResendVerificationRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/ResendVerificationRequest.json,
+  "$schema": null,
   "email": null,
 } satisfies ResendVerificationRequest
 

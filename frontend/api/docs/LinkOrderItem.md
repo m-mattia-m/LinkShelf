@@ -1,26 +1,24 @@
 
-# SetPasswordRequest
+# LinkOrderItem
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`$schema` | string
-`newPassword` | string
-`token` | string
+`id` | string
+`order` | number
 
 ## Example
 
 ```typescript
-import type { SetPasswordRequest } from ''
+import type { LinkOrderItem } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": null,
-  "newPassword": null,
-  "token": null,
-} satisfies SetPasswordRequest
+  "id": null,
+  "order": null,
+} satisfies LinkOrderItem
 
 console.log(example)
 
@@ -29,7 +27,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as SetPasswordRequest
+const exampleParsed = JSON.parse(exampleJSON) as LinkOrderItem
 console.log(exampleParsed)
 ```
 

@@ -16,7 +16,7 @@ import type { VerifyEmailRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/VerifyEmailRequest.json,
+  "$schema": null,
   "token": null,
 } satisfies VerifyEmailRequest
 

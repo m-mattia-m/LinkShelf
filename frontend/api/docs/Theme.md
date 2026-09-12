@@ -1,5 +1,5 @@
 
-# SetPasswordRequest
+# Theme
 
 
 ## Properties
@@ -7,20 +7,28 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
-`newPassword` | string
-`token` | string
+`config` | string
+`id` | string
+`name` | string
+`ownerUserId` | string
+`scope` | string
+`sourceFile` | string
 
 ## Example
 
 ```typescript
-import type { SetPasswordRequest } from ''
+import type { Theme } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "$schema": null,
-  "newPassword": null,
-  "token": null,
-} satisfies SetPasswordRequest
+  "config": null,
+  "id": null,
+  "name": null,
+  "ownerUserId": null,
+  "scope": null,
+  "sourceFile": null,
+} satisfies Theme
 
 console.log(example)
 
@@ -29,7 +37,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as SetPasswordRequest
+const exampleParsed = JSON.parse(exampleJSON) as Theme
 console.log(exampleParsed)
 ```
 
