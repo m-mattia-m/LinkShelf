@@ -134,7 +134,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
         </template>
       </UDashboardSidebar>
 
-      <UDashboardPanel :ui="{ body: 'sm:py-8 sm:px-6 lg:px-8' }">
+      <UDashboardPanel :ui="{ root: 'min-h-0 lg:min-h-svh', body: 'sm:py-8 sm:px-6 lg:px-8' }">
         <template #body>
           <slot />
         </template>
