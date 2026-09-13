@@ -101,27 +101,87 @@ async function confirmDeleteLink() {
   <UCard>
     <template #header>
       <div class="flex items-center justify-between gap-2 flex-wrap">
-        <div v-if="!renaming" class="flex items-center gap-1">
-          <UIcon name="i-lucide-grip-vertical" class="drag-handle size-4 text-dimmed cursor-grab shrink-0" aria-label="Drag to reorder section" />
-          <h3 class="font-medium">{{ section.title }}</h3>
-          <UButton icon="i-lucide-pencil" size="xs" color="neutral" variant="ghost" aria-label="Rename section" @click="startRename" />
+        <div
+          v-if="!renaming"
+          class="flex items-center gap-1"
+        >
+          <UIcon
+            name="i-lucide-grip-vertical"
+            class="drag-handle size-4 text-dimmed cursor-grab shrink-0"
+            aria-label="Drag to reorder section"
+          />
+          <h3 class="font-medium">
+            {{ section.title }}
+          </h3>
+          <UButton
+            icon="i-lucide-pencil"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            aria-label="Rename section"
+            @click="startRename"
+          />
         </div>
-        <div v-else class="flex items-center gap-2">
-          <UInput v-model="titleDraft" size="sm" autofocus @keyup.enter="confirmRename" @keyup.escape="renaming = false" />
-          <UButton icon="i-lucide-check" size="xs" color="primary" :loading="renameLoading" aria-label="Save section title" @click="confirmRename" />
-          <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" aria-label="Cancel rename" @click="renaming = false" />
+        <div
+          v-else
+          class="flex items-center gap-2"
+        >
+          <UInput
+            v-model="titleDraft"
+            size="sm"
+            autofocus
+            @keyup.enter="confirmRename"
+            @keyup.escape="renaming = false"
+          />
+          <UButton
+            icon="i-lucide-check"
+            size="xs"
+            color="primary"
+            :loading="renameLoading"
+            aria-label="Save section title"
+            @click="confirmRename"
+          />
+          <UButton
+            icon="i-lucide-x"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            aria-label="Cancel rename"
+            @click="renaming = false"
+          />
         </div>
 
         <div class="flex items-center gap-2">
-          <UButton icon="i-lucide-plus" size="xs" label="New link" color="neutral" variant="outline" @click="openCreateLink" />
-          <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" aria-label="Delete section" @click="deleteSectionOpen = true" />
+          <UButton
+            icon="i-lucide-plus"
+            size="xs"
+            label="New link"
+            color="neutral"
+            variant="outline"
+            @click="openCreateLink"
+          />
+          <UButton
+            icon="i-lucide-trash-2"
+            size="xs"
+            color="error"
+            variant="ghost"
+            aria-label="Delete section"
+            @click="deleteSectionOpen = true"
+          />
         </div>
       </div>
     </template>
 
-    <p v-if="links.length === 0" class="text-center text-muted text-sm py-6">
+    <p
+      v-if="links.length === 0"
+      class="text-center text-muted text-sm py-6"
+    >
       No links yet.
-      <UButton label="Add the first link" variant="link" @click="openCreateLink" />
+      <UButton
+        label="Add the first link"
+        variant="link"
+        @click="openCreateLink"
+      />
     </p>
 
     <draggable
@@ -135,14 +195,42 @@ async function confirmDeleteLink() {
     >
       <template #item="{ element: link }">
         <div class="flex items-center gap-2 py-2">
-          <UIcon name="i-lucide-grip-vertical" class="drag-handle size-4 text-dimmed cursor-grab shrink-0" aria-label="Drag to reorder link" />
-          <UIcon :name="link.icon || 'i-lucide-link'" class="size-4 shrink-0" :style="{ color: link.color }" />
+          <UIcon
+            name="i-lucide-grip-vertical"
+            class="drag-handle size-4 text-dimmed cursor-grab shrink-0"
+            aria-label="Drag to reorder link"
+          />
+          <UIcon
+            :name="link.icon || 'i-lucide-link'"
+            class="size-4 shrink-0"
+            :style="{ color: link.color }"
+          />
           <div class="min-w-0 flex-1">
-            <p class="font-medium truncate">{{ link.title }}</p>
-            <ULink :href="link.link" target="_blank" class="text-xs text-dimmed truncate block">{{ link.link }}</ULink>
+            <p class="font-medium truncate">
+              {{ link.title }}
+            </p>
+            <ULink
+              :href="link.link"
+              target="_blank"
+              class="text-xs text-dimmed truncate block"
+            >{{ link.link }}</ULink>
           </div>
-          <UButton icon="i-lucide-pencil" size="xs" color="neutral" variant="ghost" aria-label="Edit link" @click="openEditLink(link)" />
-          <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" aria-label="Delete link" @click="openDeleteLink(link)" />
+          <UButton
+            icon="i-lucide-pencil"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            aria-label="Edit link"
+            @click="openEditLink(link)"
+          />
+          <UButton
+            icon="i-lucide-trash-2"
+            size="xs"
+            color="error"
+            variant="ghost"
+            aria-label="Delete link"
+            @click="openDeleteLink(link)"
+          />
         </div>
       </template>
     </draggable>

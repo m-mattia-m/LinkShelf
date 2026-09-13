@@ -45,7 +45,7 @@ const schema = v.object({
   color: v.pipe(
     v.string(),
     v.check(
-      (value) => value === '' || /^#[0-9a-fA-F]{6}$/.test(value),
+      value => value === '' || /^#[0-9a-fA-F]{6}$/.test(value),
       'Must be a hex color, e.g. #588157'
     )
   )
@@ -96,33 +96,98 @@ async function save(close: () => void) {
     :ui="{ footer: 'justify-end' }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-4">
-        <UFormField label="Title" name="title" required>
-          <UInput v-model="form.title" class="w-full" />
+      <UForm
+        ref="formRef"
+        :schema="schema"
+        :state="form"
+        class="flex flex-col gap-4"
+      >
+        <UFormField
+          label="Title"
+          name="title"
+          required
+        >
+          <UInput
+            v-model="form.title"
+            class="w-full"
+          />
         </UFormField>
 
-        <UFormField label="URL" name="link" required>
-          <UInput v-model="form.link" class="w-full" placeholder="https://example.com" />
+        <UFormField
+          label="URL"
+          name="link"
+          required
+        >
+          <UInput
+            v-model="form.link"
+            class="w-full"
+            placeholder="https://example.com"
+          />
         </UFormField>
 
-        <UFormField label="Icon" name="icon" help="Optional - leave empty for no icon.">
-          <IconPicker v-model="form.icon" placeholder="i-lucide-link" />
+        <UFormField
+          label="Icon"
+          name="icon"
+          help="Optional - leave empty for no icon."
+        >
+          <IconPicker
+            v-model="form.icon"
+            placeholder="i-lucide-link"
+          />
         </UFormField>
 
-        <UFormField label="Color" name="color" help="Optional - leave unset to use the shelf's theme (or the default look).">
-          <div v-if="form.color" class="flex items-center gap-2">
-            <UColorPicker v-model="form.color" format="hex" />
-            <UInput v-model="form.color" class="w-full" placeholder="#000000" />
-            <UButton icon="i-lucide-x" size="sm" color="neutral" variant="ghost" aria-label="Clear color" @click="form.color = ''" />
+        <UFormField
+          label="Color"
+          name="color"
+          help="Optional - leave unset to use the shelf's theme (or the default look)."
+        >
+          <div
+            v-if="form.color"
+            class="flex items-center gap-2"
+          >
+            <UColorPicker
+              v-model="form.color"
+              format="hex"
+            />
+            <UInput
+              v-model="form.color"
+              class="w-full"
+              placeholder="#000000"
+            />
+            <UButton
+              icon="i-lucide-x"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              aria-label="Clear color"
+              @click="form.color = ''"
+            />
           </div>
-          <UButton v-else label="Set a color" icon="i-lucide-palette" color="neutral" variant="outline" @click="form.color = '#000000'" />
+          <UButton
+            v-else
+            label="Set a color"
+            icon="i-lucide-palette"
+            color="neutral"
+            variant="outline"
+            @click="form.color = '#000000'"
+          />
         </UFormField>
       </UForm>
     </template>
 
     <template #footer="{ close }">
-      <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
-      <UButton label="Submit" color="neutral" :loading="saving" @click="save(close)" />
+      <UButton
+        label="Cancel"
+        color="neutral"
+        variant="outline"
+        @click="close"
+      />
+      <UButton
+        label="Submit"
+        color="neutral"
+        :loading="saving"
+        @click="save(close)"
+      />
     </template>
   </UModal>
 </template>

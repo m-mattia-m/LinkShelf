@@ -35,7 +35,10 @@ const rootStyle = computed(() => {
     </main>
 
     <footer class="py-6 flex justify-center">
-      <a href="/" class="text-xs opacity-60 hover:opacity-100 transition-opacity">
+      <a
+        href="/"
+        class="text-xs opacity-60 hover:opacity-100 transition-opacity"
+      >
         {{ t('linkpage.poweredBy') }}
       </a>
     </footer>

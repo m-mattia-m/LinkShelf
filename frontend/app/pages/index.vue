@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type {ButtonProps} from "#ui/components/Button.vue";
+import type { ButtonProps } from '#ui/components/Button.vue'
 
-const links: ButtonProps[] = ref([
+const links = ref<ButtonProps[]>([
   {
     label: 'Get started',
     color: 'primary',
@@ -20,7 +20,7 @@ const links: ButtonProps[] = ref([
 ])
 
 definePageMeta({
-  layout: 'landingpage',
+  layout: 'landingpage'
 })
 </script>
 
@@ -32,14 +32,13 @@ definePageMeta({
       orientation="horizontal"
       :links="links"
     >
-
       <img
         src="https://picsum.photos/640/728"
         width="320"
         height="364"
         alt="Illustration"
         class="w-full rounded-lg"
-      />
+      >
     </UPageCTA>
 
     <UPageSection
@@ -83,7 +82,6 @@ definePageMeta({
         title: 'Secure & open',
         description: 'Built with security in mind, supporting OpenID Connect (OIDC) authentication and fully open source for transparency and extensibility.'
       }]"
-
     />
 
     <UPageSection>

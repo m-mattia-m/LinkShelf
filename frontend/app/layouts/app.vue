@@ -96,64 +96,70 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     }
   ]
 ])
-
 </script>
 
 <template>
-    <UDashboardGroup class="flex flex-col lg:flex-row">
-      <UDashboardNavbar class="w-full lg:hidden">
-        <UDashboardSidebarToggle />
-      </UDashboardNavbar>
+  <UDashboardGroup class="flex flex-col lg:flex-row">
+    <UDashboardNavbar class="w-full lg:hidden">
+      <UDashboardSidebarToggle />
+    </UDashboardNavbar>
 
-      <UDashboardSidebar
-        collapsible
-        resizable
-        :ui="{ footer: 'border-t border-default' }"
-      >
-        <template #header="{ collapsed }">
-          <ULink href="/" :class="collapsed ? 'mx-auto' : ''">
-            <AppLogo :class="collapsed ? 'size-8' : 'h-9 w-auto'" class="shrink-0" />
-          </ULink>
-        </template>
-
-        <template #default="{ collapsed }">
-          <UNavigationMenu
-            :collapsed="collapsed"
-            :items="items[0]"
-            orientation="vertical"
+    <UDashboardSidebar
+      collapsible
+      resizable
+      :ui="{ footer: 'border-t border-default' }"
+    >
+      <template #header="{ collapsed }">
+        <ULink
+          href="/"
+          :class="collapsed ? 'mx-auto' : ''"
+        >
+          <AppLogo
+            :class="collapsed ? 'size-8' : 'h-9 w-auto'"
+            class="shrink-0"
           />
+        </ULink>
+      </template>
 
-          <UNavigationMenu
-            :collapsed="collapsed"
-            :items="items[1]"
-            orientation="vertical"
-            class="mt-auto"
+      <template #default="{ collapsed }">
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="items[0]"
+          orientation="vertical"
+        />
+
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="items[1]"
+          orientation="vertical"
+          class="mt-auto"
+        />
+      </template>
+
+      <template #footer="{ collapsed }">
+        <UDropdownMenu
+          :items="userMenuItems"
+          class="w-full"
+        >
+          <UButton
+            :avatar="{ icon: 'i-lucide-user' }"
+            :label="collapsed ? undefined : userLabel"
+            color="neutral"
+            variant="ghost"
+            class="w-full"
+            :block="collapsed"
           />
-        </template>
+        </UDropdownMenu>
+      </template>
+    </UDashboardSidebar>
 
-        <template #footer="{ collapsed }">
-          <UDropdownMenu :items="userMenuItems" class="w-full">
-            <UButton
-              :avatar="{ icon: 'i-lucide-user' }"
-              :label="collapsed ? undefined : userLabel"
-              color="neutral"
-              variant="ghost"
-              class="w-full"
-              :block="collapsed"
-            />
-          </UDropdownMenu>
-        </template>
-      </UDashboardSidebar>
-
-      <UDashboardPanel :ui="{ root: 'min-h-0 lg:min-h-svh', body: 'sm:py-8 sm:px-6 lg:px-8' }">
-        <template #body>
-          <slot />
-        </template>
-      </UDashboardPanel>
-    </UDashboardGroup>
+    <UDashboardPanel :ui="{ root: 'min-h-0 lg:min-h-svh', body: 'sm:py-8 sm:px-6 lg:px-8' }">
+      <template #body>
+        <slot />
+      </template>
+    </UDashboardPanel>
+  </UDashboardGroup>
 </template>
-
-
 
 <style scoped>
 

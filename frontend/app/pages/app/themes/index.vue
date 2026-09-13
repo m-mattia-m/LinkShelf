@@ -91,73 +91,131 @@ async function onImportFileSelected(event: Event) {
 </script>
 
 <template>
-  <div class="flex justify-between items-center gap-2">
-    <h1 class="text-2xl text-highlighted pb-4">Themes</h1>
+  <div>
+    <div class="flex justify-between items-center gap-2">
+      <h1 class="text-2xl text-highlighted pb-4">
+        Themes
+      </h1>
 
-    <div class="flex items-center gap-2">
-      <UButton label="Import" icon="i-lucide-upload" color="neutral" variant="outline" @click="triggerImport" />
-      <input ref="importFileInput" type="file" accept=".txt,.css,text/plain" class="hidden" @change="onImportFileSelected">
-      <ThemeFormDialog mode="create" />
-    </div>
-  </div>
-
-  <p class="text-sm text-muted pb-6">
-    Themes only affect a shelf's public page, never the app itself. Your themes are private - if you want to share one, export it and send the file to whoever wants to import it.
-  </p>
-
-  <div v-if="loading" class="space-y-2">
-    <USkeleton v-for="i in 3" :key="i" class="h-10 w-full" />
-  </div>
-
-  <template v-else>
-    <div v-if="themeStore.instance.length" class="pb-6">
-      <h2 class="text-sm font-medium text-dimmed pb-2">Instance themes</h2>
-      <p class="text-xs text-dimmed pb-2">Provided by your instance admin. Managed via server config, not here.</p>
-      <div class="flex flex-col divide-y divide-default rounded-lg border border-default">
-        <div v-for="theme in themeStore.instance" :key="theme.id" class="flex items-center justify-between px-4 py-2.5">
-          <span class="font-medium">{{ theme.name }}</span>
-          <UBadge color="neutral" variant="subtle">Instance</UBadge>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <h2 class="text-sm font-medium text-dimmed pb-2">Your themes</h2>
-
-      <div v-if="themeStore.mine.length === 0" class="flex flex-col items-center gap-4 py-16 text-center">
-        <p class="text-muted">You haven't created any themes yet.</p>
+      <div class="flex items-center gap-2">
+        <UButton
+          label="Import"
+          icon="i-lucide-upload"
+          color="neutral"
+          variant="outline"
+          @click="triggerImport"
+        />
+        <input
+          ref="importFileInput"
+          type="file"
+          accept=".txt,.css,text/plain"
+          class="hidden"
+          @change="onImportFileSelected"
+        >
         <ThemeFormDialog mode="create" />
       </div>
+    </div>
 
-      <div v-else class="flex flex-col divide-y divide-default rounded-lg border border-default">
-        <div v-for="theme in themeStore.mine" :key="theme.id" class="flex items-center justify-between px-4 py-2.5">
-          <span class="font-medium">{{ theme.name }}</span>
-          <UDropdownMenu :items="actionItems(theme)">
-            <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" aria-label="Actions" />
-          </UDropdownMenu>
+    <p class="text-sm text-muted pb-6">
+      Themes only affect a shelf's public page, never the app itself. Your themes are private - if you want to share one, export it and send the file to whoever wants to import it.
+    </p>
+
+    <div
+      v-if="loading"
+      class="space-y-2"
+    >
+      <USkeleton
+        v-for="i in 3"
+        :key="i"
+        class="h-10 w-full"
+      />
+    </div>
+
+    <template v-else>
+      <div
+        v-if="themeStore.instance.length"
+        class="pb-6"
+      >
+        <h2 class="text-sm font-medium text-dimmed pb-2">
+          Instance themes
+        </h2>
+        <p class="text-xs text-dimmed pb-2">
+          Provided by your instance admin. Managed via server config, not here.
+        </p>
+        <div class="flex flex-col divide-y divide-default rounded-lg border border-default">
+          <div
+            v-for="theme in themeStore.instance"
+            :key="theme.id"
+            class="flex items-center justify-between px-4 py-2.5"
+          >
+            <span class="font-medium">{{ theme.name }}</span>
+            <UBadge
+              color="neutral"
+              variant="subtle"
+            >
+              Instance
+            </UBadge>
+          </div>
         </div>
       </div>
-    </div>
-  </template>
 
-  <ThemeFormDialog
-    v-model:open="editOpen"
-    mode="edit"
-    :theme="editingTheme"
-  />
+      <div>
+        <h2 class="text-sm font-medium text-dimmed pb-2">
+          Your themes
+        </h2>
 
-  <ThemeFormDialog
-    v-model:open="importOpen"
-    mode="create"
-    hide-trigger
-    :initial="importInitial"
-  />
+        <div
+          v-if="themeStore.mine.length === 0"
+          class="flex flex-col items-center gap-4 py-16 text-center"
+        >
+          <p class="text-muted">
+            You haven't created any themes yet.
+          </p>
+          <ThemeFormDialog mode="create" />
+        </div>
 
-  <ConfirmDialog
-    v-model:open="deleteOpen"
-    title="Delete theme?"
-    :description="`Delete “${deletingTheme?.name}”? Any shelf using it will fall back to the default look. This cannot be undone.`"
-    :loading="deleting"
-    @confirm="confirmDelete"
-  />
+        <div
+          v-else
+          class="flex flex-col divide-y divide-default rounded-lg border border-default"
+        >
+          <div
+            v-for="theme in themeStore.mine"
+            :key="theme.id"
+            class="flex items-center justify-between px-4 py-2.5"
+          >
+            <span class="font-medium">{{ theme.name }}</span>
+            <UDropdownMenu :items="actionItems(theme)">
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                color="neutral"
+                variant="ghost"
+                aria-label="Actions"
+              />
+            </UDropdownMenu>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <ThemeFormDialog
+      v-model:open="editOpen"
+      mode="edit"
+      :theme="editingTheme"
+    />
+
+    <ThemeFormDialog
+      v-model:open="importOpen"
+      mode="create"
+      hide-trigger
+      :initial="importInitial"
+    />
+
+    <ConfirmDialog
+      v-model:open="deleteOpen"
+      title="Delete theme?"
+      :description="`Delete “${deletingTheme?.name}”? Any shelf using it will fall back to the default look. This cannot be undone.`"
+      :loading="deleting"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

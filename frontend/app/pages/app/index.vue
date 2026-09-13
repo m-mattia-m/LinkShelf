@@ -35,40 +35,80 @@ function getShelfUrl(id: string): string {
 </script>
 
 <template>
-  <h1 class="text-2xl text-highlighted pb-4">{{ t('app.dashboard.title') }}</h1>
+  <div>
+    <h1 class="text-2xl text-highlighted pb-4">
+      {{ t('app.dashboard.title') }}
+    </h1>
 
-  <div v-if="loading" class="grid gap-4 sm:grid-cols-3">
-    <USkeleton class="h-24 w-full" />
-    <USkeleton class="h-24 w-full" />
-    <USkeleton class="h-24 w-full" />
-  </div>
-
-  <div v-else class="flex flex-col gap-6">
-    <div class="grid gap-4 sm:grid-cols-3">
-      <UCard v-for="tile in tiles" :key="tile.label">
-        <div class="flex items-center gap-4">
-          <UIcon :name="tile.icon" class="size-8 text-primary" />
-          <div>
-            <p class="text-2xl font-semibold">{{ tile.value }}</p>
-            <p class="text-muted text-sm">{{ tile.label }}</p>
-          </div>
-        </div>
-      </UCard>
+    <div
+      v-if="loading"
+      class="grid gap-4 sm:grid-cols-3"
+    >
+      <USkeleton class="h-24 w-full" />
+      <USkeleton class="h-24 w-full" />
+      <USkeleton class="h-24 w-full" />
     </div>
 
-    <div>
-      <h2 class="text-lg font-medium pb-2">{{ t('app.dashboard.recentShelves') }}</h2>
+    <div
+      v-else
+      class="flex flex-col gap-6"
+    >
+      <div class="grid gap-4 sm:grid-cols-3">
+        <UCard
+          v-for="tile in tiles"
+          :key="tile.label"
+        >
+          <div class="flex items-center gap-4">
+            <UIcon
+              :name="tile.icon"
+              class="size-8 text-primary"
+            />
+            <div>
+              <p class="text-2xl font-semibold">
+                {{ tile.value }}
+              </p>
+              <p class="text-muted text-sm">
+                {{ tile.label }}
+              </p>
+            </div>
+          </div>
+        </UCard>
+      </div>
 
-      <p v-if="recentShelves.length === 0" class="text-muted">
-        {{ t('app.dashboard.noShelves') }}
-      </p>
+      <div>
+        <h2 class="text-lg font-medium pb-2">
+          {{ t('app.dashboard.recentShelves') }}
+        </h2>
 
-      <ul v-else class="flex flex-col divide-y divide-default">
-        <li v-for="shelf in recentShelves" :key="shelf.id" class="py-2">
-          <ULink :to="getShelfUrl(shelf.id)" class="font-medium">{{ shelf.title }}</ULink>
-          <p v-if="shelf.description" class="text-sm text-muted">{{ shelf.description }}</p>
-        </li>
-      </ul>
+        <p
+          v-if="recentShelves.length === 0"
+          class="text-muted"
+        >
+          {{ t('app.dashboard.noShelves') }}
+        </p>
+
+        <ul
+          v-else
+          class="flex flex-col divide-y divide-default"
+        >
+          <li
+            v-for="shelf in recentShelves"
+            :key="shelf.id"
+            class="py-2"
+          >
+            <ULink
+              :to="getShelfUrl(shelf.id)"
+              class="font-medium"
+            >{{ shelf.title }}</ULink>
+            <p
+              v-if="shelf.description"
+              class="text-sm text-muted"
+            >
+              {{ shelf.description }}
+            </p>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>

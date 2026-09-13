@@ -74,31 +74,77 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
 <template>
   <div>
-    <h1 class="text-2xl text-highlighted pb-4">{{ t('app.profile.title') }}</h1>
+    <h1 class="text-2xl text-highlighted pb-4">
+      {{ t('app.profile.title') }}
+    </h1>
 
-    <div v-if="loading" class="flex flex-col gap-4 max-w-md">
-      <USkeleton v-for="i in 3" :key="i" class="h-10 w-full" />
+    <div
+      v-if="loading"
+      class="flex flex-col gap-4 max-w-md"
+    >
+      <USkeleton
+        v-for="i in 3"
+        :key="i"
+        class="h-10 w-full"
+      />
     </div>
 
-    <UForm v-else :schema="schema" :state="form" class="flex flex-col gap-4 max-w-md" @submit="onSubmit">
-      <UFormField :label="t('app.profile.firstName')" name="firstName" required>
-        <UInput v-model="form.firstName" class="w-full" />
+    <UForm
+      v-else
+      :schema="schema"
+      :state="form"
+      class="flex flex-col gap-4 max-w-md"
+      @submit="onSubmit"
+    >
+      <UFormField
+        :label="t('app.profile.firstName')"
+        name="firstName"
+        required
+      >
+        <UInput
+          v-model="form.firstName"
+          class="w-full"
+        />
       </UFormField>
 
-      <UFormField :label="t('app.profile.lastName')" name="lastName" required>
-        <UInput v-model="form.lastName" class="w-full" />
+      <UFormField
+        :label="t('app.profile.lastName')"
+        name="lastName"
+        required
+      >
+        <UInput
+          v-model="form.lastName"
+          class="w-full"
+        />
       </UFormField>
 
-      <UFormField :label="t('app.profile.email')" name="email" required>
-        <UInput v-model="form.email" type="email" class="w-full" />
+      <UFormField
+        :label="t('app.profile.email')"
+        name="email"
+        required
+      >
+        <UInput
+          v-model="form.email"
+          type="email"
+          class="w-full"
+        />
       </UFormField>
 
       <UFormField :label="t('app.profile.role')">
-        <UBadge :label="user?.role" color="neutral" variant="subtle" />
+        <UBadge
+          :label="user?.role"
+          color="neutral"
+          variant="subtle"
+        />
       </UFormField>
 
       <div class="flex gap-2 pt-2">
-        <UButton type="submit" :label="t('app.profile.save')" color="neutral" :loading="saving" />
+        <UButton
+          type="submit"
+          :label="t('app.profile.save')"
+          color="neutral"
+          :loading="saving"
+        />
         <UButton
           :label="t('app.profile.changePassword')"
           color="neutral"
@@ -108,6 +154,9 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       </div>
     </UForm>
 
-    <UserPasswordDialog v-model:open="passwordOpen" :user="user ?? undefined" />
+    <UserPasswordDialog
+      v-model:open="passwordOpen"
+      :user="user ?? undefined"
+    />
   </div>
 </template>

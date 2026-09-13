@@ -31,8 +31,8 @@ export const useAuthStore = defineStore('authStore', {
   }),
 
   getters: {
-    isAuthenticated: (state) => !!state.accessToken,
-    claims: (state) => (state.accessToken ? decodeAccessToken(state.accessToken) : null),
+    isAuthenticated: state => !!state.accessToken,
+    claims: state => (state.accessToken ? decodeAccessToken(state.accessToken) : null),
     userId(): string | null {
       return this.claims?.sub ?? null
     },

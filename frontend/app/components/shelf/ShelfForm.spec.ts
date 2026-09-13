@@ -1,0 +1,193 @@
+import { mountSuspended, renderSuspended } from '@nuxt/test-utils/runtime'
+import { fireEvent, screen, waitFor } from '@testing-library/vue'
+import { HttpResponse, http } from 'msw'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ThemeGroupedResponseBodyToJSON } from '~~/api'
+import type { Shelf } from '~~/api'
+import { server } from '../../../test/mocks/server'
+import { buildTheme } from '../../../test/mocks/factories'
+import { useThemeStore } from '~/stores/theme'
+import ShelfForm from './ShelfForm.vue'
+
+const BASE = 'http://localhost:8085'
+
+function buildShelfProp(overrides: Partial<Shelf> = {}): Shelf {
+  return {
+    id: 'shelf-1',
+    title: 'My Shelf',
+    description: 'A shelf',
+    domain: '',
+    path: 'my-shelf',
+    icon: 'i-lucide-book',
+    theme: {},
+    themeId: '',
+    themeMissing: false,
+    userId: 'user-1',
+    ...overrides
+  } as Shelf
+}
+
+beforeEach(() => {
+  const themeStore = useThemeStore()
+  themeStore.$reset()
+  // ShelfForm fetches themes on mount whenever the store isn't loaded yet.
+  // Default to "already loaded" so most tests don't trigger that fetch (and
+  // its unawaited promise can't bleed into a later test) - the "theme
+  // selection" tests below opt back into the unloaded state explicitly.
+  themeStore.loaded = true
+})
+
+afterEach(() => {
+  // vi.spyOn() is idempotent - without restoring, a later test's spyOn on
+  // the same store action would reuse the previous test's spy and its call
+  // history instead of starting fresh.
+  vi.restoreAllMocks()
+})
+
+describe('ShelfForm', () => {
+  it('initializes its fields from the "modelValue" prop', async () => {
+    await renderSuspended(ShelfForm, {
+      props: { modelValue: buildShelfProp({ title: 'Existing Shelf', description: 'Existing description', path: 'existing-path' }) }
+    })
+
+    expect(screen.getByLabelText('Title')).toHaveValue('Existing Shelf')
+    expect(screen.getByLabelText('Description')).toHaveValue('Existing description')
+    // "Path" is also the label of the (unrelated) Path tab trigger, so
+    // getByLabelText is ambiguous here - the textbox role disambiguates.
+    expect(screen.getByRole('textbox', { name: 'Path' })).toHaveValue('existing-path')
+  })
+
+  it('shows the domain field value after switching to the Domain tab', async () => {
+    await renderSuspended(ShelfForm, {
+      props: { modelValue: buildShelfProp({ domain: 'example.com' }) }
+    })
+
+    // Reka UI's TabsTrigger switches tabs on a left mousedown. testing-library's
+    // fireEvent.mouseDown doesn't reproduce this reliably here, so dispatch a
+    // real MouseEvent directly.
+    const domainTab = screen.getByRole('tab', { name: 'Domain' })
+    domainTab.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+    // A plain nextTick() isn't enough for Reka UI's Tabs to finish switching
+    // panels here, so give it a macrotask to settle.
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    expect(screen.getByRole('textbox', { name: 'Domain' })).toHaveValue('example.com')
+  })
+
+  it('emits update:modelValue with the current field values as they change', async () => {
+    const { emitted } = await renderSuspended(ShelfForm, {
+      props: { modelValue: buildShelfProp() }
+    })
+
+    await fireEvent.update(screen.getByLabelText('Title'), 'New Title')
+
+    const events = emitted()['update:modelValue'] as unknown[][] | undefined
+    expect(events).toBeTruthy()
+    const lastEvent = events![events!.length - 1]!
+    expect(lastEvent[0]).toMatchObject({ title: 'New Title' })
+  })
+
+  // The Select's visible current-value text is duplicated by a hidden
+  // native <option> Reka UI renders for form semantics, so scope to the
+  // visible value slot to avoid ambiguous text matches.
+  function selectedThemeLabel(text: string) {
+    return screen.getByText(text, { selector: '[data-slot="value"]' })
+  }
+
+  describe('theme selection', () => {
+    it('fetches themes on mount when the theme store has not loaded yet', async () => {
+      const themeStore = useThemeStore()
+      themeStore.loaded = false
+      const fetchSpy = vi.spyOn(themeStore, 'fetch')
+      server.use(http.get(`${BASE}/v1/themes`, () => HttpResponse.json(ThemeGroupedResponseBodyToJSON({ instance: [], mine: [] }))))
+
+      await renderSuspended(ShelfForm)
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1)
+      })
+      // Wait out the fetch's own promise (not just the call) so it can't
+      // resolve mid-flight into the next test's freshly-reset store.
+      await fetchSpy.mock.results[0]!.value
+      expect(selectedThemeLabel('No theme (default look)')).toBeInTheDocument()
+    })
+
+    it('does not refetch themes when the theme store is already loaded', async () => {
+      const themeStore = useThemeStore()
+      themeStore.loaded = true
+      themeStore.mine = [buildTheme({ id: 'theme-mine', name: 'My Theme' })]
+      const fetchSpy = vi.spyOn(themeStore, 'fetch')
+
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ themeId: 'theme-mine' }) }
+      })
+
+      expect(fetchSpy).not.toHaveBeenCalled()
+      expect(selectedThemeLabel('My Theme')).toBeInTheDocument()
+    })
+
+    it('shows a warning and falls back to "No theme" when the shelf theme is missing', async () => {
+      const themeStore = useThemeStore()
+      themeStore.loaded = true
+
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ themeId: 'gone-theme', themeMissing: true }) }
+      })
+
+      expect(screen.getByText('Theme unavailable')).toBeInTheDocument()
+      expect(selectedThemeLabel('No theme (default look)')).toBeInTheDocument()
+    })
+  })
+
+  describe('exposed validate()', () => {
+    it('fails when the title is empty', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: '', path: 'a-path' }) }
+      })
+
+      const isValid = await wrapper.vm.validate()
+
+      expect(isValid).toBe(false)
+    })
+
+    it('fails when neither domain nor path is provided', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: '', domain: '' }) }
+      })
+
+      const isValid = await wrapper.vm.validate()
+
+      expect(isValid).toBe(false)
+    })
+
+    it('fails when the path contains invalid characters', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: 'not a valid path!', domain: '' }) }
+      })
+
+      const isValid = await wrapper.vm.validate()
+
+      expect(isValid).toBe(false)
+    })
+
+    it('fails when the domain has an invalid format', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: '', domain: 'not-a-domain' }) }
+      })
+
+      const isValid = await wrapper.vm.validate()
+
+      expect(isValid).toBe(false)
+    })
+
+    it('succeeds when required fields are valid', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: 'valid-path' }) }
+      })
+
+      const isValid = await wrapper.vm.validate()
+
+      expect(isValid).toBe(true)
+    })
+  })
+})

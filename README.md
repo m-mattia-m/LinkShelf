@@ -1,6 +1,6 @@
 # LinkShelf
 
-[![CI](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml) ![coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/main/.badges/main/coverage.svg) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m-mattia-m/LinkShelf?filename=backend%2Fgo.mod) ![Release](https://img.shields.io/github/v/release/m-mattia-m/LinkShelf)
+[![CI](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml) ![backend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/main/.badges/main/coverage.svg) ![frontend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/main/.badges/main/coverage-frontend.svg) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m-mattia-m/LinkShelf?filename=backend%2Fgo.mod) ![Release](https://img.shields.io/github/v/release/m-mattia-m/LinkShelf)
 
 LinkShelf is a web application designed to help users organize, manage, and share their favorite links and bookmarks in
 a user-friendly interface. Whether you're a student, professional, or casual internet user, LinkShelf provides an
@@ -37,7 +37,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
     - [ ] handle default values like for themes
 - [ ] Add No-Index Option for Search Engine like Google, ... -> Not crawlable
 
-
 ---
 
 ### Plain Text Notes
@@ -60,17 +59,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 - fix the latest vunerabilites → can not be patched since there is no one
 - the image is about 225MB shrink it down to a much smaller image
 - if i save the settings for each element a single request is made → group them as one request and create a new endpoint which can handle many settings update at once. also add tests (unit and integration) for this.
-
 - add SMTP to send emails to verify the users email-address
 - add option to turn off the user registration for example for self-hosted instances (admin should still be able to create a user which then can finisht the registration via the email-link)
 - add functionallity to order links in a section and sections in a shelf
 - add themeing functioanllity (color, icon, theme, custom css, ...)
 
 ---
-
-
-
-- add frontend test incl. converage for readme
 
 - add dependabot automerge for dependency-updates once a week if all pipelines pass
 - rename .dockerignore into .containerignore → and check if this works → this forces me to use buildah since docker does not accept non-.dockeringore files, ..

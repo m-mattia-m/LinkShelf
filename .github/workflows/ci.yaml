@@ -110,3 +110,48 @@ jobs:
 
           git-token: ${{ secrets.GITHUB_TOKEN }}
           git-branch: ${{ github.ref_name }}
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Run tests with coverage
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Generate coverage badge
+        working-directory: frontend
+        run: node scripts/generate-coverage-badge.mjs "${{ github.ref_name }}"
+
+      - name: Commit coverage badge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .badges
+          git diff --cached --quiet || git commit -m "update frontend badge .badges/${{ github.ref_name }}/coverage-frontend.svg"
+          git push

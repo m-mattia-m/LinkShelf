@@ -5,9 +5,11 @@ frontend/.gitignore
 frontend/.output
 frontend/.data
 frontend/.nuxt
+frontend/.nuxtrc
 frontend/.nitro
 frontend/.cache
 frontend/dist
+frontend/coverage
 frontend/logs
 frontend/*.log
 frontend/.DS_Store

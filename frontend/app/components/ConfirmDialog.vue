@@ -21,14 +21,33 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="title" :ui="{ footer: 'justify-end' }">
+  <UModal
+    v-model:open="open"
+    :title="title"
+    :ui="{ footer: 'justify-end' }"
+  >
     <template #body>
-      <p v-if="description" class="text-sm text-muted">{{ description }}</p>
+      <p
+        v-if="description"
+        class="text-sm text-muted"
+      >
+        {{ description }}
+      </p>
     </template>
 
     <template #footer="{ close }">
-      <UButton :label="cancelLabel" color="neutral" variant="outline" @click="close" />
-      <UButton :label="confirmLabel" :color="color" :loading="loading" @click="emit('confirm')" />
+      <UButton
+        :label="cancelLabel"
+        color="neutral"
+        variant="outline"
+        @click="close"
+      />
+      <UButton
+        :label="confirmLabel"
+        :color="color"
+        :loading="loading"
+        @click="emit('confirm')"
+      />
     </template>
   </UModal>
 </template>

@@ -135,9 +135,15 @@ async function resend() {
         :separator="t('auth.signIn.or')"
         @submit="onSubmit"
       >
-        <template v-if="websiteSettings?.registrationEnabled" #footer>
+        <template
+          v-if="websiteSettings?.registrationEnabled"
+          #footer
+        >
           {{ t('auth.signIn.noAccount') }}
-          <ULink to="/auth/sign-up" class="text-primary font-medium">{{ t('auth.signIn.signUpLink') }}</ULink>
+          <ULink
+            to="/auth/sign-up"
+            class="text-primary font-medium"
+          >{{ t('auth.signIn.signUpLink') }}</ULink>
         </template>
       </UAuthForm>
     </div>

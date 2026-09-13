@@ -23,11 +23,11 @@ const schema = v.object({
   config: v.pipe(v.string(), v.nonEmpty('Required'))
 })
 
-const formRef = ref<any>()
+const formRef = ref<{ validate: () => Promise<unknown>, setErrors: (errs: FormError[]) => void }>()
 
 async function validate(): Promise<boolean> {
   try {
-    await formRef.value.validate()
+    await formRef.value!.validate()
     return true
   } catch {
     return false
@@ -68,24 +68,50 @@ const propertyReference = [
   ['--shelf-link-bg', 'link button background color'],
   ['--shelf-link-text', 'link button text color'],
   ['--shelf-link-radius', 'link button corner radius, e.g. 12px'],
-  ['--shelf-font-family', "font stack, e.g. 'Inter', sans-serif"],
+  ['--shelf-font-family', 'font stack, e.g. \'Inter\', sans-serif'],
   ['--shelf-bg-image', 'background image URL (https:// or /images/...)']
 ]
 </script>
 
 <template>
-  <UForm ref="formRef" :schema="schema" :state="form">
-    <UFormField label="Name" name="name" required>
-      <UInput v-model="form.name" class="w-full" />
+  <UForm
+    ref="formRef"
+    :schema="schema"
+    :state="form"
+  >
+    <UFormField
+      label="Name"
+      name="name"
+      required
+    >
+      <UInput
+        v-model="form.name"
+        class="w-full"
+      />
     </UFormField>
 
-    <UFormField label="Config" name="config" class="pt-4" help="One '--property: value;' declaration per line.">
-      <UTextarea v-model="form.config" :rows="8" class="w-full font-mono text-sm" placeholder="--shelf-bg: #1c274c;&#10;--shelf-text: #ffffff;" />
+    <UFormField
+      label="Config"
+      name="config"
+      class="pt-4"
+      help="One '--property: value;' declaration per line."
+    >
+      <UTextarea
+        v-model="form.config"
+        :rows="8"
+        class="w-full font-mono text-sm"
+        placeholder="--shelf-bg: #1c274c;&#10;--shelf-text: #ffffff;"
+      />
     </UFormField>
 
     <div class="pt-3 text-xs text-muted space-y-1">
-      <p class="font-medium text-dimmed">Available properties</p>
-      <p v-for="[prop, desc] in propertyReference" :key="prop">
+      <p class="font-medium text-dimmed">
+        Available properties
+      </p>
+      <p
+        v-for="[prop, desc] in propertyReference"
+        :key="prop"
+      >
         <code class="text-highlighted">{{ prop }}</code> — {{ desc }}
       </p>
     </div>
