@@ -37,8 +37,12 @@ class MemoryStorage implements Storage {
   }
 }
 
-globalThis.localStorage = new MemoryStorage()
-globalThis.sessionStorage = new MemoryStorage()
+// Assigning `globalThis.localStorage = ...` directly throws once the
+// environment models `localStorage` as a real getter-only accessor (as
+// actual browsers do) - Object.defineProperty replaces the accessor outright
+// instead of trying to write through it.
+Object.defineProperty(globalThis, 'localStorage', { value: new MemoryStorage(), writable: true, configurable: true })
+Object.defineProperty(globalThis, 'sessionStorage', { value: new MemoryStorage(), writable: true, configurable: true })
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 

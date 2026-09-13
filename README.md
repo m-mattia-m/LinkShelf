@@ -47,7 +47,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 - delete package-lock in the root
 - delete .DS_store from the root and add these kind of file in the .gitignore and .containerignore
 - add branding directory in the root with the different logos and credits for the SVG-Repo autor for my link → also check the license which is in the SVG-Repo for this asset: https://www.svgrepo.com/svg/525982/link-circle
-- rename docker-compose... to compose...
 - add the auth layer → don't use the mocked User-UUID in the frontend
 - add OIDC/OAuth2.0 providers/functionallity → map them to local users
 - add icon picker for new shelf/link/section
@@ -63,16 +62,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 - add option to turn off the user registration for example for self-hosted instances (admin should still be able to create a user which then can finisht the registration via the email-link)
 - add functionallity to order links in a section and sections in a shelf
 - add themeing functioanllity (color, icon, theme, custom css, ...)
-
----
-
 - add dependabot automerge for dependency-updates once a week if all pipelines pass
-- rename .dockerignore into .containerignore → and check if this works → this forces me to use buildah since docker does not accept non-.dockeringore files, ..
 
 ---
 
-- create a collage of different pages in the shelf-app which can be presented as one image in the front starter (for these screenshots i need better test-data in my linkshelf instance)
 - update the docmentation in the UI
+- create a collage of different pages in the shelf-app which can be presented as one image in the front starter (for these screenshots i need better test-data in my linkshelf instance)
 - create a discord channel or delete discord stuff from github/ui
 - add paging (is this needed? It would only be for shelves)
 
