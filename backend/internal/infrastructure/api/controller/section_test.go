@@ -256,3 +256,65 @@ func Test_API_DeleteSection_Failure(t *testing.T) {
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to delete section")
 }
+
+func Test_API_UpdateSectionsOrder_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := UpdateSectionsOrder(svc.Service)
+
+	input := &model.SectionOrderRequest{
+		Body: model.SectionOrderRequestBody{
+			Sections: []model.SectionOrderItem{{Id: "section-1", Order: 0}},
+		},
+	}
+
+	svc.SectionService.
+		EXPECT().
+		UpdateOrder(gomock.Any(), gomock.Any(), input.Body.Sections).
+		Return(nil)
+
+	resp, err := handler(context.Background(), input)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Empty(t, resp.Body.Failures)
+}
+
+func Test_API_UpdateSectionsOrder_PartialFailure(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := UpdateSectionsOrder(svc.Service)
+
+	input := &model.SectionOrderRequest{
+		Body: model.SectionOrderRequestBody{
+			Sections: []model.SectionOrderItem{{Id: "section-1", Order: 0}},
+		},
+	}
+
+	svc.SectionService.
+		EXPECT().
+		UpdateOrder(gomock.Any(), gomock.Any(), input.Body.Sections).
+		Return([]model.SectionOrderFailure{{Id: "section-1", Reason: "not found"}})
+
+	resp, err := handler(context.Background(), input)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Len(t, resp.Body.Failures, 1)
+	require.Equal(t, "section-1", resp.Body.Failures[0].Id)
+}
+
+func Test_API_UpdateSectionsOrder_Failure_EmptyBatchRejected(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := UpdateSectionsOrder(svc.Service)
+
+	resp, err := handler(context.Background(), &model.SectionOrderRequest{})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "sections must not be empty")
+}

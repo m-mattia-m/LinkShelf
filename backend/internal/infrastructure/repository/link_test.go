@@ -323,3 +323,51 @@ func Test_LinkRepository_ListByShelfId_RowsIterationError(t *testing.T) {
 	require.Error(t, err, "an error surfacing only via rows.Err() after iteration must not be silently dropped")
 	require.Nil(t, links)
 }
+
+func Test_LinkRepository_UpdateOrder_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &linkRepository{Engine: db}
+
+	mock.ExpectExec("UPDATE link").
+		WithArgs(3, "link-uuid-test").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = repo.UpdateOrder("link-uuid-test", 3)
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_LinkRepository_UpdateOrder_NoRowsAffected(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &linkRepository{Engine: db}
+
+	mock.ExpectExec("UPDATE link").
+		WithArgs(0, "missing-link").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	err = repo.UpdateOrder("missing-link", 0)
+
+	require.ErrorIs(t, err, sql.ErrNoRows)
+}
+
+func Test_LinkRepository_UpdateOrder_ExecError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &linkRepository{Engine: db}
+
+	mock.ExpectExec("UPDATE link").
+		WillReturnError(errors.New("update failed"))
+
+	err = repo.UpdateOrder("link-uuid-test", 0)
+
+	require.Error(t, err)
+}

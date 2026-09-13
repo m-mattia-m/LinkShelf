@@ -306,3 +306,156 @@ func Test_Unit_Section_Delete_Forbidden_NotOwner(t *testing.T) {
 
 	require.ErrorIs(t, err, ErrForbidden)
 }
+
+func Test_Unit_Section_UpdateOrder_Success(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-1").
+		Return(&model.Section{Id: "section-1", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		UpdateOrder("section-1", 0).
+		Return(nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-2").
+		Return(&model.Section{Id: "section-2", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		UpdateOrder("section-2", 1).
+		Return(nil)
+
+	failures := svc.Service.SectionService.UpdateOrder("user-uuid-test", false, []model.SectionOrderItem{
+		{Id: "section-1", Order: 0},
+		{Id: "section-2", Order: 1},
+	})
+
+	require.Empty(t, failures)
+}
+
+func Test_Unit_Section_UpdateOrder_NotFound(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("missing-section").
+		Return(nil, nil)
+
+	failures := svc.Service.SectionService.UpdateOrder("user-uuid-test", false, []model.SectionOrderItem{
+		{Id: "missing-section", Order: 0},
+	})
+
+	require.Len(t, failures, 1)
+	require.Equal(t, "missing-section", failures[0].Id)
+	require.Contains(t, failures[0].Reason, "not found")
+}
+
+func Test_Unit_Section_UpdateOrder_Forbidden_NotOwner(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-1").
+		Return(&model.Section{Id: "section-1", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
+
+	failures := svc.Service.SectionService.UpdateOrder("someone-else-uuid-test", false, []model.SectionOrderItem{
+		{Id: "section-1", Order: 0},
+	})
+
+	require.Len(t, failures, 1)
+	require.Equal(t, "section-1", failures[0].Id)
+	require.Contains(t, failures[0].Reason, "forbidden")
+}
+
+func Test_Unit_Section_UpdateOrder_RepositoryFailure_ContinuesBatch(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-1").
+		Return(&model.Section{Id: "section-1", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		UpdateOrder("section-1", 0).
+		Return(errors.New("db unavailable"))
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-2").
+		Return(&model.Section{Id: "section-2", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		UpdateOrder("section-2", 1).
+		Return(nil)
+
+	failures := svc.Service.SectionService.UpdateOrder("user-uuid-test", false, []model.SectionOrderItem{
+		{Id: "section-1", Order: 0},
+		{Id: "section-2", Order: 1},
+	})
+
+	require.Len(t, failures, 1)
+	require.Equal(t, "section-1", failures[0].Id)
+	require.Contains(t, failures[0].Reason, "db unavailable")
+}
+
+func Test_Unit_Section_UpdateOrder_Success_Admin(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.SectionRepository.
+		EXPECT().
+		Get("section-1").
+		Return(&model.Section{Id: "section-1", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "owner-uuid-test"}, nil)
+
+	svc.SectionRepository.
+		EXPECT().
+		UpdateOrder("section-1", 0).
+		Return(nil)
+
+	failures := svc.Service.SectionService.UpdateOrder("admin-uuid-test", true, []model.SectionOrderItem{
+		{Id: "section-1", Order: 0},
+	})
+
+	require.Empty(t, failures)
+}

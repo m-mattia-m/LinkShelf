@@ -232,3 +232,64 @@ func Test_API_DeleteLink_Failure(t *testing.T) {
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to delete link")
 }
+
+func Test_API_UpdateLinksOrder_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := UpdateLinksOrder(svc.Service)
+
+	input := &model.LinkOrderRequest{
+		Body: model.LinkOrderRequestBody{
+			Links: []model.LinkOrderItem{{Id: "link-1", Order: 0}},
+		},
+	}
+
+	svc.LinkService.
+		EXPECT().
+		UpdateOrder(gomock.Any(), gomock.Any(), input.Body.Links).
+		Return(nil)
+
+	resp, err := handler(context.Background(), input)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Empty(t, resp.Body.Failures)
+}
+
+func Test_API_UpdateLinksOrder_PartialFailure(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := UpdateLinksOrder(svc.Service)
+
+	input := &model.LinkOrderRequest{
+		Body: model.LinkOrderRequestBody{
+			Links: []model.LinkOrderItem{{Id: "link-1", Order: 0}},
+		},
+	}
+
+	svc.LinkService.
+		EXPECT().
+		UpdateOrder(gomock.Any(), gomock.Any(), input.Body.Links).
+		Return([]model.LinkOrderFailure{{Id: "link-1", Reason: "forbidden"}})
+
+	resp, err := handler(context.Background(), input)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Len(t, resp.Body.Failures, 1)
+}
+
+func Test_API_UpdateLinksOrder_Failure_EmptyBatchRejected(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := UpdateLinksOrder(svc.Service)
+
+	resp, err := handler(context.Background(), &model.LinkOrderRequest{})
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+	require.ErrorContains(t, err, "links must not be empty")
+}

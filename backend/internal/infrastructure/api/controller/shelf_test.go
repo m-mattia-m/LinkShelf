@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"backend/internal/domain"
 	"backend/internal/infrastructure/api/model"
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -71,6 +73,62 @@ func Test_API_CreateShelf_Failure_Create(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to create shelf")
+}
+
+func Test_API_CreateShelf_Failure_ThemeForbidden(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := CreateShelf(svc.Service)
+
+	input := &model.ShelfRequestBody{
+		Body: model.ShelfBase{
+			Title:   "test-shelf",
+			ThemeId: "someone-elses-theme",
+		},
+	}
+
+	svc.ShelfService.
+		EXPECT().
+		Create(gomock.Any(), gomock.Any()).
+		Return("", domain.ErrForbidden)
+
+	resp, err := handler(context.Background(), input)
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	var detailed huma.StatusError
+	require.ErrorAs(t, err, &detailed)
+	require.Equal(t, 403, detailed.GetStatus())
+}
+
+func Test_API_CreateShelf_Failure_ThemeInvalid(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := CreateShelf(svc.Service)
+
+	input := &model.ShelfRequestBody{
+		Body: model.ShelfBase{
+			Title:   "test-shelf",
+			ThemeId: "missing-theme",
+		},
+	}
+
+	svc.ShelfService.
+		EXPECT().
+		Create(gomock.Any(), gomock.Any()).
+		Return("", domain.ErrInvalidInput)
+
+	resp, err := handler(context.Background(), input)
+
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	var detailed huma.StatusError
+	require.ErrorAs(t, err, &detailed)
+	require.Equal(t, 400, detailed.GetStatus())
 }
 
 func Test_API_CreateShelf_Failure_Get(t *testing.T) {
