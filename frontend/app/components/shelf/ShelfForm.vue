@@ -1,12 +1,33 @@
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue'
+import { reactive, watch, ref, computed, onMounted } from 'vue'
 import type { Shelf, ShelfBase } from '~~/api'
-import type { FormError } from '@nuxt/ui'
+import type { FormError, SelectItem } from '@nuxt/ui'
 import * as v from 'valibot'
+import { useThemeStore } from '~/stores/theme'
 
 const props = defineProps<{
   modelValue?: Shelf
 }>()
+
+const themeStore = useThemeStore()
+onMounted(() => {
+  if (!themeStore.loaded) themeStore.fetch()
+})
+
+// Reka UI's Select reserves an empty string to mean "cleared" and throws if
+// an item actually uses it as a value, so "no theme" needs a real sentinel
+// value here - selectedThemeId below converts it back to "" for the form.
+const NO_THEME_VALUE = '__none__'
+
+const themeItems = computed<SelectItem[]>(() => [
+  { label: 'No theme (default look)', value: NO_THEME_VALUE },
+  ...(themeStore.instance.length
+    ? [{ type: 'label' as const, label: 'Instance themes' }, ...themeStore.instance.map((t) => ({ label: t.name, value: t.id }))]
+    : []),
+  ...(themeStore.mine.length
+    ? [{ type: 'label' as const, label: 'Your themes' }, ...themeStore.mine.map((t) => ({ label: t.name, value: t.id }))]
+    : [])
+])
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: ShelfBase): void
@@ -31,7 +52,7 @@ const form = reactive<ShelfBase>({
   domain: props.modelValue?.domain ?? '',
   path: props.modelValue?.path ?? '',
   icon: props.modelValue?.icon ?? '',
-  theme: props.modelValue?.theme ?? ''
+  themeId: props.modelValue?.themeId ?? ''
 })
 
 const schema = v.pipe(
@@ -72,6 +93,13 @@ const schema = v.pipe(
   )
 )
 
+const selectedThemeId = computed({
+  get: () => form.themeId || NO_THEME_VALUE,
+  set: (value: string) => {
+    form.themeId = value === NO_THEME_VALUE ? '' : value
+  }
+})
+
 /**
  * UForm ref
  */
@@ -108,7 +136,10 @@ watch(
       domain: newShelf.domain,
       path: newShelf.path,
       icon: newShelf.icon,
-      theme: newShelf.theme
+      // A missing theme's id no longer matches any picker option, which
+      // would otherwise show the raw stale id as the selection - the alert
+      // above already says it's gone, so just clear it instead.
+      themeId: newShelf.themeMissing ? '' : newShelf.themeId
     })
   },
   { immediate: true }
@@ -139,8 +170,22 @@ watch(
       <UTextarea v-model="form.description" class="w-full" />
     </UFormField>
 
-    <UFormField label="Icon" name="icon" class="pt-4">
+    <UFormField label="Icon" name="icon" class="pt-4" help="Optional - leave empty for no icon.">
       <IconPicker v-model="form.icon" placeholder="i-lucide-book-open" />
+    </UFormField>
+
+    <UAlert
+      v-if="modelValue?.themeMissing"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      title="Theme unavailable"
+      description="The theme this shelf was using no longer exists. Pick another one below."
+      class="mt-4"
+    />
+
+    <UFormField label="Theme" name="themeId" class="pt-4" help="Only affects this shelf's public page, never the app.">
+      <USelect v-model="selectedThemeId" :items="themeItems" value-key="value" class="w-full" />
     </UFormField>
 
     <UTabs :items="tabItems" class="pt-4 w-full">

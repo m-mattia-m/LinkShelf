@@ -28,6 +28,33 @@ func NewShelfService(repository *repository.Repository, domain *Service) ShelfSe
 	}
 }
 
+// annotateThemeMissing sets ThemeMissing so the edit page can tell "never
+// picked a theme" apart from "the one picked is gone" - it deliberately
+// leaves the resolved Theme config map unset here, since the authenticated
+// edit view doesn't render with it (no live preview - see design notes),
+// only the public view (annotatePublicTheme) does.
+func (s *shelfServiceImpl) annotateThemeMissing(shelf *model.Shelf) error {
+	_, missing, err := s.Domain.ThemeService.Resolve(shelf.ThemeId)
+	if err != nil {
+		return err
+	}
+	shelf.ThemeMissing = missing
+	return nil
+}
+
+// annotatePublicTheme resolves the shelf's theme into its rendered CSS
+// property map for the public link page - nil (silently falling back to the
+// page's own default look) if none is selected or the selected one no
+// longer exists.
+func (s *shelfServiceImpl) annotatePublicTheme(shelf *model.Shelf) error {
+	config, _, err := s.Domain.ThemeService.Resolve(shelf.ThemeId)
+	if err != nil {
+		return err
+	}
+	shelf.Theme = config
+	return nil
+}
+
 // Get returns a shelf, enforcing that only its owner or an admin may see it.
 func (s *shelfServiceImpl) Get(id, callerUserId string, isAdmin bool) (*model.Shelf, error) {
 	shelf, err := s.Repository.ShelfRepository.Get(id)
@@ -37,13 +64,23 @@ func (s *shelfServiceImpl) Get(id, callerUserId string, isAdmin bool) (*model.Sh
 	if !isAdmin && shelf.UserId != callerUserId {
 		return nil, ErrForbidden
 	}
+	if err := s.annotateThemeMissing(shelf); err != nil {
+		return nil, err
+	}
 	return shelf, nil
 }
 
 // GetByPath is the public, unauthenticated lookup used to render a shelf's
 // public link page - it intentionally performs no ownership check.
 func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
-	return s.Repository.ShelfRepository.GetByPath(path)
+	shelf, err := s.Repository.ShelfRepository.GetByPath(path)
+	if err != nil || shelf == nil {
+		return shelf, err
+	}
+	if err := s.annotatePublicTheme(shelf); err != nil {
+		return nil, err
+	}
+	return shelf, nil
 }
 
 // List returns every shelf for an admin, or only the caller's own shelves otherwise.
@@ -66,6 +103,10 @@ func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf
 	}
 	if user == nil {
 		return "", ErrNotFound
+	}
+
+	if err := s.Domain.ThemeService.ValidateAssignable(shelfRequest.ThemeId, callerUserId); err != nil {
+		return "", err
 	}
 
 	shelfRequest.UserId = callerUserId
@@ -92,6 +133,10 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 		return nil, ErrForbidden
 	}
 
+	if err := s.Domain.ThemeService.ValidateAssignable(shelfRequest.ThemeId, existing.UserId); err != nil {
+		return nil, err
+	}
+
 	shelfRequest.Id = shelfId
 	err = s.Repository.ShelfRepository.Update(shelfRequest)
 	if err != nil {
@@ -100,6 +145,9 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 
 	shelf, err := s.Repository.ShelfRepository.Get(shelfId)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.annotateThemeMissing(shelf); err != nil {
 		return nil, err
 	}
 	return shelf, nil

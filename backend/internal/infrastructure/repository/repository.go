@@ -27,6 +27,7 @@ type Repository struct {
 	ShelfRepository            ShelfRepository
 	SectionRepository          SectionRepository
 	LinkRepository             LinkRepository
+	ThemeRepository            ThemeRepository
 	SettingRepository          SettingRepository
 	StatisticRepository        StatisticRepository
 	RefreshTokenRepository     RefreshTokenRepository
@@ -75,6 +76,11 @@ func NewRepository() (*Repository, error) {
 		return nil, err
 	}
 
+	themeRepo, err := NewThemeRepository(db, "theme")
+	if err != nil {
+		return nil, err
+	}
+
 	settingRepo, err := NewSettingRepository(db, "setting")
 	if err != nil {
 		return nil, err
@@ -105,6 +111,7 @@ func NewRepository() (*Repository, error) {
 		ShelfRepository:            shelfRepo,
 		SectionRepository:          sectionRepo,
 		LinkRepository:             linkRepo,
+		ThemeRepository:            themeRepo,
 		SettingRepository:          settingRepo,
 		StatisticRepository:        statisticRepo,
 		RefreshTokenRepository:     refreshTokenRepo,
@@ -225,10 +232,10 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 
 // pgQuotedIdentifiers lists identifiers that are quoted Postgres-style (e.g.
 // "user") in the source query text because they're reserved words there (
-// "user" collides with Postgres's USER/CURRENT_USER keyword). MySQL reserves
-// the same words but quotes identifiers with backticks instead, so
-// buildSqlStatements rewrites them for that driver.
-var pgQuotedIdentifiers = strings.NewReplacer(`"user"`, "`user`")
+// "user" collides with Postgres's USER/CURRENT_USER keyword, "order" with
+// ORDER BY). MySQL reserves the same words but quotes identifiers with
+// backticks instead, so buildSqlStatements rewrites them for that driver.
+var pgQuotedIdentifiers = strings.NewReplacer(`"user"`, "`user`", `"order"`, "`order`")
 
 func buildSqlStatements(query string) (string, error) {
 	_, driver, _, err := getConnectionInformation()

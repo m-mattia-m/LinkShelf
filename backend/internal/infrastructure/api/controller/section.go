@@ -63,3 +63,20 @@ func DeleteSection(svc *domain.Service) func(c context.Context, input *model.Sec
 		return nil, nil
 	}
 }
+
+// UpdateSectionsOrder saves the order of many sections in a single request.
+// Invalid items (unknown id, or one the caller doesn't own) never abort the
+// rest of the batch - they're reported back in the response's failures list.
+func UpdateSectionsOrder(svc *domain.Service) func(c context.Context, input *model.SectionOrderRequest) (*model.SectionOrderResponse, error) {
+	return func(c context.Context, input *model.SectionOrderRequest) (*model.SectionOrderResponse, error) {
+		if len(input.Body.Sections) == 0 {
+			return nil, huma.Error400BadRequest("sections must not be empty")
+		}
+
+		failures := svc.SectionService.UpdateOrder(UserIdFromContext(c), IsAdminFromContext(c), input.Body.Sections)
+
+		return &model.SectionOrderResponse{
+			Body: model.SectionOrderResponseBody{Failures: failures},
+		}, nil
+	}
+}

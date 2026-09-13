@@ -112,3 +112,17 @@ func (mr *MockSectionRepositoryMockRecorder) Update(s any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSectionRepository)(nil).Update), s)
 }
+
+// UpdateOrder mocks base method.
+func (m *MockSectionRepository) UpdateOrder(id string, order int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOrder", id, order)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateOrder indicates an expected call of UpdateOrder.
+func (mr *MockSectionRepositoryMockRecorder) UpdateOrder(id, order any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrder", reflect.TypeOf((*MockSectionRepository)(nil).UpdateOrder), id, order)
+}

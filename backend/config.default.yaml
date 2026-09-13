@@ -23,6 +23,20 @@ logging:
 domain:
   openapi:
     usePort: false
+themes:
+  # Directory of instance-theme YAML files (one file per theme, each with a
+  # "name" and a "config"), scanned once at startup. Removing a file removes
+  # that theme on the next restart; leave empty to skip instance themes
+  # entirely. Mount a host directory here the same way compose.dev.yaml
+  # mounts config.default.yaml.
+  directory: ""
+assets:
+  # Directory of static files (e.g. theme background images) an instance
+  # admin wants to make available to themes, scanned once at startup and
+  # served at basePath (e.g. a file "my-dog.webp" here becomes
+  # "{basePath}/my-dog.webp"). Leave directory empty to skip entirely.
+  directory: ""
+  basePath: "/images"
 authentication:
   type: LOCAL # LOCAL # OIDC
   # jwtSecret signs the access tokens this backend issues itself, no matter

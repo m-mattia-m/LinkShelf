@@ -53,3 +53,21 @@ func DeleteLink(svc *domain.Service) func(c context.Context, input *model.LinkRe
 		return nil, nil
 	}
 }
+
+// UpdateLinksOrder saves the order of many links in a single request. Invalid
+// items (unknown id, or one the caller doesn't own) never abort the rest of
+// the batch - they're reported back in the response's failures list. A link
+// can only be reordered within the section it already belongs to.
+func UpdateLinksOrder(svc *domain.Service) func(c context.Context, input *model.LinkOrderRequest) (*model.LinkOrderResponse, error) {
+	return func(c context.Context, input *model.LinkOrderRequest) (*model.LinkOrderResponse, error) {
+		if len(input.Body.Links) == 0 {
+			return nil, huma.Error400BadRequest("links must not be empty")
+		}
+
+		failures := svc.LinkService.UpdateOrder(UserIdFromContext(c), IsAdminFromContext(c), input.Body.Links)
+
+		return &model.LinkOrderResponse{
+			Body: model.LinkOrderResponseBody{Failures: failures},
+		}, nil
+	}
+}

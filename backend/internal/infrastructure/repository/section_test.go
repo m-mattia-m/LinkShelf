@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/internal/infrastructure/api/model"
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -20,10 +21,12 @@ func Test_SectionRepository_ListByShelfId_Success(t *testing.T) {
 		"id",
 		"title",
 		"shelf_id",
+		"order",
 	}).AddRow(
 		"section-uuid-test",
 		"test-section",
 		"shelf-uuid-test",
+		0,
 	)
 
 	mock.ExpectQuery(`FROM\s+section`).
@@ -88,10 +91,12 @@ func Test_SectionRepository_Get_Success(t *testing.T) {
 		"id",
 		"title",
 		"shelf_id",
+		"order",
 	}).AddRow(
 		"section-uuid-test",
 		"test-section",
 		"shelf-uuid-test",
+		0,
 	)
 
 	mock.ExpectQuery(`FROM\s+section`).
@@ -139,6 +144,7 @@ func Test_SectionRepository_Create_Success(t *testing.T) {
 			sqlmock.AnyArg(), // generated UUID
 			"test-section",
 			"shelf-uuid-test",
+			"shelf-uuid-test", // next-order subquery's shelf_id
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -253,8 +259,8 @@ func Test_SectionRepository_ListByShelfId_RowsIterationError(t *testing.T) {
 
 	repo := &sectionRepository{Engine: db}
 
-	rows := sqlmock.NewRows([]string{"id", "title", "shelf_id"}).
-		AddRow("section-uuid-test", "title-test", "shelf-uuid-test").
+	rows := sqlmock.NewRows([]string{"id", "title", "shelf_id", "order"}).
+		AddRow("section-uuid-test", "title-test", "shelf-uuid-test", 0).
 		RowError(0, errors.New("connection dropped mid-stream"))
 
 	mock.ExpectQuery(`FROM\s+section`).
@@ -265,4 +271,52 @@ func Test_SectionRepository_ListByShelfId_RowsIterationError(t *testing.T) {
 
 	require.Error(t, err, "an error surfacing only via rows.Err() after iteration must not be silently dropped")
 	require.Nil(t, sections)
+}
+
+func Test_SectionRepository_UpdateOrder_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &sectionRepository{Engine: db}
+
+	mock.ExpectExec("UPDATE section").
+		WithArgs(2, "section-uuid-test").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = repo.UpdateOrder("section-uuid-test", 2)
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_SectionRepository_UpdateOrder_NoRowsAffected(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &sectionRepository{Engine: db}
+
+	mock.ExpectExec("UPDATE section").
+		WithArgs(0, "missing-section").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	err = repo.UpdateOrder("missing-section", 0)
+
+	require.ErrorIs(t, err, sql.ErrNoRows)
+}
+
+func Test_SectionRepository_UpdateOrder_ExecError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &sectionRepository{Engine: db}
+
+	mock.ExpectExec("UPDATE section").
+		WillReturnError(errors.New("update failed"))
+
+	err = repo.UpdateOrder("section-uuid-test", 0)
+
+	require.Error(t, err)
 }

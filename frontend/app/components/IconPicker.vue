@@ -63,9 +63,16 @@ function select(name: string) {
 <template>
   <UPopover v-model:open="open">
     <UButton color="neutral" variant="outline" class="justify-start">
-      <UIcon :name="modelValue || placeholder" class="size-5 shrink-0" />
-      <span class="truncate max-w-40">{{ modelValue || placeholder }}</span>
+      <UIcon :name="modelValue || placeholder" class="size-5 shrink-0" :class="{ 'opacity-50': !modelValue }" />
+      <span class="truncate max-w-40" :class="{ 'text-dimmed': !modelValue }">{{ modelValue || 'No icon' }}</span>
       <template #trailing>
+        <UIcon
+          v-if="modelValue"
+          name="i-lucide-x"
+          class="size-4 shrink-0 hover:text-error"
+          aria-label="Clear icon"
+          @click.stop="emit('update:modelValue', '')"
+        />
         <UIcon name="i-lucide-chevron-down" class="size-4 shrink-0" />
       </template>
     </UButton>

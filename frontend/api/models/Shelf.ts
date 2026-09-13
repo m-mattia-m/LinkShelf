@@ -57,10 +57,22 @@ export interface Shelf {
     path: string;
     /**
      * 
+     * @type {{ [key: string]: string; }}
+     * @memberof Shelf
+     */
+    theme: { [key: string]: string; };
+    /**
+     * 
      * @type {string}
      * @memberof Shelf
      */
-    theme: string;
+    themeId: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Shelf
+     */
+    themeMissing: boolean;
     /**
      * 
      * @type {string}
@@ -85,6 +97,8 @@ export function instanceOfShelf(value: object): value is Shelf {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('path' in value) || value['path'] === undefined) return false;
     if (!('theme' in value) || value['theme'] === undefined) return false;
+    if (!('themeId' in value) || value['themeId'] === undefined) return false;
+    if (!('themeMissing' in value) || value['themeMissing'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     if (!('userId' in value) || value['userId'] === undefined) return false;
     return true;
@@ -107,6 +121,8 @@ export function ShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean): She
         'id': json['id'],
         'path': json['path'],
         'theme': json['theme'],
+        'themeId': json['themeId'],
+        'themeMissing': json['themeMissing'],
         'title': json['title'],
         'userId': json['userId'],
     };
@@ -129,6 +145,8 @@ export function ShelfToJSONTyped(value?: Omit<Shelf, '$schema'> | null, ignoreDi
         'id': value['id'],
         'path': value['path'],
         'theme': value['theme'],
+        'themeId': value['themeId'],
+        'themeMissing': value['themeMissing'],
         'title': value['title'],
         'userId': value['userId'],
     };

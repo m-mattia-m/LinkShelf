@@ -113,3 +113,17 @@ func (mr *MockLinkServiceMockRecorder) Update(linkId, callerUserId, isAdmin, lin
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockLinkService)(nil).Update), linkId, callerUserId, isAdmin, linkRequest)
 }
+
+// UpdateOrder mocks base method.
+func (m *MockLinkService) UpdateOrder(callerUserId string, isAdmin bool, items []model.LinkOrderItem) []model.LinkOrderFailure {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOrder", callerUserId, isAdmin, items)
+	ret0, _ := ret[0].([]model.LinkOrderFailure)
+	return ret0
+}
+
+// UpdateOrder indicates an expected call of UpdateOrder.
+func (mr *MockLinkServiceMockRecorder) UpdateOrder(callerUserId, isAdmin, items any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrder", reflect.TypeOf((*MockLinkService)(nil).UpdateOrder), callerUserId, isAdmin, items)
+}

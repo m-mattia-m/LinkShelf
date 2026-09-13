@@ -31,6 +31,24 @@ const visibleSections = computed(() =>
 
 const hasAnyLinks = computed(() => links.value.length > 0)
 
+// See layouts/links.vue - shared with it via the same useState key since a
+// layout can't receive props from its page and these need to live on the
+// layout's own root element for its background/text color to react to them.
+const themeVars = useState<Record<string, string>>('public-shelf-theme-vars', () => ({}))
+
+// A link's own color always has a DB-level default of "#000000" rather than
+// being genuinely unset, so there's no way to tell "user picked black" apart
+// from "user never touched this." Treating that default as "no override"
+// lets a theme's --shelf-link-bg show through for links nobody has
+// customized, rather than every untouched link staying hardcoded black
+// regardless of the shelf's theme.
+function linkBackgroundStyle(link: Link): Record<string, string> {
+  if (link.color && link.color.toLowerCase() !== '#000000') {
+    return { backgroundColor: link.color }
+  }
+  return {}
+}
+
 async function load() {
   loading.value = true
   notFound.value = false
@@ -39,6 +57,7 @@ async function load() {
     const api = useApi()
     const resolvedShelf = await api.shelf.getPublicShelfByPath({ path: linkpath })
     shelf.value = resolvedShelf
+    themeVars.value = resolvedShelf.theme ?? {}
 
     const [sectionList, linkList] = await Promise.all([
       api.section.getSections({ shelfId: resolvedShelf.id }),
@@ -92,8 +111,8 @@ useSeoMeta({
             :href="link.link"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-white shadow-sm transition-transform hover:scale-[1.02]"
-            :style="{ backgroundColor: link.color }"
+            class="flex items-center gap-3 rounded-[var(--shelf-link-radius,0.75rem)] px-4 py-3 font-medium text-[var(--shelf-link-text,white)] shadow-sm transition-transform hover:scale-[1.02] bg-[var(--shelf-link-bg,#000)]"
+            :style="linkBackgroundStyle(link)"
           >
             <UIcon v-if="link.icon" :name="link.icon" class="size-5 shrink-0" />
             <span class="truncate">{{ link.title }}</span>

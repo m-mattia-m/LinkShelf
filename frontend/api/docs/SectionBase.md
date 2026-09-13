@@ -17,7 +17,7 @@ import type { SectionBase } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/SectionBase.json,
+  "$schema": null,
   "shelfId": null,
   "title": null,
 } satisfies SectionBase

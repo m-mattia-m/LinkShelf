@@ -36,6 +36,10 @@ func main() {
 		zap.L().Fatal(err.Error())
 	}
 
+	if err := domain.SyncInstanceThemes(repo); err != nil {
+		zap.L().Fatal(err.Error())
+	}
+
 	var oidcClient *oidcclient.Client
 	// TODO: bad practice -> do not open the repository directly -> add it behind the domain layer
 	if strings.EqualFold(config.String("authentication.type"), "OIDC") {

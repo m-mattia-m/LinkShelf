@@ -456,3 +456,186 @@ func Test_Unit_Shelf_Delete_Failure(t *testing.T) {
 
 	require.ErrorContains(t, err, "an error occurred")
 }
+
+func Test_Unit_Shelf_Creation_ThemeAssignable(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	shelfRequest := &model.Shelf{
+		PublicShelf: model.PublicShelf{Title: "shelf-title-test"},
+		ThemeId:     "theme-uuid-test",
+	}
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("theme-uuid-test").
+		Return(&model.Theme{Id: "theme-uuid-test", Scope: model.ThemeScopeUser, OwnerUserId: "user-uuid-test"}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Create(shelfRequest).
+		Return("shelf-uuid-test", nil)
+
+	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", shelfRequest)
+
+	require.NoError(t, err)
+	require.Equal(t, "shelf-uuid-test", shelfId)
+}
+
+func Test_Unit_Shelf_Creation_ThemeNotAssignable(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	shelfRequest := &model.Shelf{
+		PublicShelf: model.PublicShelf{Title: "shelf-title-test"},
+		ThemeId:     "theme-uuid-test",
+	}
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("theme-uuid-test").
+		Return(&model.Theme{Id: "theme-uuid-test", Scope: model.ThemeScopeUser, OwnerUserId: "someone-else-uuid-test"}, nil)
+
+	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", shelfRequest)
+
+	require.ErrorIs(t, err, ErrForbidden)
+	require.Empty(t, shelfId)
+}
+
+func Test_Unit_Shelf_Update_ThemeNotAssignable(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	shelfId := "shelf-uuid-test"
+
+	svc.UserRepository.
+		EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test"}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get(shelfId).
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{Id: shelfId},
+			UserId:      "user-uuid-test",
+		}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("theme-uuid-test").
+		Return(nil, nil)
+
+	shelf, err := svc.Service.ShelfService.Update(shelfId, "user-uuid-test", false, &model.Shelf{ThemeId: "theme-uuid-test"})
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+	require.Nil(t, shelf)
+}
+
+func Test_Unit_Shelf_Get_AnnotatesThemeMissing(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"},
+			UserId:      "user-uuid-test",
+			ThemeId:     "deleted-theme-uuid",
+		}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("deleted-theme-uuid").
+		Return(nil, nil)
+
+	shelf, err := svc.Service.ShelfService.Get("shelf-uuid-test", "user-uuid-test", false)
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.True(t, shelf.ThemeMissing)
+}
+
+func Test_Unit_Shelf_Get_ThemeStillPresent_NotMissing(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		Get("shelf-uuid-test").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"},
+			UserId:      "user-uuid-test",
+			ThemeId:     "theme-uuid-test",
+		}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("theme-uuid-test").
+		Return(&model.Theme{Id: "theme-uuid-test", Config: "--shelf-bg: #1c274c;\n"}, nil)
+
+	shelf, err := svc.Service.ShelfService.Get("shelf-uuid-test", "user-uuid-test", false)
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.False(t, shelf.ThemeMissing)
+}
+
+func Test_Unit_Shelf_GetByPath_ResolvesThemeConfig(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		GetByPath("my-path").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{Id: "shelf-uuid-test", Path: "my-path"},
+			ThemeId:     "theme-uuid-test",
+		}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("theme-uuid-test").
+		Return(&model.Theme{Id: "theme-uuid-test", Config: "--shelf-bg: #1c274c;\n"}, nil)
+
+	shelf, err := svc.Service.ShelfService.GetByPath("my-path")
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.Equal(t, "#1c274c", shelf.Theme["--shelf-bg"])
+}
+
+func Test_Unit_Shelf_GetByPath_MissingThemeFallsBackSilently(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfRepository.
+		EXPECT().
+		GetByPath("my-path").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{Id: "shelf-uuid-test", Path: "my-path"},
+			ThemeId:     "deleted-theme-uuid",
+		}, nil)
+
+	svc.ThemeRepository.
+		EXPECT().
+		Get("deleted-theme-uuid").
+		Return(nil, nil)
+
+	shelf, err := svc.Service.ShelfService.GetByPath("my-path")
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.Nil(t, shelf.Theme)
+}

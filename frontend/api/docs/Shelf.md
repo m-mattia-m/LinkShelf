@@ -12,7 +12,9 @@ Name | Type
 `icon` | string
 `id` | string
 `path` | string
-`theme` | string
+`theme` | { [key: string]: string; }
+`themeId` | string
+`themeMissing` | boolean
 `title` | string
 `userId` | string
 
@@ -23,13 +25,15 @@ import type { Shelf } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/Shelf.json,
+  "$schema": null,
   "description": null,
   "domain": null,
   "icon": null,
   "id": null,
   "path": null,
   "theme": null,
+  "themeId": null,
+  "themeMissing": null,
   "title": null,
   "userId": null,
 } satisfies Shelf

@@ -1,6 +1,6 @@
 # LinkApi
 
-All URIs are relative to *http://localhost:8085*
+All URIs are relative to *http://localhost*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -8,6 +8,7 @@ All URIs are relative to *http://localhost:8085*
 | [**getLinks**](LinkApi.md#getlinks) | **GET** /v1/links | Get links by shelf ID |
 | [**postCreateLink**](LinkApi.md#postcreatelink) | **POST** /v1/links | Create link |
 | [**putUpdateLink**](LinkApi.md#putupdatelink) | **PUT** /v1/links/{linkId} | Update link |
+| [**putUpdateLinksOrder**](LinkApi.md#putupdatelinksorder) | **PUT** /v1/links/reorder | Update links order in batch |
 
 
 
@@ -284,6 +285,78 @@ example().catch(console.error);
 ### Return type
 
 [**Link**](Link.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## putUpdateLinksOrder
+
+> LinkOrderResponseBody putUpdateLinksOrder(linkOrderRequestBody)
+
+Update links order in batch
+
+Update the order of many links in a single request. A link can only be reordered within the section it already belongs to. Invalid items are rejected individually (reported in the response\&#39;s failures list) without aborting the rest of the batch.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  LinkApi,
+} from '';
+import type { PutUpdateLinksOrderRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new LinkApi(config);
+
+  const body = {
+    // LinkOrderRequestBody
+    linkOrderRequestBody: ...,
+  } satisfies PutUpdateLinksOrderRequest;
+
+  try {
+    const data = await api.putUpdateLinksOrder(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **linkOrderRequestBody** | [LinkOrderRequestBody](LinkOrderRequestBody.md) |  | |
+
+### Return type
+
+[**LinkOrderResponseBody**](LinkOrderResponseBody.md)
 
 ### Authorization
 

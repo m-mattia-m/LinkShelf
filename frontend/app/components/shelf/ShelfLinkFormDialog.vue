@@ -24,23 +24,31 @@ const saving = ref(false)
 const form = reactive({
   title: props.link?.title ?? '',
   link: props.link?.link ?? '',
-  icon: props.link?.icon ?? 'i-lucide-link',
-  color: props.link?.color ?? '#000000'
+  icon: props.link?.icon ?? '',
+  color: props.link?.color ?? ''
 })
 
 watch(open, (isOpen) => {
   if (!isOpen) return
   form.title = props.link?.title ?? ''
   form.link = props.link?.link ?? ''
-  form.icon = props.link?.icon ?? 'i-lucide-link'
-  form.color = props.link?.color ?? '#000000'
+  form.icon = props.link?.icon ?? ''
+  form.color = props.link?.color ?? ''
 })
 
 const schema = v.object({
   title: v.pipe(v.string('Title is required'), v.nonEmpty('Title is required')),
   link: v.pipe(v.string('URL is required'), v.nonEmpty('URL is required')),
   icon: v.string(),
-  color: v.pipe(v.string(), v.regex(/^#[0-9a-fA-F]{6}$/, 'Must be a hex color, e.g. #588157'))
+  // Empty is valid too - it means "no color set", so the shelf's theme (or
+  // the default look) decides how the link renders instead.
+  color: v.pipe(
+    v.string(),
+    v.check(
+      (value) => value === '' || /^#[0-9a-fA-F]{6}$/.test(value),
+      'Must be a hex color, e.g. #588157'
+    )
+  )
 })
 
 const formRef = ref<{
@@ -97,15 +105,17 @@ async function save(close: () => void) {
           <UInput v-model="form.link" class="w-full" placeholder="https://example.com" />
         </UFormField>
 
-        <UFormField label="Icon" name="icon">
+        <UFormField label="Icon" name="icon" help="Optional - leave empty for no icon.">
           <IconPicker v-model="form.icon" placeholder="i-lucide-link" />
         </UFormField>
 
-        <UFormField label="Color" name="color">
-          <div class="flex items-center gap-2">
+        <UFormField label="Color" name="color" help="Optional - leave unset to use the shelf's theme (or the default look).">
+          <div v-if="form.color" class="flex items-center gap-2">
             <UColorPicker v-model="form.color" format="hex" />
             <UInput v-model="form.color" class="w-full" placeholder="#000000" />
+            <UButton icon="i-lucide-x" size="sm" color="neutral" variant="ghost" aria-label="Clear color" @click="form.color = ''" />
           </div>
+          <UButton v-else label="Set a color" icon="i-lucide-palette" color="neutral" variant="outline" @click="form.color = '#000000'" />
         </UFormField>
       </UForm>
     </template>

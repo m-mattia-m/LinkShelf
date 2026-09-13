@@ -17,7 +17,7 @@ import type { LoginRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/LoginRequest.json,
+  "$schema": null,
   "email": null,
   "password": null,
 } satisfies LoginRequest

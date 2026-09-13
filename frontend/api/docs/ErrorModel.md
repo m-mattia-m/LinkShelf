@@ -21,13 +21,13 @@ import type { ErrorModel } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/ErrorModel.json,
-  "detail": Property foo is required but is missing.,
+  "$schema": null,
+  "detail": null,
   "errors": null,
-  "instance": https://example.com/error-log/abc123,
-  "status": 400,
-  "title": Bad Request,
-  "type": https://example.com/errors/example,
+  "instance": null,
+  "status": null,
+  "title": null,
+  "type": null,
 } satisfies ErrorModel
 
 console.log(example)

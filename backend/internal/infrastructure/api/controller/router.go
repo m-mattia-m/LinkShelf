@@ -5,6 +5,7 @@ import (
 	"backend/internal/domain"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -70,6 +71,13 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusPermanentRedirect, "/swagger")
 	})
+
+	// Serves an instance admin's mounted assets directory (e.g. theme
+	// background images) at assets.basePath, e.g. a file "my-dog.webp"
+	// becomes "{basePath}/my-dog.webp". A no-op if assets.directory isn't set.
+	if assetsDir := strings.TrimSpace(config.String("assets.directory")); assetsDir != "" {
+		router.Static(config.String("assets.basePath"), assetsDir)
+	}
 
 	// --- Auth -----------------------------------------------------------
 	huma.Register(api, huma.Operation{
@@ -311,6 +319,15 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		DefaultStatus: http.StatusNoContent,
 		Security:      bearerSecurity(),
 	}, DeleteSection(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "put-update-sections-order",
+		Summary:     "Update sections order in batch",
+		Description: "Update the order of many sections in a single request. Invalid items are rejected individually (reported in the response's failures list) without aborting the rest of the batch.",
+		Path:        "/v1/sections/reorder",
+		Tags:        []string{"Section"},
+		Security:    bearerSecurity(),
+	}, UpdateSectionsOrder(svc))
 
 	// --- Links (owner-of-shelf or admin to write; public to read) --------
 	huma.Register(api, huma.Operation{
@@ -350,6 +367,74 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		DefaultStatus: http.StatusNoContent,
 		Security:      bearerSecurity(),
 	}, DeleteLink(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "put-update-links-order",
+		Summary:     "Update links order in batch",
+		Description: "Update the order of many links in a single request. A link can only be reordered within the section it already belongs to. Invalid items are rejected individually (reported in the response's failures list) without aborting the rest of the batch.",
+		Path:        "/v1/links/reorder",
+		Tags:        []string{"Link"},
+		Security:    bearerSecurity(),
+	}, UpdateLinksOrder(svc))
+
+	// --- Themes (instance themes are read-only, seeded from a mounted directory; every user may manage their own) ---
+	huma.Register(api, huma.Operation{
+		Method:        http.MethodPost,
+		OperationID:   "post-create-theme",
+		Summary:       "Create theme",
+		Description:   "Create a new theme, owned by the authenticated caller.",
+		Path:          "/v1/themes",
+		Tags:          []string{"Theme"},
+		DefaultStatus: http.StatusCreated,
+		Security:      bearerSecurity(),
+	}, CreateTheme(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "list-themes",
+		Summary:     "List themes",
+		Description: "List themes available to the caller, grouped into instance-provided and their own.",
+		Path:        "/v1/themes",
+		Tags:        []string{"Theme"},
+		Security:    bearerSecurity(),
+	}, ListThemes(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "list-all-user-themes",
+		Summary:     "List all user themes",
+		Description: "List every user-created theme across the instance, for moderation. Admin only.",
+		Path:        "/v1/themes/admin",
+		Tags:        []string{"Theme"},
+		Security:    bearerSecurity(),
+		Metadata:    requireAdmin(),
+	}, ListAllUserThemes(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-theme-by-id",
+		Summary:     "Get theme by ID",
+		Description: "Get a theme by ID. Instance themes are readable by any authenticated caller; user themes only by their owner or an admin.",
+		Path:        "/v1/themes/{themeId}",
+		Tags:        []string{"Theme"},
+		Security:    bearerSecurity(),
+	}, GetTheme(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "put-update-theme",
+		Summary:     "Update theme",
+		Description: "Update an existing theme. Only its owner may update it - not even an admin, and never an instance theme (managed via the mounted directory instead).",
+		Path:        "/v1/themes/{themeId}",
+		Tags:        []string{"Theme"},
+		Security:    bearerSecurity(),
+	}, UpdateTheme(svc))
+	huma.Register(api, huma.Operation{
+		Method:        http.MethodDelete,
+		OperationID:   "delete-theme",
+		Summary:       "Delete theme",
+		Description:   "Delete a theme by ID. Its owner or an admin may delete a user theme; instance themes can never be deleted through the API.",
+		Path:          "/v1/themes/{themeId}",
+		Tags:          []string{"Theme"},
+		DefaultStatus: http.StatusNoContent,
+		Security:      bearerSecurity(),
+	}, DeleteTheme(svc))
 
 	// --- Settings (read is public - it renders the public site shell; write is admin only) ---
 	huma.Register(api, huma.Operation{

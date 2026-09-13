@@ -20,7 +20,7 @@ import type { UserCreate } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/UserCreate.json,
+  "$schema": null,
   "email": null,
   "firstName": null,
   "lastName": null,

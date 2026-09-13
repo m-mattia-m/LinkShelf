@@ -63,11 +63,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 - add SMTP to send emails to verify the users email-address
 - add option to turn off the user registration for example for self-hosted instances (admin should still be able to create a user which then can finisht the registration via the email-link)
+- add functionallity to order links in a section and sections in a shelf
+- add themeing functioanllity (color, icon, theme, custom css, ...)
 
 ---
 
-- add functionallity to order links in a section and sections in a shelf
-- add themeing functioanllity (color, icon, theme, custom css, ...)
+
 
 - add frontend test incl. converage for readme
 

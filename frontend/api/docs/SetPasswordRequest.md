@@ -17,7 +17,7 @@ import type { SetPasswordRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/SetPasswordRequest.json,
+  "$schema": null,
   "newPassword": null,
   "token": null,
 } satisfies SetPasswordRequest

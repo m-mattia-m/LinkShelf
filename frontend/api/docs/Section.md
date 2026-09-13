@@ -8,6 +8,7 @@ Name | Type
 ------------ | -------------
 `$schema` | string
 `id` | string
+`order` | number
 `shelfId` | string
 `title` | string
 
@@ -18,8 +19,9 @@ import type { Section } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/Section.json,
+  "$schema": null,
   "id": null,
+  "order": null,
   "shelfId": null,
   "title": null,
 } satisfies Section

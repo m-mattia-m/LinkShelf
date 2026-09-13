@@ -51,6 +51,12 @@ export interface Link {
     link: string;
     /**
      * 
+     * @type {number}
+     * @memberof Link
+     */
+    order: number;
+    /**
+     * 
      * @type {string}
      * @memberof Link
      */
@@ -69,6 +75,7 @@ export interface Link {
 export function instanceOfLink(value: object): value is Link {
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('link' in value) || value['link'] === undefined) return false;
+    if (!('order' in value) || value['order'] === undefined) return false;
     if (!('sectionId' in value) || value['sectionId'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     return true;
@@ -89,6 +96,7 @@ export function LinkFromJSONTyped(json: any, ignoreDiscriminator: boolean): Link
         'icon': json['icon'] == null ? undefined : json['icon'],
         'id': json['id'],
         'link': json['link'],
+        'order': json['order'],
         'sectionId': json['sectionId'],
         'title': json['title'],
     };
@@ -109,6 +117,7 @@ export function LinkToJSONTyped(value?: Omit<Link, '$schema'> | null, ignoreDisc
         'icon': value['icon'],
         'id': value['id'],
         'link': value['link'],
+        'order': value['order'],
         'sectionId': value['sectionId'],
         'title': value['title'],
     };

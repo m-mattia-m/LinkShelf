@@ -17,6 +17,10 @@ type SectionRepository interface {
 	Create(s *model.Section) (string, error)
 	Update(s *model.Section) error
 	Delete(s *model.Section) error
+	// UpdateOrder sets the order of a single section. Used by the batch
+	// reorder endpoint, one call per item so a bad id in the batch fails only
+	// that item.
+	UpdateOrder(id string, order int) error
 }
 
 type sectionRepository struct {
@@ -33,9 +37,10 @@ func NewSectionRepository(engine *sql.DB, table string) (SectionRepository, erro
 
 func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, shelf_id
+		SELECT id, title, shelf_id, "order"
 		FROM section
 		WHERE shelf_id = ?
+		ORDER BY "order", id
 	`)
 	if err != nil {
 		return nil, err
@@ -53,6 +58,7 @@ func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 			&section.Id,
 			&section.Title,
 			&section.ShelfId,
+			&section.Order,
 		)
 		if err != nil {
 			return nil, err
@@ -69,7 +75,7 @@ func (r *sectionRepository) ListByShelfId(id string) ([]model.Section, error) {
 
 func (r *sectionRepository) Get(id string) (*model.Section, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, shelf_id
+		SELECT id, title, shelf_id, "order"
 		FROM section
 		WHERE id = ?
 		LIMIT 1
@@ -85,6 +91,7 @@ func (r *sectionRepository) Get(id string) (*model.Section, error) {
 		&section.Id,
 		&section.Title,
 		&section.ShelfId,
+		&section.Order,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -99,8 +106,8 @@ func (r *sectionRepository) Get(id string) (*model.Section, error) {
 
 func (r *sectionRepository) Create(s *model.Section) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO section (id, title, shelf_id)
-		VALUES (?, ?, ?)
+		INSERT INTO section (id, title, shelf_id, "order")
+		VALUES (?, ?, ?, (SELECT COALESCE(MAX(o."order"), -1) + 1 FROM section o WHERE o.shelf_id = ?))
 	`)
 	if err != nil {
 		return "", err
@@ -117,6 +124,7 @@ func (r *sectionRepository) Create(s *model.Section) (string, error) {
 		query,
 		s.Id,
 		s.Title,
+		s.ShelfId,
 		s.ShelfId,
 	)
 	if err != nil {
@@ -165,6 +173,37 @@ func (r *sectionRepository) Delete(s *model.Section) error {
 	)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *sectionRepository) UpdateOrder(id string, order int) error {
+	query, err := buildSqlStatements(`
+		UPDATE section
+		SET "order" = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	res, err := r.Engine.ExecContext(
+		context.TODO(),
+		query,
+		order,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
 	}
 
 	return nil

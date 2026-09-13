@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import draggable from 'vuedraggable'
 import type { Section, Link } from '~~/api'
-import type { TableColumn } from '#ui/components/Table.vue'
 import { useSectionStore } from '~/stores/section'
 import { useLinkStore } from '~/stores/link'
 
 const props = defineProps<{
   section: Section
-  links: Link[]
 }>()
+
+const emit = defineEmits<{
+  (e: 'reordered'): void
+}>()
+
+// Two-way bound with the parent's local, unsaved order for this section's
+// links - dragging here only ever touches this local copy; nothing is
+// persisted until the parent's single "Save order" button is clicked.
+const links = defineModel<Link[]>('links', { required: true })
 
 const sectionStore = useSectionStore()
 const linkStore = useLinkStore()
@@ -87,19 +95,14 @@ async function confirmDeleteLink() {
     deletingLink.value = false
   }
 }
-
-const columns: TableColumn<Link>[] = [
-  { accessorKey: 'title', header: 'Title' },
-  { accessorKey: 'link', header: 'URL' },
-  { id: 'action' }
-]
 </script>
 
 <template>
   <UCard>
     <template #header>
       <div class="flex items-center justify-between gap-2 flex-wrap">
-        <div v-if="!renaming" class="flex items-center gap-2">
+        <div v-if="!renaming" class="flex items-center gap-1">
+          <UIcon name="i-lucide-grip-vertical" class="drag-handle size-4 text-dimmed cursor-grab shrink-0" aria-label="Drag to reorder section" />
           <h3 class="font-medium">{{ section.title }}</h3>
           <UButton icon="i-lucide-pencil" size="xs" color="neutral" variant="ghost" aria-label="Rename section" @click="startRename" />
         </div>
@@ -116,24 +119,33 @@ const columns: TableColumn<Link>[] = [
       </div>
     </template>
 
-    <UTable :columns="columns" :data="links">
-      <template #link-cell="{ row }">
-        <ULink :href="row.original.link" target="_blank" class="truncate block max-w-xs">{{ row.original.link }}</ULink>
-      </template>
-      <template #action-cell="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <UIcon :name="row.original.icon || 'i-lucide-link'" class="size-4" :style="{ color: row.original.color }" />
-          <UButton icon="i-lucide-pencil" size="xs" color="neutral" variant="ghost" aria-label="Edit link" @click="openEditLink(row.original)" />
-          <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" aria-label="Delete link" @click="openDeleteLink(row.original)" />
+    <p v-if="links.length === 0" class="text-center text-muted text-sm py-6">
+      No links yet.
+      <UButton label="Add the first link" variant="link" @click="openCreateLink" />
+    </p>
+
+    <draggable
+      v-else
+      v-model="links"
+      item-key="id"
+      handle=".drag-handle"
+      tag="div"
+      class="flex flex-col divide-y divide-default"
+      @end="emit('reordered')"
+    >
+      <template #item="{ element: link }">
+        <div class="flex items-center gap-2 py-2">
+          <UIcon name="i-lucide-grip-vertical" class="drag-handle size-4 text-dimmed cursor-grab shrink-0" aria-label="Drag to reorder link" />
+          <UIcon :name="link.icon || 'i-lucide-link'" class="size-4 shrink-0" :style="{ color: link.color }" />
+          <div class="min-w-0 flex-1">
+            <p class="font-medium truncate">{{ link.title }}</p>
+            <ULink :href="link.link" target="_blank" class="text-xs text-dimmed truncate block">{{ link.link }}</ULink>
+          </div>
+          <UButton icon="i-lucide-pencil" size="xs" color="neutral" variant="ghost" aria-label="Edit link" @click="openEditLink(link)" />
+          <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" aria-label="Delete link" @click="openDeleteLink(link)" />
         </div>
       </template>
-      <template #empty>
-        <div class="text-center text-muted text-sm py-6">
-          No links yet.
-          <UButton label="Add the first link" variant="link" @click="openCreateLink" />
-        </div>
-      </template>
-    </UTable>
+    </draggable>
 
     <ShelfLinkFormDialog
       v-model:open="linkDialogOpen"

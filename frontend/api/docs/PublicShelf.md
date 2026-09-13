@@ -11,6 +11,7 @@ Name | Type
 `icon` | string
 `id` | string
 `path` | string
+`theme` | { [key: string]: string; }
 `title` | string
 
 ## Example
@@ -20,11 +21,12 @@ import type { PublicShelf } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/PublicShelf.json,
+  "$schema": null,
   "description": null,
   "icon": null,
   "id": null,
   "path": null,
+  "theme": null,
   "title": null,
 } satisfies PublicShelf
 

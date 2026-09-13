@@ -13,6 +13,10 @@ type SectionService interface {
 	Create(callerUserId string, isAdmin bool, u *model.Section) (*model.Section, error)
 	Update(sectionId, callerUserId string, isAdmin bool, u *model.Section) (*model.Section, error)
 	Delete(sectionId, callerUserId string, isAdmin bool) error
+	// UpdateOrder saves every valid item and reports the rest as failures - it
+	// never aborts the whole batch over one bad item, mirroring
+	// SettingService.UpdateMany.
+	UpdateOrder(callerUserId string, isAdmin bool, items []model.SectionOrderItem) []model.SectionOrderFailure
 }
 
 type sectionServiceImpl struct {
@@ -120,4 +124,46 @@ func (s *sectionServiceImpl) Delete(sectionId, callerUserId string, isAdmin bool
 	}
 
 	return s.Repository.SectionRepository.Delete(&model.Section{Id: sectionId})
+}
+
+func (s *sectionServiceImpl) UpdateOrder(callerUserId string, isAdmin bool, items []model.SectionOrderItem) []model.SectionOrderFailure {
+	var failures []model.SectionOrderFailure
+
+	for _, item := range items {
+		if err := s.canReorder(item.Id, callerUserId, isAdmin); err != nil {
+			failures = append(failures, model.SectionOrderFailure{Id: item.Id, Reason: err.Error()})
+			continue
+		}
+
+		if err := s.Repository.SectionRepository.UpdateOrder(item.Id, item.Order); err != nil {
+			failures = append(failures, model.SectionOrderFailure{Id: item.Id, Reason: err.Error()})
+		}
+	}
+
+	return failures
+}
+
+// canReorder resolves the section's shelf and checks the caller may write to
+// it, returning ErrNotFound/ErrForbidden the same way Update/Delete do.
+func (s *sectionServiceImpl) canReorder(sectionId, callerUserId string, isAdmin bool) error {
+	existing, err := s.Repository.SectionRepository.Get(sectionId)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return ErrNotFound
+	}
+
+	shelf, err := s.shelfOwner(existing.ShelfId)
+	if err != nil {
+		return err
+	}
+	if shelf == nil {
+		return ErrNotFound
+	}
+	if !isAdmin && shelf.UserId != callerUserId {
+		return ErrForbidden
+	}
+
+	return nil
 }

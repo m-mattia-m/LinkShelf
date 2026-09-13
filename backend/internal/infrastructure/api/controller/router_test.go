@@ -18,6 +18,7 @@ type MockService struct {
 	ShelfService             *mocks.MockShelfService
 	SectionService           *mocks.MockSectionService
 	LinkService              *mocks.MockLinkService
+	ThemeService             *mocks.MockThemeService
 	StatisticService         *mocks.MockStatisticService
 	SettingService           *mocks.MockSettingService
 	AuthService              *mocks.MockAuthService
@@ -33,6 +34,7 @@ func NewMockDomainService(t *testing.T) *MockService {
 	shelfService := mocks.NewMockShelfService(ctrl)
 	sectionService := mocks.NewMockSectionService(ctrl)
 	linkService := mocks.NewMockLinkService(ctrl)
+	themeService := mocks.NewMockThemeService(ctrl)
 	statisticService := mocks.NewMockStatisticService(ctrl)
 	settingService := mocks.NewMockSettingService(ctrl)
 	authService := mocks.NewMockAuthService(ctrl)
@@ -43,6 +45,7 @@ func NewMockDomainService(t *testing.T) *MockService {
 		ShelfService:             shelfService,
 		SectionService:           sectionService,
 		LinkService:              linkService,
+		ThemeService:             themeService,
 		StatisticService:         statisticService,
 		SettingService:           settingService,
 		AuthService:              authService,
@@ -56,6 +59,7 @@ func NewMockDomainService(t *testing.T) *MockService {
 		ShelfService:             shelfService,
 		SectionService:           sectionService,
 		LinkService:              linkService,
+		ThemeService:             themeService,
 		StatisticService:         statisticService,
 		SettingService:           settingService,
 		AuthService:              authService,

@@ -18,6 +18,8 @@ import type {
   ErrorModel,
   Section,
   SectionBase,
+  SectionOrderRequestBody,
+  SectionOrderResponseBody,
 } from '../models/index';
 import {
     ErrorModelFromJSON,
@@ -26,6 +28,10 @@ import {
     SectionToJSON,
     SectionBaseFromJSON,
     SectionBaseToJSON,
+    SectionOrderRequestBodyFromJSON,
+    SectionOrderRequestBodyToJSON,
+    SectionOrderResponseBodyFromJSON,
+    SectionOrderResponseBodyToJSON,
 } from '../models/index';
 
 export interface DeleteSectionRequest {
@@ -43,6 +49,10 @@ export interface PostCreateSectionRequest {
 export interface PutUpdateSectionRequest {
     sectionId: string;
     sectionBase: Omit<SectionBase, '$schema'>;
+}
+
+export interface PutUpdateSectionsOrderRequest {
+    sectionOrderRequestBody: Omit<SectionOrderRequestBody, '$schema'>;
 }
 
 /**
@@ -234,6 +244,55 @@ export class SectionApi extends runtime.BaseAPI {
      */
     async putUpdateSection(requestParameters: PutUpdateSectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Section> {
         const response = await this.putUpdateSectionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update the order of many sections in a single request. Invalid items are rejected individually (reported in the response\'s failures list) without aborting the rest of the batch.
+     * Update sections order in batch
+     */
+    async putUpdateSectionsOrderRaw(requestParameters: PutUpdateSectionsOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SectionOrderResponseBody>> {
+        if (requestParameters['sectionOrderRequestBody'] == null) {
+            throw new runtime.RequiredError(
+                'sectionOrderRequestBody',
+                'Required parameter "sectionOrderRequestBody" was null or undefined when calling putUpdateSectionsOrder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/sections/reorder`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SectionOrderRequestBodyToJSON(requestParameters['sectionOrderRequestBody']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SectionOrderResponseBodyFromJSON(jsonValue));
+    }
+
+    /**
+     * Update the order of many sections in a single request. Invalid items are rejected individually (reported in the response\'s failures list) without aborting the rest of the batch.
+     * Update sections order in batch
+     */
+    async putUpdateSectionsOrder(requestParameters: PutUpdateSectionsOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SectionOrderResponseBody> {
+        const response = await this.putUpdateSectionsOrderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

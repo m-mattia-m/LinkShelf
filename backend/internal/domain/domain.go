@@ -11,6 +11,7 @@ type Service struct {
 	ShelfService             ShelfService
 	SectionService           SectionService
 	LinkService              LinkService
+	ThemeService             ThemeService
 	SettingService           SettingService
 	StatisticService         StatisticService
 	AuthService              AuthService
@@ -26,6 +27,7 @@ func NewService(repository *repository.Repository, oidc *oidcclient.Client, m ma
 	service.ShelfService = NewShelfService(repository, &service)
 	service.SectionService = NewSectionService(repository, &service)
 	service.LinkService = NewLinkService(repository, &service)
+	service.ThemeService = NewThemeService(repository, &service)
 	service.SettingService = NewSettingService(repository, &service)
 	service.StatisticService = NewStatisticService(repository, &service)
 	service.AuthService = NewAuthService(repository, &service, oidc)
