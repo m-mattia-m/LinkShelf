@@ -8,24 +8,29 @@ updates:
   - package-ecosystem: "npm"
     directory: "frontend"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
 
   - package-ecosystem: "gomod"
     directory: "backend"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
 
+  # Picks up backend/frontend/runtime base images in .container/Containerfile
+  # (dependabot's docker ecosystem matches any file named "Dockerfile" or
+  # "Containerfile" in this directory).
   - package-ecosystem: "docker"
     directory: ".container"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
 
+  # Picks up image references in compose.yaml and compose.dev.yaml at the
+  # repo root.
   - package-ecosystem: "docker-compose"
     directory: ""
     schedule:
-      interval: "monthly"
+      interval: "weekly"
 
   - package-ecosystem: "github-actions"
     directory: ".github/workflows"
     schedule:
-      interval: "monthly"
+      interval: "weekly"

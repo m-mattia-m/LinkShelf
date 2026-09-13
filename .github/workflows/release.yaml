@@ -115,9 +115,9 @@ jobs:
               --os linux \
               --manifest "$IMAGE_NAME" \
               --file .container/Containerfile \
-              --build-arg IMAGE_NAME=$IMAGE_NAME \
-              --build-arg IMAGE_TAG=$IMAGE_TAG \
-              --label org.opencontainers.image.version=$IMAGE_TAG \
+              --build-arg "IMAGE_NAME=$IMAGE_NAME" \
+              --build-arg "IMAGE_TAG=$IMAGE_TAG" \
+              --label "org.opencontainers.image.version=$IMAGE_TAG" \
               .
           done
 

@@ -13,6 +13,11 @@ on:
       - 'refactor/**'
       - 'style/**'
       - 'test/**'
+      # Dependabot's own branch prefix - without this, CI never runs on its
+      # PRs, so the "require status checks" branch rule can never be
+      # satisfied and auto-merge hangs forever waiting on a check that was
+      # never reported.
+      - 'dependabot/**'
 
 env:
   IMAGE_NAME: linkshelf
