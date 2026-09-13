@@ -18,6 +18,8 @@ import type {
   ErrorModel,
   Link,
   LinkBase,
+  LinkOrderRequestBody,
+  LinkOrderResponseBody,
 } from '../models/index';
 import {
     ErrorModelFromJSON,
@@ -26,6 +28,10 @@ import {
     LinkToJSON,
     LinkBaseFromJSON,
     LinkBaseToJSON,
+    LinkOrderRequestBodyFromJSON,
+    LinkOrderRequestBodyToJSON,
+    LinkOrderResponseBodyFromJSON,
+    LinkOrderResponseBodyToJSON,
 } from '../models/index';
 
 export interface DeleteLinkRequest {
@@ -45,6 +51,10 @@ export interface PutUpdateLinkRequest {
     linkId: string;
     linkBase: Omit<LinkBase, '$schema'>;
     shelfId?: string;
+}
+
+export interface PutUpdateLinksOrderRequest {
+    linkOrderRequestBody: Omit<LinkOrderRequestBody, '$schema'>;
 }
 
 /**
@@ -244,6 +254,55 @@ export class LinkApi extends runtime.BaseAPI {
      */
     async putUpdateLink(requestParameters: PutUpdateLinkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Link> {
         const response = await this.putUpdateLinkRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update the order of many links in a single request. A link can only be reordered within the section it already belongs to. Invalid items are rejected individually (reported in the response\'s failures list) without aborting the rest of the batch.
+     * Update links order in batch
+     */
+    async putUpdateLinksOrderRaw(requestParameters: PutUpdateLinksOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LinkOrderResponseBody>> {
+        if (requestParameters['linkOrderRequestBody'] == null) {
+            throw new runtime.RequiredError(
+                'linkOrderRequestBody',
+                'Required parameter "linkOrderRequestBody" was null or undefined when calling putUpdateLinksOrder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/links/reorder`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: LinkOrderRequestBodyToJSON(requestParameters['linkOrderRequestBody']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => LinkOrderResponseBodyFromJSON(jsonValue));
+    }
+
+    /**
+     * Update the order of many links in a single request. A link can only be reordered within the section it already belongs to. Invalid items are rejected individually (reported in the response\'s failures list) without aborting the rest of the batch.
+     * Update links order in batch
+     */
+    async putUpdateLinksOrder(requestParameters: PutUpdateLinksOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LinkOrderResponseBody> {
+        const response = await this.putUpdateLinksOrderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

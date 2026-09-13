@@ -66,6 +66,18 @@ type Configuration struct {
 			UsePort bool `yaml:"usePort"`
 		} `yaml:"openapi"`
 	} `yaml:"domain"`
+	Themes struct {
+		// Directory of instance-theme YAML files, scanned once at startup
+		// (see domain.SyncInstanceThemes). Leave empty to skip entirely.
+		Directory string `yaml:"directory"`
+	} `yaml:"themes"`
+	Assets struct {
+		// Directory of static files (e.g. theme background images) an
+		// instance admin mounts in, scanned once at startup and served at
+		// BasePath. Leave Directory empty to skip entirely.
+		Directory string `yaml:"directory"`
+		BasePath  string `yaml:"basePath"`
+	} `yaml:"assets"`
 	Authentication struct {
 		Type                      string `yaml:"type"`
 		JwtSecret                 string `yaml:"jwtSecret" json:"-"`

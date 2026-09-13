@@ -17,7 +17,22 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
           message: detail.message!
         }))
 
-      return { message: body.detail || 'Something went wrong.', fieldErrors }
+      // huma's top-level "detail" is a generic label (e.g. "validation
+      // failed") - the actual reason lives in each item of "errors". Prefer
+      // those so the toast is useful even when a field doesn't currently
+      // render on the form (e.g. an unexpected/removed property) and the
+      // per-field red-state below has nowhere to attach to.
+      const specificMessages = (body.errors ?? [])
+        .filter((detail) => detail.message)
+        .map((detail) => detail.location
+          ? `${detail.location.replace(/^body\./, '')}: ${detail.message}`
+          : detail.message!)
+
+      const message = specificMessages.length > 0
+        ? specificMessages.join('; ')
+        : (body.detail || 'Something went wrong.')
+
+      return { message, fieldErrors }
     } catch {
       return { message: err.message, fieldErrors: [] }
     }

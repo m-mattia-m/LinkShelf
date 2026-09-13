@@ -6,8 +6,15 @@ const props = withDefaults(defineProps<{
   mode?: 'create' | 'edit'
   theme?: Theme
   initial?: ThemeBase
+  // Suppresses the dialog's own default trigger button - for a usage that's
+  // opened purely programmatically (e.g. the import flow, which only sets
+  // `initial` once a file is picked, so `!initial` alone can't tell "the
+  // import dialog" apart from "the create dialog" while no file is chosen
+  // yet).
+  hideTrigger?: boolean
 }>(), {
-  mode: 'create'
+  mode: 'create',
+  hideTrigger: false
 })
 
 const emit = defineEmits<{
@@ -53,7 +60,7 @@ async function save(close: () => void) {
     :ui="{ footer: 'justify-end' }"
   >
     <UButton
-      v-if="mode === 'create' && !initial"
+      v-if="mode === 'create' && !hideTrigger"
       icon="i-lucide-plus"
       label="New theme"
     />

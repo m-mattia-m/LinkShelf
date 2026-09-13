@@ -18,6 +18,7 @@ type MockService struct {
 	ShelfRepository            *mocks.MockShelfRepository
 	SectionRepository          *mocks.MockSectionRepository
 	LinkRepository             *mocks.MockLinkRepository
+	ThemeRepository            *mocks.MockThemeRepository
 	SettingRepository          *mocks.MockSettingRepository
 	StatisticRepository        *mocks.MockStatisticRepository
 	RefreshTokenRepository     *mocks.MockRefreshTokenRepository
@@ -34,6 +35,7 @@ func NewMockService(t *testing.T) *MockService {
 	shelfRepository := mocks.NewMockShelfRepository(ctrl)
 	sectionRepository := mocks.NewMockSectionRepository(ctrl)
 	linkRepository := mocks.NewMockLinkRepository(ctrl)
+	themeRepository := mocks.NewMockThemeRepository(ctrl)
 	settingRepository := mocks.NewMockSettingRepository(ctrl)
 	statisticRepository := mocks.NewMockStatisticRepository(ctrl)
 	refreshTokenRepository := mocks.NewMockRefreshTokenRepository(ctrl)
@@ -45,6 +47,7 @@ func NewMockService(t *testing.T) *MockService {
 		ShelfRepository:            shelfRepository,
 		SectionRepository:          sectionRepository,
 		LinkRepository:             linkRepository,
+		ThemeRepository:            themeRepository,
 		SettingRepository:          settingRepository,
 		StatisticRepository:        statisticRepository,
 		RefreshTokenRepository:     refreshTokenRepository,
@@ -62,6 +65,7 @@ func NewMockService(t *testing.T) *MockService {
 		ShelfRepository:            shelfRepository,
 		SectionRepository:          sectionRepository,
 		LinkRepository:             linkRepository,
+		ThemeRepository:            themeRepository,
 		SettingRepository:          settingRepository,
 		StatisticRepository:        statisticRepository,
 		RefreshTokenRepository:     refreshTokenRepository,

@@ -21,6 +21,12 @@ const items = computed<NavigationMenuItem[][]>(() => [
       icon: 'uil-books',
       active: route.path.startsWith('/app/shelf')
     },
+    {
+      label: 'Themes',
+      to: '/app/themes',
+      icon: 'uil-palette',
+      active: route.path.startsWith('/app/themes')
+    },
     // Settings (general site config, user management) are admin-only - a
     // regular user can't reach these pages either (see middleware/admin.ts),
     // so there's no point showing the link.
@@ -38,6 +44,11 @@ const items = computed<NavigationMenuItem[][]>(() => [
             {
               label: 'Users',
               to: '/app/settings/users',
+              exact: true
+            },
+            {
+              label: 'Themes',
+              to: '/app/settings/themes',
               exact: true
             }
           ]

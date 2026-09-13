@@ -17,6 +17,10 @@ type LinkRepository interface {
 	Create(l *model.Link) (string, error)
 	Update(l *model.Link) error
 	Delete(l *model.Link) error
+	// UpdateOrder sets the order of a single link. Used by the batch reorder
+	// endpoint, one call per item so a bad id in the batch fails only that
+	// item.
+	UpdateOrder(id string, order int) error
 }
 
 type linkRepository struct {
@@ -33,10 +37,11 @@ func NewLinkRepository(engine *sql.DB, table string) (LinkRepository, error) {
 
 func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 	query, err := buildSqlStatements(`
-		SELECT l.id, l.title, l.link, l.icon, l.color, l.section_id
+		SELECT l.id, l.title, l.link, l.icon, l.color, l.section_id, l."order"
 		FROM link l
 		JOIN section s ON l.section_id = s.id
-		WHERE s.shelf_id = ?;
+		WHERE s.shelf_id = ?
+		ORDER BY l."order", l.id;
 	`)
 	if err != nil {
 		return nil, err
@@ -57,6 +62,7 @@ func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 			&link.Icon,
 			&link.Color,
 			&link.SectionId,
+			&link.Order,
 		)
 		if err != nil {
 			return nil, err
@@ -73,7 +79,7 @@ func (r *linkRepository) ListByShelfId(id string) ([]model.Link, error) {
 
 func (r *linkRepository) Get(id string) (*model.Link, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, link, icon, color, section_id
+		SELECT id, title, link, icon, color, section_id, "order"
 		FROM link
 		WHERE id = ?
 		LIMIT 1
@@ -92,6 +98,7 @@ func (r *linkRepository) Get(id string) (*model.Link, error) {
 		&link.Icon,
 		&link.Color,
 		&link.SectionId,
+		&link.Order,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -105,8 +112,8 @@ func (r *linkRepository) Get(id string) (*model.Link, error) {
 
 func (r *linkRepository) Create(l *model.Link) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO link (id, title, link, icon, color, section_id)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO link (id, title, link, icon, color, section_id, "order")
+		VALUES (?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(o."order"), -1) + 1 FROM link o WHERE o.section_id = ?))
 	`)
 	if err != nil {
 		return "", err
@@ -126,6 +133,7 @@ func (r *linkRepository) Create(l *model.Link) (string, error) {
 		l.Link,
 		l.Icon,
 		l.Color,
+		l.SectionId,
 		l.SectionId,
 	)
 	if err != nil {
@@ -180,6 +188,37 @@ func (r *linkRepository) Delete(l *model.Link) error {
 	)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *linkRepository) UpdateOrder(id string, order int) error {
+	query, err := buildSqlStatements(`
+		UPDATE link
+		SET "order" = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	res, err := r.Engine.ExecContext(
+		context.TODO(),
+		query,
+		order,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
 	}
 
 	return nil

@@ -17,7 +17,7 @@ import type { UserRequestBodyOnlyPassword } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/UserRequestBodyOnlyPassword.json,
+  "$schema": null,
   "newPassword": null,
   "oldPassword": null,
 } satisfies UserRequestBodyOnlyPassword

@@ -278,7 +278,7 @@ func getShelfInclusiveItsOwnerUser(t *testing.T) (shelfId, token string) {
 			Description: "A shelf created during API integration tests",
 			Icon:        "",
 		},
-		Theme: "",
+		ThemeId: "",
 	})
 	require.NoError(t, err)
 

@@ -49,6 +49,10 @@ type LinkService interface {
 	Create(callerUserId string, isAdmin bool, u *model.Link) (*model.Link, error)
 	Update(linkId, callerUserId string, isAdmin bool, linkRequest *model.Link) (*model.Link, error)
 	Delete(linkId, callerUserId string, isAdmin bool) error
+	// UpdateOrder saves every valid item and reports the rest as failures - it
+	// never aborts the whole batch over one bad item, mirroring
+	// SettingService.UpdateMany.
+	UpdateOrder(callerUserId string, isAdmin bool, items []model.LinkOrderItem) []model.LinkOrderFailure
 }
 
 type linkServiceImpl struct {
@@ -168,4 +172,48 @@ func (s *linkServiceImpl) Delete(linkId, callerUserId string, isAdmin bool) erro
 	}
 
 	return s.Repository.LinkRepository.Delete(&model.Link{Id: linkId})
+}
+
+func (s *linkServiceImpl) UpdateOrder(callerUserId string, isAdmin bool, items []model.LinkOrderItem) []model.LinkOrderFailure {
+	var failures []model.LinkOrderFailure
+
+	for _, item := range items {
+		if err := s.canReorder(item.Id, callerUserId, isAdmin); err != nil {
+			failures = append(failures, model.LinkOrderFailure{Id: item.Id, Reason: err.Error()})
+			continue
+		}
+
+		if err := s.Repository.LinkRepository.UpdateOrder(item.Id, item.Order); err != nil {
+			failures = append(failures, model.LinkOrderFailure{Id: item.Id, Reason: err.Error()})
+		}
+	}
+
+	return failures
+}
+
+// canReorder resolves the link's shelf (via its section) and checks the
+// caller may write to it, returning ErrNotFound/ErrForbidden the same way
+// Update/Delete do. It never changes section_id - a reorder batch can only
+// move a link within whichever section it already belongs to.
+func (s *linkServiceImpl) canReorder(linkId, callerUserId string, isAdmin bool) error {
+	existing, err := s.Repository.LinkRepository.Get(linkId)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return ErrNotFound
+	}
+
+	shelf, err := s.shelfOwnerOfSection(existing.SectionId)
+	if err != nil {
+		return err
+	}
+	if shelf == nil {
+		return ErrNotFound
+	}
+	if !isAdmin && shelf.UserId != callerUserId {
+		return ErrForbidden
+	}
+
+	return nil
 }

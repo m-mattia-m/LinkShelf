@@ -20,10 +20,12 @@ func Test_SectionRepository_ListByShelfId_Success(t *testing.T) {
 		"id",
 		"title",
 		"shelf_id",
+		"order",
 	}).AddRow(
 		"section-uuid-test",
 		"test-section",
 		"shelf-uuid-test",
+		0,
 	)
 
 	mock.ExpectQuery(`FROM\s+section`).
@@ -88,10 +90,12 @@ func Test_SectionRepository_Get_Success(t *testing.T) {
 		"id",
 		"title",
 		"shelf_id",
+		"order",
 	}).AddRow(
 		"section-uuid-test",
 		"test-section",
 		"shelf-uuid-test",
+		0,
 	)
 
 	mock.ExpectQuery(`FROM\s+section`).
@@ -139,6 +143,7 @@ func Test_SectionRepository_Create_Success(t *testing.T) {
 			sqlmock.AnyArg(), // generated UUID
 			"test-section",
 			"shelf-uuid-test",
+			"shelf-uuid-test", // next-order subquery's shelf_id
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -253,8 +258,8 @@ func Test_SectionRepository_ListByShelfId_RowsIterationError(t *testing.T) {
 
 	repo := &sectionRepository{Engine: db}
 
-	rows := sqlmock.NewRows([]string{"id", "title", "shelf_id"}).
-		AddRow("section-uuid-test", "title-test", "shelf-uuid-test").
+	rows := sqlmock.NewRows([]string{"id", "title", "shelf_id", "order"}).
+		AddRow("section-uuid-test", "title-test", "shelf-uuid-test", 0).
 		RowError(0, errors.New("connection dropped mid-stream"))
 
 	mock.ExpectQuery(`FROM\s+section`).

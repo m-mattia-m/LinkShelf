@@ -149,6 +149,7 @@ async function onImportFileSelected(event: Event) {
   <ThemeFormDialog
     v-model:open="importOpen"
     mode="create"
+    hide-trigger
     :initial="importInitial"
   />
 

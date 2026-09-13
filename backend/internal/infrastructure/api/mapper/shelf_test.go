@@ -65,9 +65,9 @@ func Test_MapShelfToPublicShelfResponse(t *testing.T) {
 			Icon:        "i-lucide-book-open",
 			Path:        "test-path",
 		},
-		Domain: "example.com",
-		Theme:  "some-theme",
-		UserId: "user-uuid-test",
+		Domain:  "example.com",
+		ThemeId: "some-theme-id",
+		UserId:  "user-uuid-test",
 	}
 
 	resp := MapShelfToPublicShelfResponse(shelf)

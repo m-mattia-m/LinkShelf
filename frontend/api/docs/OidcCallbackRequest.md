@@ -17,7 +17,7 @@ import type { OidcCallbackRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/OidcCallbackRequest.json,
+  "$schema": null,
   "code": null,
   "state": null,
 } satisfies OidcCallbackRequest

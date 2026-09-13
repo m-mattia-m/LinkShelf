@@ -11,7 +11,7 @@ Name | Type
 `domain` | string
 `icon` | string
 `path` | string
-`theme` | string
+`themeId` | string
 `title` | string
 
 ## Example
@@ -21,12 +21,12 @@ import type { ShelfBase } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/ShelfBase.json,
+  "$schema": null,
   "description": null,
   "domain": null,
   "icon": null,
   "path": null,
-  "theme": null,
+  "themeId": null,
   "title": null,
 } satisfies ShelfBase
 

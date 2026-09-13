@@ -11,6 +11,7 @@ Name | Type
 `icon` | string
 `id` | string
 `link` | string
+`order` | number
 `sectionId` | string
 `title` | string
 
@@ -21,11 +22,12 @@ import type { Link } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/Link.json,
+  "$schema": null,
   "color": null,
   "icon": null,
   "id": null,
   "link": null,
+  "order": null,
   "sectionId": null,
   "title": null,
 } satisfies Link

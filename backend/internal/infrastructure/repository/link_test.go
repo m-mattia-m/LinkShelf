@@ -27,6 +27,7 @@ func Test_LinkRepository_ListByShelfId_Success(t *testing.T) {
 		"icon",
 		"color",
 		"section_id",
+		"order",
 	}).AddRow(
 		"link-uuid-test",
 		"title-test",
@@ -34,6 +35,7 @@ func Test_LinkRepository_ListByShelfId_Success(t *testing.T) {
 		"icon-test",
 		"#ff0000",
 		"section-uuid-test",
+		0,
 	)
 
 	mock.ExpectQuery(`FROM\s+link l`).
@@ -105,6 +107,7 @@ func Test_LinkRepository_Get_Success(t *testing.T) {
 		"icon",
 		"color",
 		"section_id",
+		"order",
 	}).AddRow(
 		"link-uuid-test",
 		"title-test",
@@ -112,6 +115,7 @@ func Test_LinkRepository_Get_Success(t *testing.T) {
 		"icon-test",
 		"#ff0000",
 		"section-uuid-test",
+		0,
 	)
 
 	mock.ExpectQuery(`FROM\s+link\s`).
@@ -180,6 +184,7 @@ func Test_LinkRepository_Create_Success(t *testing.T) {
 			"icon-test",
 			"#ff0000",
 			"section-uuid-test",
+			"section-uuid-test", // next-order subquery's section_id
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -305,8 +310,8 @@ func Test_LinkRepository_ListByShelfId_RowsIterationError(t *testing.T) {
 
 	repo := &linkRepository{Engine: db}
 
-	rows := sqlmock.NewRows([]string{"id", "title", "link", "icon", "color", "section_id"}).
-		AddRow("link-uuid-test", "title-test", "https://example.com", "icon-test", "#000000", "section-uuid-test").
+	rows := sqlmock.NewRows([]string{"id", "title", "link", "icon", "color", "section_id", "order"}).
+		AddRow("link-uuid-test", "title-test", "https://example.com", "icon-test", "#000000", "section-uuid-test", 0).
 		RowError(0, errors.New("connection dropped mid-stream"))
 
 	mock.ExpectQuery(`FROM\s+link l`).

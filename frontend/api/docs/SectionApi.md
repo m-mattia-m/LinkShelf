@@ -1,6 +1,6 @@
 # SectionApi
 
-All URIs are relative to *http://localhost:8085*
+All URIs are relative to *http://localhost*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -8,6 +8,7 @@ All URIs are relative to *http://localhost:8085*
 | [**getSections**](SectionApi.md#getsections) | **GET** /v1/sections | Get sections by shelf ID |
 | [**postCreateSection**](SectionApi.md#postcreatesection) | **POST** /v1/sections | Create section |
 | [**putUpdateSection**](SectionApi.md#putupdatesection) | **PUT** /v1/sections/{sectionId} | Update section |
+| [**putUpdateSectionsOrder**](SectionApi.md#putupdatesectionsorder) | **PUT** /v1/sections/reorder | Update sections order in batch |
 
 
 
@@ -278,6 +279,78 @@ example().catch(console.error);
 ### Return type
 
 [**Section**](Section.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## putUpdateSectionsOrder
+
+> SectionOrderResponseBody putUpdateSectionsOrder(sectionOrderRequestBody)
+
+Update sections order in batch
+
+Update the order of many sections in a single request. Invalid items are rejected individually (reported in the response\&#39;s failures list) without aborting the rest of the batch.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  SectionApi,
+} from '';
+import type { PutUpdateSectionsOrderRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new SectionApi(config);
+
+  const body = {
+    // SectionOrderRequestBody
+    sectionOrderRequestBody: ...,
+  } satisfies PutUpdateSectionsOrderRequest;
+
+  try {
+    const data = await api.putUpdateSectionsOrder(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **sectionOrderRequestBody** | [SectionOrderRequestBody](SectionOrderRequestBody.md) |  | |
+
+### Return type
+
+[**SectionOrderResponseBody**](SectionOrderResponseBody.md)
 
 ### Authorization
 

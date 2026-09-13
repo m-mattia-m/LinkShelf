@@ -206,9 +206,9 @@ func Test_ShelfRepository_Create_Success(t *testing.T) {
 			Description: "description-test",
 			Icon:        "icon-test",
 		},
-		Domain: "example.com",
-		Theme:  "dark",
-		UserId: "user-uuid-test",
+		Domain:  "example.com",
+		ThemeId: "dark",
+		UserId:  "user-uuid-test",
 	}
 
 	id, err := repo.Create(shelf)
@@ -247,8 +247,8 @@ func Test_ShelfRepository_Update_Success(t *testing.T) {
 			Description: "updated-desc",
 			Icon:        "updated-icon",
 		},
-		Domain: "updated.com",
-		Theme:  "light",
+		Domain:  "updated.com",
+		ThemeId: "light",
 	})
 
 	require.NoError(t, err)

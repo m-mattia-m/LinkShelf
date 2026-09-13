@@ -6,6 +6,7 @@ import {
   SettingApi,
   ShelfApi,
   StatisticApi,
+  ThemeApi,
   UserApi
 } from '~~/api'
 
@@ -50,6 +51,7 @@ export function useApi() {
     link: new LinkApi(configuration),
     setting: new SettingApi(configuration),
     user: new UserApi(configuration),
-    statistic: new StatisticApi(configuration)
+    statistic: new StatisticApi(configuration),
+    theme: new ThemeApi(configuration)
   }
 }

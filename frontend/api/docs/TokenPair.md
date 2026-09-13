@@ -17,7 +17,7 @@ import type { TokenPair } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/TokenPair.json,
+  "$schema": null,
   "accessToken": null,
   "refreshToken": null,
 } satisfies TokenPair

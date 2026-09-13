@@ -54,7 +54,7 @@ export interface ShelfBase {
      * @type {string}
      * @memberof ShelfBase
      */
-    theme?: string;
+    themeId?: string;
     /**
      * 
      * @type {string}
@@ -87,7 +87,7 @@ export function ShelfBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'domain': json['domain'] == null ? undefined : json['domain'],
         'icon': json['icon'] == null ? undefined : json['icon'],
         'path': json['path'],
-        'theme': json['theme'] == null ? undefined : json['theme'],
+        'themeId': json['themeId'] == null ? undefined : json['themeId'],
         'title': json['title'],
     };
 }
@@ -107,7 +107,7 @@ export function ShelfBaseToJSONTyped(value?: Omit<ShelfBase, '$schema'> | null, 
         'domain': value['domain'],
         'icon': value['icon'],
         'path': value['path'],
-        'theme': value['theme'],
+        'themeId': value['themeId'],
         'title': value['title'],
     };
 }

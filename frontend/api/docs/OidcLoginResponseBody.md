@@ -17,7 +17,7 @@ import type { OidcLoginResponseBody } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/OidcLoginResponseBody.json,
+  "$schema": null,
   "authorizationUrl": null,
   "state": null,
 } satisfies OidcLoginResponseBody

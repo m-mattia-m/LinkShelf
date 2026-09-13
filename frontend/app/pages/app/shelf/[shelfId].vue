@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type { Shelf } from '~~/api'
+import { reactive } from 'vue'
+import draggable from 'vuedraggable'
+import type { Shelf, Section, Link } from '~~/api'
 import { useShelfStore } from '~/stores/shelf'
 import { useSectionStore } from '~/stores/section'
 import { useLinkStore } from '~/stores/link'
@@ -22,6 +24,63 @@ const linkStore = useLinkStore()
 const shelf = ref<Shelf>()
 const loading = ref(true)
 const notFound = ref(false)
+
+// Local, unsaved drag order - dragging a section or link only ever mutates
+// these; nothing is persisted until "Save order" is clicked. Re-derived from
+// the stores whenever they refetch (create/delete/initial load), which also
+// discards any in-progress unsaved drag in the rare case one of those
+// happens concurrently.
+const orderedSections = ref<Section[]>([])
+const linkOrders = reactive<Record<string, Link[]>>({})
+const orderDirty = ref(false)
+const savingOrder = ref(false)
+
+function resetLocalOrder() {
+  orderedSections.value = [...sectionStore.sections].sort((a, b) => a.order - b.order)
+  for (const key of Object.keys(linkOrders)) delete linkOrders[key]
+  for (const section of orderedSections.value) {
+    linkOrders[section.id] = [...(linkStore.bySectionId.get(section.id) ?? [])].sort((a, b) => a.order - b.order)
+  }
+  orderDirty.value = false
+}
+
+watch(() => sectionStore.sections, resetLocalOrder)
+watch(() => linkStore.links, resetLocalOrder)
+
+async function saveOrder() {
+  savingOrder.value = true
+  try {
+    const api = useApi()
+    const sections = orderedSections.value.map((s, i) => ({ id: s.id, order: i }))
+    const links = orderedSections.value.flatMap((s) => (linkOrders[s.id] ?? []).map((l, i) => ({ id: l.id, order: i })))
+
+    await Promise.all([
+      sections.length ? api.section.putUpdateSectionsOrder({ sectionOrderRequestBody: { sections } }) : undefined,
+      links.length ? api.link.putUpdateLinksOrder({ linkOrderRequestBody: { links } }) : undefined
+    ])
+
+    await Promise.all([sectionStore.fetch(shelfId), linkStore.fetch(shelfId)])
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    savingOrder.value = false
+  }
+}
+
+// Unsaved order changes are easy to lose silently (tab close, in-app nav) -
+// warn before either. Deliberately no autosave-on-drop: with several active
+// users this would fire a request per drag frame instead of one on demand.
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (!orderDirty.value) return
+  e.preventDefault()
+  e.returnValue = ''
+}
+onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
+onBeforeRouteLeave(() => {
+  if (!orderDirty.value) return true
+  return window.confirm('You have unsaved order changes. Leave without saving?')
+})
 
 async function loadAll() {
   loading.value = true
@@ -131,14 +190,35 @@ async function createSection() {
       {{ t('app.section.empty') }}
     </div>
 
-    <div v-else class="flex flex-col gap-4">
-      <SectionCard
-        v-for="section in sectionStore.sections"
-        :key="section.id"
-        :section="section"
-        :links="linkStore.bySectionId.get(section.id) ?? []"
-      />
-    </div>
+    <template v-else>
+      <div class="flex justify-end pb-2">
+        <UButton
+          label="Save order"
+          icon="i-lucide-save"
+          color="primary"
+          :disabled="!orderDirty"
+          :loading="savingOrder"
+          @click="saveOrder"
+        />
+      </div>
+
+      <draggable
+        v-model="orderedSections"
+        item-key="id"
+        handle=".drag-handle"
+        tag="div"
+        class="flex flex-col gap-4"
+        @end="orderDirty = true"
+      >
+        <template #item="{ element: section }">
+          <SectionCard
+            :section="section"
+            v-model:links="linkOrders[section.id]!"
+            @reordered="orderDirty = true"
+          />
+        </template>
+      </draggable>
+    </template>
 
     <ShelfFormDialog
       v-model:open="editOpen"

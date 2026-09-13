@@ -20,7 +20,7 @@ import type { LinkBase } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/LinkBase.json,
+  "$schema": null,
   "color": null,
   "icon": null,
   "link": null,

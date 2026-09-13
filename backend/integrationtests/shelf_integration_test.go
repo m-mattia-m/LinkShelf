@@ -23,7 +23,7 @@ func Test_API_Shelf_Create(t *testing.T) {
 		Path:        "shelf-title-creation",
 		Domain:      "",
 		Description: "A shelf created during API integration tests",
-		Theme:       "",
+		ThemeId:     "",
 		Icon:        "",
 	}
 
@@ -63,8 +63,8 @@ func Test_API_Shelf_Update(t *testing.T) {
 			Description: "A shelf created during API integration tests",
 			Icon:        "",
 		},
-		Domain: "",
-		Theme:  "",
+		Domain:  "",
+		ThemeId: "",
 	})
 	require.NoError(t, err)
 
@@ -73,7 +73,7 @@ func Test_API_Shelf_Update(t *testing.T) {
 		Path:        "shelf-title-updated",
 		Domain:      "",
 		Description: "A shelf updated during API integration tests",
-		Theme:       "",
+		ThemeId:     "",
 		Icon:        "",
 	}
 
@@ -103,7 +103,7 @@ func Test_API_Shelf_Update(t *testing.T) {
 	require.Equal(t, "shelf-title-updated", shelfResp.Title)
 	require.Equal(t, "shelf-title-updated", shelfResp.Path)
 	require.Equal(t, "A shelf updated during API integration tests", shelfResp.Description)
-	require.Equal(t, "", shelfResp.Theme)
+	require.Equal(t, "", shelfResp.ThemeId)
 	require.Equal(t, "", shelfResp.Icon)
 	require.Equal(t, shelfId, shelfResp.Id)
 
@@ -119,8 +119,8 @@ func Test_API_Shelf_Delete(t *testing.T) {
 			Description: "A shelf created during API integration tests",
 			Icon:        "",
 		},
-		Domain: "",
-		Theme:  "",
+		Domain:  "",
+		ThemeId: "",
 	})
 	require.NoError(t, err)
 
@@ -152,8 +152,8 @@ func Test_API_Shelf_Get(t *testing.T) {
 			Description: "A shelf created during API integration tests",
 			Icon:        "",
 		},
-		Domain: "",
-		Theme:  "",
+		Domain:  "",
+		ThemeId: "",
 	})
 	require.NoError(t, err)
 
@@ -183,7 +183,7 @@ func Test_API_Shelf_Get(t *testing.T) {
 	require.Equal(t, "shelf-title-get", shelfResp.Title)
 	require.Equal(t, "shelf-title-get", shelfResp.Path)
 	require.Equal(t, "A shelf created during API integration tests", shelfResp.Description)
-	require.Equal(t, "", shelfResp.Theme)
+	require.Equal(t, "", shelfResp.ThemeId)
 	require.Equal(t, "", shelfResp.Icon)
 	require.Equal(t, userId, shelfResp.UserId)
 }
@@ -196,7 +196,7 @@ func Test_API_Shelf_Create_DuplicatePath_Conflict(t *testing.T) {
 		Path:        "shelf-duplicate-path",
 		Domain:      "",
 		Description: "A shelf created during API integration tests",
-		Theme:       "",
+		ThemeId:     "",
 		Icon:        "",
 	}
 
@@ -240,7 +240,7 @@ func Test_API_Shelf_Create_MissingTitle_Validation(t *testing.T) {
 		Path:        "shelf-missing-title",
 		Domain:      "",
 		Description: "A shelf created during API integration tests",
-		Theme:       "",
+		ThemeId:     "",
 		Icon:        "",
 	}
 
@@ -269,7 +269,7 @@ func Test_API_Shelf_Create_InvalidPath_Validation(t *testing.T) {
 		Path:        "not a valid path!",
 		Domain:      "",
 		Description: "A shelf created during API integration tests",
-		Theme:       "",
+		ThemeId:     "",
 		Icon:        "",
 	}
 
@@ -298,7 +298,7 @@ func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
 		Path:        "Shelf-Public-Path",
 		Domain:      "",
 		Description: "A public shelf description",
-		Theme:       "",
+		ThemeId:     "",
 		Icon:        "i-lucide-book-open",
 	}
 
@@ -344,11 +344,14 @@ func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
 	require.Equal(t, "A public shelf description", publicShelf.Description)
 	require.Equal(t, "i-lucide-book-open", publicShelf.Icon)
 	require.Equal(t, "Shelf-Public-Path", publicShelf.Path)
+	// no theme was selected, so it resolves to nil (render the built-in
+	// default look) rather than leaking the internal theme_id.
+	require.Nil(t, publicShelf.Theme)
 
 	// the public payload must not leak internal fields
 	require.NotContains(t, string(body), "userId")
 	require.NotContains(t, string(body), "domain")
-	require.NotContains(t, string(body), "theme")
+	require.NotContains(t, string(body), "themeId")
 }
 
 func Test_API_Shelf_GetPublicByPath_NotFound(t *testing.T) {

@@ -16,7 +16,7 @@ import type { SettingBatchRequestBody } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "$schema": http://localhost:8085/schemas/SettingBatchRequestBody.json,
+  "$schema": null,
   "settings": null,
 } satisfies SettingBatchRequestBody
 

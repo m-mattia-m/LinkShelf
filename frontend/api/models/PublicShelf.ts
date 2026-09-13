@@ -51,6 +51,12 @@ export interface PublicShelf {
     path: string;
     /**
      * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PublicShelf
+     */
+    theme: { [key: string]: string; };
+    /**
+     * 
      * @type {string}
      * @memberof PublicShelf
      */
@@ -65,6 +71,7 @@ export function instanceOfPublicShelf(value: object): value is PublicShelf {
     if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('path' in value) || value['path'] === undefined) return false;
+    if (!('theme' in value) || value['theme'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     return true;
 }
@@ -84,6 +91,7 @@ export function PublicShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'icon': json['icon'],
         'id': json['id'],
         'path': json['path'],
+        'theme': json['theme'],
         'title': json['title'],
     };
 }
@@ -103,6 +111,7 @@ export function PublicShelfToJSONTyped(value?: Omit<PublicShelf, '$schema'> | nu
         'icon': value['icon'],
         'id': value['id'],
         'path': value['path'],
+        'theme': value['theme'],
         'title': value['title'],
     };
 }

@@ -44,13 +44,15 @@ func nullIfEmpty(s string) any {
 	return s
 }
 
-// scanShelf reads a shelf row where path/domain may be SQL NULL, translating
-// NULL back to "" so nothing above the repository layer has to know about it.
+// scanShelf reads a shelf row where path/domain/theme_id may be SQL NULL,
+// translating NULL back to "" so nothing above the repository layer has to
+// know about it.
 func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 	var (
-		shelf  model.Shelf
-		path   sql.NullString
-		domain sql.NullString
+		shelf   model.Shelf
+		path    sql.NullString
+		domain  sql.NullString
+		themeId sql.NullString
 	)
 
 	err := scan(
@@ -59,7 +61,7 @@ func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 		&path,
 		&domain,
 		&shelf.Description,
-		&shelf.Theme,
+		&themeId,
 		&shelf.Icon,
 		&shelf.UserId,
 	)
@@ -69,12 +71,13 @@ func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 
 	shelf.Path = path.String
 	shelf.Domain = domain.String
+	shelf.ThemeId = themeId.String
 	return shelf, nil
 }
 
 func (r *shelfRepository) List() ([]model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, path, domain, description, theme, icon, user_id
+		SELECT id, title, path, domain, description, theme_id, icon, user_id
 		FROM shelf
 	`)
 	if err != nil {
@@ -107,7 +110,7 @@ func (r *shelfRepository) List() ([]model.Shelf, error) {
 
 func (r *shelfRepository) ListByUserId(userId string) ([]model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, path, domain, description, theme, icon, user_id
+		SELECT id, title, path, domain, description, theme_id, icon, user_id
 		FROM shelf
 		WHERE user_id = ?
 	`)
@@ -141,7 +144,7 @@ func (r *shelfRepository) ListByUserId(userId string) ([]model.Shelf, error) {
 
 func (r *shelfRepository) Get(id string) (*model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, path, domain, description, theme, icon, user_id
+		SELECT id, title, path, domain, description, theme_id, icon, user_id
 		FROM shelf
 		WHERE id = ?
 	`)
@@ -164,7 +167,7 @@ func (r *shelfRepository) Get(id string) (*model.Shelf, error) {
 
 func (r *shelfRepository) GetByPath(path string) (*model.Shelf, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, title, path, domain, description, theme, icon, user_id
+		SELECT id, title, path, domain, description, theme_id, icon, user_id
 		FROM shelf
 		WHERE LOWER(path) = LOWER(?)
 	`)
@@ -187,7 +190,7 @@ func (r *shelfRepository) GetByPath(path string) (*model.Shelf, error) {
 
 func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO shelf (id, title, path, domain, description, theme, icon, user_id)
+		INSERT INTO shelf (id, title, path, domain, description, theme_id, icon, user_id)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
@@ -208,7 +211,7 @@ func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 		nullIfEmpty(s.Path),
 		nullIfEmpty(s.Domain),
 		s.Description,
-		s.Theme,
+		nullIfEmpty(s.ThemeId),
 		s.Icon,
 		s.UserId,
 	)
@@ -226,7 +229,7 @@ func (r *shelfRepository) Update(s *model.Shelf) error {
 			path = ?,
 			domain = ?,
 			description = ?,
-			theme = ?,
+			theme_id = ?,
 			icon = ?
 		WHERE id = ?
 	`)
@@ -241,7 +244,7 @@ func (r *shelfRepository) Update(s *model.Shelf) error {
 		nullIfEmpty(s.Path),
 		nullIfEmpty(s.Domain),
 		s.Description,
-		s.Theme,
+		nullIfEmpty(s.ThemeId),
 		s.Icon,
 		s.Id,
 	)

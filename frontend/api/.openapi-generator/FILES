@@ -4,6 +4,7 @@ apis/SectionApi.ts
 apis/SettingApi.ts
 apis/ShelfApi.ts
 apis/StatisticApi.ts
+apis/ThemeApi.ts
 apis/UserApi.ts
 apis/index.ts
 docs/AuthApi.md
@@ -13,6 +14,10 @@ docs/ErrorModel.md
 docs/Link.md
 docs/LinkApi.md
 docs/LinkBase.md
+docs/LinkOrderFailure.md
+docs/LinkOrderItem.md
+docs/LinkOrderRequestBody.md
+docs/LinkOrderResponseBody.md
 docs/LoginRequest.md
 docs/OidcCallbackRequest.md
 docs/OidcLoginResponseBody.md
@@ -22,6 +27,10 @@ docs/ResendVerificationRequest.md
 docs/Section.md
 docs/SectionApi.md
 docs/SectionBase.md
+docs/SectionOrderFailure.md
+docs/SectionOrderItem.md
+docs/SectionOrderRequestBody.md
+docs/SectionOrderResponseBody.md
 docs/SetPasswordRequest.md
 docs/Setting.md
 docs/SettingApi.md
@@ -34,6 +43,10 @@ docs/ShelfApi.md
 docs/ShelfBase.md
 docs/Statistic.md
 docs/StatisticApi.md
+docs/Theme.md
+docs/ThemeApi.md
+docs/ThemeBase.md
+docs/ThemeGroupedResponseBody.md
 docs/TokenPair.md
 docs/User.md
 docs/UserApi.md
@@ -47,6 +60,10 @@ models/ErrorDetail.ts
 models/ErrorModel.ts
 models/Link.ts
 models/LinkBase.ts
+models/LinkOrderFailure.ts
+models/LinkOrderItem.ts
+models/LinkOrderRequestBody.ts
+models/LinkOrderResponseBody.ts
 models/LoginRequest.ts
 models/OidcCallbackRequest.ts
 models/OidcLoginResponseBody.ts
@@ -55,6 +72,10 @@ models/RefreshRequest.ts
 models/ResendVerificationRequest.ts
 models/Section.ts
 models/SectionBase.ts
+models/SectionOrderFailure.ts
+models/SectionOrderItem.ts
+models/SectionOrderRequestBody.ts
+models/SectionOrderResponseBody.ts
 models/SetPasswordRequest.ts
 models/Setting.ts
 models/SettingBatchRequestBody.ts
@@ -64,6 +85,9 @@ models/SettingUpdateFailure.ts
 models/Shelf.ts
 models/ShelfBase.ts
 models/Statistic.ts
+models/Theme.ts
+models/ThemeBase.ts
+models/ThemeGroupedResponseBody.ts
 models/TokenPair.ts
 models/User.ts
 models/UserBase.ts

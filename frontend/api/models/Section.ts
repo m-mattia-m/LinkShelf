@@ -33,6 +33,12 @@ export interface Section {
     id: string;
     /**
      * 
+     * @type {number}
+     * @memberof Section
+     */
+    order: number;
+    /**
+     * 
      * @type {string}
      * @memberof Section
      */
@@ -50,6 +56,7 @@ export interface Section {
  */
 export function instanceOfSection(value: object): value is Section {
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('order' in value) || value['order'] === undefined) return false;
     if (!('shelfId' in value) || value['shelfId'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     return true;
@@ -67,6 +74,7 @@ export function SectionFromJSONTyped(json: any, ignoreDiscriminator: boolean): S
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
         'id': json['id'],
+        'order': json['order'],
         'shelfId': json['shelfId'],
         'title': json['title'],
     };
@@ -84,6 +92,7 @@ export function SectionToJSONTyped(value?: Omit<Section, '$schema'> | null, igno
     return {
         
         'id': value['id'],
+        'order': value['order'],
         'shelfId': value['shelfId'],
         'title': value['title'],
     };
