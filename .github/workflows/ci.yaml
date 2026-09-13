@@ -151,14 +151,18 @@ jobs:
 
       - name: Generate coverage badge
         if: github.ref_name == 'main'
-        working-directory: frontend
-        run: node scripts/generate-coverage-badge.mjs "${{ github.ref_name }}"
+        uses: wjervis7/vitest-badge-action@v1.0.0
+        with:
+          result-type: lines
+          vitest-config-path: frontend/vitest.config.ts
+          summary-path: frontend/coverage/coverage-summary.json
+          badge-path: .badges/${{ github.ref_name }}/coverage-frontend.svg
+          badge-text: coverage
+          upload-badge: false
 
       - name: Commit coverage badge
         if: github.ref_name == 'main'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .badges
-          git diff --cached --quiet || git commit -m "update frontend badge .badges/${{ github.ref_name }}/coverage-frontend.svg"
-          git push
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: update frontend badge .badges/${{ github.ref_name }}/coverage-frontend.svg
+          file_pattern: .badges/${{ github.ref_name }}/coverage-frontend.svg
