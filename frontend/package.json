@@ -41,7 +41,6 @@
     "@testing-library/vue": "^8.1.0",
     "@vitest/coverage-v8": "^5.0.0",
     "@vue/test-utils": "^2.5.0",
-    "badge-maker": "^6.0.0",
     "eslint": "^10.10.0",
     "happy-dom": "^20.14.5",
     "msw": "^2.15.0",
