@@ -1,0 +1,33 @@
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    # Scopes this entire job to PRs opened by Dependabot, so no other PR can
+    # ever be touched by this workflow.
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'm-mattia-m/LinkShelf'
+
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # This only flips on GitHub's native auto-merge for the PR - it does
+      # NOT merge immediately. GitHub completes the merge on its own once
+      # every required status check (the CI pipeline) has passed, per the
+      # branch protection rule on main. A major bump, or anything that isn't
+      # from Dependabot, never reaches this step.
+      - name: Enable auto-merge for patch/minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -13,6 +13,11 @@ on:
       - 'refactor/**'
       - 'style/**'
       - 'test/**'
+      # Dependabot's own branch prefix - without this, CI never runs on its
+      # PRs, so the "require status checks" branch rule can never be
+      # satisfied and auto-merge hangs forever waiting on a check that was
+      # never reported.
+      - 'dependabot/**'
 
 env:
   IMAGE_NAME: linkshelf
@@ -108,7 +113,7 @@ jobs:
           threshold-total: 80
           debug: true
 
-          git-token: ${{ secrets.GITHUB_TOKEN }}
+          git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
           git-branch: ${{ github.ref_name }}
 
   frontend:
@@ -145,10 +150,12 @@ jobs:
         run: npm run test:coverage
 
       - name: Generate coverage badge
+        if: github.ref_name == 'main'
         working-directory: frontend
         run: node scripts/generate-coverage-badge.mjs "${{ github.ref_name }}"
 
       - name: Commit coverage badge
+        if: github.ref_name == 'main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
