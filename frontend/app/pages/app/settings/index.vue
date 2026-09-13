@@ -23,8 +23,8 @@ onMounted(async () => {
   }
 })
 
-const languageCode = ref('en')
-const availableLocales = computed(() => locales.value.map((l) => ({ label: l.name ?? l.code, value: l.code })))
+const languageCode = ref<'en' | 'de' | 'de-CH'>('en')
+const availableLocales = computed(() => locales.value.map(l => ({ label: l.name ?? l.code, value: l.code })))
 
 const form = reactive({
   about: '',
@@ -69,7 +69,7 @@ async function loadLanguage(code: string) {
 }
 
 onMounted(() => loadLanguage(languageCode.value))
-watch(languageCode, (code) => loadLanguage(code))
+watch(languageCode, code => loadLanguage(code))
 
 async function save() {
   saving.value = true
@@ -107,75 +107,158 @@ async function save() {
 </script>
 
 <template>
-  <div class="flex justify-between items-center pb-4">
-    <h1 class="text-2xl text-highlighted">{{ t('app.settings.title') }}</h1>
+  <div>
+    <div class="flex justify-between items-center pb-4">
+      <h1 class="text-2xl text-highlighted">
+        {{ t('app.settings.title') }}
+      </h1>
 
-    <USelectMenu
-      v-model="languageCode"
-      :items="availableLocales"
-      value-key="value"
-      class="w-48"
-    />
-  </div>
-
-  <div v-if="loading" class="space-y-4">
-    <USkeleton v-for="i in 4" :key="i" class="h-24 w-full" />
-  </div>
-
-  <div v-else class="flex flex-col gap-6">
-    <UFormField :label="t('app.settings.about.label')">
-      <UTextarea v-model="form.about" class="w-full" :rows="6" />
-      <template #hint>
-        <USwitch v-model="form.aboutShow" :label="t('app.settings.showOnSite')" />
-      </template>
-    </UFormField>
-
-    <UFormField :label="t('app.settings.contact.label')">
-      <UTextarea v-model="form.contact" class="w-full" :rows="6" />
-      <template #hint>
-        <USwitch v-model="form.contactShow" :label="t('app.settings.showOnSite')" />
-      </template>
-    </UFormField>
-
-    <UFormField :label="t('app.settings.imprint.label')">
-      <UTextarea v-model="form.imprint" class="w-full" :rows="6" />
-      <template #hint>
-        <USwitch v-model="form.imprintShow" :label="t('app.settings.showOnSite')" />
-      </template>
-    </UFormField>
-
-    <UFormField :label="t('app.settings.termsOfUse.label')">
-      <UTextarea v-model="form.termsOfUse" class="w-full" :rows="6" />
-      <template #hint>
-        <USwitch v-model="form.termsOfUseShow" :label="t('app.settings.showOnSite')" />
-      </template>
-    </UFormField>
-
-    <UFormField :label="t('app.settings.privacyPolicy.label')">
-      <UTextarea v-model="form.privacyPolicy" class="w-full" :rows="6" />
-      <template #hint>
-        <USwitch v-model="form.privacyPolicyShow" :label="t('app.settings.showOnSite')" />
-      </template>
-    </UFormField>
-
-    <UFormField :label="t('app.settings.redirectToDashboard.label')" :help="t('app.settings.redirectToDashboard.help')">
-      <USwitch v-model="form.redirectToDashboard" />
-    </UFormField>
-
-    <div>
-      <UButton :label="t('app.settings.save')" color="neutral" :loading="saving" @click="save" />
+      <USelectMenu
+        v-model="languageCode"
+        :items="availableLocales"
+        value-key="value"
+        class="w-48"
+      />
     </div>
 
-    <div class="border-t border-default pt-6 flex flex-col gap-2">
-      <h2 class="text-lg text-highlighted">{{ t('app.settings.emailDelivery.title') }}</h2>
-      <p v-if="!emailDeliveryInfo?.enabled" class="text-muted text-sm">{{ t('app.settings.emailDelivery.disabled') }}</p>
-      <dl v-else class="text-sm grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-        <dt class="text-muted">{{ t('app.settings.emailDelivery.host') }}</dt>
-        <dd>{{ emailDeliveryInfo.host }}</dd>
-        <dt class="text-muted">{{ t('app.settings.emailDelivery.from') }}</dt>
-        <dd>{{ emailDeliveryInfo.from }}</dd>
-      </dl>
-      <p class="text-muted text-xs">{{ t('app.settings.emailDelivery.hint') }}</p>
+    <div
+      v-if="loading"
+      class="space-y-4"
+    >
+      <USkeleton
+        v-for="i in 4"
+        :key="i"
+        class="h-24 w-full"
+      />
+    </div>
+
+    <div
+      v-else
+      class="flex flex-col gap-6"
+    >
+      <UFormField :label="t('app.settings.about.label')">
+        <UTextarea
+          id="about"
+          v-model="form.about"
+          class="w-full"
+          :rows="6"
+        />
+        <template #hint>
+          <USwitch
+            id="about-show"
+            v-model="form.aboutShow"
+            :label="t('app.settings.showOnSite')"
+          />
+        </template>
+      </UFormField>
+
+      <UFormField :label="t('app.settings.contact.label')">
+        <UTextarea
+          id="contact"
+          v-model="form.contact"
+          class="w-full"
+          :rows="6"
+        />
+        <template #hint>
+          <USwitch
+            id="contact-show"
+            v-model="form.contactShow"
+            :label="t('app.settings.showOnSite')"
+          />
+        </template>
+      </UFormField>
+
+      <UFormField :label="t('app.settings.imprint.label')">
+        <UTextarea
+          id="imprint"
+          v-model="form.imprint"
+          class="w-full"
+          :rows="6"
+        />
+        <template #hint>
+          <USwitch
+            id="imprint-show"
+            v-model="form.imprintShow"
+            :label="t('app.settings.showOnSite')"
+          />
+        </template>
+      </UFormField>
+
+      <UFormField :label="t('app.settings.termsOfUse.label')">
+        <UTextarea
+          id="terms-of-use"
+          v-model="form.termsOfUse"
+          class="w-full"
+          :rows="6"
+        />
+        <template #hint>
+          <USwitch
+            id="terms-of-use-show"
+            v-model="form.termsOfUseShow"
+            :label="t('app.settings.showOnSite')"
+          />
+        </template>
+      </UFormField>
+
+      <UFormField :label="t('app.settings.privacyPolicy.label')">
+        <UTextarea
+          id="privacy-policy"
+          v-model="form.privacyPolicy"
+          class="w-full"
+          :rows="6"
+        />
+        <template #hint>
+          <USwitch
+            id="privacy-policy-show"
+            v-model="form.privacyPolicyShow"
+            :label="t('app.settings.showOnSite')"
+          />
+        </template>
+      </UFormField>
+
+      <UFormField
+        :label="t('app.settings.redirectToDashboard.label')"
+        :help="t('app.settings.redirectToDashboard.help')"
+      >
+        <USwitch v-model="form.redirectToDashboard" />
+      </UFormField>
+
+      <div>
+        <UButton
+          :label="t('app.settings.save')"
+          color="neutral"
+          :loading="saving"
+          @click="save"
+        />
+      </div>
+
+      <div class="border-t border-default pt-6 flex flex-col gap-2">
+        <h2 class="text-lg text-highlighted">
+          {{ t('app.settings.emailDelivery.title') }}
+        </h2>
+        <p
+          v-if="!emailDeliveryInfo?.enabled"
+          class="text-muted text-sm"
+        >
+          {{ t('app.settings.emailDelivery.disabled') }}
+        </p>
+        <dl
+          v-else
+          class="text-sm grid grid-cols-[auto_1fr] gap-x-3 gap-y-1"
+        >
+          <dt class="text-muted">
+            {{ t('app.settings.emailDelivery.host') }}
+          </dt>
+          <dd>{{ emailDeliveryInfo.host }}</dd>
+          <dt class="text-muted">
+            {{ t('app.settings.emailDelivery.from') }}
+          </dt>
+          <dd>{{ emailDeliveryInfo.from }}</dd>
+        </dl>
+        <p class="text-muted text-xs">
+          {{ t('app.settings.emailDelivery.hint') }}
+        </p>
+      </div>
     </div>
   </div>
 </template>

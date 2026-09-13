@@ -37,7 +37,7 @@ const savingOrder = ref(false)
 
 function resetLocalOrder() {
   orderedSections.value = [...sectionStore.sections].sort((a, b) => a.order - b.order)
-  for (const key of Object.keys(linkOrders)) delete linkOrders[key]
+  for (const key of Object.keys(linkOrders)) Reflect.deleteProperty(linkOrders, key)
   for (const section of orderedSections.value) {
     linkOrders[section.id] = [...(linkStore.bySectionId.get(section.id) ?? [])].sort((a, b) => a.order - b.order)
   }
@@ -52,7 +52,7 @@ async function saveOrder() {
   try {
     const api = useApi()
     const sections = orderedSections.value.map((s, i) => ({ id: s.id, order: i }))
-    const links = orderedSections.value.flatMap((s) => (linkOrders[s.id] ?? []).map((l, i) => ({ id: l.id, order: i })))
+    const links = orderedSections.value.flatMap(s => (linkOrders[s.id] ?? []).map((l, i) => ({ id: l.id, order: i })))
 
     await Promise.all([
       sections.length ? api.section.putUpdateSectionsOrder({ sectionOrderRequestBody: { sections } }) : undefined,
@@ -140,103 +140,145 @@ async function createSection() {
 </script>
 
 <template>
-  <div v-if="loading" class="space-y-4">
-    <USkeleton class="h-8 w-1/3" />
-    <USkeleton class="h-24 w-full" />
-    <USkeleton class="h-40 w-full" />
-  </div>
+  <div>
+    <div
+      v-if="loading"
+      class="space-y-4"
+    >
+      <USkeleton class="h-8 w-1/3" />
+      <USkeleton class="h-24 w-full" />
+      <USkeleton class="h-40 w-full" />
+    </div>
 
-  <div v-else-if="notFound" class="text-center py-16">
-    <p class="text-muted">{{ t('app.shelf.detail.notFound') }}</p>
-    <ULink to="/app/shelf" class="text-primary">{{ t('app.shelf.detail.backToList') }}</ULink>
-  </div>
+    <div
+      v-else-if="notFound"
+      class="text-center py-16"
+    >
+      <p class="text-muted">
+        {{ t('app.shelf.detail.notFound') }}
+      </p>
+      <ULink
+        to="/app/shelf"
+        class="text-primary"
+      >{{ t('app.shelf.detail.backToList') }}</ULink>
+    </div>
 
-  <template v-else-if="shelf">
-    <div class="flex justify-between items-start gap-4 pb-4">
-      <div>
-        <h1 class="text-2xl text-highlighted">{{ shelf.title }}</h1>
-        <p v-if="shelf.description" class="text-muted">{{ shelf.description }}</p>
-        <p class="text-sm text-dimmed">
-          <span v-if="shelf.path">/{{ shelf.path }}</span>
-          <span v-if="shelf.domain">{{ shelf.path ? ' · ' : '' }}{{ shelf.domain }}</span>
-        </p>
+    <template v-else-if="shelf">
+      <div class="flex justify-between items-start gap-4 pb-4">
+        <div>
+          <h1 class="text-2xl text-highlighted">
+            {{ shelf.title }}
+          </h1>
+          <p
+            v-if="shelf.description"
+            class="text-muted"
+          >
+            {{ shelf.description }}
+          </p>
+          <p class="text-sm text-dimmed">
+            <span v-if="shelf.path">/{{ shelf.path }}</span>
+            <span v-if="shelf.domain">{{ shelf.path ? ' · ' : '' }}{{ shelf.domain }}</span>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <UButton
+            :label="t('app.shelf.detail.open')"
+            icon="i-lucide-external-link"
+            color="neutral"
+            variant="outline"
+            :href="'/' + shelf.path"
+            target="_blank"
+          />
+          <UButton
+            :label="t('app.shelf.detail.edit')"
+            icon="i-lucide-pencil"
+            color="neutral"
+            variant="outline"
+            @click="editOpen = true"
+          />
+          <UButton
+            :label="t('app.shelf.detail.delete')"
+            icon="i-lucide-trash-2"
+            color="error"
+            variant="outline"
+            @click="deleteOpen = true"
+          />
+        </div>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <UButton :label="t('app.shelf.detail.open')" icon="i-lucide-external-link" color="neutral" variant="outline" :href="'/' + shelf.path" target="_blank" />
-        <UButton :label="t('app.shelf.detail.edit')" icon="i-lucide-pencil" color="neutral" variant="outline" @click="editOpen = true" />
-        <UButton :label="t('app.shelf.detail.delete')" icon="i-lucide-trash-2" color="error" variant="outline" @click="deleteOpen = true" />
-      </div>
-    </div>
-
-    <div class="flex items-center gap-2 pb-4">
-      <UInput
-        v-model="newSectionTitle"
-        :placeholder="t('app.section.newPlaceholder')"
-        class="max-w-xs"
-        @keyup.enter="createSection"
-      />
-      <UButton
-        :label="t('app.section.new')"
-        icon="i-lucide-plus"
-        color="neutral"
-        :loading="creatingSection"
-        :disabled="!newSectionTitle.trim()"
-        @click="createSection"
-      />
-    </div>
-
-    <div v-if="sectionStore.sections.length === 0" class="text-center text-muted py-12">
-      {{ t('app.section.empty') }}
-    </div>
-
-    <template v-else>
-      <div class="flex justify-end pb-2">
+      <div class="flex items-center gap-2 pb-4">
+        <UInput
+          v-model="newSectionTitle"
+          :placeholder="t('app.section.newPlaceholder')"
+          class="max-w-xs"
+          @keyup.enter="createSection"
+        />
         <UButton
-          label="Save order"
-          icon="i-lucide-save"
-          color="primary"
-          :disabled="!orderDirty"
-          :loading="savingOrder"
-          @click="saveOrder"
+          :label="t('app.section.new')"
+          icon="i-lucide-plus"
+          color="neutral"
+          :loading="creatingSection"
+          :disabled="!newSectionTitle.trim()"
+          @click="createSection"
         />
       </div>
 
-      <draggable
-        v-model="orderedSections"
-        item-key="id"
-        handle=".drag-handle"
-        tag="div"
-        class="flex flex-col gap-4"
-        @end="orderDirty = true"
+      <div
+        v-if="sectionStore.sections.length === 0"
+        class="text-center text-muted py-12"
       >
-        <template #item="{ element: section }">
-          <SectionCard
-            :section="section"
-            v-model:links="linkOrders[section.id]!"
-            @reordered="orderDirty = true"
+        {{ t('app.section.empty') }}
+      </div>
+
+      <template v-else>
+        <div class="flex justify-end pb-2">
+          <UButton
+            label="Save order"
+            icon="i-lucide-save"
+            color="primary"
+            :disabled="!orderDirty"
+            :loading="savingOrder"
+            @click="saveOrder"
           />
-        </template>
-      </draggable>
+        </div>
+
+        <draggable
+          v-model="orderedSections"
+          item-key="id"
+          handle=".drag-handle"
+          tag="div"
+          class="flex flex-col gap-4"
+          @end="orderDirty = true"
+        >
+          <template #item="{ element: section }">
+            <SectionCard
+              v-model:links="linkOrders[section.id]!"
+              :section="section"
+              @reordered="orderDirty = true"
+            />
+          </template>
+        </draggable>
+      </template>
+
+      <ShelfFormDialog
+        v-model:open="editOpen"
+        mode="edit"
+        :shelf="shelf"
+        @saved="onShelfSaved"
+      />
+
+      <ConfirmDialog
+        v-model:open="deleteOpen"
+        :title="t('app.shelf.deleteConfirm.title')"
+        :description="t('app.shelf.deleteConfirm.descriptionWithCounts', {
+          title: shelf.title,
+          sections: sectionStore.sections.length,
+          links: linkStore.links.length
+        })"
+        :loading="deleting"
+        @confirm="confirmDeleteShelf"
+      />
     </template>
-
-    <ShelfFormDialog
-      v-model:open="editOpen"
-      mode="edit"
-      :shelf="shelf"
-      @saved="onShelfSaved"
-    />
-
-    <ConfirmDialog
-      v-model:open="deleteOpen"
-      :title="t('app.shelf.deleteConfirm.title')"
-      :description="t('app.shelf.deleteConfirm.descriptionWithCounts', {
-        title: shelf.title,
-        sections: sectionStore.sections.length,
-        links: linkStore.links.length
-      })"
-      :loading="deleting"
-      @confirm="confirmDeleteShelf"
-    />
-  </template>
+  </div>
 </template>

@@ -22,10 +22,10 @@ const NO_THEME_VALUE = '__none__'
 const themeItems = computed<SelectItem[]>(() => [
   { label: 'No theme (default look)', value: NO_THEME_VALUE },
   ...(themeStore.instance.length
-    ? [{ type: 'label' as const, label: 'Instance themes' }, ...themeStore.instance.map((t) => ({ label: t.name, value: t.id }))]
+    ? [{ type: 'label' as const, label: 'Instance themes' }, ...themeStore.instance.map(t => ({ label: t.name, value: t.id }))]
     : []),
   ...(themeStore.mine.length
-    ? [{ type: 'label' as const, label: 'Your themes' }, ...themeStore.mine.map((t) => ({ label: t.name, value: t.id }))]
+    ? [{ type: 'label' as const, label: 'Your themes' }, ...themeStore.mine.map(t => ({ label: t.name, value: t.id }))]
     : [])
 ])
 
@@ -46,7 +46,7 @@ const tabItems = [
   }
 ]
 
-const form = reactive<ShelfBase>({
+const form = reactive({
   title: props.modelValue?.title ?? '',
   description: props.modelValue?.description ?? '',
   domain: props.modelValue?.domain ?? '',
@@ -62,9 +62,9 @@ const schema = v.pipe(
     domain: v.pipe(
       v.string(),
       v.check(
-        (value) =>
-          value === '' ||
-          /^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(value),
+        value =>
+          value === ''
+          || /^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(value),
         'Please enter a valid domain (e.g. example.com)'
       )
     ),
@@ -79,14 +79,14 @@ const schema = v.pipe(
   }),
   v.forward(
     v.check(
-      (data) => data.domain.trim() !== '' || data.path.trim() !== '',
+      data => data.domain.trim() !== '' || data.path.trim() !== '',
       'Either domain or path must be provided'
     ),
     ['domain']
   ),
   v.forward(
     v.check(
-      (data) => data.domain.trim() !== '' || data.path.trim() !== '',
+      data => data.domain.trim() !== '' || data.path.trim() !== '',
       'Either domain or path must be provided'
     ),
     ['path']
@@ -103,14 +103,14 @@ const selectedThemeId = computed({
 /**
  * UForm ref
  */
-const formRef = ref<any>()
+const formRef = ref<{ validate: () => Promise<unknown>, setErrors: (errs: FormError[]) => void }>()
 
 /**
  * Expose validate() ONLY
  */
 async function validate(): Promise<boolean> {
   try {
-    await formRef.value.validate()
+    await formRef.value!.validate()
     return true
   } catch {
     return false
@@ -155,23 +155,44 @@ watch(
 )
 </script>
 
-
 <template>
   <UForm
     ref="formRef"
     :schema="schema"
     :state="form"
   >
-    <UFormField label="Title" name="title" required>
-      <UInput v-model="form.title" class="w-full" />
+    <UFormField
+      label="Title"
+      name="title"
+      required
+    >
+      <UInput
+        v-model="form.title"
+        class="w-full"
+      />
     </UFormField>
 
-    <UFormField label="Description" name="description" class="pt-4">
-      <UTextarea v-model="form.description" class="w-full" />
+    <UFormField
+      label="Description"
+      name="description"
+      class="pt-4"
+    >
+      <UTextarea
+        v-model="form.description"
+        class="w-full"
+      />
     </UFormField>
 
-    <UFormField label="Icon" name="icon" class="pt-4" help="Optional - leave empty for no icon.">
-      <IconPicker v-model="form.icon" placeholder="i-lucide-book-open" />
+    <UFormField
+      label="Icon"
+      name="icon"
+      class="pt-4"
+      help="Optional - leave empty for no icon."
+    >
+      <IconPicker
+        v-model="form.icon"
+        placeholder="i-lucide-book-open"
+      />
     </UFormField>
 
     <UAlert
@@ -184,20 +205,47 @@ watch(
       class="mt-4"
     />
 
-    <UFormField label="Theme" name="themeId" class="pt-4" help="Only affects this shelf's public page, never the app.">
-      <USelect v-model="selectedThemeId" :items="themeItems" value-key="value" class="w-full" />
+    <UFormField
+      label="Theme"
+      name="themeId"
+      class="pt-4"
+      help="Only affects this shelf's public page, never the app."
+    >
+      <USelect
+        v-model="selectedThemeId"
+        :items="themeItems"
+        value-key="value"
+        class="w-full"
+      />
     </UFormField>
 
-    <UTabs :items="tabItems" class="pt-4 w-full">
+    <UTabs
+      :items="tabItems"
+      class="pt-4 w-full"
+    >
       <template #domain>
-        <UFormField label="Domain" name="domain" :help="'https://' + form.domain">
-          <UInput v-model="form.domain" class="w-full" />
+        <UFormField
+          label="Domain"
+          name="domain"
+          :help="'https://' + form.domain"
+        >
+          <UInput
+            v-model="form.domain"
+            class="w-full"
+          />
         </UFormField>
       </template>
 
       <template #path>
-        <UFormField label="Path" name="path" :help="'https://linkshelf.com/' + form.path">
-          <UInput v-model="form.path" class="w-full" />
+        <UFormField
+          label="Path"
+          name="path"
+          :help="'https://linkshelf.com/' + form.path"
+        >
+          <UInput
+            v-model="form.path"
+            class="w-full"
+          />
         </UFormField>
       </template>
     </UTabs>

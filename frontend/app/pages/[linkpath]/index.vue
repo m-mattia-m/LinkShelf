@@ -26,7 +26,7 @@ const linksBySectionId = computed(() => {
 })
 
 const visibleSections = computed(() =>
-  sections.value.filter((section) => (linksBySectionId.value.get(section.id)?.length ?? 0) > 0)
+  sections.value.filter(section => (linksBySectionId.value.get(section.id)?.length ?? 0) > 0)
 )
 
 const hasAnyLinks = computed(() => links.value.length > 0)
@@ -91,19 +91,43 @@ useSeoMeta({
     </template>
 
     <template v-else-if="notFound">
-      <p class="text-lg font-medium">{{ t('linkpage.notFound.title') }}</p>
-      <p class="text-sm opacity-70 text-center">{{ t('linkpage.notFound.description') }}</p>
-      <NuxtLink to="/" class="text-sm underline">{{ t('linkpage.notFound.backHome') }}</NuxtLink>
+      <p class="text-lg font-medium">
+        {{ t('linkpage.notFound.title') }}
+      </p>
+      <p class="text-sm opacity-70 text-center">
+        {{ t('linkpage.notFound.description') }}
+      </p>
+      <NuxtLink
+        to="/"
+        class="text-sm underline"
+      >{{ t('linkpage.notFound.backHome') }}</NuxtLink>
     </template>
 
     <template v-else-if="shelf">
-      <UIcon v-if="shelf.icon" :name="shelf.icon" class="size-12" />
-      <h1 class="text-xl font-semibold text-center">{{ shelf.title }}</h1>
-      <p v-if="shelf.description" class="text-sm text-center opacity-70">{{ shelf.description }}</p>
+      <UIcon
+        v-if="shelf.icon"
+        :name="shelf.icon"
+        class="size-12"
+      />
+      <h1 class="text-xl font-semibold text-center">
+        {{ shelf.title }}
+      </h1>
+      <p
+        v-if="shelf.description"
+        class="text-sm text-center opacity-70"
+      >
+        {{ shelf.description }}
+      </p>
 
       <template v-if="hasAnyLinks">
-        <div v-for="section in visibleSections" :key="section.id" class="w-full flex flex-col gap-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide opacity-60">{{ section.title }}</h2>
+        <div
+          v-for="section in visibleSections"
+          :key="section.id"
+          class="w-full flex flex-col gap-3"
+        >
+          <h2 class="text-xs font-semibold uppercase tracking-wide opacity-60">
+            {{ section.title }}
+          </h2>
 
           <a
             v-for="link in linksBySectionId.get(section.id)"
@@ -114,13 +138,22 @@ useSeoMeta({
             class="flex items-center gap-3 rounded-[var(--shelf-link-radius,0.75rem)] px-4 py-3 font-medium text-[var(--shelf-link-text,white)] shadow-sm transition-transform hover:scale-[1.02] bg-[var(--shelf-link-bg,#000)]"
             :style="linkBackgroundStyle(link)"
           >
-            <UIcon v-if="link.icon" :name="link.icon" class="size-5 shrink-0" />
+            <UIcon
+              v-if="link.icon"
+              :name="link.icon"
+              class="size-5 shrink-0"
+            />
             <span class="truncate">{{ link.title }}</span>
           </a>
         </div>
       </template>
 
-      <p v-else class="text-sm opacity-60">{{ t('linkpage.empty') }}</p>
+      <p
+        v-else
+        class="text-sm opacity-60"
+      >
+        {{ t('linkpage.empty') }}
+      </p>
     </template>
   </div>
 </template>

@@ -18,7 +18,7 @@ if (!page.value) {
 }
 
 definePageMeta({
-  layout: 'docs',
+  layout: 'docs'
 })
 </script>
 
@@ -26,9 +26,18 @@ definePageMeta({
   <UContainer class="flex gap-10 py-8">
     <UPage v-if="page">
       <UPageBody class="mt-0">
-        <article v-if="page" class="flex-1 prose max-w-none">
-          <UPageHeader :title="page.title" class="pt-0" />
-          <ContentRenderer v-if="page.body" :value="page"/>
+        <article
+          v-if="page"
+          class="flex-1 prose max-w-none"
+        >
+          <UPageHeader
+            :title="page.title"
+            class="pt-0"
+          />
+          <ContentRenderer
+            v-if="page.body"
+            :value="page"
+          />
         </article>
       </UPageBody>
     </UPage>

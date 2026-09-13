@@ -33,8 +33,7 @@ export function useApi() {
     const refreshed = await authStore.refresh()
     if (!refreshed) return response
 
-    const headers = new Headers(init?.headers)
-    headers.set('Authorization', `Bearer ${authStore.accessToken}`)
+    const headers = { ...Object.fromEntries(new Headers(init?.headers).entries()), Authorization: `Bearer ${authStore.accessToken}` }
     return fetch(input, { ...init, headers })
   }
 

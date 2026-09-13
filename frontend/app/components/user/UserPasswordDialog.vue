@@ -33,7 +33,7 @@ const schema = v.pipe(
     confirmPassword: v.pipe(v.string(), v.nonEmpty('Required'))
   }),
   v.forward(
-    v.check((data) => data.newPassword === data.confirmPassword, 'Passwords do not match'),
+    v.check(data => data.newPassword === data.confirmPassword, 'Passwords do not match'),
     ['confirmPassword']
   )
 )
@@ -76,24 +76,63 @@ async function save(close: () => void) {
     :ui="{ footer: 'justify-end' }"
   >
     <template #body>
-      <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-4">
-        <UFormField label="Current password" name="oldPassword" required>
-          <UInput v-model="form.oldPassword" type="password" class="w-full" />
+      <UForm
+        ref="formRef"
+        :schema="schema"
+        :state="form"
+        class="flex flex-col gap-4"
+      >
+        <UFormField
+          label="Current password"
+          name="oldPassword"
+          required
+        >
+          <UInput
+            v-model="form.oldPassword"
+            type="password"
+            class="w-full"
+          />
         </UFormField>
 
-        <UFormField label="New password" name="newPassword" required>
-          <UInput v-model="form.newPassword" type="password" class="w-full" />
+        <UFormField
+          label="New password"
+          name="newPassword"
+          required
+        >
+          <UInput
+            v-model="form.newPassword"
+            type="password"
+            class="w-full"
+          />
         </UFormField>
 
-        <UFormField label="Confirm new password" name="confirmPassword" required>
-          <UInput v-model="form.confirmPassword" type="password" class="w-full" />
+        <UFormField
+          label="Confirm new password"
+          name="confirmPassword"
+          required
+        >
+          <UInput
+            v-model="form.confirmPassword"
+            type="password"
+            class="w-full"
+          />
         </UFormField>
       </UForm>
     </template>
 
     <template #footer="{ close }">
-      <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
-      <UButton label="Submit" color="neutral" :loading="saving" @click="save(close)" />
+      <UButton
+        label="Cancel"
+        color="neutral"
+        variant="outline"
+        @click="close"
+      />
+      <UButton
+        label="Submit"
+        color="neutral"
+        :loading="saving"
+        @click="save(close)"
+      />
     </template>
   </UModal>
 </template>

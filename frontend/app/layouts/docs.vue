@@ -3,41 +3,42 @@ import type { AccordionItem } from '@nuxt/ui'
 
 const route = useRoute()
 
-const {data: page} = await useAsyncData(route.path, () => queryCollection('docs').path(route.path).first())
+const { data: page } = await useAsyncData(route.path, () => queryCollection('docs').path(route.path).first())
 if (!page.value) {
-  throw createError({statusCode: 404, statusMessage: 'Page not found', fatal: true})
+  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
 const items = [
   {
     label: 'Navigate in the docs',
-    slot: 'menu',
+    slot: 'menu'
   }
 ] satisfies AccordionItem[]
-
 </script>
 
 <template>
   <AppLayout>
-
     <div class="block lg:hidden">
-    <UAccordion :items="items" class="border-b border-gray-200 px-6">
-      <template #menu>
-        <DocsSidebar/>
-      </template>
-    </UAccordion>
+      <UAccordion
+        :items="items"
+        class="border-b border-gray-200 px-6"
+      >
+        <template #menu>
+          <DocsSidebar />
+        </template>
+      </UAccordion>
     </div>
 
     <div class="min-h-screen flex">
       <div class="hidden lg:block w-56 min-w-56 max-w-56 border-r border-gray-200 bg-white">
-        <DocsSidebar/>
+        <DocsSidebar />
       </div>
 
-      <slot/>
+      <slot />
 
       <div
-        id="toc"
         v-if="page?.body?.toc?.links?.length"
+        id="toc"
         class="hidden lg:block w-56 min-w-56 max-w-56 border-l border-gray-200 bg-white -pl-4"
       >
         <UContentToc
@@ -45,7 +46,6 @@ const items = [
           class="backdrop-blur-none mx-0 sm:mx-0 pt-0"
         />
       </div>
-
     </div>
   </AppLayout>
 </template>

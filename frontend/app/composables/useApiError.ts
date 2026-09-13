@@ -11,8 +11,8 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
     try {
       const body = await err.response.clone().json() as ErrorModel
       const fieldErrors: FormError[] = (body.errors ?? [])
-        .filter((detail) => detail.location && detail.message)
-        .map((detail) => ({
+        .filter(detail => detail.location && detail.message)
+        .map(detail => ({
           name: detail.location!.replace(/^body\./, ''),
           message: detail.message!
         }))
@@ -23,8 +23,8 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
       // render on the form (e.g. an unexpected/removed property) and the
       // per-field red-state below has nowhere to attach to.
       const specificMessages = (body.errors ?? [])
-        .filter((detail) => detail.message)
-        .map((detail) => detail.location
+        .filter(detail => detail.message)
+        .map(detail => detail.location
           ? `${detail.location.replace(/^body\./, '')}: ${detail.message}`
           : detail.message!)
 

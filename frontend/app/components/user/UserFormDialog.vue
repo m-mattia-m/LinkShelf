@@ -33,7 +33,7 @@ const form = reactive({
   lastName: props.user?.lastName ?? '',
   email: props.user?.email ?? '',
   password: '',
-  role: props.user?.role ?? 'user'
+  role: (props.user?.role ?? 'user') as 'user' | 'admin'
 })
 
 watch(open, (isOpen) => {
@@ -42,7 +42,7 @@ watch(open, (isOpen) => {
   form.lastName = props.user?.lastName ?? ''
   form.email = props.user?.email ?? ''
   form.password = ''
-  form.role = props.user?.role ?? 'user'
+  form.role = (props.user?.role ?? 'user') as 'user' | 'admin'
 })
 
 // Password can be left blank on create only when email verification is on -
@@ -115,20 +115,51 @@ async function save(close: () => void) {
     :title="mode === 'edit' ? 'Edit user' : 'New user'"
     :ui="{ footer: 'justify-end' }"
   >
-    <UButton v-if="mode === 'create'" icon="i-lucide-plus" label="New" />
+    <UButton
+      v-if="mode === 'create'"
+      icon="i-lucide-plus"
+      label="New"
+    />
 
     <template #body>
-      <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-4">
-        <UFormField label="First name" name="firstName" required>
-          <UInput v-model="form.firstName" class="w-full" />
+      <UForm
+        ref="formRef"
+        :schema="schema"
+        :state="form"
+        class="flex flex-col gap-4"
+      >
+        <UFormField
+          label="First name"
+          name="firstName"
+          required
+        >
+          <UInput
+            v-model="form.firstName"
+            class="w-full"
+          />
         </UFormField>
 
-        <UFormField label="Last name" name="lastName" required>
-          <UInput v-model="form.lastName" class="w-full" />
+        <UFormField
+          label="Last name"
+          name="lastName"
+          required
+        >
+          <UInput
+            v-model="form.lastName"
+            class="w-full"
+          />
         </UFormField>
 
-        <UFormField label="Email" name="email" required>
-          <UInput v-model="form.email" type="email" class="w-full" />
+        <UFormField
+          label="Email"
+          name="email"
+          required
+        >
+          <UInput
+            v-model="form.email"
+            type="email"
+            class="w-full"
+          />
         </UFormField>
 
         <UFormField
@@ -138,18 +169,41 @@ async function save(close: () => void) {
           :required="!canInviteWithoutPassword"
           :hint="canInviteWithoutPassword ? t('app.settings.users.form.passwordInviteHint') : undefined"
         >
-          <UInput v-model="form.password" type="password" class="w-full" />
+          <UInput
+            v-model="form.password"
+            type="password"
+            class="w-full"
+          />
         </UFormField>
 
-        <UFormField label="Role" name="role" required>
-          <USelect v-model="form.role" :items="roleOptions" value-key="value" class="w-full" />
+        <UFormField
+          label="Role"
+          name="role"
+          required
+        >
+          <USelect
+            v-model="form.role"
+            :items="roleOptions"
+            value-key="value"
+            class="w-full"
+          />
         </UFormField>
       </UForm>
     </template>
 
     <template #footer="{ close }">
-      <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
-      <UButton label="Submit" color="neutral" :loading="saving" @click="save(close)" />
+      <UButton
+        label="Cancel"
+        color="neutral"
+        variant="outline"
+        @click="close"
+      />
+      <UButton
+        label="Submit"
+        color="neutral"
+        :loading="saving"
+        @click="save(close)"
+      />
     </template>
   </UModal>
 </template>

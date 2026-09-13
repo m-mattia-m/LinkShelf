@@ -44,34 +44,66 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <h1 class="text-2xl text-highlighted pb-2">User themes</h1>
-  <p class="text-sm text-muted pb-6">
-    Every user-created theme across the instance. You can remove one (a shelf using it falls back to the default look), but not edit its content - it belongs to its creator.
-  </p>
+  <div>
+    <h1 class="text-2xl text-highlighted pb-2">
+      User themes
+    </h1>
+    <p class="text-sm text-muted pb-6">
+      Every user-created theme across the instance. You can remove one (a shelf using it falls back to the default look), but not edit its content - it belongs to its creator.
+    </p>
 
-  <div v-if="loading" class="space-y-2">
-    <USkeleton v-for="i in 3" :key="i" class="h-10 w-full" />
-  </div>
-
-  <div v-else-if="themes.length === 0" class="text-center text-muted py-16">
-    No user-created themes yet.
-  </div>
-
-  <div v-else class="flex flex-col divide-y divide-default rounded-lg border border-default">
-    <div v-for="theme in themes" :key="theme.id" class="flex items-center justify-between px-4 py-2.5 gap-4">
-      <div class="min-w-0">
-        <p class="font-medium truncate">{{ theme.name }}</p>
-        <p class="text-xs text-dimmed truncate">Owner: {{ theme.ownerUserId }}</p>
-      </div>
-      <UButton icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" aria-label="Delete theme" @click="openDelete(theme)" />
+    <div
+      v-if="loading"
+      class="space-y-2"
+    >
+      <USkeleton
+        v-for="i in 3"
+        :key="i"
+        class="h-10 w-full"
+      />
     </div>
-  </div>
 
-  <ConfirmDialog
-    v-model:open="deleteOpen"
-    title="Delete theme?"
-    :description="`Delete “${deletingTheme?.name}”? Any shelf using it will fall back to the default look. This cannot be undone.`"
-    :loading="deleting"
-    @confirm="confirmDelete"
-  />
+    <div
+      v-else-if="themes.length === 0"
+      class="text-center text-muted py-16"
+    >
+      No user-created themes yet.
+    </div>
+
+    <div
+      v-else
+      class="flex flex-col divide-y divide-default rounded-lg border border-default"
+    >
+      <div
+        v-for="theme in themes"
+        :key="theme.id"
+        class="flex items-center justify-between px-4 py-2.5 gap-4"
+      >
+        <div class="min-w-0">
+          <p class="font-medium truncate">
+            {{ theme.name }}
+          </p>
+          <p class="text-xs text-dimmed truncate">
+            Owner: {{ theme.ownerUserId }}
+          </p>
+        </div>
+        <UButton
+          icon="i-lucide-trash-2"
+          size="xs"
+          color="error"
+          variant="ghost"
+          aria-label="Delete theme"
+          @click="openDelete(theme)"
+        />
+      </div>
+    </div>
+
+    <ConfirmDialog
+      v-model:open="deleteOpen"
+      title="Delete theme?"
+      :description="`Delete “${deletingTheme?.name}”? Any shelf using it will fall back to the default look. This cannot be undone.`"
+      :loading="deleting"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

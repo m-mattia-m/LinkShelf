@@ -75,8 +75,18 @@ async function save(close: () => void) {
     </template>
 
     <template #footer="{ close }">
-      <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
-      <UButton label="Save" color="neutral" :loading="saving" @click="save(close)" />
+      <UButton
+        label="Cancel"
+        color="neutral"
+        variant="outline"
+        @click="close"
+      />
+      <UButton
+        label="Save"
+        color="neutral"
+        :loading="saving"
+        @click="save(close)"
+      />
     </template>
   </UModal>
 </template>

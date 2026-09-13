@@ -5,11 +5,11 @@
 // instance of this component via useState, so opening a second picker on the
 // same page is instant.
 interface IconNameSets {
-  lucide: string[]
+  'lucide': string[]
   'simple-icons': string[]
 }
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   modelValue: string
   placeholder?: string
 }>(), {
@@ -49,7 +49,7 @@ const MAX_RESULTS = 120
 const matchingIcons = computed(() => {
   const query = search.value.trim().toLowerCase()
   if (!query) return allIcons.value
-  return allIcons.value.filter((name) => name.toLowerCase().includes(query))
+  return allIcons.value.filter(name => name.toLowerCase().includes(query))
 })
 
 const visibleIcons = computed(() => matchingIcons.value.slice(0, MAX_RESULTS))
@@ -62,9 +62,20 @@ function select(name: string) {
 
 <template>
   <UPopover v-model:open="open">
-    <UButton color="neutral" variant="outline" class="justify-start">
-      <UIcon :name="modelValue || placeholder" class="size-5 shrink-0" :class="{ 'opacity-50': !modelValue }" />
-      <span class="truncate max-w-40" :class="{ 'text-dimmed': !modelValue }">{{ modelValue || 'No icon' }}</span>
+    <UButton
+      color="neutral"
+      variant="outline"
+      class="justify-start"
+    >
+      <UIcon
+        :name="modelValue || placeholder"
+        class="size-5 shrink-0"
+        :class="{ 'opacity-50': !modelValue }"
+      />
+      <span
+        class="truncate max-w-40"
+        :class="{ 'text-dimmed': !modelValue }"
+      >{{ modelValue || 'No icon' }}</span>
       <template #trailing>
         <UIcon
           v-if="modelValue"
@@ -73,7 +84,10 @@ function select(name: string) {
           aria-label="Clear icon"
           @click.stop="emit('update:modelValue', '')"
         />
-        <UIcon name="i-lucide-chevron-down" class="size-4 shrink-0" />
+        <UIcon
+          name="i-lucide-chevron-down"
+          class="size-4 shrink-0"
+        />
       </template>
     </UButton>
 
@@ -87,11 +101,20 @@ function select(name: string) {
           autofocus
         />
 
-        <div v-if="loading" class="flex justify-center py-6">
-          <UIcon name="i-lucide-loader-circle" class="size-5 animate-spin text-muted" />
+        <div
+          v-if="loading"
+          class="flex justify-center py-6"
+        >
+          <UIcon
+            name="i-lucide-loader-circle"
+            class="size-5 animate-spin text-muted"
+          />
         </div>
 
-        <p v-else-if="loadFailed" class="text-xs text-error py-2">
+        <p
+          v-else-if="loadFailed"
+          class="text-xs text-error py-2"
+        >
           Could not load the icon list. You can still type an icon name directly.
         </p>
 
@@ -106,14 +129,23 @@ function select(name: string) {
               :title="name"
               @click="select(name)"
             >
-              <UIcon :name="name" class="size-5" />
+              <UIcon
+                :name="name"
+                class="size-5"
+              />
             </button>
           </div>
 
-          <p v-if="matchingIcons.length > visibleIcons.length" class="text-xs text-muted pt-2">
+          <p
+            v-if="matchingIcons.length > visibleIcons.length"
+            class="text-xs text-muted pt-2"
+          >
             Showing {{ visibleIcons.length }} of {{ matchingIcons.length }} - keep typing to narrow it down.
           </p>
-          <p v-else-if="visibleIcons.length === 0" class="text-xs text-muted pt-2">
+          <p
+            v-else-if="visibleIcons.length === 0"
+            class="text-xs text-muted pt-2"
+          >
             No icons found for "{{ search }}".
           </p>
         </template>

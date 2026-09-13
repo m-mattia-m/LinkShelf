@@ -34,12 +34,22 @@ onMounted(async () => {
   <div class="min-h-screen flex items-center justify-center p-4">
     <div class="flex flex-col items-center gap-4 text-center">
       <template v-if="!failed">
-        <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-primary" />
-        <p class="text-muted">{{ t('auth.callback.completing') }}</p>
+        <UIcon
+          name="i-lucide-loader-circle"
+          class="size-8 animate-spin text-primary"
+        />
+        <p class="text-muted">
+          {{ t('auth.callback.completing') }}
+        </p>
       </template>
       <template v-else>
-        <p class="text-muted">{{ t('auth.callback.failed') }}</p>
-        <ULink to="/auth/sign-in" class="text-primary font-medium">{{ t('auth.callback.backToSignIn') }}</ULink>
+        <p class="text-muted">
+          {{ t('auth.callback.failed') }}
+        </p>
+        <ULink
+          to="/auth/sign-in"
+          class="text-primary font-medium"
+        >{{ t('auth.callback.backToSignIn') }}</ULink>
       </template>
     </div>
   </div>

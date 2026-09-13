@@ -85,46 +85,75 @@ const columns: TableColumn<Shelf>[] = [
 </script>
 
 <template>
-  <div class="flex justify-between items-center">
-    <h1 class="text-2xl text-highlighted pb-4">{{ t('app.shelf.title') }}</h1>
+  <div>
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl text-highlighted pb-4">
+        {{ t('app.shelf.title') }}
+      </h1>
 
-    <ShelfFormDialog mode="create" />
+      <ShelfFormDialog mode="create" />
+    </div>
+
+    <div
+      v-if="loading"
+      class="space-y-2"
+    >
+      <USkeleton
+        v-for="i in 3"
+        :key="i"
+        class="h-10 w-full"
+      />
+    </div>
+
+    <div
+      v-else-if="shelfStore.shelves.length === 0"
+      class="flex flex-col items-center gap-4 py-16 text-center"
+    >
+      <p class="text-muted">
+        {{ t('app.shelf.empty') }}
+      </p>
+      <ShelfFormDialog mode="create" />
+    </div>
+
+    <UTable
+      v-else
+      :columns="columns"
+      :data="shelfStore.shelves"
+      class="flex-1"
+    >
+      <template #title-cell="{ row }">
+        <ULink
+          :to="getShelfUrl(row.original.id)"
+          class="font-medium"
+        >
+          {{ row.original.title }}
+        </ULink>
+      </template>
+
+      <template #action-cell="{ row }">
+        <UDropdownMenu :items="actionItems(row.original)">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            aria-label="Actions"
+          />
+        </UDropdownMenu>
+      </template>
+    </UTable>
+
+    <ShelfFormDialog
+      v-model:open="editOpen"
+      mode="edit"
+      :shelf="editingShelf"
+    />
+
+    <ConfirmDialog
+      v-model:open="deleteOpen"
+      :title="t('app.shelf.deleteConfirm.title')"
+      :description="t('app.shelf.deleteConfirm.description', { title: deletingShelf?.title })"
+      :loading="deleting"
+      @confirm="confirmDelete"
+    />
   </div>
-
-  <div v-if="loading" class="space-y-2">
-    <USkeleton v-for="i in 3" :key="i" class="h-10 w-full" />
-  </div>
-
-  <div v-else-if="shelfStore.shelves.length === 0" class="flex flex-col items-center gap-4 py-16 text-center">
-    <p class="text-muted">{{ t('app.shelf.empty') }}</p>
-    <ShelfFormDialog mode="create" />
-  </div>
-
-  <UTable v-else :columns="columns" :data="shelfStore.shelves" class="flex-1">
-    <template #title-cell="{ row }">
-      <ULink :to="getShelfUrl(row.original.id)" class="font-medium">
-        {{ row.original.title }}
-      </ULink>
-    </template>
-
-    <template #action-cell="{ row }">
-      <UDropdownMenu :items="actionItems(row.original)">
-        <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" aria-label="Actions" />
-      </UDropdownMenu>
-    </template>
-  </UTable>
-
-  <ShelfFormDialog
-    v-model:open="editOpen"
-    mode="edit"
-    :shelf="editingShelf"
-  />
-
-  <ConfirmDialog
-    v-model:open="deleteOpen"
-    :title="t('app.shelf.deleteConfirm.title')"
-    :description="t('app.shelf.deleteConfirm.description', { title: deletingShelf?.title })"
-    :loading="deleting"
-    @confirm="confirmDelete"
-  />
 </template>

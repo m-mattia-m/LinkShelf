@@ -15,9 +15,20 @@ const clipId = `app-logo-clip-${useId()}`
   >
     <g transform="matrix(1,0,0,1,-2441.94,-612)">
       <g transform="matrix(1.02508,0,0,1.03345,2429.1,594.873)">
-        <rect x="12.525" y="16.572" width="499.475" height="495.428" style="fill:none;" />
+        <rect
+          x="12.525"
+          y="16.572"
+          width="499.475"
+          height="495.428"
+          style="fill:none;"
+        />
         <clipPath :id="clipId">
-          <rect x="12.525" y="16.572" width="499.475" height="495.428" />
+          <rect
+            x="12.525"
+            y="16.572"
+            width="499.475"
+            height="495.428"
+          />
         </clipPath>
         <g :clip-path="`url(#${clipId})`">
           <g transform="matrix(1.18526,0,0,1.17629,-796.064,-778.283)">

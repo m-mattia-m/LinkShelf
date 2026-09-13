@@ -1,26 +1,36 @@
 <script setup lang="ts">
-import type {ContentNavigationLink} from "#ui/components/content/ContentNavigation.vue";
+import type { ContentNavigationLink } from '#ui/components/content/ContentNavigation.vue'
 
-const route = useRoute()
-
-const {data: page} = await useAsyncData(() => queryCollection('docs').all())
+const { data: page } = await useAsyncData(() => queryCollection('docs').all())
 if (!page.value) {
-  throw createError({statusCode: 404, statusMessage: 'Page not found', fatal: true})
+  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
+}
+
+interface DocsNavItem {
+  navigation?: boolean
+  order?: number
+  path: string
+  title: string
+  meta?: {
+    icon?: string
+    order?: number
+    metadata?: { order?: number }
+  }
 }
 
 const navigation = computed(() => {
-  return buildNavigation(page.value || [])
+  return buildNavigation((page.value || []) as DocsNavItem[])
 })
 
-function buildNavigation(items: any[]): ContentNavigationLink[] {
+function buildNavigation(items: DocsNavItem[]): ContentNavigationLink[] {
   const nav: Record<string, ContentNavigationLink & { _order?: number }> = {}
 
-  const getOrder = (item?: any) =>
+  const getOrder = (item?: DocsNavItem) =>
     Number(
-      item?.order ??
-      item?.meta?.order ??
-      item?.meta?.metadata?.order ??
-      Infinity
+      item?.order
+      ?? item?.meta?.order
+      ?? item?.meta?.metadata?.order
+      ?? Infinity
     )
 
   const sorted = items
@@ -39,26 +49,26 @@ function buildNavigation(items: any[]): ContentNavigationLink[] {
       nav.__root__ = {
         title: item.title,
         path: item.path,
-        icon: item.meta.icon,
+        icon: item.meta?.icon,
         _order: getOrder(item)
       }
       continue
     }
 
-    const sectionKey = segments[0]
+    const sectionKey = segments[0]!
     const isSectionRoot = segments.length === 1
 
     nav[sectionKey] ??= {
       title: item.title,
       path: `/docs/${sectionKey}`,
-      icon: item.meta.icon,
+      icon: item.meta?.icon,
       children: [],
       _order: Infinity
     }
 
     if (isSectionRoot) {
       nav[sectionKey].title = item.title
-      nav[sectionKey].icon = item.meta.icon
+      nav[sectionKey].icon = item.meta?.icon
       nav[sectionKey]._order = getOrder(item)
       continue
     }
@@ -91,13 +101,14 @@ function buildNavigation(items: any[]): ContentNavigationLink[] {
     })
     .map(({ _order, ...item }) => item)
 }
-
 </script>
 
 <template>
   <div class="m-0 lg:m-8">
-    <UContentNavigation :navigation="navigation" color="neutral" link />
+    <UContentNavigation
+      :navigation="navigation"
+      color="neutral"
+      link
+    />
   </div>
 </template>
-
-

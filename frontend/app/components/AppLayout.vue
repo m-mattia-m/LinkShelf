@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type {FooterColumn, NavigationMenuItem} from "@nuxt/ui";
-import type {SettingPageBody} from "~~/api";
+import type { FooterColumn, NavigationMenuItem } from '@nuxt/ui'
+import type { SettingPageBody } from '~~/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,12 +12,12 @@ const columns: FooterColumn[] = [
       {
         label: 'About',
         to: '/about',
-        class: websiteSettings.value?.aboutShow ? '' : 'hidden',
+        class: websiteSettings.value?.aboutShow ? '' : 'hidden'
       },
       {
         label: 'Contact',
         to: '/contact',
-        class: websiteSettings.value?.contactShow ? '' : 'hidden',
+        class: websiteSettings.value?.contactShow ? '' : 'hidden'
       }
     ]
   },
@@ -27,17 +27,17 @@ const columns: FooterColumn[] = [
       {
         label: 'Imprint',
         to: '/imprint',
-        class: websiteSettings.value?.imprintShow ? '' : 'hidden',
+        class: websiteSettings.value?.imprintShow ? '' : 'hidden'
       },
       {
         label: 'Terms of use',
         to: '/terms-of-use',
-        class: websiteSettings.value?.termsOfUseShow ? '' : 'hidden',
+        class: websiteSettings.value?.termsOfUseShow ? '' : 'hidden'
       },
       {
         label: 'Privacy policy',
         to: '/privacy-policy',
-        class: websiteSettings.value?.privacyPolicyShow ? '' : 'hidden',
+        class: websiteSettings.value?.privacyPolicyShow ? '' : 'hidden'
       }
     ]
   },
@@ -59,43 +59,49 @@ const columns: FooterColumn[] = [
     ]
   }
 ]
-const {locale, locales, setLocale} = useI18n()
+const { locale, locales, setLocale } = useI18n()
+// ULocaleSelect's `locales` prop is typed for @nuxt/ui's own Locale<M> (with
+// `dir`/`messages` for its internal component strings), not @nuxtjs/i18n's
+// app-content locale list this app actually configures - there's no de-CH
+// @nuxt/ui locale pack to wire up here, so this intentionally only supplies
+// code/name and casts past the mismatch.
 const availableLocales = computed(() => {
-  return locales.value.map(l => ({
+  const mapped = locales.value.map(l => ({
     code: l.code,
     name: l.name ?? l.code
   }))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return mapped as any
 })
 const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Home',
     to: '/',
-    active: isActive('/'),
+    active: isActive('/')
   },
   {
     label: 'Docs',
     to: '/docs',
-    active: isActive('/docs'),
+    active: isActive('/docs')
   },
   {
     label: 'Cloud',
     to: '/cloud',
-    active: isActive('/cloud'),
+    active: isActive('/cloud')
   },
   {
     label: 'Dashboard',
     to: '/app',
-    active: isActive('/app'),
+    active: isActive('/app')
   }
 ])
 
 onMounted(() => {
-  if (websiteSettings.value?.redirectToDashboard) router.push("/app")
+  if (websiteSettings.value?.redirectToDashboard) router.push('/app')
 })
 
 const isActive = (base: string) =>
   route.path === base || route.path.startsWith(`${base}/`)
-
 </script>
 
 <template>
@@ -103,14 +109,18 @@ const isActive = (base: string) =>
     <UHeader>
       <template #left>
         <NuxtLink to="/">
-          <AppLogo class="w-auto h-10 shrink-0"/>
+          <AppLogo class="w-auto h-10 shrink-0" />
         </NuxtLink>
       </template>
 
-      <UNavigationMenu color="neutral" :items="items" class="w-full"/>
+      <UNavigationMenu
+        color="neutral"
+        :items="items"
+        class="w-full"
+      />
 
       <template #right>
-        <UColorModeButton/>
+        <UColorModeButton />
 
         <UButton
           to="https://github.com/m-mattia-m/LinkShelf"
@@ -123,30 +133,38 @@ const isActive = (base: string) =>
       </template>
 
       <template #body>
-        <UNavigationMenu orientation="vertical" :items="items" />
+        <UNavigationMenu
+          orientation="vertical"
+          :items="items"
+        />
       </template>
-
     </UHeader>
 
     <UMain>
-      <slot/>
+      <slot />
     </UMain>
 
-    <USeparator/>
+    <USeparator />
 
     <div class="p-4 sm:p-6 lg:p-8 text-dimmed">
-      <UFooterColumns :columns="columns"/>
+      <UFooterColumns :columns="columns" />
       <ULocaleSelect
         class="mt-4 lg:mt-0"
         :model-value="locale"
         :locales="availableLocales"
-        @update:model-value="setLocale($event)"
+        @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH')"
       />
       <p class="flex items-center justify-center mt-8">
         Made with
-        <UIcon name="i-lucide-heart" class="mx-1"/>
+        <UIcon
+          name="i-lucide-heart"
+          class="mx-1"
+        />
         by all
-        <ULink href="https://github.com/m-mattia-m/LinkShelf/graphs/contributors" class="ml-1 text-dimmed">
+        <ULink
+          href="https://github.com/m-mattia-m/LinkShelf/graphs/contributors"
+          class="ml-1 text-dimmed"
+        >
           contributers
         </ULink>
       </p>

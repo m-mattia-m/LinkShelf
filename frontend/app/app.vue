@@ -1,12 +1,11 @@
 <script setup>
-const route = useRoute();
-const {locale} = useI18n()
+const { locale } = useI18n()
 
 const websiteSettings = useState('settings')
 
 await callOnce(async () => {
   try {
-    websiteSettings.value = await useApi().setting.getPageSettings({languageCode: locale.value})
+    websiteSettings.value = await useApi().setting.getPageSettings({ languageCode: locale.value })
   } catch (error) {
     // The backend is not reachable while prerendering during the build, and may
     // be down at runtime; render without settings instead of failing the page.
@@ -20,15 +19,15 @@ const description = 'A production-ready starter template powered by Nuxt UI. Bui
 
 useHead({
   meta: [
-    {name: 'viewport', content: 'width=device-width, initial-scale=1'},
-    {name: 'theme-color', content: '#1c274c'}
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { name: 'theme-color', content: '#1c274c' }
   ],
   link: [
-    {rel: 'icon', type: 'image/png', href: '/favicon-96x96.png', sizes: '96x96'},
-    {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
-    {rel: 'shortcut icon', href: '/favicon.ico'},
-    {rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png'},
-    {rel: 'manifest', href: '/site.webmanifest'}
+    { rel: 'icon', type: 'image/png', href: '/favicon-96x96.png', sizes: '96x96' },
+    { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+    { rel: 'shortcut icon', href: '/favicon.ico' },
+    { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+    { rel: 'manifest', href: '/site.webmanifest' }
   ],
   htmlAttrs: {
     lang: 'en'
@@ -50,7 +49,7 @@ useSeoMeta({
   <ClientOnly>
     <UApp>
       <NuxtLayout>
-        <NuxtPage/>
+        <NuxtPage />
       </NuxtLayout>
     </UApp>
   </ClientOnly>

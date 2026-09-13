@@ -9,6 +9,9 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "openapi:generate": "npx @openapitools/openapi-generator-cli generate -i ./openapi-v3.json -g typescript-fetch -o api/"
   },
   "dependencies": {
@@ -31,11 +34,20 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/image": "^2.1.0",
+    "@nuxt/test-utils": "^4.3.2",
     "@nuxt/ui": "^4.4.0",
     "@openapitools/openapi-generator-cli": "^2.41.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/vue": "^8.1.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vue/test-utils": "^2.5.0",
+    "badge-maker": "^6.0.0",
     "eslint": "^10.10.0",
+    "happy-dom": "^20.14.5",
+    "msw": "^2.15.0",
     "nuxt": "^4.3.0",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1",
     "vue-tsc": "^3.3.11"
