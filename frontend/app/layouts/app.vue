@@ -90,6 +90,13 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   ],
   [
     {
+      label: 'Dark mode',
+      slot: 'color-mode',
+      onSelect: (e: Event) => e.preventDefault()
+    }
+  ],
+  [
+    {
       label: t('auth.userMenu.signOut'),
       icon: 'i-lucide-log-out',
       onSelect: signOut
@@ -141,6 +148,22 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
           :items="userMenuItems"
           class="w-full"
         >
+          <template #color-mode="{ item }">
+            <div
+              class="flex w-full items-center justify-between gap-2"
+              @click.stop
+            >
+              <span class="flex items-center gap-2">
+                <UIcon
+                  name="i-lucide-sun-moon"
+                  class="size-4 shrink-0"
+                />
+                <span>{{ item.label }}</span>
+              </span>
+              <UColorModeSwitch />
+            </div>
+          </template>
+
           <UButton
             :avatar="{ icon: 'i-lucide-user' }"
             :label="collapsed ? undefined : userLabel"
