@@ -20,6 +20,16 @@
 - [LinkShelf Logo - No Border (SVG)](./linkshelf-logo-no-border.svg)
 - [LinkShelf Logo - No Border (WebP)](./linkshelf-logo-no-border.webp)
 
+## Colors
+
+![color palette](colors.webp)
+
+- #4C9A5B (Shamrock)
+- #1D3557 (Oxford Navy)
+- #F1E9DB (Soft Linen)
+
+[coolors.co - online view](https://coolors.co/4c9a5b-1d3557-f1e9db)
+
 ## Credits
 
 Logo icon "Link Circle" by Solar Icons (https://www.svgrepo.com/author/Solar%20Icons/),

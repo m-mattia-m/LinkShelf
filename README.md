@@ -28,26 +28,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Todo:
 
-- [ ] add validations
-    - [ ] does user exist on shelfCreate/Update
-    - [ ] does shelf exist on sectionCreate/Update
-    - [ ] does sectiotion exist on linkCreate/Update
-    - [ ] are all required fields given
-        - [ ] ShelfPath, ShelfName, ...
-    - [ ] handle default values like for themes
-- [ ] Add No-Index Option for Search Engine like Google, ... -> Not crawlable
-
----
-
-### Plain Text Notes
-
-
-- fix branding → there are color schemas in the root README.md file → logo should be aligned with the branding colors which should NOT be the default Nuxt colors
-- update the docmentation in the UI
+- fix branding → there are color schemas in the root README.md file 
+  → logo should be aligned with the branding colors which should NOT be the default Nuxt colors
+- update the documentation in the UI
 - create a collage of different pages in the shelf-app which can be presented as one image in the front starter (for these screenshots i need better test-data in my linkshelf instance)
+- Add No-Index Option for Search Engine like Google, ... -> Not crawlable
+  - Move the rest to SSR
 
 - create a discord channel or delete discord stuff from github/ui
-
 
 - marketing: fully european software and hosted in europe
 - post on reddit, and producthunt, ...

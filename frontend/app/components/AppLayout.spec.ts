@@ -13,7 +13,7 @@ describe('AppLayout', () => {
 
     const homeLink = screen.getAllByRole('link').find(link => link.getAttribute('href') === '/')
     expect(homeLink).toBeTruthy()
-    expect(homeLink?.querySelector('svg')).toBeInTheDocument()
+    expect(homeLink?.querySelector('img[src="/logo.svg"]')).toBeInTheDocument()
   })
 
   it('renders the primary navigation links', async () => {
