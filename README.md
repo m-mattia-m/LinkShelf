@@ -1,6 +1,6 @@
 # LinkShelf
 
-[![CI](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml) ![backend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/main/.badges/main/coverage.svg) ![frontend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/main/.badges/main/coverage-frontend.svg) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m-mattia-m/LinkShelf?filename=backend%2Fgo.mod) ![Release](https://img.shields.io/github/v/release/m-mattia-m/LinkShelf)
+[![CI](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml) ![backend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/badges/.badges/main/coverage.svg) ![frontend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/badges/.badges/main/coverage-frontend.svg) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m-mattia-m/LinkShelf?filename=backend%2Fgo.mod) ![Release](https://img.shields.io/github/v/release/m-mattia-m/LinkShelf)
 
 LinkShelf is a web application designed to help users organize, manage, and share their favorite links and bookmarks in
 a user-friendly interface. Whether you're a student, professional, or casual internet user, LinkShelf provides an
@@ -41,13 +41,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Plain Text Notes
 
-- update the docmentation in the UI
-- create a collage of different pages in the shelf-app which can be presented as one image in the front starter (for these screenshots i need better test-data in my linkshelf instance)
-- create a discord channel or delete discord stuff from github/ui
-- add paging (is this needed? It would only be for shelves)
-
 
 - fix branding → there are color schemas in the root README.md file → logo should be aligned with the branding colors which should NOT be the default Nuxt colors
-- think about the .badges directory which creates different sub-directories for each branch
+- update the docmentation in the UI
+- create a collage of different pages in the shelf-app which can be presented as one image in the front starter (for these screenshots i need better test-data in my linkshelf instance)
+
+- create a discord channel or delete discord stuff from github/ui
+
+
 - marketing: fully european software and hosted in europe
 - post on reddit, and producthunt, ...

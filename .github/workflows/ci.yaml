@@ -114,7 +114,8 @@ jobs:
           debug: true
 
           git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
-          git-branch: ${{ github.ref_name }}
+          git-branch: badges
+          git-file-name: .badges/main/coverage.svg
 
   frontend:
     runs-on: ubuntu-latest
@@ -149,6 +150,13 @@ jobs:
         working-directory: frontend
         run: npm run test:coverage
 
+      - name: Checkout badges branch
+        if: github.ref_name == 'main'
+        uses: actions/checkout@v7
+        with:
+          ref: badges
+          path: badges-branch
+
       - name: Generate coverage badge
         if: github.ref_name == 'main'
         uses: wjervis7/vitest-badge-action@v1.0.0
@@ -156,7 +164,7 @@ jobs:
           result-type: lines
           vitest-config-path: frontend/vitest.config.ts
           summary-path: frontend/coverage/coverage-summary.json
-          badge-path: .badges/${{ github.ref_name }}/coverage-frontend.svg
+          badge-path: badges-branch/.badges/main/coverage-frontend.svg
           badge-text: coverage
           upload-badge: false
 
@@ -164,5 +172,6 @@ jobs:
         if: github.ref_name == 'main'
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: update frontend badge .badges/${{ github.ref_name }}/coverage-frontend.svg
-          file_pattern: .badges/${{ github.ref_name }}/coverage-frontend.svg
+          repository: badges-branch
+          commit_message: update frontend badge .badges/main/coverage-frontend.svg
+          file_pattern: .badges/main/coverage-frontend.svg
