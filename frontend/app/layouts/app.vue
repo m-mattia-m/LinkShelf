@@ -148,7 +148,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
           :items="userMenuItems"
           class="w-full"
         >
-          <template #color-mode="{ item }">
+          <template #color-mode>
             <div
               class="flex w-full items-center justify-between gap-2"
               @click.stop
@@ -158,7 +158,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                   name="i-lucide-sun-moon"
                   class="size-4 shrink-0"
                 />
-                <span>{{ item.label }}</span>
+                <span>Dark mode</span>
               </span>
               <UColorModeSwitch />
             </div>
