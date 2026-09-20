@@ -4,6 +4,7 @@ import { screen, waitFor, within } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ThemeGroupedResponseBodyToJSON } from '~~/api'
 import { server } from '../../../../test/mocks/server'
+import { errorResponse } from '../../../../test/mocks/handlers'
 import { buildTheme } from '../../../../test/mocks/factories'
 import { resetOnceCache } from '../../../../test/reset-once-cache'
 import ThemesIndexPage from './index.vue'
@@ -71,6 +72,17 @@ describe('themes index page', () => {
 
     await waitFor(() => {
       expect(deleteCalled).toBe(true)
+    })
+  })
+
+  it('stops showing the loading placeholder when the themes cannot be loaded', async () => {
+    server.use(http.get(`${BASE}/v1/themes`, () => errorResponse(500, 'boom')))
+
+    await renderSuspended(ThemesIndexPage)
+
+    // The skeleton placeholder must not stay behind when the request fails.
+    await waitFor(() => {
+      expect(document.querySelector('.animate-pulse')).toBeNull()
     })
   })
 })

@@ -4,6 +4,7 @@ import { screen, waitFor } from '@testing-library/vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ShelfToJSON, StatisticToJSON } from '~~/api'
 import { server } from '../../../test/mocks/server'
+import { errorResponse } from '../../../test/mocks/handlers'
 import { buildShelf, buildStatistic } from '../../../test/mocks/factories'
 import { resetOnceCache } from '../../../test/reset-once-cache'
 import DashboardPage from './index.vue'
@@ -63,5 +64,19 @@ describe('app dashboard page', () => {
     })
     expect(screen.getByText('Shelf 4')).toBeInTheDocument()
     expect(screen.queryByText('Shelf 5')).not.toBeInTheDocument()
+  })
+
+  it('stops showing the loading placeholder when the data cannot be loaded', async () => {
+    server.use(
+      http.get(`${BASE}/v1/statistics`, () => errorResponse(500, 'boom')),
+      http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([]))
+    )
+
+    await renderSuspended(DashboardPage)
+
+    // The skeleton placeholder must not stay behind when the request fails.
+    await waitFor(() => {
+      expect(document.querySelector('.animate-pulse')).toBeNull()
+    })
   })
 })

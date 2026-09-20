@@ -11,9 +11,14 @@ const themes = ref<Theme[]>([])
 
 async function load() {
   loading.value = true
-  const api = useApi()
-  themes.value = (await api.theme.listAllUserThemes()) ?? []
-  loading.value = false
+  try {
+    const api = useApi()
+    themes.value = (await api.theme.listAllUserThemes()) ?? []
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(load)
