@@ -39,7 +39,7 @@
     "@openapitools/openapi-generator-cli": "^2.41.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/vue": "^8.1.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.1",
     "@vue/test-utils": "^2.5.0",
     "eslint": "^10.10.0",
     "happy-dom": "^20.14.5",
