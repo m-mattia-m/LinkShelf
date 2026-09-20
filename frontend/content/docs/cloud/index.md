@@ -5,4 +5,4 @@ order: 4
 navigation: true
 ---
 
-## Getting started with Cloud
+Go to [Getting started](/docs/cloud/getting-started) to read more about cloud.

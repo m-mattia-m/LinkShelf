@@ -3,10 +3,97 @@ title: Configuration
 order: 6
 ---
 
-## How to install LinkShelf
+## Configuration Options
 
-Hello world
+All options are available via YAML configuration and can be overwritten via environment variables. For example
+`app.name` in yaml is overridden by the environment variable `APP_NAME`.
 
-## Tutorials
-
-ASDF
+```yaml
+app:
+  name: LinkShelf
+  description: LinkShelf is an OpenSource alternative to linktree.
+  environment: production
+  logo: <base64-encoded-logo-or-path>
+  frontendUrl: "http://localhost:3000"
+server:
+  scheme: http
+  host: localhost
+  port: 8085 # Do not change this port since the Containerfile exposes this port. It's just for development purposes.
+  trustedProxies:
+    - 127.0.0.1
+database:
+  engine: POSTGRES # MYSQL # POSTGRES
+  host: localhost
+  port: 15432 # 3306 # 5432
+  username: linkshelf
+  password: linkshelf
+  name: linkshelf
+  params: "sslmode=disable" # "charset=utf8mb4&parseTime=true" # "sslmode=disable" # optional
+logging:
+  level: info
+domain:
+  openapi:
+    usePort: false
+themes:
+  # Directory of instance-theme YAML files (one file per theme, each with a
+  # "name" and a "config"), scanned once at startup. Removing a file removes
+  # that theme on the next restart; leave empty to skip instance themes
+  # entirely. Mount a host directory here the same way compose.dev.yaml
+  # mounts config.default.yaml.
+  directory: ""
+assets:
+  # Directory of static files (e.g. theme background images) an instance
+  # admin wants to make available to themes, scanned once at startup and
+  # served at basePath (e.g. a file "my-dog.webp" here becomes
+  # "{basePath}/my-dog.webp"). Leave directory empty to skip entirely.
+  directory: ""
+  basePath: "/images"
+authentication:
+  type: LOCAL # LOCAL # OIDC
+  # jwtSecret signs the access tokens this backend issues itself, no matter
+  # which auth type is active below. Override this in production via the
+  # APP_AUTHENTICATION_JWTSECRET environment variable - never ship the
+  # default value.
+  jwtSecret: "change-me-to-a-long-random-value-in-production"
+  accessTokenExpiryMinutes: 5
+  refreshTokenExpiryMinutes: 1440 # 24h
+  bootstrapAdmin:
+    # Idempotently created/refreshed on every startup with role=admin.
+    # Leave both empty to skip bootstrapping an admin account.
+    email: admin@example.com
+    password: "change-me"
+  oidc:
+    # issuer and clientId are required when authentication.type is OIDC.
+    # Works with any standards-compliant OIDC issuer (Keycloak, Zitadel,
+    # Auth0, Google, ...).
+    issuer: ""
+    clientId: ""
+    # clientSecret is optional: the login flow always runs PKCE, so a public
+    # client registered without a secret works fine - leave this empty in
+    # that case.
+    clientSecret: ""
+    # Must match the frontend's OIDC callback page, which completes the
+    # login by POSTing the code+state here to /v1/auth/oidc/callback.
+    redirectUrl: "http://localhost:3000/auth/callback"
+  # Set to false to disable public self-registration (POST /v1/users without
+  # an admin token). Admins can still create accounts, and OIDC
+  # auto-provisioning is unaffected either way.
+  registrationEnabled: true
+  emailVerification:
+    # When true, smtp.host and smtp.from must be set (checked at startup) and
+    # local/password accounts must verify their email before they can log in.
+    # OIDC accounts are always exempt.
+    enabled: true
+    tokenExpiryHours: 24
+smtp:
+  # Defaults to the Mailpit dev container (see compose.yaml) for local
+  # development - matches the pattern of database.host/port also pointing at
+  # its published compose port.
+  host: localhost
+  port: 1025
+  username: ""
+  password: ""
+  from: "no-reply@linkshelf.local"
+  # none | starttls | tls - Mailpit speaks plain SMTP with no TLS at all.
+  tlsMode: none
+```

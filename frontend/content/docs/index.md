@@ -12,5 +12,5 @@ you need.
 
 ## Getting Started
 
-There are two ways you can start, either use your [cloud](/cloud/getting-started) solution or you can [self-hosted](/docs/self-hosting/getting-started)
+There are two ways you can start, either use your [cloud](/docs/cloud/getting-started) solution or you can [self-hosted](/docs/self-hosting/getting-started)
 version.

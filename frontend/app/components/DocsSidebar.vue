@@ -6,6 +6,10 @@ if (!page.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
+// `exact` is forwarded to the underlying link: without it "/docs" counts as
+// active on every "/docs/..." page.
+type DocsNavLink = ContentNavigationLink & { exact?: boolean, _order?: number }
+
 interface DocsNavItem {
   navigation?: boolean
   order?: number
@@ -23,7 +27,7 @@ const navigation = computed(() => {
 })
 
 function buildNavigation(items: DocsNavItem[]): ContentNavigationLink[] {
-  const nav: Record<string, ContentNavigationLink & { _order?: number }> = {}
+  const nav: Record<string, DocsNavLink> = {}
 
   const getOrder = (item?: DocsNavItem) =>
     Number(
@@ -50,6 +54,7 @@ function buildNavigation(items: DocsNavItem[]): ContentNavigationLink[] {
         title: item.title,
         path: item.path,
         icon: item.meta?.icon,
+        exact: true,
         _order: getOrder(item)
       }
       continue
@@ -62,6 +67,7 @@ function buildNavigation(items: DocsNavItem[]): ContentNavigationLink[] {
       title: item.title,
       path: `/docs/${sectionKey}`,
       icon: item.meta?.icon,
+      exact: true,
       children: [],
       _order: Infinity
     }
@@ -75,8 +81,9 @@ function buildNavigation(items: DocsNavItem[]): ContentNavigationLink[] {
 
     nav[sectionKey].children!.push({
       title: item.title,
-      path: item.path
-    })
+      path: item.path,
+      exact: true
+    } as DocsNavLink)
   }
 
   for (const section of Object.values(nav)) {

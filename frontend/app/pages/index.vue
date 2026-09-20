@@ -33,7 +33,7 @@ definePageMeta({
       :links="links"
     >
       <img
-        src="https://picsum.photos/640/728"
+        src="/presentation.webp"
         width="320"
         height="364"
         alt="Illustration"

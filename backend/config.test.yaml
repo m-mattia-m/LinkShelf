@@ -2,7 +2,6 @@ app:
   name: LinkShelfTest
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: development
-  logo: <base64-encoded-logo-or-path>
   frontendUrl: "http://localhost:3000"
 server:
   scheme: http
