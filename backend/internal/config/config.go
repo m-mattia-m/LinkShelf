@@ -143,13 +143,31 @@ func LoadConfig() error {
 		}
 	}
 
-	if err := k.Load(env.Provider(envPrefix, ".", func(s string) string {
-		return strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".")
-	}), nil); err != nil {
+	if err := k.Load(env.Provider(envPrefix, ".", envKeyMapper(k.Keys())), nil); err != nil {
 		return err
 	}
 
 	return validate()
+}
+
+// envKeyMapper turns an APP_ environment variable name into a config key.
+// Env var names cannot carry capitals, so APP_AUTHENTICATION_JWTSECRET would
+// otherwise become "authentication.jwtsecret" - a different koanf key than the
+// "authentication.jwtSecret" every config.String() call reads. Matching the
+// lowercased path against the keys the files already defined restores the
+// original casing; unknown keys fall back to the plain lowercased path.
+func envKeyMapper(existing []string) func(string) string {
+	byLower := make(map[string]string, len(existing))
+	for _, key := range existing {
+		byLower[strings.ToLower(key)] = key
+	}
+	return func(s string) string {
+		key := strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".")
+		if original, ok := byLower[key]; ok {
+			return original
+		}
+		return key
+	}
 }
 
 func validate() error {

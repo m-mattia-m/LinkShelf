@@ -1,0 +1,26 @@
+secrets:
+  existingSecret:
+    name: linkshelf-secrets
+    keys:
+      jwtSecret: jwt
+      bootstrapAdminPassword: admin-password
+      smtpPassword: smtp-password
+env:
+  APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
+database:
+  engine: MYSQL
+  params: charset=utf8mb4&parseTime=true
+  existingSecret:
+    name: linkshelf-db
+ingress:
+  enabled: true
+  className: nginx
+  frontend:
+    host: links.example.com
+  backend:
+    host: api.example.com
+  tls:
+    - secretName: linkshelf-tls
+      hosts:
+        - links.example.com
+        - api.example.com

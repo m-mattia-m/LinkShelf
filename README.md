@@ -28,8 +28,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Todo:
 
-- fix branding → there are color schemas in the root README.md file 
-  → logo should be aligned with the branding colors which should NOT be the default Nuxt colors
 - update the documentation in the UI
 - create a collage of different pages in the shelf-app which can be presented as one image in the front starter (for these screenshots i need better test-data in my linkshelf instance)
 - Add No-Index Option for Search Engine like Google, ... -> Not crawlable

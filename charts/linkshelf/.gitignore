@@ -1,0 +1,2 @@
+# fetched by `helm dependency build`, Chart.lock pins the version
+charts/

@@ -175,3 +175,65 @@ jobs:
           repository: badges-branch
           commit_message: update frontend badge .badges/main/coverage-frontend.svg
           file_pattern: .badges/main/coverage-frontend.svg
+
+  chart:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: charts/linkshelf
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.18.4
+
+      - name: Install helm-values-schema-json
+        run: helm plugin install https://github.com/losisin/helm-values-schema-json.git --version 2.6.0
+
+      - name: Build dependencies
+        run: |
+          helm repo add groundhog2k https://groundhog2k.github.io/helm-charts/
+          helm dependency build
+
+      - name: Verify values.schema.json is up-to-date
+        run: |
+          helm schema
+          git diff --exit-code values.schema.json
+
+      - name: Lint and template
+        run: |
+          for values in ci/*.yaml; do
+            echo "::group::$values"
+            helm lint --strict . -f "$values"
+            helm template ci . -f "$values" > "$RUNNER_TEMP/rendered.yaml"
+            if grep -q '^kind: Secret$' "$RUNNER_TEMP/rendered.yaml"; then
+              echo "the chart must not render Secrets, use existing ones"; exit 1
+            fi
+            echo "::endgroup::"
+          done
+
+      - name: Verify required values are enforced
+        run: |
+          expect_failure() {
+            local message="$1"; shift
+            if output=$(helm template ci . "$@" 2>&1); then
+              echo "expected helm template to fail: $*"; exit 1
+            fi
+            echo "$output" | grep -q -- "$message" || { echo "unexpected error: $output"; exit 1; }
+          }
+
+          expect_failure "secrets.existingSecret.name" --set database.existingSecret.name=db
+          expect_failure "keys.jwtSecret" -f ci/minimal.yaml --set secrets.existingSecret.keys.jwtSecret=
+          expect_failure "configure a database" --set secrets.existingSecret.name=s
+          expect_failure "bootstrapAdminPassword" -f ci/minimal.yaml --set env.APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL=a@b.c
+          expect_failure "cannot be combined" -f ci/bundled-postgres.yaml --set database.existingSecret.name=db
+          expect_failure "postgresql.settings.existingSecret" -f ci/bundled-postgres.yaml --set postgresql.settings.existingSecret=
+          expect_failure "ingress.frontend.host" -f ci/minimal.yaml --set ingress.enabled=true

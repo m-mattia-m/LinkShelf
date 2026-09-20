@@ -1,0 +1,30 @@
+secrets:
+  existingSecret:
+    name: linkshelf-secrets
+database:
+  existingSecret:
+    name: linkshelf-db
+additionalResources:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Release.Name }}-extra"
+    data:
+      key: value
+  - |
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: {{ .Release.Name }}-from-string
+    data:
+      chart: {{ .Chart.Name }}
+extraEnv:
+  - name: FOO
+    value: bar
+extraVolumes:
+  - name: themes
+    configMap:
+      name: themes
+extraVolumeMounts:
+  - name: themes
+    mountPath: /themes

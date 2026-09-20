@@ -30,6 +30,22 @@ func Test_LoadConfig_EnvVarOverridesFile(t *testing.T) {
 	require.Equal(t, "env-override-host", String("database.host"))
 }
 
+func Test_LoadConfig_EnvVarOverridesCamelCaseKeys(t *testing.T) {
+	Reset()
+	t.Setenv("APP_AUTHENTICATION_JWTSECRET", "from-env")
+	t.Setenv("APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL", "env@example.com")
+	t.Setenv("APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED", "false")
+	t.Setenv("APP_SMTP_TLSMODE", "starttls")
+
+	require.NoError(t, LoadConfig())
+
+	require.Equal(t, "from-env", String("authentication.jwtSecret"))
+	require.Equal(t, "env@example.com", String("authentication.bootstrapAdmin.email"))
+	require.False(t, Bool("authentication.emailVerification.enabled"))
+	require.Equal(t, "starttls", String("smtp.tlsMode"))
+	require.Equal(t, "from-env", Get().Authentication.JwtSecret)
+}
+
 func Test_LoadConfig_ConfigurationFilePathOverridesDefault(t *testing.T) {
 	Reset()
 
