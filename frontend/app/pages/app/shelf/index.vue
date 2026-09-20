@@ -15,8 +15,13 @@ const shelfStore = useShelfStore()
 const loading = ref(true)
 
 onMounted(async () => {
-  await callOnce(shelfStore.fetch)
-  loading.value = false
+  try {
+    await callOnce(shelfStore.fetch)
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    loading.value = false
+  }
 })
 
 function getShelfUrl(id: string): string {

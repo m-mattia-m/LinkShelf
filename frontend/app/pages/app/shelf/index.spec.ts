@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ShelfToJSON } from '~~/api'
 import { server } from '../../../../test/mocks/server'
+import { errorResponse } from '../../../../test/mocks/handlers'
 import { buildShelf } from '../../../../test/mocks/factories'
 import { resetOnceCache } from '../../../../test/reset-once-cache'
 import { useThemeStore } from '~/stores/theme'
@@ -115,6 +116,17 @@ describe('shelf index page', () => {
 
     await waitFor(() => {
       expect(receivedShelfId).toBe('shelf-1')
+    })
+  })
+
+  it('stops showing the loading placeholder when the shelves cannot be loaded', async () => {
+    server.use(http.get(`${BASE}/v1/shelves`, () => errorResponse(500, 'boom')))
+
+    await renderSuspended(ShelfIndexPage)
+
+    // The skeleton placeholder must not stay behind when the request fails.
+    await waitFor(() => {
+      expect(document.querySelector('.animate-pulse')).toBeNull()
     })
   })
 })

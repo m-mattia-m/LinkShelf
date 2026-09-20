@@ -11,8 +11,13 @@ const themeStore = useThemeStore()
 const loading = ref(true)
 
 onMounted(async () => {
-  await callOnce(themeStore.fetch)
-  loading.value = false
+  try {
+    await callOnce(themeStore.fetch)
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    loading.value = false
+  }
 })
 
 const editOpen = ref(false)

@@ -13,12 +13,17 @@ const statistic = ref<Statistic>()
 const loading = ref(true)
 
 onMounted(async () => {
-  const api = useApi()
-  await Promise.all([
-    callOnce(shelfStore.fetch),
-    api.statistic.getStatistic().then((result) => { statistic.value = result })
-  ])
-  loading.value = false
+  try {
+    const api = useApi()
+    await Promise.all([
+      callOnce(shelfStore.fetch),
+      api.statistic.getStatistic().then((result) => { statistic.value = result })
+    ])
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    loading.value = false
+  }
 })
 
 const tiles = computed(() => [

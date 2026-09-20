@@ -12,8 +12,5 @@ you need.
 
 ## Getting Started
 
-ASDf
-
-## Tutorials
-
-ASDF
+There are two ways you can start, either use your [cloud](/docs/cloud/getting-started) solution or you can [self-hosted](/docs/self-hosting/getting-started)
+version.

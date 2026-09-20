@@ -10,9 +10,9 @@ import {
   UserApi
 } from '~~/api'
 
-function hasAuthorizationHeader(headers: HeadersInit | undefined): boolean {
-  if (!headers) return false
-  return new Headers(headers).has('Authorization')
+function authorizationHeader(headers: HeadersInit | undefined): string | null {
+  if (!headers) return null
+  return new Headers(headers).get('Authorization')
 }
 
 export function useApi() {
@@ -26,15 +26,28 @@ export function useApi() {
   const customFetch: typeof fetch = async (input, init) => {
     const response = await fetch(input, init)
 
-    if (response.status !== 401 || !hasAuthorizationHeader(init?.headers) || !authStore.refreshToken) {
+    const sentAuthorization = authorizationHeader(init?.headers)
+    if (response.status !== 401 || sentAuthorization === null || !authStore.refreshToken) {
       return response
     }
 
-    const refreshed = await authStore.refresh()
-    if (!refreshed) return response
+    // A request that was in flight at the same time may already have renewed
+    // the tokens - only refresh if the token this one used is still current.
+    if (sentAuthorization === `Bearer ${authStore.accessToken}`) {
+      const refreshed = await authStore.refresh()
+      if (!refreshed) return response
+    } else if (!authStore.accessToken) {
+      return response
+    }
 
-    const headers = { ...Object.fromEntries(new Headers(init?.headers).entries()), Authorization: `Bearer ${authStore.accessToken}` }
-    return fetch(input, { ...init, headers })
+    // Overwrite the header on a Headers object, then hand fetch a plain record
+    // with exactly one key per header. Spreading the old headers next to a
+    // differently-cased "Authorization" key would send both values, which
+    // browsers merge into "Bearer <old>, Bearer <new>" - a token the backend
+    // rejects.
+    const headers = new Headers(init?.headers)
+    headers.set('Authorization', `Bearer ${authStore.accessToken}`)
+    return fetch(input, { ...init, headers: Object.fromEntries(headers.entries()) })
   }
 
   const configuration = new Configuration({

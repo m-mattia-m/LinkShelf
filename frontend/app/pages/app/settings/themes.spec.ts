@@ -87,4 +87,15 @@ describe('app settings themes page', () => {
     })
     expect(screen.getByText('Sticky')).toBeInTheDocument()
   })
+
+  it('stops showing the loading placeholder when the themes cannot be loaded', async () => {
+    server.use(http.get(`${BASE}/v1/themes/admin`, () => errorResponse(500, 'boom')))
+
+    await renderSuspended(ThemesSettingsPage)
+
+    // The skeleton placeholder must not stay behind when the request fails.
+    await waitFor(() => {
+      expect(document.querySelector('.animate-pulse')).toBeNull()
+    })
+  })
 })

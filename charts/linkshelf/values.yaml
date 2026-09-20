@@ -1,0 +1,179 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/m-mattia-m/linkshelf
+  # Defaults to the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent # @schema enum:[Always,IfNotPresent,Never]
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Public URLs of the frontend and the backend API. Derived from the ingress
+# hosts when empty. Without an ingress the image defaults apply, which suits
+# `kubectl port-forward` on localhost.
+frontendUrl: ""
+apiUrl: ""
+# Defaults to <frontendUrl>/auth/callback.
+oidcRedirectUrl: ""
+
+# Non-sensitive settings as environment variables. Every key of the backend
+# config file maps to APP_<KEY_PATH>, e.g. smtp.host -> APP_SMTP_HOST. See
+# backend/config.default.yaml for all keys. Values set here win over the
+# values the chart derives.
+env: {}
+  # APP_SMTP_HOST: smtp.example.com
+  # APP_SMTP_PORT: "587"
+  # APP_SMTP_FROM: no-reply@example.com
+  # APP_SMTP_TLSMODE: starttls
+  # APP_AUTHENTICATION_REGISTRATIONENABLED: "false"
+  # APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED: "false"
+  # APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
+
+# The chart never renders a Secret. Create the Secrets yourself, for example
+# with External Secrets, Sealed Secrets or kubectl, and reference them here.
+
+# Sensitive app settings, all in one Secret.
+secrets:
+  existingSecret:
+    name: ""
+    # Key names inside that Secret. jwtSecret signs the access tokens and is
+    # required. Leave the others empty if you don't use them.
+    keys:
+      jwtSecret: jwt-secret
+      # Only used together with APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL in env.
+      bootstrapAdminPassword: ""
+      smtpPassword: ""
+      oidcClientSecret: ""
+
+# Bring your own database. The Secret has to hold the connection details.
+# Ignored when postgresql.enabled is true.
+database:
+  engine: POSTGRES # @schema enum:[POSTGRES,MYSQL]
+  # Extra connection parameters, e.g. sslmode=require. Empty keeps the image
+  # default.
+  params: ""
+  existingSecret:
+    name: ""
+    keys:
+      host: host
+      port: port
+      username: username
+      password: password
+      database: database
+
+# Optional Postgres from the groundhog2k/postgres chart, meant for evaluation.
+# Not supported on OpenShift, bring your own database there. All values under
+# postgresql are passed to that chart, see
+# https://github.com/groundhog2k/helm-charts/tree/master/charts/postgres
+postgresql:
+  enabled: false
+  settings:
+    # Secret with the postgres superuser password, required when enabled.
+    existingSecret: ""
+    superuserPassword:
+      secretKey: POSTGRES_PASSWORD
+  # Secret with the linkshelf database, user and password, required when
+  # enabled. LinkShelf reads the same Secret.
+  userDatabase:
+    existingSecret: ""
+    name:
+      secretKey: POSTGRES_DB
+    user:
+      secretKey: USERDB_USER
+    password:
+      secretKey: USERDB_PASSWORD
+  storage:
+    requestedSize: 2Gi
+
+service:
+  type: ClusterIP # @schema enum:[ClusterIP,NodePort,LoadBalancer]
+  frontendPort: 3000
+  backendPort: 8085
+  annotations: {}
+
+# The frontend and the backend need separate hosts, the browser talks to the
+# backend directly.
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  frontend:
+    host: ""
+  backend:
+    host: ""
+  # Also decides whether the derived URLs use https.
+  tls: []
+    # - secretName: linkshelf-tls
+    #   hosts:
+    #     - linkshelf.example.com
+    #     - api.linkshelf.example.com
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations: {}
+podLabels: {}
+
+# No user or group IDs on purpose: the image runs as 1001 and OpenShift's
+# restricted SCC assigns its own.
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    memory: 512Mi
+
+startupProbe:
+  httpGet:
+    path: /health/liveness
+    port: backend
+  periodSeconds: 5
+  failureThreshold: 30
+
+livenessProbe:
+  httpGet:
+    path: /health/liveness
+    port: backend
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health/readiness
+    port: backend
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+extraEnv: []
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+
+# Extra manifests, rendered with the release. Each entry is a map or a string,
+# both go through `tpl`, so {{ .Release.Name }} works inside.
+additionalResources: []
+  # - apiVersion: v1
+  #   kind: ConfigMap
+  #   metadata:
+  #     name: "{{ .Release.Name }}-extra"
+  #   data:
+  #     key: value

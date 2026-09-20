@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ResponseError, TokenPairToJSON, UserToJSON } from '~~/api'
 import { errorResponse } from '../../test/mocks/handlers'
 import { server } from '../../test/mocks/server'
@@ -107,6 +107,57 @@ describe('useAuthStore', () => {
       expect(result).toBe(true)
       expect(store.accessToken).toBe(rotated.accessToken)
       expect(store.refreshToken).toBe(rotated.refreshToken)
+    })
+
+    it('shares one request between concurrent refreshes', async () => {
+      const store = useAuthStore()
+      store.setTokens(buildTokenPair({ refreshToken: 'old-refresh' }))
+      const rotated = buildTokenPair()
+      let calls = 0
+      server.use(http.post(`${BASE}/v1/auth/refresh`, async () => {
+        calls += 1
+        await new Promise(resolve => setTimeout(resolve, 20))
+        return HttpResponse.json(TokenPairToJSON(rotated))
+      }))
+
+      const results = await Promise.all([store.refresh(), store.refresh(), store.refresh()])
+
+      expect(results).toEqual([true, true, true])
+      expect(calls).toBe(1)
+      expect(store.refreshToken).toBe(rotated.refreshToken)
+    })
+
+    describe('when the refresh token is rejected', () => {
+      afterEach(async () => {
+        await navigateTo('/')
+      })
+
+      it('sends the user from an app page to sign-in and remembers where they were', async () => {
+        const store = useAuthStore()
+        store.setTokens(buildTokenPair({ refreshToken: 'old-refresh' }))
+        await navigateTo('/app/themes?sort=name')
+        server.use(http.post(`${BASE}/v1/auth/refresh`, () => errorResponse(401, 'expired')))
+
+        await store.refresh()
+
+        await vi.waitFor(() => {
+          const route = useRouter().currentRoute.value
+          expect(route.path).toBe('/auth/sign-in')
+          expect(route.query.redirect).toBe('/app/themes?sort=name')
+        })
+      })
+
+      it('leaves the user alone on a public page', async () => {
+        const store = useAuthStore()
+        store.setTokens(buildTokenPair({ refreshToken: 'old-refresh' }))
+        await navigateTo('/docs')
+        server.use(http.post(`${BASE}/v1/auth/refresh`, () => errorResponse(401, 'expired')))
+
+        await store.refresh()
+        await new Promise(resolve => setTimeout(resolve, 50))
+
+        expect(useRouter().currentRoute.value.path).toBe('/docs')
+      })
     })
 
     it('clears the session when the refresh token is rejected', async () => {

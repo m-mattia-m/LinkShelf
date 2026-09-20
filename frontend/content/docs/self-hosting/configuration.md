@@ -1,7 +1,19 @@
+---
+title: Configuration
+order: 6
+---
+
+## Configuration Options
+
+All options are available via YAML configuration and can be overwritten via environment variables. For example
+`app.name` in yaml is overridden by the environment variable `APP_NAME`.
+
+```yaml
 app:
   name: LinkShelf
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: production
+  logo: <base64-encoded-logo-or-path>
   frontendUrl: "http://localhost:3000"
 server:
   scheme: http
@@ -84,3 +96,4 @@ smtp:
   from: "no-reply@linkshelf.local"
   # none | starttls | tls - Mailpit speaks plain SMTP with no TLS at all.
   tlsMode: none
+```

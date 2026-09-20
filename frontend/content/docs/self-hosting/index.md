@@ -5,6 +5,4 @@ order: 2
 navigation: true
 ---
 
-# Self-hosting
-
-You can self-host the application by following these steps:
+Go to [Getting started](/docs/self-hosting/getting-started) to read more about self-hosting.

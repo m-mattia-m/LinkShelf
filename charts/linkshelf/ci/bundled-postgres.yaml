@@ -1,0 +1,9 @@
+secrets:
+  existingSecret:
+    name: linkshelf-secrets
+postgresql:
+  enabled: true
+  settings:
+    existingSecret: linkshelf-postgres-admin
+  userDatabase:
+    existingSecret: linkshelf-postgres

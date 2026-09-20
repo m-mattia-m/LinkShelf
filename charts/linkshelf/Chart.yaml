@@ -1,0 +1,37 @@
+apiVersion: v2
+name: linkshelf
+description: LinkShelf, an open-source alternative to Linktree.
+type: application
+# version and appVersion are placeholders. The release workflow stamps both
+# from the release tag, see .github/workflows/release.yaml.
+version: 0.0.0
+appVersion: "latest"
+kubeVersion: ">=1.25.0-0"
+home: https://github.com/m-mattia-m/LinkShelf
+icon: https://raw.githubusercontent.com/m-mattia-m/LinkShelf/main/branding/LinkShelf.png
+sources:
+  - https://github.com/m-mattia-m/LinkShelf
+keywords:
+  - linkshelf
+  - linktree
+  - links
+maintainers:
+  - name: m-mattia-m
+    url: https://github.com/m-mattia-m
+dependencies:
+  # Optional Postgres for evaluation, see postgresql.* in values.yaml.
+  - name: postgres
+    alias: postgresql
+    version: 1.6.8
+    repository: https://groundhog2k.github.io/helm-charts/
+    condition: postgresql.enabled
+annotations:
+  artifacthub.io/images: |
+    - name: linkshelf
+      image: ghcr.io/m-mattia-m/linkshelf:latest
+      platforms:
+        - linux/amd64
+        - linux/arm64
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://github.com/m-mattia-m/LinkShelf/tree/main/charts/linkshelf

@@ -1,3 +1,4 @@
+import { getActivePinia } from 'pinia'
 import { ResponseError } from '~~/api'
 import type { TokenPair, User, UserCreate } from '~~/api'
 
@@ -21,6 +22,22 @@ function decodeAccessToken(token: string): AccessTokenClaims | null {
     return null
   }
 }
+
+// Once the session is gone an /app page can't do anything useful. The route
+// middleware only runs on navigation, so without this the user stays on a page
+// whose requests all fail. Sign-in sends them back here afterwards.
+function redirectToSignIn() {
+  if (!import.meta.client) return
+  const route = useRouter().currentRoute.value
+  if (!route.path.startsWith('/app')) return
+  navigateTo({ path: '/auth/sign-in', query: { redirect: route.fullPath } })
+}
+
+// In-flight refreshes, keyed by Pinia instance: one per app in the browser and
+// one per request on the server, so nothing leaks between users. The store
+// itself is not a usable key - the object an action sees as `this` is not the
+// same one from call to call.
+const refreshes = new WeakMap<object, Promise<boolean>>()
 
 export const useAuthStore = defineStore('authStore', {
   state: () => ({
@@ -120,8 +137,23 @@ export const useAuthStore = defineStore('authStore', {
      * Exchanges the refresh token for a new pair (single-use rotation on the
      * backend - the old refresh token stops working the moment this call
      * succeeds). Clears the session on failure.
+     *
+     * Concurrent callers share one exchange: a page load fires several
+     * requests at once, and if each of them refreshed on its own, every call
+     * after the first would present an already-spent token, fail, and wipe
+     * the session that the first call had just renewed.
      */
-    async refresh(): Promise<boolean> {
+    refresh(): Promise<boolean> {
+      const pinia = getActivePinia()!
+      let attempt = refreshes.get(pinia)
+      if (!attempt) {
+        attempt = this.exchangeRefreshToken().finally(() => refreshes.delete(pinia))
+        refreshes.set(pinia, attempt)
+      }
+      return attempt
+    },
+
+    async exchangeRefreshToken(): Promise<boolean> {
       if (!this.refreshToken) return false
       try {
         const api = useApi()
@@ -130,6 +162,7 @@ export const useAuthStore = defineStore('authStore', {
         return true
       } catch {
         this.clear()
+        redirectToSignIn()
         return false
       }
     },

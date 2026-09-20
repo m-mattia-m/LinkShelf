@@ -1,0 +1,6 @@
+secrets:
+  existingSecret:
+    name: linkshelf-secrets
+database:
+  existingSecret:
+    name: linkshelf-db

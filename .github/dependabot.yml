@@ -34,3 +34,9 @@ updates:
     directory: ".github/workflows"
     schedule:
       interval: "weekly"
+
+  # Picks up the postgres dependency in charts/linkshelf/Chart.yaml.
+  - package-ecosystem: "helm"
+    directory: "charts/linkshelf"
+    schedule:
+      interval: "weekly"

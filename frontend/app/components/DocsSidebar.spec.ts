@@ -75,4 +75,17 @@ describe('DocsSidebar', () => {
     expect(screen.getByRole('button', { name: 'Users API' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Users API' })).toBeInTheDocument()
   })
+
+  it('only marks the link of the current page as active, not "/docs" on every docs page', async () => {
+    docsState.items = [
+      { path: '/docs', title: 'Introduction', navigation: true, meta: {} },
+      { path: '/docs/guide', title: 'Guide', navigation: true, meta: { order: 1 } },
+      { path: '/docs/guide/install', title: 'Install', navigation: true, meta: {} }
+    ]
+
+    await renderSuspended(DocsSidebar, { route: '/docs/guide/install' })
+
+    expect(screen.getByRole('link', { name: 'Install' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Introduction' })).not.toHaveAttribute('aria-current')
+  })
 })
