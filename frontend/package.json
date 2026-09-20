@@ -15,7 +15,7 @@
     "openapi:generate": "npx @openapitools/openapi-generator-cli generate -i ./openapi-v3.json -g typescript-fetch -o api/"
   },
   "dependencies": {
-    "@iconify-json/lucide": "^1.2.129",
+    "@iconify-json/lucide": "^1.2.133",
     "@iconify-json/simple-icons": "^1.2.94",
     "@nuxt/content": "3.16.0",
     "@nuxt/hints": "1.1.4",
