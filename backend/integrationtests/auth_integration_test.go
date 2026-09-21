@@ -23,7 +23,7 @@ func Test_API_Auth_Login_Success(t *testing.T) {
 	email := "auth-login-" + ShortUUID(randUuid.String()) + "@test.com"
 
 	_, err = TestService.UserService.Create(&model.UserCreate{
-		UserBase: model.UserBase{Email: email, FirstName: "Auth", LastName: "Login"},
+		UserBase: model.UserBase{Username: uniqueUsername(), Email: email, FirstName: "Auth", LastName: "Login"},
 		Password: "correct-password",
 	}, true)
 	require.NoError(t, err)
@@ -50,7 +50,7 @@ func Test_API_Auth_Login_WrongPassword(t *testing.T) {
 	email := "auth-login-wrong-" + ShortUUID(randUuid.String()) + "@test.com"
 
 	_, err = TestService.UserService.Create(&model.UserCreate{
-		UserBase: model.UserBase{Email: email, FirstName: "Auth", LastName: "Login"},
+		UserBase: model.UserBase{Username: uniqueUsername(), Email: email, FirstName: "Auth", LastName: "Login"},
 		Password: "correct-password",
 	}, true)
 	require.NoError(t, err)
@@ -69,7 +69,7 @@ func Test_API_Auth_Refresh_RotatesToken(t *testing.T) {
 	email := "auth-refresh-" + ShortUUID(randUuid.String()) + "@test.com"
 	const password = "secret"
 	_, err = TestService.UserService.Create(&model.UserCreate{
-		UserBase: model.UserBase{Email: email, FirstName: "Auth", LastName: "Refresh"},
+		UserBase: model.UserBase{Username: uniqueUsername(), Email: email, FirstName: "Auth", LastName: "Refresh"},
 		Password: password,
 	}, true)
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func Test_API_Auth_Logout_InvalidatesRefreshToken(t *testing.T) {
 	email := "auth-logout-" + ShortUUID(randUuid.String()) + "@test.com"
 	const password = "secret"
 	_, err = TestService.UserService.Create(&model.UserCreate{
-		UserBase: model.UserBase{Email: email, FirstName: "Auth", LastName: "Logout"},
+		UserBase: model.UserBase{Username: uniqueUsername(), Email: email, FirstName: "Auth", LastName: "Logout"},
 		Password: password,
 	}, true)
 	require.NoError(t, err)
@@ -155,7 +155,7 @@ func Test_API_Auth_Login_Blocked_WhenEmailVerificationEnabledAndNotVerified(t *t
 	email := "auth-login-pending-" + ShortUUID(randUuid.String()) + "@test.com"
 
 	created, err := TestService.UserService.Create(&model.UserCreate{
-		UserBase: model.UserBase{Email: email, FirstName: "Auth", LastName: "Pending"},
+		UserBase: model.UserBase{Username: uniqueUsername(), Email: email, FirstName: "Auth", LastName: "Pending"},
 		Password: "correct-password",
 	}, true)
 	require.NoError(t, err)
@@ -183,7 +183,7 @@ func Test_API_Auth_Login_Succeeds_AfterAdminMarksVerified(t *testing.T) {
 	email := "auth-login-verified-" + ShortUUID(randUuid.String()) + "@test.com"
 
 	created, err := TestService.UserService.Create(&model.UserCreate{
-		UserBase: model.UserBase{Email: email, FirstName: "Auth", LastName: "Verified"},
+		UserBase: model.UserBase{Username: uniqueUsername(), Email: email, FirstName: "Auth", LastName: "Verified"},
 		Password: "correct-password",
 	}, true)
 	require.NoError(t, err)

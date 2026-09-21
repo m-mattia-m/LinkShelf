@@ -17,7 +17,7 @@ func CreateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 			if errors.Is(err, domain.ErrNotFound) {
 				return nil, huma.Error404NotFound("user not found", err)
 			}
-			if errors.Is(err, domain.ErrForbidden) || errors.Is(err, domain.ErrInvalidInput) {
+			if errors.Is(err, domain.ErrForbidden) || errors.Is(err, domain.ErrInvalidInput) || errors.Is(err, domain.ErrConflict) {
 				return nil, mapper.MapOwnershipError("failed to create shelf", err)
 			}
 			return nil, mapper.MapWriteError("failed to create shelf", err)
@@ -60,6 +60,24 @@ func GetShelfById(svc *domain.Service) func(c context.Context, input *model.Shel
 func GetPublicShelfByPath(svc *domain.Service) func(c context.Context, input *model.ShelfPathFilter) (*model.PublicShelfResponse, error) {
 	return func(c context.Context, input *model.ShelfPathFilter) (*model.PublicShelfResponse, error) {
 		shelf, err := svc.ShelfService.GetByPath(input.Path)
+		if err != nil {
+			return nil, huma.Error400BadRequest("failed to get shelf", err)
+		}
+
+		if shelf == nil {
+			return nil, huma.Error404NotFound("shelf not found")
+		}
+
+		return mapper.MapShelfToPublicShelfResponse(*shelf), nil
+	}
+}
+
+// GetPublicShelfByUsernameAndPath is GetPublicShelfByPath for /<username>/<path>.
+// Only one of the two lookups answers at a time, depending on
+// app.userBasedPaths - the other returns 404.
+func GetPublicShelfByUsernameAndPath(svc *domain.Service) func(c context.Context, input *model.ShelfUsernamePathFilter) (*model.PublicShelfResponse, error) {
+	return func(c context.Context, input *model.ShelfUsernamePathFilter) (*model.PublicShelfResponse, error) {
+		shelf, err := svc.ShelfService.GetByUsernameAndPath(input.Username, input.Path)
 		if err != nil {
 			return nil, huma.Error400BadRequest("failed to get shelf", err)
 		}

@@ -3,9 +3,9 @@ import { fireEvent, screen, waitFor } from '@testing-library/vue'
 import { HttpResponse, http } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ThemeGroupedResponseBodyToJSON } from '~~/api'
-import type { Shelf } from '~~/api'
+import type { SettingPageBody, Shelf } from '~~/api'
 import { server } from '../../../test/mocks/server'
-import { buildTheme } from '../../../test/mocks/factories'
+import { buildSettingPageBody, buildTheme, buildUser } from '../../../test/mocks/factories'
 import { useThemeStore } from '~/stores/theme'
 import ShelfForm from './ShelfForm.vue'
 
@@ -188,6 +188,90 @@ describe('ShelfForm', () => {
       const isValid = await wrapper.vm.validate()
 
       expect(isValid).toBe(true)
+    })
+  })
+
+  describe('path rules and URL', () => {
+    function setUserBasedPaths(enabled: boolean) {
+      useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: enabled })
+    }
+
+    beforeEach(() => {
+      setUserBasedPaths(false)
+      useAuthStore().$reset()
+    })
+
+    it('rejects a word the app itself answers as a top-level path', async () => {
+      for (const path of ['docs', 'app', 'auth', 'cloud', 'API']) {
+        const wrapper = await mountSuspended(ShelfForm, {
+          props: { modelValue: buildShelfProp({ path: 'old-path' }) }
+        })
+        await fireEvent.update(wrapper.get('input[name="path"]').element as HTMLInputElement, path)
+
+        expect(await wrapper.vm.validate(), path).toBe(false)
+      }
+    })
+
+    it('shows why the path is rejected', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'old-path' }) }
+      })
+
+      await fireEvent.update(screen.getByRole('textbox', { name: 'Path' }), 'docs')
+      await fireEvent.click(document.body)
+
+      const form = document.querySelector('form')!
+      form.dispatchEvent(new Event('submit', { cancelable: true }))
+
+      await waitFor(() => {
+        expect(screen.getByText('This path is used by a page of this app. Please choose another one')).toBeInTheDocument()
+      })
+    })
+
+    it('accepts the same word behind a username', async () => {
+      setUserBasedPaths(true)
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'old-path' }) }
+      })
+      await fireEvent.update(wrapper.get('input[name="path"]').element as HTMLInputElement, 'docs')
+
+      expect(await wrapper.vm.validate()).toBe(true)
+    })
+
+    it('leaves a shelf editable that already has a reserved path', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Renamed title', path: 'docs' }) }
+      })
+
+      expect(await wrapper.vm.validate()).toBe(true)
+    })
+
+    it('shows the URL without a username while user-based paths are off', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'my-shelf', username: 'alice' }) }
+      })
+
+      expect(screen.getByText(`${window.location.origin}/my-shelf`)).toBeInTheDocument()
+    })
+
+    it('shows the owner\'s username in the URL while user-based paths are on', async () => {
+      setUserBasedPaths(true)
+
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'my-shelf', username: 'alice' }) }
+      })
+
+      expect(screen.getByText(`${window.location.origin}/alice/my-shelf`)).toBeInTheDocument()
+    })
+
+    it('uses the signed-in user for a shelf that is not saved yet', async () => {
+      setUserBasedPaths(true)
+      useAuthStore().user = buildUser({ id: 'user-1', username: 'bob' })
+
+      await renderSuspended(ShelfForm)
+      await fireEvent.update(screen.getByRole('textbox', { name: 'Path' }), 'fresh')
+
+      expect(screen.getByText(`${window.location.origin}/bob/fresh`)).toBeInTheDocument()
     })
   })
 })

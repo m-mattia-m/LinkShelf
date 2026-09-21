@@ -445,3 +445,106 @@ func Test_API_ListShelf_Failure(t *testing.T) {
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to list shelves")
 }
+
+func Test_API_GetPublicShelfByUsernameAndPath_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := GetPublicShelfByUsernameAndPath(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		GetByUsernameAndPath("alice", "my-path").
+		Return(&model.Shelf{
+			PublicShelf: model.PublicShelf{Id: "shelf-uuid-test", Path: "my-path"},
+			UserId:      "user-uuid-test",
+			Username:    "alice",
+		}, nil)
+
+	resp, err := handler(context.Background(), &model.ShelfUsernamePathFilter{Username: "alice", Path: "my-path"})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Equal(t, "shelf-uuid-test", resp.Body.Id)
+	require.Equal(t, "my-path", resp.Body.Path)
+}
+
+func Test_API_GetPublicShelfByUsernameAndPath_NotFound(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := GetPublicShelfByUsernameAndPath(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		GetByUsernameAndPath("alice", "missing").
+		Return(nil, nil)
+
+	resp, err := handler(context.Background(), &model.ShelfUsernamePathFilter{Username: "alice", Path: "missing"})
+
+	require.Nil(t, resp)
+	var detailed huma.StatusError
+	require.ErrorAs(t, err, &detailed)
+	require.Equal(t, 404, detailed.GetStatus())
+}
+
+func Test_API_GetPublicShelfByUsernameAndPath_Failure(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	handler := GetPublicShelfByUsernameAndPath(svc.Service)
+
+	svc.ShelfService.
+		EXPECT().
+		GetByUsernameAndPath("alice", "my-path").
+		Return(nil, errors.New("db unavailable"))
+
+	resp, err := handler(context.Background(), &model.ShelfUsernamePathFilter{Username: "alice", Path: "my-path"})
+
+	require.Nil(t, resp)
+	var detailed huma.StatusError
+	require.ErrorAs(t, err, &detailed)
+	require.Equal(t, 400, detailed.GetStatus())
+}
+
+func Test_API_CreateShelf_PathProblemsMapToTheRightStatus(t *testing.T) {
+	cases := map[string]struct {
+		err    error
+		status int
+	}{
+		"conflict":      {domain.ErrConflict, 409},
+		"invalid input": {domain.ErrInvalidInput, 400},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			svc := NewMockDomainService(t)
+			defer svc.Ctrl.Finish()
+
+			svc.ShelfService.EXPECT().Create(gomock.Any(), gomock.Any()).Return("", c.err)
+
+			resp, err := CreateShelf(svc.Service)(context.Background(), &model.ShelfRequestBody{Body: model.ShelfBase{Title: "t", Path: "p"}})
+
+			require.Nil(t, resp)
+			var detailed huma.StatusError
+			require.ErrorAs(t, err, &detailed)
+			require.Equal(t, c.status, detailed.GetStatus())
+		})
+	}
+}
+
+func Test_API_UpdateShelf_PathConflictIs409(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfService.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, domain.ErrConflict)
+
+	resp, err := UpdateShelf(svc.Service)(context.Background(), &model.ShelfFilterFilterAndBody{
+		ShelfRequestFilter: model.ShelfRequestFilter{ShelfId: "shelf-1"},
+		Body:               model.ShelfBase{Title: "t", Path: "p"},
+	})
+
+	require.Nil(t, resp)
+	var detailed huma.StatusError
+	require.ErrorAs(t, err, &detailed)
+	require.Equal(t, 409, detailed.GetStatus())
+}

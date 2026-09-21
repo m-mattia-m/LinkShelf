@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware((to) => {
   // admin testing an invite, or a user checking the link on a device where
   // they're logged into a different account) - same reasoning that already
   // exempts the OIDC callback below.
-  const isTokenActionRoute = to.path === '/auth/callback' || to.path === '/auth/verify-email' || to.path === '/auth/set-password'
+  const isTokenActionRoute = to.path === '/auth/callback' || to.path === '/auth/verify-email' || to.path === '/auth/set-password' || to.path === '/auth/reset-password'
 
   if (isAppRoute && !authStore.isAuthenticated) {
     return navigateTo({ path: '/auth/sign-in', query: { redirect: to.fullPath } })

@@ -27,6 +27,12 @@ export interface Shelf {
     readonly $schema?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof Shelf
+     */
+    createdWithUserBasedPaths: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof Shelf
      */
@@ -85,12 +91,19 @@ export interface Shelf {
      * @memberof Shelf
      */
     userId: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Shelf
+     */
+    username: string;
 }
 
 /**
  * Check if a given object implements the Shelf interface.
  */
 export function instanceOfShelf(value: object): value is Shelf {
+    if (!('createdWithUserBasedPaths' in value) || value['createdWithUserBasedPaths'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('domain' in value) || value['domain'] === undefined) return false;
     if (!('icon' in value) || value['icon'] === undefined) return false;
@@ -101,6 +114,7 @@ export function instanceOfShelf(value: object): value is Shelf {
     if (!('themeMissing' in value) || value['themeMissing'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
     if (!('userId' in value) || value['userId'] === undefined) return false;
+    if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
 
@@ -115,6 +129,7 @@ export function ShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean): She
     return {
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
+        'createdWithUserBasedPaths': json['createdWithUserBasedPaths'],
         'description': json['description'],
         'domain': json['domain'],
         'icon': json['icon'],
@@ -125,6 +140,7 @@ export function ShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean): She
         'themeMissing': json['themeMissing'],
         'title': json['title'],
         'userId': json['userId'],
+        'username': json['username'],
     };
 }
 
@@ -139,6 +155,7 @@ export function ShelfToJSONTyped(value?: Omit<Shelf, '$schema'> | null, ignoreDi
 
     return {
         
+        'createdWithUserBasedPaths': value['createdWithUserBasedPaths'],
         'description': value['description'],
         'domain': value['domain'],
         'icon': value['icon'],
@@ -149,6 +166,7 @@ export function ShelfToJSONTyped(value?: Omit<Shelf, '$schema'> | null, ignoreDi
         'themeMissing': value['themeMissing'],
         'title': value['title'],
         'userId': value['userId'],
+        'username': value['username'],
     };
 }
 

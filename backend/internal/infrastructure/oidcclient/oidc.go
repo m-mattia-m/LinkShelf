@@ -25,6 +25,8 @@ type Identity struct {
 	EmailVerified bool
 	FirstName     string
 	LastName      string
+	// PreferredUsername is optional in OIDC, so it is often empty.
+	PreferredUsername string
 }
 
 const stateExpiry = 10 * time.Minute
@@ -134,6 +136,9 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 	var profile struct {
 		GivenName  string `json:"given_name"`
 		FamilyName string `json:"family_name"`
+		// The "profile" scope is already requested, so providers that
+		// support it return this in the userinfo response.
+		PreferredUsername string `json:"preferred_username"`
 	}
 	if err := userInfo.Claims(&profile); err != nil {
 		return nil, fmt.Errorf("failed to parse userinfo claims: %w", err)
@@ -145,6 +150,8 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 		EmailVerified: userInfo.EmailVerified,
 		FirstName:     profile.GivenName,
 		LastName:      profile.FamilyName,
+
+		PreferredUsername: profile.PreferredUsername,
 	}, nil
 }
 

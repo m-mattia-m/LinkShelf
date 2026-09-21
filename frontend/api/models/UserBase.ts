@@ -49,6 +49,12 @@ export interface UserBase {
      * @memberof UserBase
      */
     role?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserBase
+     */
+    username: string;
 }
 
 /**
@@ -58,6 +64,7 @@ export function instanceOfUserBase(value: object): value is UserBase {
     if (!('email' in value) || value['email'] === undefined) return false;
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
 
@@ -76,6 +83,7 @@ export function UserBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'firstName': json['first_name'],
         'lastName': json['last_name'],
         'role': json['role'] == null ? undefined : json['role'],
+        'username': json['username'],
     };
 }
 
@@ -94,6 +102,7 @@ export function UserBaseToJSONTyped(value?: Omit<UserBase, '$schema'> | null, ig
         'first_name': value['firstName'],
         'last_name': value['lastName'],
         'role': value['role'],
+        'username': value['username'],
     };
 }
 

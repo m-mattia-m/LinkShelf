@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import draggable from 'vuedraggable'
-import type { Shelf, Section, Link } from '~~/api'
+import type { Shelf, Section, Link, SettingPageBody } from '~~/api'
 import { useShelfStore } from '~/stores/shelf'
 import { useSectionStore } from '~/stores/section'
 import { useLinkStore } from '~/stores/link'
@@ -23,6 +23,9 @@ const linkStore = useLinkStore()
 
 const shelf = ref<Shelf>()
 const loading = ref(true)
+
+const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
+const publicPath = computed(() => shelf.value ? publicShelfPath(shelf.value, websiteSettings.value?.userBasedPaths ?? false) : '')
 const notFound = ref(false)
 
 // Local, unsaved drag order - dragging a section or link only ever mutates
@@ -164,6 +167,11 @@ async function createSection() {
     </div>
 
     <template v-else-if="shelf">
+      <ShelfUrlAlert
+        :shelf="shelf"
+        class="mb-4"
+      />
+
       <div class="flex justify-between items-start gap-4 pb-4">
         <div>
           <h1 class="text-2xl text-highlighted">
@@ -176,7 +184,7 @@ async function createSection() {
             {{ shelf.description }}
           </p>
           <p class="text-sm text-dimmed">
-            <span v-if="shelf.path">/{{ shelf.path }}</span>
+            <span v-if="shelf.path">{{ publicPath }}</span>
             <span v-if="shelf.domain">{{ shelf.path ? ' · ' : '' }}{{ shelf.domain }}</span>
           </p>
         </div>
@@ -187,7 +195,7 @@ async function createSection() {
             icon="i-lucide-external-link"
             color="neutral"
             variant="outline"
-            :href="'/' + shelf.path"
+            :href="publicPath || '/'"
             target="_blank"
           />
           <UButton

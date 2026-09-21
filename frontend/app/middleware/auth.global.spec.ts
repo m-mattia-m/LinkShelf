@@ -51,7 +51,8 @@ describe('auth.global middleware', () => {
   it.each([
     '/auth/callback',
     '/auth/verify-email',
-    '/auth/set-password'
+    '/auth/set-password',
+    '/auth/reset-password'
   ])('always lets a token-action route (%s) through even when already authenticated', (path) => {
     const authStore = useAuthStore()
     authStore.setTokens(buildTokenPair())

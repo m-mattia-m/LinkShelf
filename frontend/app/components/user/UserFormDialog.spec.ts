@@ -6,7 +6,8 @@ import { UserToJSON } from '~~/api'
 import type { SettingPageBody } from '~~/api'
 import { errorResponse } from '../../../test/mocks/handlers'
 import { server } from '../../../test/mocks/server'
-import { buildSettingPageBody, buildUser } from '../../../test/mocks/factories'
+import { buildSettingPageBody, buildShelf, buildUser } from '../../../test/mocks/factories'
+import { useShelfStore } from '~/stores/shelf'
 import UserFormDialog from './UserFormDialog.vue'
 
 const BASE = 'http://localhost:8085'
@@ -33,6 +34,7 @@ describe('UserFormDialog', () => {
     const dialog = within(baseElement as HTMLElement)
     await fireEvent.update(dialog.getByLabelText('First name'), 'Ada')
     await fireEvent.update(dialog.getByLabelText('Last name'), 'Lovelace')
+    await fireEvent.update(dialog.getByLabelText('Username'), 'ada-lovelace')
     await fireEvent.update(dialog.getByLabelText('Email'), 'ada@example.com')
     await fireEvent.update(dialog.getByLabelText('Password'), 'secret123')
     await fireEvent.click(dialog.getByRole('button', { name: 'Submit' }))
@@ -42,6 +44,7 @@ describe('UserFormDialog', () => {
     })
     expect(postedBody).toEqual({
       email: 'ada@example.com',
+      username: 'ada-lovelace',
       first_name: 'Ada',
       last_name: 'Lovelace',
       password: 'secret123',
@@ -62,6 +65,7 @@ describe('UserFormDialog', () => {
     const dialog = within(baseElement as HTMLElement)
     await fireEvent.update(dialog.getByLabelText('First name'), 'Ada')
     await fireEvent.update(dialog.getByLabelText('Last name'), 'Lovelace')
+    await fireEvent.update(dialog.getByLabelText('Username'), 'ada-lovelace')
     await fireEvent.update(dialog.getByLabelText('Email'), 'ada@example.com')
     await fireEvent.click(dialog.getByRole('button', { name: 'Submit' }))
 
@@ -87,6 +91,7 @@ describe('UserFormDialog', () => {
     const dialog = within(baseElement as HTMLElement)
     await fireEvent.update(dialog.getByLabelText('First name'), 'Ada')
     await fireEvent.update(dialog.getByLabelText('Last name'), 'Lovelace')
+    await fireEvent.update(dialog.getByLabelText('Username'), 'ada-lovelace')
     await fireEvent.update(dialog.getByLabelText('Email'), 'ada@example.com')
     await fireEvent.click(dialog.getByRole('button', { name: 'Submit' }))
 
@@ -123,6 +128,7 @@ describe('UserFormDialog', () => {
     })
     expect(putBody).toEqual({
       email: 'old@example.com',
+      username: 'user-1',
       first_name: 'New',
       last_name: 'Name',
       role: 'user'
@@ -140,6 +146,7 @@ describe('UserFormDialog', () => {
     const dialog = within(baseElement as HTMLElement)
     await fireEvent.update(dialog.getByLabelText('First name'), 'Ada')
     await fireEvent.update(dialog.getByLabelText('Last name'), 'Lovelace')
+    await fireEvent.update(dialog.getByLabelText('Username'), 'ada-lovelace')
     await fireEvent.update(dialog.getByLabelText('Email'), 'taken@example.com')
     await fireEvent.update(dialog.getByLabelText('Password'), 'secret123')
     await fireEvent.click(dialog.getByRole('button', { name: 'Submit' }))
@@ -148,5 +155,83 @@ describe('UserFormDialog', () => {
       expect(dialog.getByText('already registered')).toBeInTheDocument()
     })
     expect(emitted().saved).toBeFalsy()
+  })
+
+  describe('renaming a user', () => {
+    const user = () => buildUser({ id: 'user-1', username: 'jane', email: 'jane@example.com' })
+
+    function arrange({ userBasedPaths, shelves }: { userBasedPaths: boolean, shelves: ReturnType<typeof buildShelf>[] }) {
+      useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths })
+      const shelfStore = useShelfStore()
+      shelfStore.shelves = shelves
+      shelfStore.loaded = true
+    }
+
+    async function openAndRename(username: string) {
+      const { baseElement } = await renderSuspended(UserFormDialog, { props: { mode: 'edit', user: user(), open: true } })
+      const dialog = within(baseElement as HTMLElement)
+      await fireEvent.update(dialog.getByLabelText('Username'), username)
+      return dialog
+    }
+
+    it('warns how many of the user\'s shelf URLs change', async () => {
+      arrange({
+        userBasedPaths: true,
+        shelves: [
+          buildShelf({ id: 's1', userId: 'user-1', path: 'one' }),
+          buildShelf({ id: 's2', userId: 'user-1', path: 'two' }),
+          buildShelf({ id: 's3', userId: 'user-2', path: 'someone-else' }),
+          buildShelf({ id: 's4', userId: 'user-1', path: '' })
+        ]
+      })
+
+      const dialog = await openAndRename('janet')
+
+      await waitFor(() => {
+        expect(dialog.getByText(/public URL of this user's 2 shelves/)).toBeInTheDocument()
+      })
+    })
+
+    it('uses the singular for one shelf', async () => {
+      arrange({ userBasedPaths: true, shelves: [buildShelf({ id: 's1', userId: 'user-1', path: 'one' })] })
+
+      const dialog = await openAndRename('janet')
+
+      await waitFor(() => {
+        expect(dialog.getByText(/public URL of this user's shelf\./)).toBeInTheDocument()
+      })
+    })
+
+    it('does not warn while user-based paths are off', async () => {
+      arrange({ userBasedPaths: false, shelves: [buildShelf({ id: 's1', userId: 'user-1', path: 'one' })] })
+
+      const dialog = await openAndRename('janet')
+
+      expect(dialog.queryByText(/Links shared with the old username stop working/)).not.toBeInTheDocument()
+    })
+
+    it('does not warn when the username is unchanged', async () => {
+      arrange({ userBasedPaths: true, shelves: [buildShelf({ id: 's1', userId: 'user-1', path: 'one' })] })
+
+      const dialog = await openAndRename('jane')
+
+      expect(dialog.queryByText(/Links shared with the old username stop working/)).not.toBeInTheDocument()
+    })
+
+    it('does not warn for a user without shelves', async () => {
+      arrange({ userBasedPaths: true, shelves: [] })
+
+      const dialog = await openAndRename('janet')
+
+      expect(dialog.queryByText(/Links shared with the old username stop working/)).not.toBeInTheDocument()
+    })
+
+    it('does not warn when creating a user', async () => {
+      arrange({ userBasedPaths: true, shelves: [buildShelf({ id: 's1', userId: 'user-1', path: 'one' })] })
+
+      const { baseElement } = await renderSuspended(UserFormDialog, { props: { mode: 'create', open: true } })
+
+      expect(within(baseElement as HTMLElement).queryByText(/Links shared with the old username stop working/)).not.toBeInTheDocument()
+    })
   })
 })

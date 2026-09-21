@@ -30,6 +30,11 @@ env: {}
   # APP_AUTHENTICATION_REGISTRATIONENABLED: "false"
   # APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED: "false"
   # APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
+  # APP_AUTHENTICATION_BOOTSTRAPADMIN_USERNAME: admin
+  # "Forgot password?" needs working email (smtp). Turn it off without:
+  # APP_AUTHENTICATION_PASSWORDRESET_ENABLED: "false"
+  # Shelves live at /<username>/<path> instead of /<path>:
+  # APP_APP_USERBASEDPATHS: "true"
 
 # The chart never renders a Secret. Create the Secrets yourself, for example
 # with External Secrets, Sealed Secrets or kubectl, and reference them here.

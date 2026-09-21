@@ -19,6 +19,7 @@ import (
 func Test_API_User_Create(t *testing.T) {
 	request := model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-creation@test.com",
 			FirstName: "user-api-creation-firstname",
 			LastName:  "user-api-creation-lastname",
@@ -57,6 +58,7 @@ func Test_API_User_Create(t *testing.T) {
 func Test_API_User_List(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-list@test.com",
 			FirstName: "user-api-list-firstname",
 			LastName:  "user-api-list-lastname",
@@ -104,6 +106,7 @@ func Test_API_User_List(t *testing.T) {
 func Test_API_User_Get(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-get@test.com",
 			FirstName: "user-api-get-firstname",
 			LastName:  "user-api-get-lastname",
@@ -147,6 +150,7 @@ func Test_API_User_Get(t *testing.T) {
 func Test_API_User_Update(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-update@test.com",
 			FirstName: "user-api-update-firstname",
 			LastName:  "user-api-update-lastname",
@@ -162,6 +166,7 @@ func Test_API_User_Update(t *testing.T) {
 	token := loginAndGetToken(t, user.Email, user.Password)
 
 	updateRequest := model.UserBase{
+		Username:  uniqueUsername(),
 		Email:     "user-api-update@test.com",
 		FirstName: "user-api-update-firstname-updated",
 		LastName:  "user-api-update-lastname-updated",
@@ -197,6 +202,7 @@ func Test_API_User_Update(t *testing.T) {
 func Test_API_User_PatchPassword(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-patch-password@test.com",
 			FirstName: "user-api-patch-password-firstname",
 			LastName:  "user-api-patch-password-lastname",
@@ -243,6 +249,7 @@ func Test_API_User_PatchPassword(t *testing.T) {
 func Test_API_User_Delete(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-delete-user@test.com",
 			FirstName: "user-api-delete-user-firstname",
 			LastName:  "user-api-delete-user-lastname",
@@ -279,6 +286,7 @@ func Test_API_User_Create_RegistrationDisabled_Rejected(t *testing.T) {
 
 	request := model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-registration-disabled@test.com",
 			FirstName: "First",
 			LastName:  "Last",
@@ -300,6 +308,7 @@ func Test_API_User_Create_RegistrationDisabled_AdminStillCanCreate(t *testing.T)
 
 	request := model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-admin-bypasses-registration-disabled@test.com",
 			FirstName: "First",
 			LastName:  "Last",
@@ -316,6 +325,7 @@ func Test_API_User_Create_RegistrationDisabled_AdminStillCanCreate(t *testing.T)
 func Test_API_User_MarkVerified_AdminOverride(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-mark-verified@test.com",
 			FirstName: "First",
 			LastName:  "Last",
@@ -345,6 +355,7 @@ func Test_API_User_MarkVerified_AdminOverride(t *testing.T) {
 func Test_API_User_MarkVerified_RequiresAdmin(t *testing.T) {
 	user := &model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     "user-api-mark-verified-forbidden@test.com",
 			FirstName: "First",
 			LastName:  "Last",

@@ -11,6 +11,7 @@ docs/AuthApi.md
 docs/EmailDeliveryInfo.md
 docs/ErrorDetail.md
 docs/ErrorModel.md
+docs/ForgotPasswordRequest.md
 docs/Link.md
 docs/LinkApi.md
 docs/LinkBase.md
@@ -24,6 +25,7 @@ docs/OidcLoginResponseBody.md
 docs/PublicShelf.md
 docs/RefreshRequest.md
 docs/ResendVerificationRequest.md
+docs/ResetPasswordRequest.md
 docs/Section.md
 docs/SectionApi.md
 docs/SectionBase.md
@@ -58,6 +60,7 @@ index.ts
 models/EmailDeliveryInfo.ts
 models/ErrorDetail.ts
 models/ErrorModel.ts
+models/ForgotPasswordRequest.ts
 models/Link.ts
 models/LinkBase.ts
 models/LinkOrderFailure.ts
@@ -70,6 +73,7 @@ models/OidcLoginResponseBody.ts
 models/PublicShelf.ts
 models/RefreshRequest.ts
 models/ResendVerificationRequest.ts
+models/ResetPasswordRequest.ts
 models/Section.ts
 models/SectionBase.ts
 models/SectionOrderFailure.ts

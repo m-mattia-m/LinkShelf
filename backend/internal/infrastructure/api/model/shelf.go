@@ -20,6 +20,15 @@ type Shelf struct {
 	PublicShelf
 	Domain string `json:"domain" bson:"domain"`
 	UserId string `json:"userId" bson:"userId"`
+	// Username is the owner's username, so a client can build the public URL
+	// (/<username>/<path> with app.userBasedPaths) without a second request -
+	// including for an admin looking at other people's shelves.
+	Username string `json:"username" bson:"username"`
+	// CreatedWithUserBasedPaths records whether app.userBasedPaths was on when
+	// the shelf was created. It never changes afterwards. Compared with the
+	// current setting it tells a client that the shelf's URL has changed shape
+	// since it was created, and that links shared back then no longer work.
+	CreatedWithUserBasedPaths bool `json:"createdWithUserBasedPaths" bson:"createdWithUserBasedPaths"`
 	// ThemeId is the selected theme's id ("" if none selected).
 	ThemeId string `json:"themeId" bson:"themeId"`
 	// ThemeMissing is true when ThemeId is set but no longer resolves to an
@@ -47,6 +56,11 @@ type ShelfRequestFilter struct {
 
 type ShelfPathFilter struct {
 	Path string `path:"path"`
+}
+
+type ShelfUsernamePathFilter struct {
+	Username string `path:"username"`
+	Path     string `path:"path"`
 }
 
 type ShelfFilterFilterAndBody struct {

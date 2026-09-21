@@ -99,6 +99,21 @@ func (mr *MockShelfServiceMockRecorder) GetByPath(path any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByPath", reflect.TypeOf((*MockShelfService)(nil).GetByPath), path)
 }
 
+// GetByUsernameAndPath mocks base method.
+func (m *MockShelfService) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByUsernameAndPath", username, path)
+	ret0, _ := ret[0].(*model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByUsernameAndPath indicates an expected call of GetByUsernameAndPath.
+func (mr *MockShelfServiceMockRecorder) GetByUsernameAndPath(username, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUsernameAndPath", reflect.TypeOf((*MockShelfService)(nil).GetByUsernameAndPath), username, path)
+}
+
 // List mocks base method.
 func (m *MockShelfService) List(callerUserId string, isAdmin bool) ([]model.Shelf, error) {
 	m.ctrl.T.Helper()

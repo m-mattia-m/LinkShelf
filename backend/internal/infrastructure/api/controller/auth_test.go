@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -411,4 +412,96 @@ func signTestAccessToken(t *testing.T, userId, role string) string {
 	signed, err := token.SignedString([]byte(config.String("authentication.jwtSecret")))
 	require.NoError(t, err)
 	return signed
+}
+
+func Test_API_ForgotPassword_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.EXPECT().RequestPasswordReset("test@test.com").Return(nil)
+
+	resp, err := ForgotPassword(svc.Service)(context.Background(), &model.ForgotPasswordRequestBody{
+		Body: model.ForgotPasswordRequest{Email: "test@test.com"},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp)
+}
+
+func Test_API_ForgotPassword_LooksTheSameWhateverHappensInside(t *testing.T) {
+	for name, internal := range map[string]error{
+		"unknown or throttled":  nil,
+		"database error":        errors.New("db unavailable"),
+		"mail delivery failure": errors.New("smtp unreachable"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			svc := NewMockDomainService(t)
+			defer svc.Ctrl.Finish()
+
+			svc.EmailVerificationService.EXPECT().RequestPasswordReset(gomock.Any()).Return(internal)
+
+			_, err := ForgotPassword(svc.Service)(context.Background(), &model.ForgotPasswordRequestBody{
+				Body: model.ForgotPasswordRequest{Email: "anyone@test.com"},
+			})
+
+			require.NoError(t, err, "an error here would tell a caller whether the address exists")
+		})
+	}
+}
+
+func Test_API_ForgotPassword_Disabled(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.EXPECT().RequestPasswordReset(gomock.Any()).Return(domain.ErrPasswordResetDisabled)
+
+	_, err := ForgotPassword(svc.Service)(context.Background(), &model.ForgotPasswordRequestBody{
+		Body: model.ForgotPasswordRequest{Email: "test@test.com"},
+	})
+
+	var detailed huma.StatusError
+	require.ErrorAs(t, err, &detailed)
+	require.Equal(t, 403, detailed.GetStatus())
+}
+
+func Test_API_ResetPassword_Success(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.EmailVerificationService.EXPECT().ResetPassword("raw-token", "new-secret-password").Return(nil)
+
+	_, err := ResetPassword(svc.Service)(context.Background(), &model.ResetPasswordRequestBody{
+		Body: model.ResetPasswordRequest{Token: "raw-token", NewPassword: "new-secret-password"},
+	})
+
+	require.NoError(t, err)
+}
+
+func Test_API_ResetPassword_Failures(t *testing.T) {
+	cases := map[string]struct {
+		err     error
+		status  int
+		message string
+	}{
+		"invalid or expired token": {domain.ErrInvalidToken, 400, "invalid or expired reset link"},
+		"disabled":                 {domain.ErrPasswordResetDisabled, 403, "password reset is currently disabled"},
+		"anything else":            {errors.New("db unavailable"), 400, "failed to reset password"},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			svc := NewMockDomainService(t)
+			defer svc.Ctrl.Finish()
+
+			svc.EmailVerificationService.EXPECT().ResetPassword(gomock.Any(), gomock.Any()).Return(c.err)
+
+			_, err := ResetPassword(svc.Service)(context.Background(), &model.ResetPasswordRequestBody{
+				Body: model.ResetPasswordRequest{Token: "t", NewPassword: "new-secret-password"},
+			})
+
+			var detailed huma.StatusError
+			require.ErrorAs(t, err, &detailed)
+			require.Equal(t, c.status, detailed.GetStatus())
+			require.ErrorContains(t, err, c.message)
+		})
+	}
 }

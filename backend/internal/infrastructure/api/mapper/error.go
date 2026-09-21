@@ -42,6 +42,8 @@ func MapOwnershipError(fallbackMessage string, err error) error {
 		return huma.Error403Forbidden("you do not have access to this resource", err)
 	case errors.Is(err, domain.ErrNotFound):
 		return huma.Error404NotFound("resource not found", err)
+	case errors.Is(err, domain.ErrConflict):
+		return huma.Error409Conflict("a resource with this value already exists", err)
 	default:
 		return huma.Error400BadRequest(fallbackMessage, err)
 	}

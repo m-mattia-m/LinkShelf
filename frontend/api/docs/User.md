@@ -14,6 +14,7 @@ Name | Type
 `id` | string
 `lastName` | string
 `role` | string
+`username` | string
 
 ## Example
 
@@ -30,6 +31,7 @@ const example = {
   "id": null,
   "lastName": null,
   "role": null,
+  "username": null,
 } satisfies User
 
 console.log(example)

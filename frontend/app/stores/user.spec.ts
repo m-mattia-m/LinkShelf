@@ -40,7 +40,7 @@ describe('useUserStore', () => {
         http.get(`${BASE}/v1/users`, () => HttpResponse.json([UserToJSON(created)]))
       )
 
-      const result = await store.create({ email: 'new@example.com', firstName: 'New', lastName: 'User', password: 'secret123' })
+      const result = await store.create({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
 
       expect(result.id).toBe('user-new')
       expect(store.users).toHaveLength(1)
@@ -56,7 +56,7 @@ describe('useUserStore', () => {
         http.get(`${BASE}/v1/users`, () => HttpResponse.json([]))
       )
 
-      await store.create({ email: 'new@example.com', firstName: 'New', lastName: 'User', password: 'secret123' })
+      await store.create({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
     })
   })
 
@@ -72,7 +72,7 @@ describe('useUserStore', () => {
         http.get(`${BASE}/v1/users`, () => HttpResponse.json([UserToJSON(updated)]))
       )
 
-      const result = await store.update('user-1', { email: updated.email, firstName: 'Updated', lastName: 'Doe' })
+      const result = await store.update('user-1', { email: updated.email, username: updated.username, firstName: 'Updated', lastName: 'Doe' })
 
       expect(result.firstName).toBe('Updated')
       expect(store.users).toHaveLength(1)

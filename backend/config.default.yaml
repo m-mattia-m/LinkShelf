@@ -3,6 +3,12 @@ app:
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: production
   frontendUrl: "http://localhost:3000"
+  # When true, a shelf's public URL is /<username>/<path>, so two users can
+  # both own /profile. When false (the default) it is /<path>, unique across
+  # the whole instance - the simpler choice for a single-user or private
+  # instance. Switching back to false fails on startup if two shelves then
+  # share a path.
+  userBasedPaths: false
 server:
   scheme: http
   host: localhost
@@ -47,9 +53,12 @@ authentication:
   refreshTokenExpiryMinutes: 1440 # 24h
   bootstrapAdmin:
     # Idempotently created/refreshed on every startup with role=admin.
-    # Leave both empty to skip bootstrapping an admin account.
+    # Leave email and password empty to skip bootstrapping an admin account.
     email: admin@example.com
     password: "change-me"
+    # Applied as configured, without the checks a user-chosen username goes
+    # through (so it may be a reserved word such as "admin").
+    username: admin
   oidc:
     # issuer and clientId are required when authentication.type is OIDC.
     # Works with any standards-compliant OIDC issuer (Keycloak, Zitadel,
@@ -73,6 +82,12 @@ authentication:
     # OIDC accounts are always exempt.
     enabled: true
     tokenExpiryHours: 24
+  passwordReset:
+    # When true, the sign-in page offers "Forgot password?" and emails a
+    # reset link. smtp.host and smtp.from must be set (checked at startup).
+    # Set to false on an instance without working email.
+    enabled: true
+    tokenExpiryMinutes: 60
 smtp:
   # Defaults to the Mailpit dev container (see compose.yaml) for local
   # development - matches the pattern of database.host/port also pointing at

@@ -130,6 +130,7 @@ const columns = computed<TableColumn<User>[]>(() => {
   const cols: TableColumn<User>[] = [
     { accessorKey: 'firstName', header: t('app.settings.users.columns.firstName') },
     { accessorKey: 'lastName', header: t('app.settings.users.columns.lastName') },
+    { accessorKey: 'username', header: t('app.settings.users.columns.username') },
     { accessorKey: 'email', header: t('app.settings.users.columns.email') }
   ]
 

@@ -55,6 +55,12 @@ export interface UserCreate {
      * @memberof UserCreate
      */
     role?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserCreate
+     */
+    username: string;
 }
 
 /**
@@ -64,6 +70,7 @@ export function instanceOfUserCreate(value: object): value is UserCreate {
     if (!('email' in value) || value['email'] === undefined) return false;
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
 
@@ -83,6 +90,7 @@ export function UserCreateFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'lastName': json['last_name'],
         'password': json['password'] == null ? undefined : json['password'],
         'role': json['role'] == null ? undefined : json['role'],
+        'username': json['username'],
     };
 }
 
@@ -102,6 +110,7 @@ export function UserCreateToJSONTyped(value?: Omit<UserCreate, '$schema'> | null
         'last_name': value['lastName'],
         'password': value['password'],
         'role': value['role'],
+        'username': value['username'],
     };
 }
 

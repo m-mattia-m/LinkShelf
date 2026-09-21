@@ -136,6 +136,17 @@ async function resend() {
         @submit="onSubmit"
       >
         <template
+          v-if="websiteSettings?.passwordResetEnabled"
+          #password-hint
+        >
+          <ULink
+            to="/auth/forgot-password"
+            class="text-primary font-medium text-sm"
+            tabindex="-1"
+          >{{ t('auth.signIn.forgotPassword') }}</ULink>
+        </template>
+
+        <template
           v-if="websiteSettings?.registrationEnabled"
           #footer
         >

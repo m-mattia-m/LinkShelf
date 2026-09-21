@@ -4,8 +4,9 @@ import { HttpResponse, http } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import draggable from 'vuedraggable'
 import { LinkOrderResponseBodyToJSON, LinkToJSON, SectionOrderResponseBodyToJSON, SectionToJSON, ShelfToJSON } from '~~/api'
+import type { SettingPageBody } from '~~/api'
 import { server } from '../../../../test/mocks/server'
-import { buildLink, buildSection, buildShelf, buildTokenPair } from '../../../../test/mocks/factories'
+import { buildLink, buildSection, buildSettingPageBody, buildShelf, buildTokenPair } from '../../../../test/mocks/factories'
 import ShelfDetailPage from './[shelfId].vue'
 
 const BASE = 'http://localhost:8085'
@@ -29,8 +30,28 @@ beforeEach(() => {
   // (including the `route:` option below, since it's an actual router
   // navigation) and redirects to /auth/sign-in when unauthenticated.
   useAuthStore().setTokens(buildTokenPair())
+  useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: false })
   mockShelfDetail()
 })
+
+// Nuxt UI's alert has no ARIA role, so "no alert" is checked by its titles.
+function expectNoUrlAlert() {
+  for (const title of ['This shelf\'s URL now includes your username', 'This shelf\'s URL no longer includes a username', 'This path can\'t be reached']) {
+    expect(screen.queryByText(title)).not.toBeInTheDocument()
+  }
+}
+
+function mockShelfWithPath(path: string, { username = 'alice', createdWithUserBasedPaths = false } = {}) {
+  server.use(http.get(`${BASE}/v1/shelves/shelf-1`, () => HttpResponse.json(ShelfToJSON(buildShelf({
+    id: 'shelf-1',
+    title: 'My Shelf',
+    description: 'A shelf',
+    path,
+    username,
+    createdWithUserBasedPaths,
+    domain: ''
+  })))))
+}
 
 describe('shelf detail page', () => {
   it('shows the shelf title, description and path once loaded', async () => {
@@ -41,6 +62,66 @@ describe('shelf detail page', () => {
     })
     expect(screen.getByText('A shelf')).toBeInTheDocument()
     expect(screen.getByText('/my-shelf')).toBeInTheDocument()
+  })
+
+  describe('public URL and the alert at the top', () => {
+    it('shows no alert for an ordinary path while user-based paths are off', async () => {
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      await waitFor(() => {
+        expect(screen.getByText('My Shelf')).toBeInTheDocument()
+      })
+      expectNoUrlAlert()
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/my-shelf')
+    })
+
+    it('puts the owner\'s username in the URL and explains the change for a shelf created before user-based paths were on', async () => {
+      useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: true })
+      mockShelfWithPath('my-shelf', { username: 'alice', createdWithUserBasedPaths: false })
+
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      await waitFor(() => {
+        expect(screen.getByText('This shelf\'s URL now includes your username')).toBeInTheDocument()
+      })
+      expect(screen.getByText('/alice/my-shelf')).toBeInTheDocument()
+      expect(screen.getByText(/Links without the username, like \/my-shelf, no longer work/)).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/alice/my-shelf')
+    })
+
+    it('shows no alert for a shelf created while user-based paths were already on', async () => {
+      useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: true })
+      mockShelfWithPath('my-shelf', { username: 'alice', createdWithUserBasedPaths: true })
+
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      await waitFor(() => {
+        expect(screen.getByText('/alice/my-shelf')).toBeInTheDocument()
+      })
+      expectNoUrlAlert()
+      // The URL itself still has the username in it.
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/alice/my-shelf')
+    })
+
+    it('warns that a reserved path cannot be reached', async () => {
+      mockShelfWithPath('docs')
+
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      await waitFor(() => {
+        expect(screen.getByText('This path can\'t be reached')).toBeInTheDocument()
+      })
+    })
+
+    it('shows the alert above the title', async () => {
+      mockShelfWithPath('docs')
+
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      const alert = await screen.findByText('This path can\'t be reached')
+      const title = screen.getByRole('heading', { name: 'My Shelf' })
+      expect(alert.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
   })
 
   it('shows a not-found state when the shelf cannot be loaded', async () => {

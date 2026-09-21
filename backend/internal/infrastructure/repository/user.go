@@ -18,6 +18,7 @@ import (
 type AuthRecord struct {
 	Id            string
 	Email         string
+	Username      string
 	FirstName     string
 	LastName      string
 	Role          string
@@ -33,12 +34,20 @@ type UserRepository interface {
 	GetPassword(id string) (string, error)
 	Create(u model.UserBase, hashedPassword, role string) (string, error)
 	Update(u *model.User) error
+	// UsernameTaken reports whether another user (not exceptUserId, which
+	// may be empty) already has this username. Usernames are stored
+	// lowercase, so the comparison is exact.
+	UsernameTaken(username, exceptUserId string) (bool, error)
+	// ListWithoutUsername returns the users that still have no username -
+	// only Id and Email are filled in.
+	ListWithoutUsername() ([]model.User, error)
+	SetUsername(userId, username string) error
 	PatchPassword(id string, hashedPassword string) error
 	Delete(u *model.User) error
 
 	FindByEmail(email string) (*AuthRecord, error)
 	FindByProviderId(providerId string) (*AuthRecord, error)
-	CreateExternal(email, firstName, lastName, provider, providerId string) (string, error)
+	CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error)
 	LinkProvider(userId, provider, providerId string) error
 	SetPasswordAndRole(userId, hashedPassword, role string) error
 
@@ -66,7 +75,7 @@ func NewUserRepository(engine *sql.DB, table string) (UserRepository, error) {
 
 func (r *userRepository) List() ([]model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role, password, email_verified
+		SELECT id, email, username, first_name, last_name, role, password, email_verified
 		FROM "user"
 	`)
 	if err != nil {
@@ -83,9 +92,11 @@ func (r *userRepository) List() ([]model.User, error) {
 	for rows.Next() {
 		var user model.User
 		var password string
+		var username sql.NullString
 		err := rows.Scan(
 			&user.Id,
 			&user.Email,
+			&username,
 			&user.FirstName,
 			&user.LastName,
 			&user.Role,
@@ -95,6 +106,7 @@ func (r *userRepository) List() ([]model.User, error) {
 		if err != nil {
 			return nil, err
 		}
+		user.Username = username.String
 		user.HasPassword = password != ""
 		users = append(users, user)
 	}
@@ -104,7 +116,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role, password, email_verified
+		SELECT id, email, username, first_name, last_name, role, password, email_verified
 		FROM "user"
 		WHERE id = ?
 	`)
@@ -114,9 +126,11 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 
 	var user model.User
 	var password string
+	var username sql.NullString
 	err = r.Engine.QueryRowContext(context.TODO(), query, id).Scan(
 		&user.Id,
 		&user.Email,
+		&username,
 		&user.FirstName,
 		&user.LastName,
 		&user.Role,
@@ -130,6 +144,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	user.Username = username.String
 	user.HasPassword = password != ""
 
 	return &user, nil
@@ -159,8 +174,8 @@ func (r *userRepository) GetPassword(id string) (string, error) {
 
 func (r *userRepository) Create(u model.UserBase, hashedPassword, role string) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO "user" (id, email, first_name, last_name, password, provider, role)
-		VALUES (?, ?, ?, ?, ?, 'LOCAL', ?)
+		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, role)
+		VALUES (?, ?, ?, ?, ?, ?, 'LOCAL', ?)
 	`)
 	if err != nil {
 		return "", err
@@ -177,6 +192,7 @@ func (r *userRepository) Create(u model.UserBase, hashedPassword, role string) (
 		query,
 		id,
 		u.Email,
+		nullIfEmpty(u.Username),
 		u.FirstName,
 		u.LastName,
 		hashedPassword,
@@ -193,6 +209,7 @@ func (r *userRepository) Update(u *model.User) error {
 	query, err := buildSqlStatements(`
 		UPDATE "user"
 		SET email = ?,
+			username = ?,
 		 	first_name = ?,
 			last_name = ?,
 			role = ?
@@ -206,6 +223,7 @@ func (r *userRepository) Update(u *model.User) error {
 		context.TODO(),
 		query,
 		u.Email,
+		nullIfEmpty(u.Username),
 		u.FirstName,
 		u.LastName,
 		u.Role,
@@ -264,7 +282,7 @@ func (r *userRepository) Delete(u *model.User) error {
 
 func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role, password, provider, provider_id, email_verified
+		SELECT id, email, username, first_name, last_name, role, password, provider, provider_id, email_verified
 		FROM "user"
 		WHERE LOWER(email) = LOWER(?)
 	`)
@@ -273,9 +291,11 @@ func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 	}
 
 	var record AuthRecord
+	var username sql.NullString
 	err = r.Engine.QueryRowContext(context.TODO(), query, email).Scan(
 		&record.Id,
 		&record.Email,
+		&username,
 		&record.FirstName,
 		&record.LastName,
 		&record.Role,
@@ -291,13 +311,14 @@ func (r *userRepository) FindByEmail(email string) (*AuthRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	record.Username = username.String
 
 	return &record, nil
 }
 
 func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, first_name, last_name, role, password, provider, provider_id, email_verified
+		SELECT id, email, username, first_name, last_name, role, password, provider, provider_id, email_verified
 		FROM "user"
 		WHERE provider_id = ?
 	`)
@@ -306,9 +327,11 @@ func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error
 	}
 
 	var record AuthRecord
+	var username sql.NullString
 	err = r.Engine.QueryRowContext(context.TODO(), query, providerId).Scan(
 		&record.Id,
 		&record.Email,
+		&username,
 		&record.FirstName,
 		&record.LastName,
 		&record.Role,
@@ -324,16 +347,17 @@ func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error
 	if err != nil {
 		return nil, err
 	}
+	record.Username = username.String
 
 	return &record, nil
 }
 
 // CreateExternal creates a user with no local password, provisioned from an
 // external identity provider login.
-func (r *userRepository) CreateExternal(email, firstName, lastName, provider, providerId string) (string, error) {
+func (r *userRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO "user" (id, email, first_name, last_name, password, provider, provider_id)
-		VALUES (?, ?, ?, ?, '', ?, ?)
+		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, provider_id)
+		VALUES (?, ?, ?, ?, ?, '', ?, ?)
 	`)
 	if err != nil {
 		return "", err
@@ -350,6 +374,7 @@ func (r *userRepository) CreateExternal(email, firstName, lastName, provider, pr
 		query,
 		id,
 		email,
+		nullIfEmpty(username),
 		firstName,
 		lastName,
 		provider,
@@ -436,5 +461,65 @@ func (r *userRepository) SetPassword(userId, hashedPassword string) error {
 	}
 
 	_, err = r.Engine.ExecContext(context.TODO(), query, hashedPassword, time.Now().UTC(), userId)
+	return err
+}
+
+func (r *userRepository) UsernameTaken(username, exceptUserId string) (bool, error) {
+	query, err := buildSqlStatements(`
+		SELECT COUNT(*)
+		FROM "user"
+		WHERE username = ? AND id <> ?
+	`)
+	if err != nil {
+		return false, err
+	}
+
+	var count int
+	if err := r.Engine.QueryRowContext(context.TODO(), query, username, exceptUserId).Scan(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *userRepository) ListWithoutUsername() ([]model.User, error) {
+	query, err := buildSqlStatements(`
+		SELECT id, email
+		FROM "user"
+		WHERE username IS NULL
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Engine.QueryContext(context.TODO(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]model.User, 0)
+	for rows.Next() {
+		var user model.User
+		if err := rows.Scan(&user.Id, &user.Email); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, rows.Err()
+}
+
+func (r *userRepository) SetUsername(userId, username string) error {
+	query, err := buildSqlStatements(`
+		UPDATE "user"
+		SET username = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Engine.ExecContext(context.TODO(), query, username, userId)
 	return err
 }

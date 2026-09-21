@@ -16,11 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   ErrorModel,
+  ForgotPasswordRequest,
   LoginRequest,
   OidcCallbackRequest,
   OidcLoginResponseBody,
   RefreshRequest,
   ResendVerificationRequest,
+  ResetPasswordRequest,
   SetPasswordRequest,
   TokenPair,
   VerifyEmailRequest,
@@ -28,6 +30,8 @@ import type {
 import {
     ErrorModelFromJSON,
     ErrorModelToJSON,
+    ForgotPasswordRequestFromJSON,
+    ForgotPasswordRequestToJSON,
     LoginRequestFromJSON,
     LoginRequestToJSON,
     OidcCallbackRequestFromJSON,
@@ -38,6 +42,8 @@ import {
     RefreshRequestToJSON,
     ResendVerificationRequestFromJSON,
     ResendVerificationRequestToJSON,
+    ResetPasswordRequestFromJSON,
+    ResetPasswordRequestToJSON,
     SetPasswordRequestFromJSON,
     SetPasswordRequestToJSON,
     TokenPairFromJSON,
@@ -45,6 +51,10 @@ import {
     VerifyEmailRequestFromJSON,
     VerifyEmailRequestToJSON,
 } from '../models/index';
+
+export interface PostForgotPasswordRequest {
+    forgotPasswordRequest: Omit<ForgotPasswordRequest, '$schema'>;
+}
 
 export interface PostLoginRequest {
     loginRequest: Omit<LoginRequest, '$schema'>;
@@ -65,6 +75,10 @@ export interface PostRefreshRequest {
 
 export interface PostResendVerificationRequest {
     resendVerificationRequest: Omit<ResendVerificationRequest, '$schema'>;
+}
+
+export interface PostResetPasswordRequest {
+    resetPasswordRequest: Omit<ResetPasswordRequest, '$schema'>;
 }
 
 export interface PostSetPasswordRequest {
@@ -109,6 +123,46 @@ export class AuthApi extends runtime.BaseAPI {
     async getOidcLogin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OidcLoginResponseBody> {
         const response = await this.getOidcLoginRaw(initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Emails a password reset link to the given address. Always responds the same way regardless of whether the address belongs to an account or the request was rate-limited. Responds 403 while password reset is disabled.
+     * Request a password reset
+     */
+    async postForgotPasswordRaw(requestParameters: PostForgotPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['forgotPasswordRequest'] == null) {
+            throw new runtime.RequiredError(
+                'forgotPasswordRequest',
+                'Required parameter "forgotPasswordRequest" was null or undefined when calling postForgotPassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/auth/forgot-password`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ForgotPasswordRequestToJSON(requestParameters['forgotPasswordRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Emails a password reset link to the given address. Always responds the same way regardless of whether the address belongs to an account or the request was rate-limited. Responds 403 while password reset is disabled.
+     * Request a password reset
+     */
+    async postForgotPassword(requestParameters: PostForgotPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.postForgotPasswordRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -316,6 +370,46 @@ export class AuthApi extends runtime.BaseAPI {
      */
     async postResendVerification(requestParameters: PostResendVerificationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.postResendVerificationRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Sets a new password using the token from the emailed reset link, marks the address verified and signs the account out everywhere.
+     * Reset password
+     */
+    async postResetPasswordRaw(requestParameters: PostResetPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['resetPasswordRequest'] == null) {
+            throw new runtime.RequiredError(
+                'resetPasswordRequest',
+                'Required parameter "resetPasswordRequest" was null or undefined when calling postResetPassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/auth/reset-password`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ResetPasswordRequestToJSON(requestParameters['resetPasswordRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Sets a new password using the token from the emailed reset link, marks the address verified and signs the account out everywhere.
+     * Reset password
+     */
+    async postResetPassword(requestParameters: PostResetPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.postResetPasswordRaw(requestParameters, initOverrides);
     }
 
     /**

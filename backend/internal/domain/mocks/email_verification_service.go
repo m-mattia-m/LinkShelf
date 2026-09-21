@@ -54,6 +54,20 @@ func (mr *MockEmailVerificationServiceMockRecorder) MarkVerified(userId any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkVerified", reflect.TypeOf((*MockEmailVerificationService)(nil).MarkVerified), userId)
 }
 
+// RequestPasswordReset mocks base method.
+func (m *MockEmailVerificationService) RequestPasswordReset(email string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestPasswordReset", email)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RequestPasswordReset indicates an expected call of RequestPasswordReset.
+func (mr *MockEmailVerificationServiceMockRecorder) RequestPasswordReset(email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestPasswordReset", reflect.TypeOf((*MockEmailVerificationService)(nil).RequestPasswordReset), email)
+}
+
 // Resend mocks base method.
 func (m *MockEmailVerificationService) Resend(email string) error {
 	m.ctrl.T.Helper()
@@ -66,6 +80,20 @@ func (m *MockEmailVerificationService) Resend(email string) error {
 func (mr *MockEmailVerificationServiceMockRecorder) Resend(email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resend", reflect.TypeOf((*MockEmailVerificationService)(nil).Resend), email)
+}
+
+// ResetPassword mocks base method.
+func (m *MockEmailVerificationService) ResetPassword(rawToken, newPassword string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetPassword", rawToken, newPassword)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResetPassword indicates an expected call of ResetPassword.
+func (mr *MockEmailVerificationServiceMockRecorder) ResetPassword(rawToken, newPassword any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetPassword", reflect.TypeOf((*MockEmailVerificationService)(nil).ResetPassword), rawToken, newPassword)
 }
 
 // SendInitial mocks base method.

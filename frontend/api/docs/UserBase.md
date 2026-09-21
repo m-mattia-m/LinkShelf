@@ -11,6 +11,7 @@ Name | Type
 `firstName` | string
 `lastName` | string
 `role` | string
+`username` | string
 
 ## Example
 
@@ -24,6 +25,7 @@ const example = {
   "firstName": null,
   "lastName": null,
   "role": null,
+  "username": null,
 } satisfies UserBase
 
 console.log(example)

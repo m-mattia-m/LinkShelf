@@ -7,6 +7,7 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
+`createdWithUserBasedPaths` | boolean
 `description` | string
 `domain` | string
 `icon` | string
@@ -17,6 +18,7 @@ Name | Type
 `themeMissing` | boolean
 `title` | string
 `userId` | string
+`username` | string
 
 ## Example
 
@@ -26,6 +28,7 @@ import type { Shelf } from ''
 // TODO: Update the object below with actual values
 const example = {
   "$schema": null,
+  "createdWithUserBasedPaths": null,
   "description": null,
   "domain": null,
   "icon": null,
@@ -36,6 +39,7 @@ const example = {
   "themeMissing": null,
   "title": null,
   "userId": null,
+  "username": null,
 } satisfies Shelf
 
 console.log(example)

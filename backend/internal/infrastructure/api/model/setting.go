@@ -33,6 +33,13 @@ type SettingPageBody struct {
 	// email" step) without guessing from a failed request.
 	RegistrationEnabled      bool `json:"registration_enabled" bson:"registration_enabled"`
 	EmailVerificationEnabled bool `json:"email_verification_enabled" bson:"email_verification_enabled"`
+	// UserBasedPaths mirrors app.userBasedPaths: public shelf URLs are
+	// /<username>/<path> instead of /<path>.
+	UserBasedPaths bool `json:"user_based_paths" bson:"user_based_paths"`
+	// PasswordResetEnabled mirrors authentication.passwordReset.enabled, so
+	// the sign-in page only offers "Forgot password?" when a reset email can
+	// actually be sent.
+	PasswordResetEnabled bool `json:"password_reset_enabled" bson:"password_reset_enabled"`
 }
 
 // EmailDeliveryInfo is deliberately minimal (host + from address only, no

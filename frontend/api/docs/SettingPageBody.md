@@ -15,12 +15,14 @@ Name | Type
 `imprint` | string
 `imprintShow` | boolean
 `oidcEnabled` | boolean
+`passwordResetEnabled` | boolean
 `privacyPolicy` | string
 `privacyPolicyShow` | boolean
 `redirectToDashboard` | boolean
 `registrationEnabled` | boolean
 `termsOfUse` | string
 `termsOfUseShow` | boolean
+`userBasedPaths` | boolean
 
 ## Example
 
@@ -38,12 +40,14 @@ const example = {
   "imprint": null,
   "imprintShow": null,
   "oidcEnabled": null,
+  "passwordResetEnabled": null,
   "privacyPolicy": null,
   "privacyPolicyShow": null,
   "redirectToDashboard": null,
   "registrationEnabled": null,
   "termsOfUse": null,
   "termsOfUseShow": null,
+  "userBasedPaths": null,
 } satisfies SettingPageBody
 
 console.log(example)

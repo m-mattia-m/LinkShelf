@@ -22,7 +22,7 @@ func UpdateSetting(svc *domain.Service) func(c context.Context, input *model.Set
 			return nil, huma.Error400BadRequest("failed to get setting", err)
 		}
 
-		return mapper.MapSettingToSettingPageResponse(input.Body.LanguageCode, settings, svc.AuthService.IsOidcEnabled(), config.Bool("authentication.registrationEnabled"), config.Bool("authentication.emailVerification.enabled")), nil
+		return mapper.MapSettingToSettingPageResponse(input.Body.LanguageCode, settings, settingPageFlags(svc)), nil
 	}
 }
 
@@ -48,7 +48,7 @@ func UpdateSettingsBatch(svc *domain.Service) func(c context.Context, input *mod
 		// to decide which language's page to render back.
 		languageCode := input.Body.Settings[0].LanguageCode
 
-		page := mapper.MapSettingToSettingPageResponse(languageCode, settings, svc.AuthService.IsOidcEnabled(), config.Bool("authentication.registrationEnabled"), config.Bool("authentication.emailVerification.enabled"))
+		page := mapper.MapSettingToSettingPageResponse(languageCode, settings, settingPageFlags(svc))
 
 		return &model.SettingBatchResponse{
 			Body: model.SettingBatchResponseBody{
@@ -66,7 +66,7 @@ func GetPageSettings(svc *domain.Service) func(c context.Context, input *model.S
 			return nil, huma.Error400BadRequest("failed to get settings", err)
 		}
 
-		return mapper.MapSettingToSettingPageResponse(input.LanguageCode, settings, svc.AuthService.IsOidcEnabled(), config.Bool("authentication.registrationEnabled"), config.Bool("authentication.emailVerification.enabled")), nil
+		return mapper.MapSettingToSettingPageResponse(input.LanguageCode, settings, settingPageFlags(svc)), nil
 	}
 }
 
@@ -82,5 +82,18 @@ func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *st
 				From:    config.String("smtp.from"),
 			},
 		}, nil
+	}
+}
+
+// settingPageFlags gathers the configuration-derived values every settings
+// response carries, so the three endpoints that return the settings page
+// can't drift apart.
+func settingPageFlags(svc *domain.Service) mapper.SettingPageFlags {
+	return mapper.SettingPageFlags{
+		OidcEnabled:              svc.AuthService.IsOidcEnabled(),
+		RegistrationEnabled:      config.Bool("authentication.registrationEnabled"),
+		EmailVerificationEnabled: config.Bool("authentication.emailVerification.enabled"),
+		UserBasedPaths:           config.Bool("app.userBasedPaths"),
+		PasswordResetEnabled:     config.Bool("authentication.passwordReset.enabled"),
 	}
 }
