@@ -22,6 +22,17 @@ app:
   # instance. Switching back to false fails on startup if two shelves then
   # share a path.
   userBasedPaths: false
+  # When true, the API only accepts what belongs to this instance:
+  #   - browsers may call it only from the origin of frontendUrl, or from the
+  #     domain of a shelf that has one (so a shelf served on its own domain can
+  #     still load its content). Requests without an Origin header, such as
+  #     the frontend's server-side calls or curl, are not affected.
+  #   - it only answers requests whose Host is server.host (plus server.port
+  #     when domain.openapi.usePort is true). Anything else gets a 421. The
+  #     health endpoints are always exempt so probes that use a pod IP work.
+  # Requires frontendUrl and server.host to be set to the real public values.
+  # Leave it false while they are still the localhost defaults.
+  strictOrigins: false
 server:
   scheme: http
   host: localhost
@@ -133,6 +144,29 @@ so two users can both have `/profile`.
   says so and shows the URL it has now. Shelves created under the current setting show no notice.
 - While it is off, words like `app`, `auth` and `docs` can't be used as a shelf path, because those URLs belong to
   LinkShelf's own pages.
+
+## Strict origins
+
+By default the API accepts calls from any website. Set `app.strictOrigins` to `true`
+(`APP_APP_STRICTORIGINS=true`) to lock it to your instance:
+
+- **Browsers.** A page may only call the API if it was loaded from `app.frontendUrl`, or from the domain of a shelf (see
+  [Custom domains](/docs/self-hosting/custom-domains)). Any other website gets a `403`. A `http://` shelf domain is only
+  accepted when `frontendUrl` itself starts with `http://`. A domain that was just added or removed takes up to a minute
+  to count.
+- **Host.** The API only answers requests addressed to `server.host`. Anything else gets a `421 Misdirected Request`
+  without a body. `server.port` is only compared when `domain.openapi.usePort` is `true`, because behind a proxy the
+  public address usually has no port. If a trusted proxy from `server.trustedProxies` sends `X-Forwarded-Host`, that is
+  used instead of `Host`.
+- **Not affected.** Requests without an `Origin` header, like the frontend's server-side calls, `curl` or scripts, and
+  the two health endpoints, so Kubernetes probes that address the pod by its IP keep working.
+
+This limits which *websites* can use the API from a visitor's browser. It is not authentication, every endpoint still
+checks its own token.
+
+LinkShelf refuses to start with the setting on unless `app.frontendUrl` is a full `http(s)` URL and `server.host` is set,
+and it logs what it allows. Set both to your real public addresses first. In the Helm chart it is switched on
+automatically once the ingress is enabled, see [Kubernetes](/docs/self-hosting/kubernetes#custom-domains).
 
 ## Password reset
 

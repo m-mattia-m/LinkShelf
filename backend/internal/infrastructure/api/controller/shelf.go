@@ -72,6 +72,23 @@ func GetPublicShelfByPath(svc *domain.Service) func(c context.Context, input *mo
 	}
 }
 
+// GetPublicShelfByDomain is GetPublicShelfByPath for a shelf served on a
+// domain of its own.
+func GetPublicShelfByDomain(svc *domain.Service) func(c context.Context, input *model.ShelfDomainFilter) (*model.PublicShelfResponse, error) {
+	return func(c context.Context, input *model.ShelfDomainFilter) (*model.PublicShelfResponse, error) {
+		shelf, err := svc.ShelfService.GetByDomain(input.Domain)
+		if err != nil {
+			return nil, huma.Error400BadRequest("failed to get shelf", err)
+		}
+
+		if shelf == nil {
+			return nil, huma.Error404NotFound("shelf not found")
+		}
+
+		return mapper.MapShelfToPublicShelfResponse(*shelf), nil
+	}
+}
+
 // GetPublicShelfByUsernameAndPath is GetPublicShelfByPath for /<username>/<path>.
 // Only one of the two lookups answers at a time, depending on
 // app.userBasedPaths - the other returns 404.

@@ -101,3 +101,43 @@ func Test_RealDB_ShelfRepository_DuplicateDomain_IsRejected(t *testing.T) {
 	_, err = repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Second"}, Domain: domain, UserId: userId})
 	require.Error(t, err, "a second shelf with the same non-empty domain must be rejected by the DB's unique constraint")
 }
+
+func Test_RealDB_ShelfRepository_GetByDomain(t *testing.T) {
+	repo := TestRepository.ShelfRepository
+	userId := realDBTestUser(t)
+	domain := "lookup-" + uuid.NewString() + ".example.com"
+
+	id, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Domain shelf"}, Domain: domain, UserId: userId})
+	require.NoError(t, err)
+
+	found, err := repo.GetByDomain(domain)
+	require.NoError(t, err)
+	require.NotNil(t, found)
+	require.Equal(t, id, found.Id)
+	require.Empty(t, found.Path, "a domain-only shelf has no path")
+
+	missing, err := repo.GetByDomain("nobody-" + uuid.NewString() + ".example.com")
+	require.NoError(t, err)
+	require.Nil(t, missing)
+}
+
+func Test_RealDB_ShelfRepository_DomainInUse(t *testing.T) {
+	repo := TestRepository.ShelfRepository
+	userId := realDBTestUser(t)
+	domain := "inuse-" + uuid.NewString() + ".example.com:9443"
+
+	id, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Domain shelf"}, Domain: domain, UserId: userId})
+	require.NoError(t, err)
+
+	inUse, err := repo.DomainInUse(domain, "")
+	require.NoError(t, err)
+	require.True(t, inUse, "any shelf counts when no shelf is excluded")
+
+	inUse, err = repo.DomainInUse(domain, id)
+	require.NoError(t, err)
+	require.False(t, inUse, "a shelf doesn't conflict with itself")
+
+	inUse, err = repo.DomainInUse("free-"+uuid.NewString()+".example.com", "")
+	require.NoError(t, err)
+	require.False(t, inUse)
+}

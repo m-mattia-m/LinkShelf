@@ -38,18 +38,39 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ShelfBase): void
 }>()
 
+// A shelf is reached through a path or through a domain of its own, never
+// both. The tab that is open when the form is saved decides which one is kept
+// and the other is sent empty, so the backend's "exactly one" rule can never
+// surprise anyone who filled in both.
+type Mode = 'path' | 'domain'
+
 const tabItems = [
   {
     label: 'Path',
     icon: 'i-lucide-link',
-    slot: 'path'
+    slot: 'path',
+    value: 'path'
   },
   {
     label: 'Domain',
     icon: 'i-lucide-globe',
-    slot: 'domain'
+    slot: 'domain',
+    value: 'domain'
   }
 ]
+
+// A shelf that only has a domain opens on the Domain tab. One that has both
+// (created before a shelf had to choose) opens on Path, like everywhere else.
+function modeOf(shelf?: Pick<Shelf, 'path' | 'domain'>): Mode {
+  return shelf?.domain && !shelf?.path ? 'domain' : 'path'
+}
+
+const mode = ref<Mode>(modeOf(props.modelValue))
+const hadBoth = computed(() => Boolean(props.modelValue?.path && props.modelValue?.domain))
+
+// The host this app is being used on: a shelf can't take over the instance
+// itself. The backend also rejects its configured frontend host.
+const ownHost = normalizeShelfDomain(useRequestURL().host)
 
 const form = reactive({
   title: props.modelValue?.title ?? '',
@@ -60,50 +81,46 @@ const form = reactive({
   themeId: props.modelValue?.themeId ?? ''
 })
 
-const schema = v.pipe(
-  v.object({
-    title: v.pipe(v.string(), v.nonEmpty('Required')),
-    description: v.string(),
-    domain: v.pipe(
-      v.string(),
-      v.check(
-        value =>
-          value === ''
-          || /^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(value),
-        'Please enter a valid domain (e.g. example.com)'
-      )
-    ),
-    path: v.pipe(
-      v.string(),
-      v.regex(
-        /^[a-zA-Z0-9-]*$/,
-        'Path may only contain letters, numbers, and hyphens'
-      ),
-      // Behind a username nothing is off limits. Top-level, the words the app
-      // itself answers can't be used - except on a shelf that already has
-      // one, so its other fields stay editable (the backend does the same).
-      v.check(
-        value => userBasedPaths.value || value === props.modelValue?.path || !isRouteReservedPath(value),
-        'This path is used by a page of this app. Please choose another one'
-      )
-    ),
-    icon: v.string()
-  }),
-  v.forward(
+// Each of path and domain is only checked while its tab is the one in use - a
+// half-typed value on the other tab is thrown away on save anyway.
+const schema = v.object({
+  title: v.pipe(v.string(), v.nonEmpty('Required')),
+  description: v.string(),
+  domain: v.pipe(
+    v.string(),
     v.check(
-      data => data.domain.trim() !== '' || data.path.trim() !== '',
-      'Either domain or path must be provided'
+      value => mode.value !== 'domain' || normalizeShelfDomain(value) !== '',
+      'Please enter a domain (e.g. profile.example.com)'
     ),
-    ['domain']
+    v.check(
+      value => mode.value !== 'domain' || validateShelfDomain(normalizeShelfDomain(value)) === null,
+      issue => validateShelfDomain(normalizeShelfDomain(String(issue.input))) ?? 'Please enter a valid domain'
+    ),
+    v.check(
+      value => mode.value !== 'domain' || normalizeShelfDomain(value) !== ownHost,
+      'This is the address of this LinkShelf instance itself. Please choose another domain'
+    )
   ),
-  v.forward(
+  path: v.pipe(
+    v.string(),
     v.check(
-      data => data.domain.trim() !== '' || data.path.trim() !== '',
-      'Either domain or path must be provided'
+      value => mode.value !== 'path' || value.trim() !== '',
+      'Please enter a path'
     ),
-    ['path']
-  )
-)
+    v.check(
+      value => mode.value !== 'path' || /^[a-zA-Z0-9-]*$/.test(value),
+      'Path may only contain letters, numbers, and hyphens'
+    ),
+    // Behind a username nothing is off limits. Top-level, the words the app
+    // itself answers can't be used - except on a shelf that already has
+    // one, so its other fields stay editable (the backend does the same).
+    v.check(
+      value => mode.value !== 'path' || userBasedPaths.value || value === props.modelValue?.path || !isRouteReservedPath(value),
+      'This path is used by a page of this app. Please choose another one'
+    )
+  ),
+  icon: v.string()
+})
 
 // The URL the shelf will get: /<username>/<path> with user-based paths, else
 // /<path>. A shelf being edited keeps its owner's username - an admin may be
@@ -112,6 +129,12 @@ const ownerUsername = computed(() => props.modelValue?.username || currentUser.v
 const pathHelp = computed(() => userBasedPaths.value
   ? `${origin}/${ownerUsername.value || '<username>'}/${form.path}`
   : `${origin}/${form.path}`)
+
+const domainHelp = computed(() => {
+  const domain = normalizeShelfDomain(form.domain)
+  const shown = domain ? `https://${domain}` : 'https://<domain>'
+  return `${shown} - point the domain's DNS at this LinkShelf instance and route it to the frontend.`
+})
 
 const selectedThemeId = computed({
   get: () => form.themeId || NO_THEME_VALUE,
@@ -161,6 +184,7 @@ watch(
       // above already says it's gone, so just clear it instead.
       themeId: newShelf.themeMissing ? '' : newShelf.themeId
     })
+    mode.value = modeOf(newShelf)
   },
   { immediate: true }
 )
@@ -169,8 +193,12 @@ watch(
  * Sync form → parent
  */
 watch(
-  form,
-  () => emit('update:modelValue', { ...form }),
+  [form, mode],
+  () => emit('update:modelValue', {
+    ...form,
+    path: mode.value === 'path' ? form.path.trim() : '',
+    domain: mode.value === 'domain' ? normalizeShelfDomain(form.domain) : ''
+  }),
   { deep: true }
 )
 </script>
@@ -239,19 +267,37 @@ watch(
       />
     </UFormField>
 
+    <UAlert
+      v-if="hadBoth"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      title="Path and domain"
+      :description="`This shelf has both a path and a domain, and a shelf can only have one of them. Saving keeps the ${mode} and clears the other.`"
+      class="mt-4"
+    />
+
+    <p class="pt-4 text-sm text-muted">
+      A shelf is reached through either a path on this site or a domain of its own. The tab that is open when you save
+      is used, the other one is cleared.
+    </p>
+
     <UTabs
+      v-model="mode"
       :items="tabItems"
-      class="pt-4 w-full"
+      class="pt-2 w-full"
     >
       <template #domain>
         <UFormField
           label="Domain"
           name="domain"
-          :help="'https://' + form.domain"
+          :help="domainHelp"
         >
           <UInput
             v-model="form.domain"
             class="w-full"
+            placeholder="profile.example.com"
+            @blur="form.domain = normalizeShelfDomain(form.domain)"
           />
         </UFormField>
       </template>

@@ -19,8 +19,13 @@ ingress:
     host: links.example.com
   backend:
     host: api.example.com
+  # Shelves served on a domain of their own go to the frontend as well.
+  extraHosts:
+    - profile.example.com
+    - "*.shelves.example.com"
   tls:
     - secretName: linkshelf-tls
       hosts:
         - links.example.com
         - api.example.com
+        - profile.example.com

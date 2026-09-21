@@ -89,6 +89,16 @@ connection parameters such as `sslmode=require`.
 chart derives `frontendUrl`, `apiUrl` and `oidcRedirectUrl` from these hosts and uses `https` when a host is listed
 in `ingress.tls`. Set the three values yourself if you expose LinkShelf another way.
 
+**Custom domains.** A shelf can be served on a domain of its own. List the domains in `ingress.extraHosts` (a wildcard
+like `*.shelves.example.com` works too) and they are sent to the frontend. Add a certificate for them to `ingress.tls`.
+The ingress controller has to pass the original `Host` header (or `X-Forwarded-Host`) on, and no annotation or load
+balancer in front of it may overwrite it, otherwise shelves only work through their path.
+
+**Strict origins.** With the ingress enabled, `strictOrigins` (default `true`) locks the API to the instance: it only
+answers requests for the `apiUrl` host, and only browsers from `frontendUrl` or from a shelf's domain may call it. The
+chart sets `APP_APP_STRICTORIGINS`, `APP_SERVER_HOST` and `APP_SERVER_SCHEME` for that. Set it to `false` to keep the
+API open. Without an ingress it has no effect.
+
 **Themes and assets.** Mount the directories with `extraVolumes` and `extraVolumeMounts` and point
 `APP_THEMES_DIRECTORY` and `APP_ASSETS_DIRECTORY` at them.
 

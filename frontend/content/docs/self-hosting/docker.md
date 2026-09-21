@@ -44,3 +44,14 @@ services:
       timeout: 3s
       retries: 30
 ```
+
+## Custom domains for shelves
+
+A shelf can be served on a domain of its own, like `profile.example.com`, see [Custom domains](/docs/self-hosting/custom-domains).
+For that to work, put a reverse proxy in front of port `3000` that sends the domain to LinkShelf, and make sure it
+**passes the original `Host` header (or `X-Forwarded-Host`) on and doesn't overwrite it**. If the proxy replaces it with
+its own address, every domain looks like your normal LinkShelf address, and shelves only work through their path.
+
+Set `APP_APP_FRONTENDURL` and `APP_SERVER_HOST` to your real public addresses, and add `APP_APP_STRICTORIGINS=true` to lock
+the API to them.
+

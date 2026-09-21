@@ -32,3 +32,36 @@ Email verification is on by default. Configure SMTP or turn it off with
 The chart can also deploy a Postgres for testing, and it works on OpenShift with your own database. Ingress, SMTP,
 secrets and everything else are described in the
 [chart README](https://github.com/m-mattia-m/LinkShelf/tree/main/charts/linkshelf).
+
+## Custom domains
+
+Shelves can be served on a domain of their own, see [Custom domains](/docs/self-hosting/custom-domains). The ingress has
+to send those domains to the frontend, so list them in `ingress.extraHosts`, or use a wildcard for all of them, and add
+a certificate for them to `ingress.tls`:
+
+```yaml
+ingress:
+  enabled: true
+  frontend:
+    host: links.example.com
+  backend:
+    host: api.example.com
+  extraHosts:
+    - profile.example.com
+    - "*.shelves.example.com"
+  tls:
+    - secretName: linkshelf-tls
+      hosts:
+        - links.example.com
+        - api.example.com
+        - profile.example.com
+```
+
+The ingress controller has to **pass the original `Host` header (or `X-Forwarded-Host`) on, and no annotation or
+load balancer in front of it may overwrite it**. Otherwise LinkShelf can't tell which domain was asked for, and shelves
+only work through their path.
+
+With the ingress enabled the chart also turns on `app.strictOrigins`, so the API only answers on the `apiUrl` host and only
+to browsers from the frontend or from a shelf's domain, see [Strict origins](/docs/self-hosting/configuration#strict-origins).
+Set `strictOrigins: false` in the values to keep the API open.
+

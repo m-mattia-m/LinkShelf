@@ -54,6 +54,34 @@ describe('shelf index page', () => {
     })
   })
 
+  describe('the "Open" action', () => {
+    async function openActionFor(shelf: ReturnType<typeof buildShelf>) {
+      server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([shelf].map(ShelfToJSON))))
+
+      const { baseElement } = await renderSuspended(ShelfIndexPage)
+      await waitFor(() => {
+        expect(screen.getByText(shelf.title)).toBeInTheDocument()
+      })
+
+      await screen.getByRole('button', { name: 'Actions' }).click()
+      return within(baseElement as HTMLElement).findByRole('menuitem', { name: 'Open' })
+    }
+
+    it('opens the public page of a path shelf in a new tab', async () => {
+      const item = await openActionFor(buildShelf({ id: 'shelf-1', title: 'Bookmarks', path: 'bookmarks', domain: '' }))
+
+      expect(item).toHaveAttribute('href', `${window.location.origin}/bookmarks`)
+      expect(item).toHaveAttribute('target', '_blank')
+    })
+
+    it('opens a domain shelf on its own domain', async () => {
+      const item = await openActionFor(buildShelf({ id: 'shelf-1', title: 'Profile', path: '', domain: 'profile.example.com' }))
+
+      expect(item).toHaveAttribute('href', 'https://profile.example.com')
+      expect(item).toHaveAttribute('target', '_blank')
+    })
+  })
+
   it('deletes a shelf after the user confirms the destructive dialog', async () => {
     let deleteCalled = false
     server.use(

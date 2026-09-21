@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**deleteShelf**](ShelfApi.md#deleteshelf) | **DELETE** /v1/shelves/{shelfId} | Delete shelf |
+| [**getPublicShelfByDomain**](ShelfApi.md#getpublicshelfbydomain) | **GET** /v1/shelves/by-domain/{domain} | Get public shelf by domain |
 | [**getPublicShelfByPath**](ShelfApi.md#getpublicshelfbypath) | **GET** /v1/shelves/by-path/{path} | Get public shelf by path |
 | [**getPublicShelfByUsernameAndPath**](ShelfApi.md#getpublicshelfbyusernameandpath) | **GET** /v1/shelves/by-user/{username}/{path} | Get public shelf by username and path |
 | [**getShelfById**](ShelfApi.md#getshelfbyid) | **GET** /v1/shelves/{shelfId} | Get shelf by ID |
@@ -81,6 +82,74 @@ example().catch(console.error);
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getPublicShelfByDomain
+
+> PublicShelf getPublicShelfByDomain(domain)
+
+Get public shelf by domain
+
+Get the public-safe view of the shelf that is served on a domain of its own, for example profile.example.com or profile.example.com:9443. The domain is normalized first (lowercased, without a trailing dot or slash, without :80 or :443). Used to render that shelf when the frontend is reached on the domain, and requires no authentication. Unlike the lookups by path it doesn\&#39;t depend on app.userBasedPaths.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ShelfApi,
+} from '';
+import type { GetPublicShelfByDomainRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new ShelfApi();
+
+  const body = {
+    // string
+    domain: domain_example,
+  } satisfies GetPublicShelfByDomainRequest;
+
+  try {
+    const data = await api.getPublicShelfByDomain(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **domain** | `string` |  | [Defaults to `undefined`] |
+
+### Return type
+
+[**PublicShelf**](PublicShelf.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

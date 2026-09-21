@@ -22,10 +22,19 @@ const links = ref<ButtonProps[]>([
 definePageMeta({
   layout: 'landingpage'
 })
+
+// The domain of the shelf this host serves, set by middleware/shelf-host.global.ts
+// (which also switches to the layout a shelf page uses), or null on the
+// instance's own host.
+const shelfHost = useState<string | null | undefined>('shelf-host')
 </script>
 
 <template>
-  <div>
+  <ShelfPublicView
+    v-if="shelfHost"
+    :domain="shelfHost"
+  />
+  <div v-else>
     <UPageCTA
       :title="$t('home.welcome.title')"
       :description="$t('home.welcome.description')"

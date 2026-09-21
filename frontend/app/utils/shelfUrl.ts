@@ -19,3 +19,24 @@ export function publicShelfPath(shelf: { path?: string, username?: string }, use
   if (!shelf.path) return ''
   return userBasedPaths ? `/${shelf.username ?? ''}/${shelf.path}` : `/${shelf.path}`
 }
+
+/**
+ * The address a shelf is opened at: https://<domain> for a shelf that is served
+ * on a domain of its own, otherwise the instance's own origin plus the shelf's
+ * path. Empty for a shelf that has neither, which the backend doesn't allow
+ * anymore.
+ *
+ * A shelf that has both (created before it had to choose one) opens at its
+ * path, the same way the edit form shows it first. A domain is always shown
+ * with https:// - putting a shelf on a domain without TLS isn't something to
+ * point people towards.
+ */
+export function publicShelfUrl(
+  shelf: { path?: string, domain?: string, username?: string },
+  options: { userBasedPaths: boolean, origin: string }
+): string {
+  const path = publicShelfPath(shelf, options.userBasedPaths)
+  if (path) return options.origin + path
+  if (shelf.domain) return `https://${shelf.domain}`
+  return ''
+}

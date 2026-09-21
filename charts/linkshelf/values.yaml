@@ -18,6 +18,13 @@ apiUrl: ""
 # Defaults to <frontendUrl>/auth/callback.
 oidcRedirectUrl: ""
 
+# Lock the API to this instance: browsers may only call it from frontendUrl or
+# from the domain of a shelf, and it only answers requests addressed to the
+# apiUrl host (app.strictOrigins in the backend config). It takes effect when
+# the ingress is enabled, since that is what tells the chart the real public
+# addresses. Set it to false to keep the API open.
+strictOrigins: true
+
 # Non-sensitive settings as environment variables. Every key of the backend
 # config file maps to APP_<KEY_PATH>, e.g. smtp.host -> APP_SMTP_HOST. See
 # backend/config.default.yaml for all keys. Values set here win over the
@@ -108,6 +115,15 @@ ingress:
     host: ""
   backend:
     host: ""
+  # More hosts that go to the frontend, for shelves that are served on a domain
+  # of their own (a shelf's domain field). List each domain, or a wildcard like
+  # "*.links.example.com" for all of them. The ingress controller has to pass
+  # the original Host header on, and the domain needs a TLS certificate: add it
+  # to tls below. Without a rule for it a domain never reaches LinkShelf, and
+  # shelves work through their path only.
+  extraHosts: []
+    # - profile.example.com
+    # - "*.links.example.com"
   # Also decides whether the derived URLs use https.
   tls: []
     # - secretName: linkshelf-tls

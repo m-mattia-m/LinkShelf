@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '#ui/components/Table.vue'
 import { useShelfStore } from '~/stores/shelf'
-import type { Shelf } from '~~/api'
+import type { SettingPageBody, Shelf } from '~~/api'
 import ShelfFormDialog from '~/components/shelf/ShelfFormDialog.vue'
 
 definePageMeta({
@@ -26,6 +26,15 @@ onMounted(async () => {
 
 function getShelfUrl(id: string): string {
   return `/app/shelf/${id}`
+}
+
+// Where the shelf is actually served: its own domain, or the path on this
+// instance. "Open" goes there, the title links to the editor.
+const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
+const origin = useRequestURL().origin
+
+function getPublicUrl(shelf: Shelf): string {
+  return publicShelfUrl(shelf, { userBasedPaths: websiteSettings.value?.userBasedPaths ?? false, origin })
 }
 
 const editOpen = ref(false)
@@ -60,7 +69,7 @@ async function confirmDelete() {
 
 function actionItems(shelf: Shelf) {
   return [
-    [{ label: t('app.shelf.actions.open'), icon: 'i-lucide-external-link', to: getShelfUrl(shelf.id) }],
+    [{ label: t('app.shelf.actions.open'), icon: 'i-lucide-external-link', to: getPublicUrl(shelf), target: '_blank', disabled: !getPublicUrl(shelf) }],
     [{ label: t('app.shelf.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(shelf) }],
     [{ label: t('app.shelf.actions.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(shelf) }]
   ]

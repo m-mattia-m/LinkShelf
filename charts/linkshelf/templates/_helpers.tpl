@@ -110,6 +110,13 @@ so a user can always override a derived value. Rendered as YAML.
 {{- with (include "linkshelf.frontendUrl" .) }}{{ $env = set $env "APP_APP_FRONTENDURL" . }}{{ end }}
 {{- with (include "linkshelf.apiUrl" .) }}{{ $env = set $env "NUXT_PUBLIC_API_BASE" . }}{{ end }}
 {{- with (include "linkshelf.oidcRedirectUrl" .) }}{{ $env = set $env "APP_AUTHENTICATION_OIDC_REDIRECTURL" . }}{{ end }}
+{{- /* Strict origins need the real public addresses, which only an ingress guarantees. The backend answers on the host of apiUrl. */}}
+{{- if and .Values.strictOrigins .Values.ingress.enabled (include "linkshelf.frontendUrl" .) (include "linkshelf.apiUrl" .) }}
+{{- $api := urlParse (include "linkshelf.apiUrl" .) }}
+{{- $env = set $env "APP_APP_STRICTORIGINS" "true" }}
+{{- $env = set $env "APP_SERVER_SCHEME" $api.scheme }}
+{{- $env = set $env "APP_SERVER_HOST" $api.hostname }}
+{{- end }}
 {{- /* The image ships a default admin account. Keep it disabled unless the operator sets one. */}}
 {{- $env = set $env "APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL" "" }}
 {{- if not (include "linkshelf.secretKey" (dict "root" . "name" "bootstrapAdminPassword")) }}

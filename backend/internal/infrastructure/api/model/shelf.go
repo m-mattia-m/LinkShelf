@@ -38,9 +38,12 @@ type Shelf struct {
 }
 
 type ShelfBase struct {
-	Title       string `json:"title" bson:"title" required:"true" minLength:"1"`
-	Path        string `json:"path" bson:"path" required:"true" pattern:"^[a-zA-Z0-9-]+$" patternDescription:"letters, numbers, and hyphens only"`
-	Domain      string `json:"domain" bson:"domain" required:"false"`
+	Title string `json:"title" bson:"title" required:"true" minLength:"1"`
+	// A shelf is reached through a path or a domain, never both: exactly one
+	// of Path and Domain has to be set. The API can't express that with tags,
+	// so ShelfService enforces it.
+	Path        string `json:"path" bson:"path" required:"false" pattern:"^[a-zA-Z0-9-]*$" patternDescription:"letters, numbers, and hyphens only"`
+	Domain      string `json:"domain" bson:"domain" required:"false" doc:"A fully qualified domain name with an optional port, for example profile.example.com. Stored trimmed and lowercased, without a trailing dot or slash and without :80 or :443."`
 	Description string `json:"description" bson:"description" required:"false"`
 	ThemeId     string `json:"themeId" bson:"themeId" required:"false"`
 	Icon        string `json:"icon" bson:"icon" required:"false"`
@@ -56,6 +59,10 @@ type ShelfRequestFilter struct {
 
 type ShelfPathFilter struct {
 	Path string `path:"path"`
+}
+
+type ShelfDomainFilter struct {
+	Domain string `path:"domain"`
 }
 
 type ShelfUsernamePathFilter struct {

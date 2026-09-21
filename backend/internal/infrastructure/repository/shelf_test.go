@@ -620,3 +620,94 @@ func Test_ShelfRepository_UpdateNeverTouchesTheCreationMode(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func Test_ShelfRepository_GetByDomain_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	rows := sqlmock.NewRows([]string{
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths",
+	}).AddRow(
+		"shelf-uuid-test", "test-shelf", nil, "profile.example.com", "description-test", "", "icon-test", "user-uuid-test", "owner-name", false,
+	)
+
+	mock.ExpectQuery(`(?s)FROM\s+shelf s.*WHERE s\.domain =`).
+		WithArgs("profile.example.com").
+		WillReturnRows(rows)
+
+	shelf, err := repo.GetByDomain("profile.example.com")
+
+	require.NoError(t, err)
+	require.NotNil(t, shelf)
+	require.Equal(t, "profile.example.com", shelf.Domain)
+	require.Empty(t, shelf.Path, "a domain-only shelf has a NULL path")
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_ShelfRepository_GetByDomain_NoRows(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`FROM\s+shelf`).
+		WithArgs("nobody.example.com").
+		WillReturnError(sql.ErrNoRows)
+
+	shelf, err := repo.GetByDomain("nobody.example.com")
+
+	require.NoError(t, err)
+	require.Nil(t, shelf)
+}
+
+func Test_ShelfRepository_GetByDomain_Failure(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`FROM\s+shelf`).
+		WithArgs("profile.example.com").
+		WillReturnError(errors.New("db unavailable"))
+
+	shelf, err := repo.GetByDomain("profile.example.com")
+
+	require.ErrorContains(t, err, "db unavailable")
+	require.Nil(t, shelf)
+}
+
+func Test_ShelfRepository_DomainInUse(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`(?s)SELECT COUNT\(\*\).*FROM\s+shelf.*WHERE domain = .* AND id <>`).
+		WithArgs("profile.example.com", "shelf-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	inUse, err := repo.DomainInUse("profile.example.com", "shelf-1")
+	require.NoError(t, err)
+	require.True(t, inUse)
+
+	mock.ExpectQuery(`SELECT COUNT`).
+		WithArgs("free.example.com", "").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	inUse, err = repo.DomainInUse("free.example.com", "")
+	require.NoError(t, err)
+	require.False(t, inUse)
+
+	mock.ExpectQuery(`SELECT COUNT`).
+		WithArgs("broken.example.com", "").
+		WillReturnError(errors.New("db unavailable"))
+	_, err = repo.DomainInUse("broken.example.com", "")
+	require.ErrorContains(t, err, "db unavailable")
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}

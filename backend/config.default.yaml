@@ -9,6 +9,17 @@ app:
   # instance. Switching back to false fails on startup if two shelves then
   # share a path.
   userBasedPaths: false
+  # When true, the API only accepts what belongs to this instance:
+  #   - browsers may call it only from the origin of frontendUrl, or from the
+  #     domain of a shelf that has one (so a shelf served on its own domain can
+  #     still load its content). Requests without an Origin header, such as
+  #     the frontend's server-side calls or curl, are not affected.
+  #   - it only answers requests whose Host is server.host (plus server.port
+  #     when domain.openapi.usePort is true). Anything else gets a 421. The
+  #     health endpoints are always exempt so probes that use a pod IP work.
+  # Requires frontendUrl and server.host to be set to the real public values.
+  # Leave it false while they are still the localhost defaults.
+  strictOrigins: false
 server:
   scheme: http
   host: localhost
