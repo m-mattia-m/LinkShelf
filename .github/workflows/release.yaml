@@ -118,6 +118,7 @@ jobs:
               --build-arg "IMAGE_NAME=$IMAGE_NAME" \
               --build-arg "IMAGE_TAG=$IMAGE_TAG" \
               --label "org.opencontainers.image.version=$IMAGE_TAG" \
+              --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
               .
           done
 
