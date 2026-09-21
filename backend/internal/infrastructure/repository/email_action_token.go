@@ -14,6 +14,9 @@ import (
 const (
 	EmailActionVerify      = "verify"
 	EmailActionSetPassword = "set_password"
+	// EmailActionResetPassword is a "forgot password" link: it sets a new
+	// password on an account that may already have one.
+	EmailActionResetPassword = "reset_password"
 )
 
 type EmailActionToken struct {

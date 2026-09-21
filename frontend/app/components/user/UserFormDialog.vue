@@ -3,6 +3,7 @@ import { reactive, ref, watch } from 'vue'
 import * as v from 'valibot'
 import type { SettingPageBody, User } from '~~/api'
 import { useUserStore } from '~/stores/user'
+import { useShelfStore } from '~/stores/shelf'
 
 const { t } = useI18n()
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
@@ -21,7 +22,9 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { default: false })
 
 const userStore = useUserStore()
+const shelfStore = useShelfStore()
 const saving = ref(false)
+const userBasedPaths = computed(() => websiteSettings.value?.userBasedPaths ?? false)
 
 const roleOptions = [
   { label: 'User', value: 'user' },
@@ -31,18 +34,28 @@ const roleOptions = [
 const form = reactive({
   firstName: props.user?.firstName ?? '',
   lastName: props.user?.lastName ?? '',
+  username: props.user?.username ?? '',
   email: props.user?.email ?? '',
   password: '',
   role: (props.user?.role ?? 'user') as 'user' | 'admin'
 })
 
-watch(open, (isOpen) => {
+watch(open, async (isOpen) => {
   if (!isOpen) return
   form.firstName = props.user?.firstName ?? ''
   form.lastName = props.user?.lastName ?? ''
+  form.username = props.user?.username ?? ''
   form.email = props.user?.email ?? ''
   form.password = ''
   form.role = (props.user?.role ?? 'user') as 'user' | 'admin'
+
+  if (props.mode === 'edit' && userBasedPaths.value && !shelfStore.loaded) {
+    try {
+      await shelfStore.fetch()
+    } catch {
+      // Only the rename warning depends on this; saving works without it.
+    }
+  }
 })
 
 // Password can be left blank on create only when email verification is on -
@@ -53,6 +66,7 @@ const canInviteWithoutPassword = computed(() => websiteSettings.value?.emailVeri
 const createSchema = computed(() => v.object({
   firstName: v.pipe(v.string(), v.nonEmpty('Required')),
   lastName: v.pipe(v.string(), v.nonEmpty('Required')),
+  username: usernameSchema(),
   email: v.pipe(v.string(), v.nonEmpty('Required'), v.email('Must be a valid email address')),
   password: canInviteWithoutPassword.value ? v.string() : v.pipe(v.string(), v.nonEmpty('Required')),
   role: v.picklist(['user', 'admin'])
@@ -61,9 +75,25 @@ const createSchema = computed(() => v.object({
 const editSchema = v.object({
   firstName: v.pipe(v.string(), v.nonEmpty('Required')),
   lastName: v.pipe(v.string(), v.nonEmpty('Required')),
+  username: usernameSchema(),
   email: v.pipe(v.string(), v.nonEmpty('Required'), v.email('Must be a valid email address')),
   password: v.string(),
   role: v.picklist(['user', 'admin'])
+})
+
+// Renaming a user changes the URL of every shelf of theirs that has a path.
+// An admin sees all shelves, so they can be counted here.
+const affectedShelves = computed(() =>
+  props.mode === 'edit' && props.user
+    ? shelfStore.shelves.filter(shelf => shelf.userId === props.user!.id && shelf.path).length
+    : 0
+)
+const usernameChangeWarning = computed(() => {
+  const renamed = props.mode === 'edit' && props.user && form.username !== props.user.username
+  if (!renamed || !userBasedPaths.value || affectedShelves.value === 0) return undefined
+  return affectedShelves.value === 1
+    ? t('app.settings.users.form.usernameChangeWarningOne')
+    : t('app.settings.users.form.usernameChangeWarningMany', { count: affectedShelves.value })
 })
 
 const schema = computed(() => (props.mode === 'create' ? createSchema.value : editSchema))
@@ -86,6 +116,7 @@ async function save(close: () => void) {
       await userStore.update(props.user.id, {
         firstName: form.firstName,
         lastName: form.lastName,
+        username: form.username,
         email: form.email,
         role: form.role
       })
@@ -93,6 +124,7 @@ async function save(close: () => void) {
       await userStore.create({
         firstName: form.firstName,
         lastName: form.lastName,
+        username: form.username,
         email: form.email,
         password: form.password,
         role: form.role
@@ -149,6 +181,25 @@ async function save(close: () => void) {
             class="w-full"
           />
         </UFormField>
+
+        <UFormField
+          :label="t('app.settings.users.form.username')"
+          name="username"
+          required
+        >
+          <UInput
+            v-model="form.username"
+            class="w-full"
+          />
+        </UFormField>
+
+        <UAlert
+          v-if="usernameChangeWarning"
+          color="warning"
+          variant="subtle"
+          icon="i-lucide-triangle-alert"
+          :description="usernameChangeWarning"
+        />
 
         <UFormField
           label="Email"

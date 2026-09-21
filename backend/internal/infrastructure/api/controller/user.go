@@ -30,6 +30,9 @@ func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRe
 			if errors.Is(err, domain.ErrInvalidRole) || errors.Is(err, domain.ErrInvalidInput) {
 				return nil, huma.Error400BadRequest(err.Error())
 			}
+			if errors.Is(err, domain.ErrConflict) {
+				return nil, huma.Error409Conflict(err.Error())
+			}
 			if errors.Is(err, domain.ErrRegistrationDisabled) {
 				return nil, huma.Error403Forbidden(err.Error())
 			}
@@ -87,8 +90,11 @@ func UpdateUser(svc *domain.Service) func(c context.Context, input *model.UserFi
 
 		user, err := svc.UserService.Update(input.UserId, mapper.MapUserBaseToUserPointer(input.Body), isAdmin)
 		if err != nil {
-			if errors.Is(err, domain.ErrInvalidRole) {
+			if errors.Is(err, domain.ErrInvalidRole) || errors.Is(err, domain.ErrInvalidInput) {
 				return nil, huma.Error400BadRequest(err.Error())
+			}
+			if errors.Is(err, domain.ErrConflict) {
+				return nil, huma.Error409Conflict(err.Error())
 			}
 			return nil, mapper.MapWriteError("failed to update user", err)
 		}

@@ -75,6 +75,12 @@ export interface SettingPageBody {
     oidcEnabled: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof SettingPageBody
+     */
+    passwordResetEnabled: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SettingPageBody
      */
@@ -109,6 +115,12 @@ export interface SettingPageBody {
      * @memberof SettingPageBody
      */
     termsOfUseShow: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SettingPageBody
+     */
+    userBasedPaths: boolean;
 }
 
 /**
@@ -123,12 +135,14 @@ export function instanceOfSettingPageBody(value: object): value is SettingPageBo
     if (!('imprint' in value) || value['imprint'] === undefined) return false;
     if (!('imprintShow' in value) || value['imprintShow'] === undefined) return false;
     if (!('oidcEnabled' in value) || value['oidcEnabled'] === undefined) return false;
+    if (!('passwordResetEnabled' in value) || value['passwordResetEnabled'] === undefined) return false;
     if (!('privacyPolicy' in value) || value['privacyPolicy'] === undefined) return false;
     if (!('privacyPolicyShow' in value) || value['privacyPolicyShow'] === undefined) return false;
     if (!('redirectToDashboard' in value) || value['redirectToDashboard'] === undefined) return false;
     if (!('registrationEnabled' in value) || value['registrationEnabled'] === undefined) return false;
     if (!('termsOfUse' in value) || value['termsOfUse'] === undefined) return false;
     if (!('termsOfUseShow' in value) || value['termsOfUseShow'] === undefined) return false;
+    if (!('userBasedPaths' in value) || value['userBasedPaths'] === undefined) return false;
     return true;
 }
 
@@ -151,12 +165,14 @@ export function SettingPageBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
         'imprint': json['imprint'],
         'imprintShow': json['imprint_show'],
         'oidcEnabled': json['oidc_enabled'],
+        'passwordResetEnabled': json['password_reset_enabled'],
         'privacyPolicy': json['privacy_policy'],
         'privacyPolicyShow': json['privacy_policy_show'],
         'redirectToDashboard': json['redirect_to_dashboard'],
         'registrationEnabled': json['registration_enabled'],
         'termsOfUse': json['terms_of_use'],
         'termsOfUseShow': json['terms_of_use_show'],
+        'userBasedPaths': json['user_based_paths'],
     };
 }
 
@@ -179,12 +195,14 @@ export function SettingPageBodyToJSONTyped(value?: Omit<SettingPageBody, '$schem
         'imprint': value['imprint'],
         'imprint_show': value['imprintShow'],
         'oidc_enabled': value['oidcEnabled'],
+        'password_reset_enabled': value['passwordResetEnabled'],
         'privacy_policy': value['privacyPolicy'],
         'privacy_policy_show': value['privacyPolicyShow'],
         'redirect_to_dashboard': value['redirectToDashboard'],
         'registration_enabled': value['registrationEnabled'],
         'terms_of_use': value['termsOfUse'],
         'terms_of_use_show': value['termsOfUseShow'],
+        'user_based_paths': value['userBasedPaths'],
     };
 }
 

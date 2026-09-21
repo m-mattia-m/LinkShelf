@@ -39,6 +39,20 @@ describe('app settings users page', () => {
     })
   })
 
+  it('shows each user\'s username in its own column', async () => {
+    signInAsAdmin()
+    server.use(http.get(`${BASE}/v1/users`, () => HttpResponse.json([
+      buildUser({ id: 'user-1', username: 'jane-doe', email: 'jane@example.com' })
+    ].map(UserToJSON))))
+
+    await renderSuspended(UsersSettingsPage)
+
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Username' })).toBeInTheDocument()
+    })
+    expect(screen.getByText('jane-doe')).toBeInTheDocument()
+  })
+
   it('shows an empty-state prompt when there are no users', async () => {
     signInAsAdmin()
     server.use(http.get(`${BASE}/v1/users`, () => HttpResponse.json([])))

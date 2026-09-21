@@ -12,7 +12,12 @@ type User struct {
 }
 
 type UserBase struct {
-	Email     string `json:"email" bson:"email" required:"true"`
+	Email string `json:"email" bson:"email" required:"true"`
+	// Username is lowercase letters, digits and hyphens, and is part of a
+	// shelf's public URL when app.userBasedPaths is enabled. Reserved words
+	// and taken names are rejected by the domain layer, which also owns the
+	// rules below - the schema only documents and pre-checks the shape.
+	Username  string `json:"username" bson:"username" required:"true" minLength:"3" maxLength:"30" pattern:"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" patternDescription:"lowercase letters, numbers, and hyphens, not starting or ending with a hyphen"`
 	FirstName string `json:"first_name" bson:"first_name" required:"true"`
 	LastName  string `json:"last_name" bson:"last_name" required:"true"`
 	// Role is only ever applied when the caller is an authenticated admin -
@@ -79,6 +84,23 @@ type VerifyEmailRequest struct {
 
 type VerifyEmailRequestBody struct {
 	Body VerifyEmailRequest `json:"body" bson:"body"`
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" bson:"email" required:"true"`
+}
+
+type ForgotPasswordRequestBody struct {
+	Body ForgotPasswordRequest `json:"body" bson:"body"`
+}
+
+type ResetPasswordRequest struct {
+	Token       string `json:"token" bson:"token" required:"true"`
+	NewPassword string `json:"new_password" bson:"new_password" required:"true" minLength:"8"`
+}
+
+type ResetPasswordRequestBody struct {
+	Body ResetPasswordRequest `json:"body" bson:"body"`
 }
 
 type SetPasswordRequest struct {

@@ -103,7 +103,7 @@ func Test_RealDB_UserRepository_AuthMethods(t *testing.T) {
 
 	externalEmail := "realdb-external-" + uuid.NewString() + "@example.com"
 	externalProviderId := "oidc-sub-" + uuid.NewString()
-	externalId, err := repo.CreateExternal(externalEmail, "External", "User", "OIDC", externalProviderId)
+	externalId, err := repo.CreateExternal(externalEmail, "external-"+uuid.NewString()[:8], "External", "User", "OIDC", externalProviderId)
 	require.NoError(t, err)
 	require.NotEmpty(t, externalId)
 

@@ -36,6 +36,15 @@ type EmailVerificationService interface {
 	// SetPassword completes the admin-invite flow: sets the first password
 	// and marks the account verified, consuming the token.
 	SetPassword(rawToken, newPassword string) error
+	// RequestPasswordReset emails a reset link for the given address. Like
+	// Resend it never reports whether the address exists or the request was
+	// rate-limited, so it can't be used to enumerate accounts. It only errors
+	// when the feature is disabled or something internal fails.
+	RequestPasswordReset(email string) error
+	// ResetPassword completes the forgot-password flow: sets the new
+	// password, marks the address verified (the link proved control of it) and
+	// ends every session of that account.
+	ResetPassword(rawToken, newPassword string) error
 	// MarkVerified is the admin override - forces a user's email to
 	// verified without any token at all.
 	MarkVerified(userId string) error
@@ -102,7 +111,7 @@ func (s *emailVerificationServiceImpl) send(userId, email, action string) error 
 		return err
 	}
 
-	expiry := time.Duration(config.Int("authentication.emailVerification.tokenExpiryHours")) * time.Hour
+	expiry := tokenLifetime(action)
 	if err := s.Repository.EmailActionTokenRepository.DeleteByUserIdAndAction(userId, action); err != nil {
 		return err
 	}
@@ -110,10 +119,62 @@ func (s *emailVerificationServiceImpl) send(userId, email, action string) error 
 		return err
 	}
 
-	if action == repository.EmailActionSetPassword {
+	switch action {
+	case repository.EmailActionSetPassword:
 		return s.mailer.Send(setPasswordMessage(email, rawToken))
+	case repository.EmailActionResetPassword:
+		return s.mailer.Send(resetPasswordMessage(email, rawToken))
+	default:
+		return s.mailer.Send(verifyEmailMessage(email, rawToken))
 	}
-	return s.mailer.Send(verifyEmailMessage(email, rawToken))
+}
+
+// tokenLifetime is how long a freshly issued link works. A reset link is
+// short-lived on purpose: it is a way into the account.
+func tokenLifetime(action string) time.Duration {
+	if action == repository.EmailActionResetPassword {
+		return time.Duration(config.Int("authentication.passwordReset.tokenExpiryMinutes")) * time.Minute
+	}
+	return time.Duration(config.Int("authentication.emailVerification.tokenExpiryHours")) * time.Hour
+}
+
+func (s *emailVerificationServiceImpl) RequestPasswordReset(email string) error {
+	if !config.Bool("authentication.passwordReset.enabled") {
+		return ErrPasswordResetDisabled
+	}
+
+	record, err := s.Repository.UserRepository.FindByEmail(email)
+	if err != nil {
+		return err
+	}
+	if record == nil {
+		return nil
+	}
+
+	return s.send(record.Id, record.Email, repository.EmailActionResetPassword)
+}
+
+func (s *emailVerificationServiceImpl) ResetPassword(rawToken, newPassword string) error {
+	if !config.Bool("authentication.passwordReset.enabled") {
+		return ErrPasswordResetDisabled
+	}
+
+	token, err := s.consumeToken(rawToken, repository.EmailActionResetPassword)
+	if err != nil {
+		return err
+	}
+
+	hashedPassword, err := hashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	if err := s.Repository.UserRepository.SetPassword(token.UserId, hashedPassword); err != nil {
+		return err
+	}
+
+	// A reset is often done because the old password leaked, so nobody who
+	// was signed in with it may stay signed in.
+	return s.Repository.RefreshTokenRepository.DeleteByUserId(token.UserId)
 }
 
 func (s *emailVerificationServiceImpl) VerifyEmail(rawToken string) error {
@@ -203,5 +264,18 @@ func setPasswordMessage(to, rawToken string) mailer.Message {
 			"This link expires in %d hours.", link, config.Int("authentication.emailVerification.tokenExpiryHours")),
 		HTMLBody: fmt.Sprintf(`<p>An account was created for you. Set your password to finish registration.</p><p><a href="%s">Set my password</a></p><p>This link expires in %d hours.</p>`,
 			link, config.Int("authentication.emailVerification.tokenExpiryHours")),
+	}
+}
+
+func resetPasswordMessage(to, rawToken string) mailer.Message {
+	link := fmt.Sprintf("%s/auth/reset-password?token=%s", config.String("app.frontendUrl"), rawToken)
+	minutes := config.Int("authentication.passwordReset.tokenExpiryMinutes")
+	return mailer.Message{
+		To:      to,
+		Subject: fmt.Sprintf("Reset your %s password", config.String("app.name")),
+		TextBody: fmt.Sprintf("Someone asked to reset the password of this account. To choose a new one, open this link:\n\n%s\n\n"+
+			"It expires in %d minutes. If this wasn't you, you can ignore this email and your password stays as it is.", link, minutes),
+		HTMLBody: fmt.Sprintf(`<p>Someone asked to reset the password of this account. To choose a new one, click the link below.</p><p><a href="%s">Reset my password</a></p><p>It expires in %d minutes. If this wasn't you, you can ignore this email and your password stays as it is.</p>`,
+			link, minutes),
 	}
 }

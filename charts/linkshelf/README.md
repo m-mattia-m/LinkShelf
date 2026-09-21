@@ -77,7 +77,8 @@ env:
 
 **Secrets.** `secrets.existingSecret.name` and its `jwtSecret` key are required. The bootstrap admin from the image is
 switched off. To get an admin, set `APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL` in `env` and name the key of the password
-in `secrets.existingSecret.keys.bootstrapAdminPassword`. That account does not need email verification, so it works
+in `secrets.existingSecret.keys.bootstrapAdminPassword`. Its username is `admin`, change it with
+`APP_AUTHENTICATION_BOOTSTRAPADMIN_USERNAME`. That account does not need email verification, so it works
 before SMTP is set up. `smtpPassword` and `oidcClientSecret` work the same way, leave a key empty if you don't use it.
 
 **Database.** Point `database.existingSecret.name` to a Secret with the connection details (key names are configurable

@@ -13,6 +13,12 @@ var (
 	// ErrInvalidInput means a request field failed a business-rule validation
 	// (as opposed to the basic required/type checks huma already enforces).
 	ErrInvalidInput = errors.New("invalid input")
+	// ErrConflict means the request is valid but clashes with something that
+	// already exists, such as a taken username or shelf path.
+	ErrConflict = errors.New("conflict")
+	// ErrPasswordResetDisabled means a caller used the forgot-password flow
+	// while authentication.passwordReset.enabled is false.
+	ErrPasswordResetDisabled = errors.New("password reset is currently disabled")
 	// ErrRegistrationDisabled means a caller tried to self-register while
 	// authentication.registrationEnabled is false. Admin-created accounts
 	// and OIDC auto-provisioning are unaffected by this toggle.

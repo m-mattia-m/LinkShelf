@@ -57,18 +57,18 @@ func (mr *MockUserRepositoryMockRecorder) Create(u, hashedPassword, role any) *g
 }
 
 // CreateExternal mocks base method.
-func (m *MockUserRepository) CreateExternal(email, firstName, lastName, provider, providerId string) (string, error) {
+func (m *MockUserRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateExternal", email, firstName, lastName, provider, providerId)
+	ret := m.ctrl.Call(m, "CreateExternal", email, username, firstName, lastName, provider, providerId)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateExternal indicates an expected call of CreateExternal.
-func (mr *MockUserRepositoryMockRecorder) CreateExternal(email, firstName, lastName, provider, providerId any) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) CreateExternal(email, username, firstName, lastName, provider, providerId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExternal", reflect.TypeOf((*MockUserRepository)(nil).CreateExternal), email, firstName, lastName, provider, providerId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExternal", reflect.TypeOf((*MockUserRepository)(nil).CreateExternal), email, username, firstName, lastName, provider, providerId)
 }
 
 // Delete mocks base method.
@@ -174,6 +174,21 @@ func (mr *MockUserRepositoryMockRecorder) List() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockUserRepository)(nil).List))
 }
 
+// ListWithoutUsername mocks base method.
+func (m *MockUserRepository) ListWithoutUsername() ([]model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWithoutUsername")
+	ret0, _ := ret[0].([]model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWithoutUsername indicates an expected call of ListWithoutUsername.
+func (mr *MockUserRepositoryMockRecorder) ListWithoutUsername() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithoutUsername", reflect.TypeOf((*MockUserRepository)(nil).ListWithoutUsername))
+}
+
 // MarkVerified mocks base method.
 func (m *MockUserRepository) MarkVerified(userId string) error {
 	m.ctrl.T.Helper()
@@ -230,6 +245,20 @@ func (mr *MockUserRepositoryMockRecorder) SetPasswordAndRole(userId, hashedPassw
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPasswordAndRole", reflect.TypeOf((*MockUserRepository)(nil).SetPasswordAndRole), userId, hashedPassword, role)
 }
 
+// SetUsername mocks base method.
+func (m *MockUserRepository) SetUsername(userId, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetUsername", userId, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetUsername indicates an expected call of SetUsername.
+func (mr *MockUserRepositoryMockRecorder) SetUsername(userId, username any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetUsername", reflect.TypeOf((*MockUserRepository)(nil).SetUsername), userId, username)
+}
+
 // Update mocks base method.
 func (m *MockUserRepository) Update(u *model.User) error {
 	m.ctrl.T.Helper()
@@ -242,4 +271,19 @@ func (m *MockUserRepository) Update(u *model.User) error {
 func (mr *MockUserRepositoryMockRecorder) Update(u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), u)
+}
+
+// UsernameTaken mocks base method.
+func (m *MockUserRepository) UsernameTaken(username, exceptUserId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UsernameTaken", username, exceptUserId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UsernameTaken indicates an expected call of UsernameTaken.
+func (mr *MockUserRepositoryMockRecorder) UsernameTaken(username, exceptUserId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UsernameTaken", reflect.TypeOf((*MockUserRepository)(nil).UsernameTaken), username, exceptUserId)
 }

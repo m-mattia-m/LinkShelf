@@ -46,6 +46,22 @@ func Test_LoadConfig_EnvVarOverridesCamelCaseKeys(t *testing.T) {
 	require.Equal(t, "from-env", Get().Authentication.JwtSecret)
 }
 
+func Test_LoadConfig_UserBasedPathsIsOffByDefaultAndSettableFromTheEnvironment(t *testing.T) {
+	Reset()
+	require.NoError(t, LoadConfig())
+	require.False(t, Bool("app.userBasedPaths"))
+	require.Equal(t, "admin", String("authentication.bootstrapAdmin.username"))
+
+	Reset()
+	t.Setenv("APP_APP_USERBASEDPATHS", "true")
+	t.Setenv("APP_AUTHENTICATION_BOOTSTRAPADMIN_USERNAME", "root-admin")
+	require.NoError(t, LoadConfig())
+
+	require.True(t, Bool("app.userBasedPaths"))
+	require.Equal(t, "root-admin", String("authentication.bootstrapAdmin.username"))
+	require.True(t, Get().App.UserBasedPaths)
+}
+
 func Test_LoadConfig_ConfigurationFilePathOverridesDefault(t *testing.T) {
 	Reset()
 
@@ -181,6 +197,34 @@ func Test_Validate_SucceedsForEmailVerificationDisabledWithoutSmtp(t *testing.T)
 	Set("authentication.jwtSecret", "some-secret")
 	Set("authentication.type", "LOCAL")
 	Set("authentication.emailVerification.enabled", false)
+
+	require.NoError(t, validate())
+}
+
+func Test_Validate_PasswordResetNeedsSmtp(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.passwordReset.enabled", true)
+	Set("smtp.host", "")
+	Set("smtp.from", "")
+
+	require.ErrorContains(t, validate(), "authentication.passwordReset.enabled")
+
+	Set("smtp.host", "smtp.example.com")
+	require.ErrorContains(t, validate(), "smtp.from", "the sender is needed too")
+
+	Set("smtp.from", "no-reply@example.com")
+	require.NoError(t, validate())
+}
+
+func Test_Validate_PasswordResetDisabledNeedsNoSmtp(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.passwordReset.enabled", false)
+	Set("smtp.host", "")
+	Set("smtp.from", "")
 
 	require.NoError(t, validate())
 }

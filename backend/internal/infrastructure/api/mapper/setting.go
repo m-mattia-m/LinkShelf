@@ -5,7 +5,17 @@ import (
 	"fmt"
 )
 
-func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, oidcEnabled, registrationEnabled, emailVerificationEnabled bool) *model.SettingPageResponse {
+// SettingPageFlags are the values the settings page reports that come from the
+// configuration rather than from the stored settings.
+type SettingPageFlags struct {
+	OidcEnabled              bool
+	RegistrationEnabled      bool
+	EmailVerificationEnabled bool
+	UserBasedPaths           bool
+	PasswordResetEnabled     bool
+}
+
+func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, flags SettingPageFlags) *model.SettingPageResponse {
 	settingsMap := make(map[string]model.Setting)
 
 	for _, setting := range settings {
@@ -25,9 +35,11 @@ func MapSettingToSettingPageResponse(languageCode string, settings []model.Setti
 			PrivacyPolicyShow:        getSettingValue(settingsMap, "privacy_policy_show", languageCode) == "true",
 			PrivacyPolicy:            getSettingValue(settingsMap, "privacy_policy", languageCode),
 			RedirectToDashboard:      getSettingValue(settingsMap, "redirect_to_dashboard", languageCode) == "true",
-			OidcEnabled:              oidcEnabled,
-			RegistrationEnabled:      registrationEnabled,
-			EmailVerificationEnabled: emailVerificationEnabled,
+			OidcEnabled:              flags.OidcEnabled,
+			RegistrationEnabled:      flags.RegistrationEnabled,
+			EmailVerificationEnabled: flags.EmailVerificationEnabled,
+			UserBasedPaths:           flags.UserBasedPaths,
+			PasswordResetEnabled:     flags.PasswordResetEnabled,
 		},
 	}
 }

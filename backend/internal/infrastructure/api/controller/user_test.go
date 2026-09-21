@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -609,4 +610,57 @@ func Test_API_ListUsers_Failure(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "failed to list users")
+}
+
+func Test_API_CreateUser_UsernameProblemsMapToTheRightStatus(t *testing.T) {
+	cases := map[string]struct {
+		err    error
+		status int
+	}{
+		"taken":    {domain.ErrConflict, 409},
+		"reserved": {domain.ErrInvalidInput, 400},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			svc := NewMockDomainService(t)
+			defer svc.Ctrl.Finish()
+
+			svc.UserService.EXPECT().Create(gomock.Any(), false).Return(nil, c.err)
+
+			resp, err := CreateUser(svc.Service)(context.Background(), &model.UserRequestBody{})
+
+			require.Nil(t, resp)
+			var detailed huma.StatusError
+			require.ErrorAs(t, err, &detailed)
+			require.Equal(t, c.status, detailed.GetStatus())
+		})
+	}
+}
+
+func Test_API_UpdateUser_UsernameProblemsMapToTheRightStatus(t *testing.T) {
+	cases := map[string]struct {
+		err    error
+		status int
+	}{
+		"taken":    {domain.ErrConflict, 409},
+		"reserved": {domain.ErrInvalidInput, 400},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			svc := NewMockDomainService(t)
+			defer svc.Ctrl.Finish()
+
+			svc.UserService.EXPECT().Update("user-1", gomock.Any(), false).Return(nil, c.err)
+
+			ctx := context.WithValue(context.Background(), userIdContextKey, "user-1")
+			resp, err := UpdateUser(svc.Service)(ctx, &model.UserFilterFilterAndBody{
+				UserRequestFilter: model.UserRequestFilter{UserId: "user-1"},
+			})
+
+			require.Nil(t, resp)
+			var detailed huma.StatusError
+			require.ErrorAs(t, err, &detailed)
+			require.Equal(t, c.status, detailed.GetStatus())
+		})
+	}
 }

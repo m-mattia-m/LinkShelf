@@ -3,6 +3,7 @@
 export * from './EmailDeliveryInfo';
 export * from './ErrorDetail';
 export * from './ErrorModel';
+export * from './ForgotPasswordRequest';
 export * from './Link';
 export * from './LinkBase';
 export * from './LinkOrderFailure';
@@ -15,6 +16,7 @@ export * from './OidcLoginResponseBody';
 export * from './PublicShelf';
 export * from './RefreshRequest';
 export * from './ResendVerificationRequest';
+export * from './ResetPasswordRequest';
 export * from './Section';
 export * from './SectionBase';
 export * from './SectionOrderFailure';

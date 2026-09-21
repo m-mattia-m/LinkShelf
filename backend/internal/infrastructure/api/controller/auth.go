@@ -59,6 +59,36 @@ func SetPassword(svc *domain.Service) func(c context.Context, input *model.SetPa
 	}
 }
 
+// ForgotPassword emails a reset link. It answers the same way whether or not
+// the address belongs to an account, so it can't be used to look accounts up.
+func ForgotPassword(svc *domain.Service) func(c context.Context, input *model.ForgotPasswordRequestBody) (*struct{}, error) {
+	return func(c context.Context, input *model.ForgotPasswordRequestBody) (*struct{}, error) {
+		err := svc.EmailVerificationService.RequestPasswordReset(input.Body.Email)
+		if errors.Is(err, domain.ErrPasswordResetDisabled) {
+			return nil, huma.Error403Forbidden(err.Error())
+		}
+		// Every other outcome, including a failed send, looks the same.
+		return nil, nil
+	}
+}
+
+// ResetPassword completes the forgot-password flow with the emailed token.
+func ResetPassword(svc *domain.Service) func(c context.Context, input *model.ResetPasswordRequestBody) (*struct{}, error) {
+	return func(c context.Context, input *model.ResetPasswordRequestBody) (*struct{}, error) {
+		if err := svc.EmailVerificationService.ResetPassword(input.Body.Token, input.Body.NewPassword); err != nil {
+			switch {
+			case errors.Is(err, domain.ErrPasswordResetDisabled):
+				return nil, huma.Error403Forbidden(err.Error())
+			case errors.Is(err, domain.ErrInvalidToken):
+				return nil, huma.Error400BadRequest("invalid or expired reset link", err)
+			default:
+				return nil, huma.Error400BadRequest("failed to reset password", err)
+			}
+		}
+		return nil, nil
+	}
+}
+
 func Refresh(svc *domain.Service) func(c context.Context, input *model.RefreshRequestBody) (*model.TokenResponse, error) {
 	return func(c context.Context, input *model.RefreshRequestBody) (*model.TokenResponse, error) {
 		tokens, err := svc.AuthService.Refresh(input.Body.RefreshToken)

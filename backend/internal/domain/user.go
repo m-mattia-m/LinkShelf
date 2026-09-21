@@ -65,6 +65,13 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 		role = validated
 	}
 
+	if err := validateUsername(u.Username); err != nil {
+		return nil, err
+	}
+	if err := checkUsernameAvailable(s.Repository, u.Username, ""); err != nil {
+		return nil, err
+	}
+
 	verificationEnabled := config.Bool("authentication.emailVerification.enabled")
 	passwordRequired := !callerIsAdmin || !verificationEnabled
 	if passwordRequired && strings.TrimSpace(u.Password) == "" {
@@ -118,6 +125,20 @@ func (s *userServiceImpl) Update(userId string, userRequest *model.User, callerI
 			return nil, err
 		}
 		role = validated
+	}
+
+	// Only a changed username is checked, so saving an unrelated profile
+	// change never fails because of a name that was fine when it was chosen.
+	// Shelves keep their path: their public URL is built from the owner's
+	// current username, so a rename moves every URL at once and old ones stop
+	// resolving.
+	if userRequest.Username != existing.Username {
+		if err := validateUsername(userRequest.Username); err != nil {
+			return nil, err
+		}
+		if err := checkUsernameAvailable(s.Repository, userRequest.Username, userId); err != nil {
+			return nil, err
+		}
 	}
 
 	userRequest.Id = userId

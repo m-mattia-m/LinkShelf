@@ -241,6 +241,7 @@ func createUserWithRole(t *testing.T, role string) (userId, token string) {
 
 	user, err := TestService.UserService.Create(&model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  uniqueUsername(),
 			Email:     email,
 			FirstName: "test-firstname",
 			LastName:  "test-lastname",
@@ -251,6 +252,12 @@ func createUserWithRole(t *testing.T, role string) (userId, token string) {
 	require.NoError(t, err)
 
 	return user.Id, loginAndGetToken(t, email, password)
+}
+
+// uniqueUsername returns a valid, never-reused username so tests can create
+// as many users as they like against the one shared database.
+func uniqueUsername() string {
+	return "user-" + strings.ReplaceAll(uuid.NewString(), "-", "")[:16]
 }
 
 func createTestUser(t *testing.T) (userId, token string) {

@@ -67,6 +67,12 @@ export interface User {
      * @memberof User
      */
     role?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    username: string;
 }
 
 /**
@@ -79,6 +85,7 @@ export function instanceOfUser(value: object): value is User {
     if (!('hasPassword' in value) || value['hasPassword'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
 
@@ -100,6 +107,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'id': json['id'],
         'lastName': json['last_name'],
         'role': json['role'] == null ? undefined : json['role'],
+        'username': json['username'],
     };
 }
 
@@ -121,6 +129,7 @@ export function UserToJSONTyped(value?: Omit<User, '$schema'> | null, ignoreDisc
         'id': value['id'],
         'last_name': value['lastName'],
         'role': value['role'],
+        'username': value['username'],
     };
 }
 

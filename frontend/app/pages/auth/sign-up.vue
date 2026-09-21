@@ -15,6 +15,7 @@ const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody |
 const schema = v.object({
   firstName: v.pipe(v.string('First name is required'), v.nonEmpty('First name is required')),
   lastName: v.pipe(v.string('Last name is required'), v.nonEmpty('Last name is required')),
+  username: usernameSchema(),
   email: v.pipe(
     v.string('Email is required'),
     v.nonEmpty('Email is required'),
@@ -32,6 +33,7 @@ type Schema = v.InferOutput<typeof schema>
 const fields = [
   { name: 'firstName', type: 'text' as const, label: t('auth.signUp.firstName'), required: true },
   { name: 'lastName', type: 'text' as const, label: t('auth.signUp.lastName'), required: true },
+  { name: 'username', type: 'text' as const, label: t('auth.signUp.username'), required: true },
   { name: 'email', type: 'text' as const, label: t('auth.signUp.email'), required: true },
   { name: 'password', type: 'password' as const, label: t('auth.signUp.password'), required: true }
 ]
@@ -46,6 +48,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   try {
     const result = await authStore.register({
       email: payload.data.email,
+      username: payload.data.username,
       firstName: payload.data.firstName,
       lastName: payload.data.lastName,
       password: payload.data.password

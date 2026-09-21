@@ -144,6 +144,22 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/auth/set-password",
 		Tags:        []string{"Auth"},
 	}, SetPassword(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		OperationID: "post-forgot-password",
+		Summary:     "Request a password reset",
+		Description: "Emails a password reset link to the given address. Always responds the same way regardless of whether the address belongs to an account or the request was rate-limited. Responds 403 while password reset is disabled.",
+		Path:        "/v1/auth/forgot-password",
+		Tags:        []string{"Auth"},
+	}, ForgotPassword(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		OperationID: "post-reset-password",
+		Summary:     "Reset password",
+		Description: "Sets a new password using the token from the emailed reset link, marks the address verified and signs the account out everywhere.",
+		Path:        "/v1/auth/reset-password",
+		Tags:        []string{"Auth"},
+	}, ResetPassword(svc))
 
 	// --- Users (admin only, except self-registration, own profile, and own password) ---
 	huma.Register(api, huma.Operation{
@@ -252,6 +268,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/shelves/by-path/{path}",
 		Tags:        []string{"Shelf"},
 	}, GetPublicShelfByPath(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-public-shelf-by-username-and-path",
+		Summary:     "Get public shelf by username and path",
+		Description: "Get the public-safe view of a shelf by its owner's username and its path, used while app.userBasedPaths is enabled. Requires no authentication. While the setting is disabled, use the lookup by path alone instead - the two never answer at the same time.",
+		Path:        "/v1/shelves/by-user/{username}/{path}",
+		Tags:        []string{"Shelf"},
+	}, GetPublicShelfByUsernameAndPath(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-shelf-by-id",

@@ -21,7 +21,7 @@ func Test_MapSettingToSettingPageResponse_Success(t *testing.T) {
 		{Key: "privacy_policy", LanguageCode: "en", Value: "Privacy EN"},
 	}
 
-	resp := MapSettingToSettingPageResponse("en", settings, false, false, false)
+	resp := MapSettingToSettingPageResponse("en", settings, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false})
 
 	require.NotNil(t, resp)
 
@@ -49,7 +49,7 @@ func Test_MapSettingToSettingPageResponse_LanguageIsolation(t *testing.T) {
 		{Key: "about", LanguageCode: "de", Value: "Über DE"},
 	}
 
-	resp := MapSettingToSettingPageResponse("de", settings, false, false, false)
+	resp := MapSettingToSettingPageResponse("de", settings, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false})
 
 	require.False(t, resp.Body.AboutShow)
 	require.Equal(t, "Über DE", resp.Body.About)
@@ -61,14 +61,14 @@ func Test_MapSettingToSettingPageResponse_BooleanParsing(t *testing.T) {
 		{Key: "about", LanguageCode: "en", Value: "About"},
 	}
 
-	resp := MapSettingToSettingPageResponse("en", settings, false, false, false)
+	resp := MapSettingToSettingPageResponse("en", settings, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false})
 
 	// Only exact "true" is treated as true
 	require.False(t, resp.Body.AboutShow)
 }
 
 func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
-	resp := MapSettingToSettingPageResponse("en", nil, false, false, false)
+	resp := MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false})
 
 	require.NotNil(t, resp)
 
@@ -89,18 +89,28 @@ func Test_MapSettingToSettingPageResponse_MissingSettings(t *testing.T) {
 }
 
 func Test_MapSettingToSettingPageResponse_OidcEnabled(t *testing.T) {
-	require.True(t, MapSettingToSettingPageResponse("en", nil, true, false, false).Body.OidcEnabled)
-	require.False(t, MapSettingToSettingPageResponse("en", nil, false, false, false).Body.OidcEnabled)
+	require.True(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: true, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false}).Body.OidcEnabled)
+	require.False(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false}).Body.OidcEnabled)
 }
 
 func Test_MapSettingToSettingPageResponse_RegistrationAndEmailVerificationEnabled(t *testing.T) {
-	resp := MapSettingToSettingPageResponse("en", nil, false, true, true)
+	resp := MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: true, EmailVerificationEnabled: true, UserBasedPaths: false})
 
 	require.True(t, resp.Body.RegistrationEnabled)
 	require.True(t, resp.Body.EmailVerificationEnabled)
 
-	resp = MapSettingToSettingPageResponse("en", nil, false, false, false)
+	resp = MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false})
 
 	require.False(t, resp.Body.RegistrationEnabled)
 	require.False(t, resp.Body.EmailVerificationEnabled)
+}
+
+func Test_MapSettingToSettingPageResponse_UserBasedPaths(t *testing.T) {
+	require.True(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: true}).Body.UserBasedPaths)
+	require.False(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{OidcEnabled: false, RegistrationEnabled: false, EmailVerificationEnabled: false, UserBasedPaths: false}).Body.UserBasedPaths)
+}
+
+func Test_MapSettingToSettingPageResponse_PasswordResetEnabled(t *testing.T) {
+	require.True(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{PasswordResetEnabled: true}).Body.PasswordResetEnabled)
+	require.False(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{}).Body.PasswordResetEnabled)
 }

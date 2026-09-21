@@ -201,7 +201,16 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		return nil, ErrEmailNotVerified
 	}
 
-	userId, err := s.Repository.UserRepository.CreateExternal(identity.Email, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject)
+	// There is no step in this flow where the person could pick a name, so it
+	// is derived: the preferred_username claim if the provider sent one,
+	// otherwise the part of the email address before the "@". They can rename
+	// themselves afterwards.
+	username, err := availableUsername(s.Repository, identity.PreferredUsername, emailLocalPart(identity.Email))
+	if err != nil {
+		return nil, err
+	}
+
+	userId, err := s.Repository.UserRepository.CreateExternal(identity.Email, username, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject)
 	if err != nil {
 		return nil, err
 	}

@@ -456,7 +456,12 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_VerifiedEmail_Success(t *t
 
 	svc.UserRepository.
 		EXPECT().
-		CreateExternal(identity.Email, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject).
+		UsernameTaken("new-user", "").
+		Return(false, nil)
+
+	svc.UserRepository.
+		EXPECT().
+		CreateExternal(identity.Email, "new-user", identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject).
 		Return("new-user-id", nil)
 
 	svc.RefreshTokenRepository.
@@ -499,5 +504,99 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UnverifiedEmail_Fails(t *t
 
 	require.ErrorIs(t, err, ErrEmailNotVerified)
 	require.NotErrorIs(t, err, ErrEmailNotVerifiedForLinking)
+	require.Nil(t, tokens)
+}
+
+// provisionOidcUser runs the auto-provisioning branch for a new, verified
+// identity and returns the username that CreateExternal received.
+func provisionOidcUser(t *testing.T, identity *oidcclient.Identity, taken ...string) string {
+	t.Helper()
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	takenSet := map[string]bool{}
+	for _, name := range taken {
+		takenSet[name] = true
+	}
+
+	svc.UserRepository.EXPECT().FindByProviderId(identity.Subject).Return(nil, nil)
+	svc.UserRepository.EXPECT().FindByEmail(identity.Email).Return(nil, nil)
+	svc.UserRepository.EXPECT().
+		UsernameTaken(gomock.Any(), "").
+		DoAndReturn(func(username, _ string) (bool, error) { return takenSet[username], nil }).
+		AnyTimes()
+
+	var got string
+	svc.UserRepository.EXPECT().
+		CreateExternal(identity.Email, gomock.Any(), identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject).
+		DoAndReturn(func(_, username, _, _, _, _ string) (string, error) {
+			got = username
+			return "new-user-id", nil
+		})
+	svc.RefreshTokenRepository.EXPECT().Create("new-user-id", gomock.Any(), gomock.Any()).Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	_, err := authSvc.resolveOidcIdentity(identity, nil)
+	require.NoError(t, err)
+	return got
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UsesPreferredUsername(t *testing.T) {
+	got := provisionOidcUser(t, &oidcclient.Identity{
+		Subject: "sub", Email: "someone@example.com", EmailVerified: true,
+		FirstName: "Some", LastName: "One", PreferredUsername: "The.Real_Name",
+	})
+
+	require.Equal(t, "the-real-name", got)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_FallsBackToTheEmailPrefix(t *testing.T) {
+	got := provisionOidcUser(t, &oidcclient.Identity{
+		Subject: "sub", Email: "myusername@domain.com", EmailVerified: true, FirstName: "My", LastName: "Name",
+	})
+
+	require.Equal(t, "myusername", got)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_FallsBackWhenTheClaimHasNoUsableCharacters(t *testing.T) {
+	got := provisionOidcUser(t, &oidcclient.Identity{
+		Subject: "sub", Email: "fallback@domain.com", EmailVerified: true, PreferredUsername: "!!!",
+	})
+
+	require.Equal(t, "fallback", got)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_AddsASuffixWhenTheNameIsTaken(t *testing.T) {
+	got := provisionOidcUser(t, &oidcclient.Identity{
+		Subject: "sub", Email: "alice@domain.com", EmailVerified: true,
+	}, "alice", "alice-2")
+
+	require.Equal(t, "alice-3", got)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_AvoidsReservedNames(t *testing.T) {
+	got := provisionOidcUser(t, &oidcclient.Identity{
+		Subject: "sub", Email: "admin@domain.com", EmailVerified: true,
+	})
+
+	require.Equal(t, "admin-2", got)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UsernameLookupFails(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+
+	identity := &oidcclient.Identity{Subject: "sub", Email: "alice@domain.com", EmailVerified: true}
+	svc.UserRepository.EXPECT().FindByProviderId(identity.Subject).Return(nil, nil)
+	svc.UserRepository.EXPECT().FindByEmail(identity.Email).Return(nil, nil)
+	svc.UserRepository.EXPECT().UsernameTaken("alice", "").Return(false, errors.New("db unavailable"))
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.ErrorContains(t, err, "db unavailable")
 	require.Nil(t, tokens)
 }

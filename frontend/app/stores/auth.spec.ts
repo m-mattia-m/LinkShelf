@@ -51,7 +51,7 @@ describe('useAuthStore', () => {
       server.use(http.post(`${BASE}/v1/users`, () => HttpResponse.json(UserToJSON(buildUser()))))
       const store = useAuthStore()
 
-      const result = await store.register({ email: 'new@example.com', firstName: 'New', lastName: 'User', password: 'secret123' })
+      const result = await store.register({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
 
       expect(result).toEqual({ pendingVerification: false })
       expect(store.isAuthenticated).toBe(true)
@@ -64,7 +64,7 @@ describe('useAuthStore', () => {
       )
       const store = useAuthStore()
 
-      const result = await store.register({ email: 'new@example.com', firstName: 'New', lastName: 'User', password: 'secret123' })
+      const result = await store.register({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
 
       expect(result).toEqual({ pendingVerification: true })
       expect(store.isAuthenticated).toBe(false)
@@ -77,7 +77,7 @@ describe('useAuthStore', () => {
       )
       const store = useAuthStore()
 
-      await expect(store.register({ email: 'new@example.com', firstName: 'New', lastName: 'User', password: 'secret123' })).rejects.toBeInstanceOf(ResponseError)
+      await expect(store.register({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })).rejects.toBeInstanceOf(ResponseError)
     })
   })
 

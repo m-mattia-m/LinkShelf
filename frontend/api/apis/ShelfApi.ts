@@ -39,6 +39,11 @@ export interface GetPublicShelfByPathRequest {
     path: string;
 }
 
+export interface GetPublicShelfByUsernameAndPathRequest {
+    username: string;
+    path: string;
+}
+
 export interface GetShelfByIdRequest {
     shelfId: string;
 }
@@ -139,6 +144,53 @@ export class ShelfApi extends runtime.BaseAPI {
      */
     async getPublicShelfByPath(requestParameters: GetPublicShelfByPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublicShelf> {
         const response = await this.getPublicShelfByPathRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get the public-safe view of a shelf by its owner\'s username and its path, used while app.userBasedPaths is enabled. Requires no authentication. While the setting is disabled, use the lookup by path alone instead - the two never answer at the same time.
+     * Get public shelf by username and path
+     */
+    async getPublicShelfByUsernameAndPathRaw(requestParameters: GetPublicShelfByUsernameAndPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublicShelf>> {
+        if (requestParameters['username'] == null) {
+            throw new runtime.RequiredError(
+                'username',
+                'Required parameter "username" was null or undefined when calling getPublicShelfByUsernameAndPath().'
+            );
+        }
+
+        if (requestParameters['path'] == null) {
+            throw new runtime.RequiredError(
+                'path',
+                'Required parameter "path" was null or undefined when calling getPublicShelfByUsernameAndPath().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/shelves/by-user/{username}/{path}`;
+        urlPath = urlPath.replace(`{${"username"}}`, encodeURIComponent(String(requestParameters['username'])));
+        urlPath = urlPath.replace(`{${"path"}}`, encodeURIComponent(String(requestParameters['path'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublicShelfFromJSON(jsonValue));
+    }
+
+    /**
+     * Get the public-safe view of a shelf by its owner\'s username and its path, used while app.userBasedPaths is enabled. Requires no authentication. While the setting is disabled, use the lookup by path alone instead - the two never answer at the same time.
+     * Get public shelf by username and path
+     */
+    async getPublicShelfByUsernameAndPath(requestParameters: GetPublicShelfByUsernameAndPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublicShelf> {
+        const response = await this.getPublicShelfByUsernameAndPathRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

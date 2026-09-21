@@ -3,13 +3,17 @@
 package domain
 
 import (
+	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/repository"
+	"fmt"
+	"strings"
 )
 
 type ShelfService interface {
 	Get(id, callerUserId string, isAdmin bool) (*model.Shelf, error)
 	GetByPath(path string) (*model.Shelf, error)
+	GetByUsernameAndPath(username, path string) (*model.Shelf, error)
 	List(callerUserId string, isAdmin bool) ([]model.Shelf, error)
 	Create(callerUserId string, u *model.Shelf) (string, error)
 	Update(shelfId, callerUserId string, isAdmin bool, shelfRequest *model.Shelf) (*model.Shelf, error)
@@ -71,8 +75,14 @@ func (s *shelfServiceImpl) Get(id, callerUserId string, isAdmin bool) (*model.Sh
 }
 
 // GetByPath is the public, unauthenticated lookup used to render a shelf's
-// public link page - it intentionally performs no ownership check.
+// public link page - it intentionally performs no ownership check. It only
+// answers while app.userBasedPaths is off: with it on, /<path> without a
+// username is no longer a valid URL and must not resolve.
 func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
+	if config.Bool("app.userBasedPaths") {
+		return nil, nil
+	}
+
 	shelf, err := s.Repository.ShelfRepository.GetByPath(path)
 	if err != nil || shelf == nil {
 		return shelf, err
@@ -81,6 +91,61 @@ func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
 		return nil, err
 	}
 	return shelf, nil
+}
+
+// GetByUsernameAndPath is GetByPath for /<username>/<path>, and only answers
+// while app.userBasedPaths is on.
+func (s *shelfServiceImpl) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
+	if !config.Bool("app.userBasedPaths") {
+		return nil, nil
+	}
+
+	shelf, err := s.Repository.ShelfRepository.GetByUsernameAndPath(strings.ToLower(username), path)
+	if err != nil || shelf == nil {
+		return shelf, err
+	}
+	if err := s.annotatePublicTheme(shelf); err != nil {
+		return nil, err
+	}
+	return shelf, nil
+}
+
+// validatePath checks a shelf's path before it is saved. Which rules apply
+// depends on app.userBasedPaths:
+//   - on: the path lives behind the owner's username, so it only has to be
+//     unique among that owner's shelves and no word is off limits.
+//   - off: the path is a top-level URL, so it must be unique across the whole
+//     instance and must not be a word the frontend or backend already routes.
+//
+// An empty path (a shelf that is only reachable through its domain) is always
+// fine.
+func (s *shelfServiceImpl) validatePath(path, ownerId, exceptShelfId string) error {
+	if path == "" {
+		return nil
+	}
+
+	if config.Bool("app.userBasedPaths") {
+		taken, err := s.Repository.ShelfRepository.PathInUseByUser(ownerId, path, exceptShelfId)
+		if err != nil {
+			return err
+		}
+		if taken {
+			return fmt.Errorf("%w: you already have a shelf with the path %q", ErrConflict, path)
+		}
+		return nil
+	}
+
+	if isRouteReserved(path) {
+		return fmt.Errorf("%w: the path %q is reserved and can't be used for a shelf", ErrInvalidInput, path)
+	}
+	taken, err := s.Repository.ShelfRepository.PathInUse(path, exceptShelfId)
+	if err != nil {
+		return err
+	}
+	if taken {
+		return fmt.Errorf("%w: the path %q is already in use", ErrConflict, path)
+	}
+	return nil
 }
 
 // List returns every shelf for an admin, or only the caller's own shelves otherwise.
@@ -109,7 +174,19 @@ func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf
 		return "", err
 	}
 
+	// A username is normally always set (every creation path requires one and
+	// startup backfills the rest), so this only guards a state that should
+	// not exist: a URL with the username missing.
+	if config.Bool("app.userBasedPaths") && shelfRequest.Path != "" && user.Username == "" {
+		return "", fmt.Errorf("%w: set a username before creating a shelf with a path", ErrInvalidInput)
+	}
+	if err := s.validatePath(shelfRequest.Path, callerUserId, ""); err != nil {
+		return "", err
+	}
+
 	shelfRequest.UserId = callerUserId
+	// Stamped here, never taken from the client, and left alone by Update.
+	shelfRequest.CreatedWithUserBasedPaths = config.Bool("app.userBasedPaths")
 	return s.Repository.ShelfRepository.Create(shelfRequest)
 }
 
@@ -135,6 +212,15 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 
 	if err := s.Domain.ThemeService.ValidateAssignable(shelfRequest.ThemeId, existing.UserId); err != nil {
 		return nil, err
+	}
+
+	// Only a changed path is checked, so a shelf that already sits on a path
+	// that is no longer allowed (for example one that a later release
+	// reserved) can still have its title or theme edited.
+	if shelfRequest.Path != existing.Path {
+		if err := s.validatePath(shelfRequest.Path, existing.UserId, shelfId); err != nil {
+			return nil, err
+		}
 	}
 
 	shelfRequest.Id = shelfId

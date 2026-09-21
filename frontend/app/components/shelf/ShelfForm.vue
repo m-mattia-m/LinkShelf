@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, watch, ref, computed, onMounted } from 'vue'
-import type { Shelf, ShelfBase } from '~~/api'
+import type { SettingPageBody, Shelf, ShelfBase } from '~~/api'
 import type { FormError, SelectItem } from '@nuxt/ui'
 import * as v from 'valibot'
 import { useThemeStore } from '~/stores/theme'
@@ -8,6 +8,11 @@ import { useThemeStore } from '~/stores/theme'
 const props = defineProps<{
   modelValue?: Shelf
 }>()
+
+const { user: currentUser } = useCurrentUser()
+const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
+const userBasedPaths = computed(() => websiteSettings.value?.userBasedPaths ?? false)
+const origin = useRequestURL().origin
 
 const themeStore = useThemeStore()
 onMounted(() => {
@@ -73,6 +78,13 @@ const schema = v.pipe(
       v.regex(
         /^[a-zA-Z0-9-]*$/,
         'Path may only contain letters, numbers, and hyphens'
+      ),
+      // Behind a username nothing is off limits. Top-level, the words the app
+      // itself answers can't be used - except on a shelf that already has
+      // one, so its other fields stay editable (the backend does the same).
+      v.check(
+        value => userBasedPaths.value || value === props.modelValue?.path || !isRouteReservedPath(value),
+        'This path is used by a page of this app. Please choose another one'
       )
     ),
     icon: v.string()
@@ -92,6 +104,14 @@ const schema = v.pipe(
     ['path']
   )
 )
+
+// The URL the shelf will get: /<username>/<path> with user-based paths, else
+// /<path>. A shelf being edited keeps its owner's username - an admin may be
+// editing someone else's shelf.
+const ownerUsername = computed(() => props.modelValue?.username || currentUser.value?.username || '')
+const pathHelp = computed(() => userBasedPaths.value
+  ? `${origin}/${ownerUsername.value || '<username>'}/${form.path}`
+  : `${origin}/${form.path}`)
 
 const selectedThemeId = computed({
   get: () => form.themeId || NO_THEME_VALUE,
@@ -240,7 +260,7 @@ watch(
         <UFormField
           label="Path"
           name="path"
-          :help="'https://linkshelf.com/' + form.path"
+          :help="pathHelp"
         >
           <UInput
             v-model="form.path"

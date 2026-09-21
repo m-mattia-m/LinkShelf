@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost*
 |------------- | ------------- | -------------|
 | [**deleteShelf**](ShelfApi.md#deleteshelf) | **DELETE** /v1/shelves/{shelfId} | Delete shelf |
 | [**getPublicShelfByPath**](ShelfApi.md#getpublicshelfbypath) | **GET** /v1/shelves/by-path/{path} | Get public shelf by path |
+| [**getPublicShelfByUsernameAndPath**](ShelfApi.md#getpublicshelfbyusernameandpath) | **GET** /v1/shelves/by-user/{username}/{path} | Get public shelf by username and path |
 | [**getShelfById**](ShelfApi.md#getshelfbyid) | **GET** /v1/shelves/{shelfId} | Get shelf by ID |
 | [**listShelves**](ShelfApi.md#listshelves) | **GET** /v1/shelves | List shelves |
 | [**postCreateShelf**](ShelfApi.md#postcreateshelf) | **POST** /v1/shelves | Create shelf |
@@ -128,6 +129,77 @@ example().catch(console.error);
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
+| **path** | `string` |  | [Defaults to `undefined`] |
+
+### Return type
+
+[**PublicShelf**](PublicShelf.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getPublicShelfByUsernameAndPath
+
+> PublicShelf getPublicShelfByUsernameAndPath(username, path)
+
+Get public shelf by username and path
+
+Get the public-safe view of a shelf by its owner\&#39;s username and its path, used while app.userBasedPaths is enabled. Requires no authentication. While the setting is disabled, use the lookup by path alone instead - the two never answer at the same time.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  ShelfApi,
+} from '';
+import type { GetPublicShelfByUsernameAndPathRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new ShelfApi();
+
+  const body = {
+    // string
+    username: username_example,
+    // string
+    path: path_example,
+  } satisfies GetPublicShelfByUsernameAndPathRequest;
+
+  try {
+    const data = await api.getPublicShelfByUsernameAndPath(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **username** | `string` |  | [Defaults to `undefined`] |
 | **path** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type

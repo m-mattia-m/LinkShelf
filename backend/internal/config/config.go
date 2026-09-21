@@ -40,6 +40,9 @@ type Configuration struct {
 		// FrontendUrl is where verification/invite emails point their links
 		// (e.g. "<FrontendUrl>/auth/verify-email?token=...").
 		FrontendUrl string `yaml:"frontendUrl"`
+		// UserBasedPaths switches public shelf URLs from /<path> to
+		// /<username>/<path>.
+		UserBasedPaths bool `yaml:"userBasedPaths"`
 	} `yaml:"app"`
 	Server struct {
 		Scheme         string   `yaml:"scheme"`
@@ -86,6 +89,7 @@ type Configuration struct {
 		BootstrapAdmin            struct {
 			Email    string `yaml:"email"`
 			Password string `yaml:"password" json:"-"`
+			Username string `yaml:"username"`
 		} `yaml:"bootstrapAdmin"`
 		Oidc struct {
 			Issuer       string `yaml:"issuer"`
@@ -102,6 +106,11 @@ type Configuration struct {
 			// TokenExpiryHours is how long a verification/invite link stays valid.
 			TokenExpiryHours int `yaml:"tokenExpiryHours"`
 		} `yaml:"emailVerification"`
+		PasswordReset struct {
+			Enabled bool `yaml:"enabled"`
+			// TokenExpiryMinutes is how long an emailed reset link stays valid.
+			TokenExpiryMinutes int `yaml:"tokenExpiryMinutes"`
+		} `yaml:"passwordReset"`
 	} `yaml:"authentication"`
 	Smtp struct {
 		Host     string `yaml:"host"`
@@ -197,6 +206,12 @@ func validate() error {
 	if Bool("authentication.emailVerification.enabled") {
 		if strings.TrimSpace(String("smtp.host")) == "" || strings.TrimSpace(String("smtp.from")) == "" {
 			return fmt.Errorf("smtp.host and smtp.from must be set when authentication.emailVerification.enabled is true")
+		}
+	}
+
+	if Bool("authentication.passwordReset.enabled") {
+		if strings.TrimSpace(String("smtp.host")) == "" || strings.TrimSpace(String("smtp.from")) == "" {
+			return fmt.Errorf("smtp.host and smtp.from must be set when authentication.passwordReset.enabled is true")
 		}
 	}
 

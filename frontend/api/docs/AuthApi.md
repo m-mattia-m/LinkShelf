@@ -5,11 +5,13 @@ All URIs are relative to *http://localhost*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**getOidcLogin**](AuthApi.md#getoidclogin) | **GET** /v1/auth/oidc/login | Start OIDC login |
+| [**postForgotPassword**](AuthApi.md#postforgotpassword) | **POST** /v1/auth/forgot-password | Request a password reset |
 | [**postLogin**](AuthApi.md#postlogin) | **POST** /v1/auth/login | Login |
 | [**postLogout**](AuthApi.md#postlogout) | **POST** /v1/auth/logout | Logout |
 | [**postOidcCallback**](AuthApi.md#postoidccallback) | **POST** /v1/auth/oidc/callback | Complete OIDC login |
 | [**postRefresh**](AuthApi.md#postrefresh) | **POST** /v1/auth/refresh | Refresh token |
 | [**postResendVerification**](AuthApi.md#postresendverification) | **POST** /v1/auth/resend-verification | Resend verification email |
+| [**postResetPassword**](AuthApi.md#postresetpassword) | **POST** /v1/auth/reset-password | Reset password |
 | [**postSetPassword**](AuthApi.md#postsetpassword) | **POST** /v1/auth/set-password | Set password |
 | [**postVerifyEmail**](AuthApi.md#postverifyemail) | **POST** /v1/auth/verify-email | Verify email |
 
@@ -70,6 +72,74 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postForgotPassword
+
+> postForgotPassword(forgotPasswordRequest)
+
+Request a password reset
+
+Emails a password reset link to the given address. Always responds the same way regardless of whether the address belongs to an account or the request was rate-limited. Responds 403 while password reset is disabled.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '';
+import type { PostForgotPasswordRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // ForgotPasswordRequest
+    forgotPasswordRequest: ...,
+  } satisfies PostForgotPasswordRequest;
+
+  try {
+    const data = await api.postForgotPassword(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **forgotPasswordRequest** | [ForgotPasswordRequest](ForgotPasswordRequest.md) |  | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -394,6 +464,74 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **resendVerificationRequest** | [ResendVerificationRequest](ResendVerificationRequest.md) |  | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postResetPassword
+
+> postResetPassword(resetPasswordRequest)
+
+Reset password
+
+Sets a new password using the token from the emailed reset link, marks the address verified and signs the account out everywhere.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '';
+import type { PostResetPasswordRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // ResetPasswordRequest
+    resetPasswordRequest: ...,
+  } satisfies PostResetPasswordRequest;
+
+  try {
+    const data = await api.postResetPassword(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **resetPasswordRequest** | [ResetPasswordRequest](ResetPasswordRequest.md) |  | |
 
 ### Return type
 

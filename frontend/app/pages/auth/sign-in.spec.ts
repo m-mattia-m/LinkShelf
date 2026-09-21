@@ -148,4 +148,22 @@ describe('sign-in page', () => {
 
     expect(screen.queryByRole('button', { name: 'Continue with SSO' })).not.toBeInTheDocument()
   })
+
+  it('offers "Forgot password?" when password reset is enabled', async () => {
+    const websiteSettings = useState<SettingPageBody | null>('settings')
+    websiteSettings.value = buildSettingPageBody({ passwordResetEnabled: true })
+
+    await renderSuspended(SignInPage)
+
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/auth/forgot-password')
+  })
+
+  it('hides "Forgot password?" when password reset is disabled', async () => {
+    const websiteSettings = useState<SettingPageBody | null>('settings')
+    websiteSettings.value = buildSettingPageBody({ passwordResetEnabled: false })
+
+    await renderSuspended(SignInPage)
+
+    expect(screen.queryByRole('link', { name: 'Forgot password?' })).not.toBeInTheDocument()
+  })
 })

@@ -41,6 +41,7 @@ export function buildUser(overrides: Partial<User> = {}): User {
   return {
     id,
     email: `${id}@example.com`,
+    username: id,
     emailVerified: true,
     firstName: 'Jane',
     lastName: 'Doe',
@@ -59,6 +60,8 @@ export function buildShelf(overrides: Partial<Shelf> = {}): Shelf {
     domain: '',
     icon: 'i-lucide-book',
     themeId: undefined,
+    username: 'owner',
+    createdWithUserBasedPaths: false,
     ...overrides
   } as Shelf
 }
@@ -125,6 +128,8 @@ export function buildSettingPageBody(overrides: Partial<SettingPageBody> = {}): 
     privacyPolicy: '',
     privacyPolicyShow: false,
     redirectToDashboard: false,
+    userBasedPaths: false,
+    passwordResetEnabled: false,
     ...overrides
   } as SettingPageBody
 }

@@ -20,6 +20,7 @@ beforeEach(() => {
 async function fillForm() {
   await fireEvent.update(screen.getByLabelText('First name'), 'Ada')
   await fireEvent.update(screen.getByLabelText('Last name'), 'Lovelace')
+  await fireEvent.update(screen.getByLabelText('Username'), 'ada-lovelace')
   await fireEvent.update(screen.getByLabelText('Email'), 'ada@example.com')
   await fireEvent.update(screen.getByLabelText('Password'), 'secret123')
 }
@@ -50,6 +51,7 @@ describe('sign-up page', () => {
     })
     expect(postedBody).toEqual({
       email: 'ada@example.com',
+      username: 'ada-lovelace',
       first_name: 'Ada',
       last_name: 'Lovelace',
       password: 'secret123',
@@ -120,5 +122,38 @@ describe('sign-up page', () => {
 
     expect(screen.getByText('Registration is currently disabled. Please contact an administrator for an invite.')).toBeInTheDocument()
     expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
+  })
+
+  it('validates the username without calling the API', async () => {
+    let called = false
+    server.use(http.post(`${BASE}/v1/users`, () => {
+      called = true
+      return HttpResponse.json(UserToJSON(buildUser()))
+    }))
+
+    await renderSuspended(SignUpPage)
+
+    await fillForm()
+    await fireEvent.update(screen.getByLabelText('Username'), 'Not Valid')
+    await fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/Lowercase letters, numbers and hyphens only/)).toBeInTheDocument()
+    })
+    expect(called).toBe(false)
+  })
+
+  it('shows the API message when the username is taken or reserved', async () => {
+    server.use(http.post(`${BASE}/v1/users`, () => errorResponse(409, 'conflict: username "ada" is already taken')))
+
+    await renderSuspended(SignUpPage)
+
+    await fillForm()
+    await fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/username "ada-lovelace" is already taken|username "ada" is already taken/)).toBeInTheDocument()
+    })
+    expect(useAuthStore().isAuthenticated).toBe(false)
   })
 })

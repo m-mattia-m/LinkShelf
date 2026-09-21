@@ -61,6 +61,11 @@ func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *test
 
 	svc.UserRepository.
 		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
+	svc.UserRepository.
+		EXPECT().
 		Create(gomock.Any(), gomock.Any(), model.RoleUser).
 		Return("user-uuid-test", nil)
 
@@ -70,6 +75,7 @@ func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *test
 		Return(&model.User{
 			Id: "user-uuid-test",
 			UserBase: model.UserBase{
+				Username:  "test-user",
 				FirstName: "firstname-test",
 				LastName:  "lastname-test",
 				Email:     "test@test.com",
@@ -78,7 +84,7 @@ func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *test
 		}, nil)
 
 	userRequest := model.UserCreate{
-		UserBase: model.UserBase{
+		UserBase: model.UserBase{Username: "test-user",
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
@@ -120,16 +126,22 @@ func Test_Unit_User_Creation_Success_AdminBypassesRegistrationDisabled(t *testin
 
 	svc.UserRepository.
 		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
+	svc.UserRepository.
+		EXPECT().
 		Create(gomock.Any(), gomock.Any(), model.RoleUser).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
 		EXPECT().
 		Get("user-uuid-test").
-		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{
+			Username: "test-user", Role: model.RoleUser}}, nil)
 
 	userRequest := model.UserCreate{
-		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		UserBase: model.UserBase{Username: "test-user", Email: "test@test.com", FirstName: "First", LastName: "Last"},
 		Password: "secret",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest, true)
@@ -143,8 +155,13 @@ func Test_Unit_User_Creation_Failure_SelfRegistrationRequiresPassword(t *testing
 	defer svc.Ctrl.Finish()
 	allowSelfRegistration(t)
 
+	svc.UserRepository.
+		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
 	userRequest := model.UserCreate{
-		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		UserBase: model.UserBase{Username: "test-user", Email: "test@test.com", FirstName: "First", LastName: "Last"},
 		Password: "",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest, false)
@@ -160,8 +177,13 @@ func Test_Unit_User_Creation_Failure_AdminRequiresPasswordWhenVerificationDisabl
 	t.Cleanup(config.Reset)
 	config.Set("authentication.emailVerification.enabled", false)
 
+	svc.UserRepository.
+		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
 	userRequest := model.UserCreate{
-		UserBase: model.UserBase{Email: "test@test.com", FirstName: "First", LastName: "Last"},
+		UserBase: model.UserBase{Username: "test-user", Email: "test@test.com", FirstName: "First", LastName: "Last"},
 		Password: "",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest, true)
@@ -177,6 +199,11 @@ func Test_Unit_User_Creation_Success_AdminInvitesPasswordlessAccount(t *testing.
 	t.Cleanup(config.Reset)
 	config.Set("authentication.emailVerification.enabled", true)
 	config.Set("authentication.emailVerification.tokenExpiryHours", 24)
+
+	svc.UserRepository.
+		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
 
 	svc.UserRepository.
 		EXPECT().
@@ -207,7 +234,8 @@ func Test_Unit_User_Creation_Success_AdminInvitesPasswordlessAccount(t *testing.
 	svc.Mailer.EXPECT().Send(gomock.Any()).Return(nil)
 
 	userRequest := model.UserCreate{
-		UserBase: model.UserBase{Email: "invited@test.com", FirstName: "First", LastName: "Last"},
+		UserBase: model.UserBase{
+			Username: "test-user", Email: "invited@test.com", FirstName: "First", LastName: "Last"},
 		Password: "",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest, true)
@@ -224,6 +252,11 @@ func Test_Unit_User_Creation_Success_AdminSetsRole(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
+	svc.UserRepository.
+		EXPECT().
 		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
 		Return("user-uuid-test", nil)
 
@@ -231,12 +264,13 @@ func Test_Unit_User_Creation_Success_AdminSetsRole(t *testing.T) {
 		EXPECT().
 		Get("user-uuid-test").
 		Return(&model.User{
-			Id:       "user-uuid-test",
-			UserBase: model.UserBase{Role: model.RoleAdmin},
+			Id: "user-uuid-test",
+			UserBase: model.UserBase{
+				Username: "test-user", Role: model.RoleAdmin},
 		}, nil)
 
 	userRequest := model.UserCreate{
-		UserBase: model.UserBase{Role: model.RoleAdmin},
+		UserBase: model.UserBase{Username: "test-user", Role: model.RoleAdmin},
 		Password: "secret",
 	}
 	user, err := svc.Service.UserService.Create(&userRequest, true)
@@ -266,11 +300,17 @@ func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
+	svc.UserRepository.
+		EXPECT().
 		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", errors.New("an error occurred"))
 
 	userRequest := model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  "test-user",
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
@@ -290,6 +330,11 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
+		UsernameTaken("test-user", "").
+		Return(false, nil)
+
+	svc.UserRepository.
+		EXPECT().
 		Create(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("user-uuid-test", nil)
 
@@ -300,6 +345,7 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 
 	userRequest := model.UserCreate{
 		UserBase: model.UserBase{
+			Username:  "test-user",
 			Email:     "test@test.com",
 			FirstName: "firstname-test",
 			LastName:  "lastname-test",
@@ -649,4 +695,150 @@ func Test_Unit_User_Delete_Failure(t *testing.T) {
 	err := svc.Service.UserService.Delete(userToDelete)
 
 	require.ErrorContains(t, err, "an error occurred")
+}
+
+func existingUserWithUsername(username string) *model.User {
+	return &model.User{
+		Id:       "user-1",
+		UserBase: model.UserBase{Email: "a@test.com", Username: username, FirstName: "First", LastName: "Last", Role: model.RoleUser},
+	}
+}
+
+func Test_Unit_User_Creation_Failure_InvalidUsername(t *testing.T) {
+	for name, username := range map[string]string{
+		"empty":    "",
+		"reserved": "admin",
+		"route":    "docs",
+		"format":   "Not Valid",
+	} {
+		t.Run(name, func(t *testing.T) {
+			svc := NewMockService(t)
+			defer svc.Ctrl.Finish()
+			allowSelfRegistration(t)
+
+			// No repository expectations: an invalid username never reaches the database.
+			userRequest := model.UserCreate{
+				UserBase: model.UserBase{Username: username, Email: "a@test.com", FirstName: "First", LastName: "Last"},
+				Password: "secret",
+			}
+			user, err := svc.Service.UserService.Create(&userRequest, false)
+
+			require.ErrorIs(t, err, ErrInvalidInput)
+			require.Nil(t, user)
+		})
+	}
+}
+
+func Test_Unit_User_Creation_Failure_UsernameTaken(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
+
+	svc.UserRepository.EXPECT().UsernameTaken("test-user", "").Return(true, nil)
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Username: "test-user", Email: "a@test.com", FirstName: "First", LastName: "Last"},
+		Password: "secret",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, false)
+
+	require.ErrorIs(t, err, ErrConflict)
+	require.Nil(t, user)
+}
+
+func Test_Unit_User_Creation_Failure_UsernameLookupFails(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
+
+	svc.UserRepository.EXPECT().UsernameTaken("test-user", "").Return(false, errors.New("db unavailable"))
+
+	userRequest := model.UserCreate{
+		UserBase: model.UserBase{Username: "test-user", Email: "a@test.com", FirstName: "First", LastName: "Last"},
+		Password: "secret",
+	}
+	user, err := svc.Service.UserService.Create(&userRequest, false)
+
+	require.ErrorContains(t, err, "db unavailable")
+	require.Nil(t, user)
+}
+
+func Test_Unit_User_Update_Success_RenameChecksTheNewUsername(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.EXPECT().Get("user-1").Return(existingUserWithUsername("old-name"), nil).Times(2)
+	svc.UserRepository.EXPECT().UsernameTaken("new-name", "user-1").Return(false, nil)
+	svc.UserRepository.EXPECT().Update(gomock.Any()).DoAndReturn(func(u *model.User) error {
+		require.Equal(t, "new-name", u.Username)
+		return nil
+	})
+
+	request := model.User{UserBase: model.UserBase{Email: "a@test.com", Username: "new-name", FirstName: "First", LastName: "Last"}}
+	updated, err := svc.Service.UserService.Update("user-1", &request, false)
+
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+}
+
+func Test_Unit_User_Update_Failure_RenameToTakenUsername(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.EXPECT().Get("user-1").Return(existingUserWithUsername("old-name"), nil)
+	svc.UserRepository.EXPECT().UsernameTaken("taken-name", "user-1").Return(true, nil)
+
+	request := model.User{UserBase: model.UserBase{Email: "a@test.com", Username: "taken-name", FirstName: "First", LastName: "Last"}}
+	updated, err := svc.Service.UserService.Update("user-1", &request, false)
+
+	require.ErrorIs(t, err, ErrConflict)
+	require.Nil(t, updated)
+}
+
+func Test_Unit_User_Update_Failure_RenameToInvalidOrReservedUsername(t *testing.T) {
+	for _, username := range []string{"admin", "docs", "ab", "Bad Name", ""} {
+		t.Run(username, func(t *testing.T) {
+			svc := NewMockService(t)
+			defer svc.Ctrl.Finish()
+
+			svc.UserRepository.EXPECT().Get("user-1").Return(existingUserWithUsername("old-name"), nil)
+
+			request := model.User{UserBase: model.UserBase{Email: "a@test.com", Username: username, FirstName: "First", LastName: "Last"}}
+			updated, err := svc.Service.UserService.Update("user-1", &request, false)
+
+			require.ErrorIs(t, err, ErrInvalidInput)
+			require.Nil(t, updated)
+		})
+	}
+}
+
+func Test_Unit_User_Update_Success_UnchangedUsernameIsNotChecked(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	// "admin" is reserved, but it is what this account already has (the
+	// bootstrap admin), so saving other profile fields must still work and
+	// must not ask the repository about it.
+	svc.UserRepository.EXPECT().Get("user-1").Return(existingUserWithUsername("admin"), nil).Times(2)
+	svc.UserRepository.EXPECT().Update(gomock.Any()).Return(nil)
+
+	request := model.User{UserBase: model.UserBase{Email: "a@test.com", Username: "admin", FirstName: "New", LastName: "Last"}}
+	updated, err := svc.Service.UserService.Update("user-1", &request, false)
+
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+}
+
+func Test_Unit_User_Update_Failure_UsernameLookupFails(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.EXPECT().Get("user-1").Return(existingUserWithUsername("old-name"), nil)
+	svc.UserRepository.EXPECT().UsernameTaken("new-name", "user-1").Return(false, errors.New("db unavailable"))
+
+	request := model.User{UserBase: model.UserBase{Email: "a@test.com", Username: "new-name", FirstName: "First", LastName: "Last"}}
+	updated, err := svc.Service.UserService.Update("user-1", &request, false)
+
+	require.ErrorContains(t, err, "db unavailable")
+	require.Nil(t, updated)
 }

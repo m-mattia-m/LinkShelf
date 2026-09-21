@@ -11,6 +11,7 @@ package mocks
 
 import (
 	model "backend/internal/infrastructure/api/model"
+	repository "backend/internal/infrastructure/repository"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -99,6 +100,21 @@ func (mr *MockShelfRepositoryMockRecorder) GetByPath(path any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByPath", reflect.TypeOf((*MockShelfRepository)(nil).GetByPath), path)
 }
 
+// GetByUsernameAndPath mocks base method.
+func (m *MockShelfRepository) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByUsernameAndPath", username, path)
+	ret0, _ := ret[0].(*model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByUsernameAndPath indicates an expected call of GetByUsernameAndPath.
+func (mr *MockShelfRepositoryMockRecorder) GetByUsernameAndPath(username, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUsernameAndPath", reflect.TypeOf((*MockShelfRepository)(nil).GetByUsernameAndPath), username, path)
+}
+
 // List mocks base method.
 func (m *MockShelfRepository) List() ([]model.Shelf, error) {
 	m.ctrl.T.Helper()
@@ -127,6 +143,51 @@ func (m *MockShelfRepository) ListByUserId(userId string) ([]model.Shelf, error)
 func (mr *MockShelfRepositoryMockRecorder) ListByUserId(userId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUserId", reflect.TypeOf((*MockShelfRepository)(nil).ListByUserId), userId)
+}
+
+// ListPathCollisions mocks base method.
+func (m *MockShelfRepository) ListPathCollisions() ([]repository.PathCollision, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPathCollisions")
+	ret0, _ := ret[0].([]repository.PathCollision)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPathCollisions indicates an expected call of ListPathCollisions.
+func (mr *MockShelfRepositoryMockRecorder) ListPathCollisions() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPathCollisions", reflect.TypeOf((*MockShelfRepository)(nil).ListPathCollisions))
+}
+
+// PathInUse mocks base method.
+func (m *MockShelfRepository) PathInUse(path, exceptShelfId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PathInUse", path, exceptShelfId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PathInUse indicates an expected call of PathInUse.
+func (mr *MockShelfRepositoryMockRecorder) PathInUse(path, exceptShelfId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PathInUse", reflect.TypeOf((*MockShelfRepository)(nil).PathInUse), path, exceptShelfId)
+}
+
+// PathInUseByUser mocks base method.
+func (m *MockShelfRepository) PathInUseByUser(userId, path, exceptShelfId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PathInUseByUser", userId, path, exceptShelfId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PathInUseByUser indicates an expected call of PathInUseByUser.
+func (mr *MockShelfRepositoryMockRecorder) PathInUseByUser(userId, path, exceptShelfId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PathInUseByUser", reflect.TypeOf((*MockShelfRepository)(nil).PathInUseByUser), userId, path, exceptShelfId)
 }
 
 // Update mocks base method.
