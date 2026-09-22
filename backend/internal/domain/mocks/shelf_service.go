@@ -84,6 +84,21 @@ func (mr *MockShelfServiceMockRecorder) Get(id, callerUserId, isAdmin any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockShelfService)(nil).Get), id, callerUserId, isAdmin)
 }
 
+// GetByDomain mocks base method.
+func (m *MockShelfService) GetByDomain(domain string) (*model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByDomain", domain)
+	ret0, _ := ret[0].(*model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByDomain indicates an expected call of GetByDomain.
+func (mr *MockShelfServiceMockRecorder) GetByDomain(domain any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByDomain", reflect.TypeOf((*MockShelfService)(nil).GetByDomain), domain)
+}
+
 // GetByPath mocks base method.
 func (m *MockShelfService) GetByPath(path string) (*model.Shelf, error) {
 	m.ctrl.T.Helper()
@@ -112,6 +127,21 @@ func (m *MockShelfService) GetByUsernameAndPath(username, path string) (*model.S
 func (mr *MockShelfServiceMockRecorder) GetByUsernameAndPath(username, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUsernameAndPath", reflect.TypeOf((*MockShelfService)(nil).GetByUsernameAndPath), username, path)
+}
+
+// IsDomainRegistered mocks base method.
+func (m *MockShelfService) IsDomainRegistered(domain string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsDomainRegistered", domain)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsDomainRegistered indicates an expected call of IsDomainRegistered.
+func (mr *MockShelfServiceMockRecorder) IsDomainRegistered(domain any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDomainRegistered", reflect.TypeOf((*MockShelfService)(nil).IsDomainRegistered), domain)
 }
 
 // List mocks base method.

@@ -10,6 +10,8 @@ import { buildLink, buildSection, buildSettingPageBody, buildShelf, buildTokenPa
 import ShelfDetailPage from './[shelfId].vue'
 
 const BASE = 'http://localhost:8085'
+// The instance's own origin, which a path shelf's public URL starts with.
+const ORIGIN = window.location.origin
 
 function mockShelfDetail() {
   server.use(
@@ -61,7 +63,7 @@ describe('shelf detail page', () => {
       expect(screen.getByText('My Shelf')).toBeInTheDocument()
     })
     expect(screen.getByText('A shelf')).toBeInTheDocument()
-    expect(screen.getByText('/my-shelf')).toBeInTheDocument()
+    expect(screen.getByText(`${ORIGIN}/my-shelf`)).toBeInTheDocument()
   })
 
   describe('public URL and the alert at the top', () => {
@@ -72,7 +74,7 @@ describe('shelf detail page', () => {
         expect(screen.getByText('My Shelf')).toBeInTheDocument()
       })
       expectNoUrlAlert()
-      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/my-shelf')
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `${ORIGIN}/my-shelf`)
     })
 
     it('puts the owner\'s username in the URL and explains the change for a shelf created before user-based paths were on', async () => {
@@ -84,9 +86,9 @@ describe('shelf detail page', () => {
       await waitFor(() => {
         expect(screen.getByText('This shelf\'s URL now includes your username')).toBeInTheDocument()
       })
-      expect(screen.getByText('/alice/my-shelf')).toBeInTheDocument()
+      expect(screen.getByText(`${ORIGIN}/alice/my-shelf`)).toBeInTheDocument()
       expect(screen.getByText(/Links without the username, like \/my-shelf, no longer work/)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/alice/my-shelf')
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `${ORIGIN}/alice/my-shelf`)
     })
 
     it('shows no alert for a shelf created while user-based paths were already on', async () => {
@@ -96,11 +98,11 @@ describe('shelf detail page', () => {
       await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
 
       await waitFor(() => {
-        expect(screen.getByText('/alice/my-shelf')).toBeInTheDocument()
+        expect(screen.getByText(`${ORIGIN}/alice/my-shelf`)).toBeInTheDocument()
       })
       expectNoUrlAlert()
       // The URL itself still has the username in it.
-      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/alice/my-shelf')
+      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `${ORIGIN}/alice/my-shelf`)
     })
 
     it('warns that a reserved path cannot be reached', async () => {
@@ -111,6 +113,26 @@ describe('shelf detail page', () => {
       await waitFor(() => {
         expect(screen.getByText('This path can\'t be reached')).toBeInTheDocument()
       })
+    })
+
+    it('shows a domain shelf at its own domain, without a path', async () => {
+      server.use(http.get(`${BASE}/v1/shelves/shelf-1`, () => HttpResponse.json(ShelfToJSON(buildShelf({
+        id: 'shelf-1',
+        title: 'My Shelf',
+        description: 'A shelf',
+        path: '',
+        domain: 'profile.example.com:9443'
+      })))))
+
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      await waitFor(() => {
+        expect(screen.getByText('https://profile.example.com:9443')).toBeInTheDocument()
+      })
+      expectNoUrlAlert()
+      const open = screen.getByRole('link', { name: 'Open' })
+      expect(open).toHaveAttribute('href', 'https://profile.example.com:9443')
+      expect(open).toHaveAttribute('target', '_blank')
     })
 
     it('shows the alert above the title', async () => {

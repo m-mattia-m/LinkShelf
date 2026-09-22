@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,6 +44,10 @@ type Configuration struct {
 		// UserBasedPaths switches public shelf URLs from /<path> to
 		// /<username>/<path>.
 		UserBasedPaths bool `yaml:"userBasedPaths"`
+		// StrictOrigins locks the API to this instance's own hosts: browsers
+		// may only call it from FrontendUrl's origin or from a shelf's own
+		// domain, and it only answers requests addressed to Server.Host.
+		StrictOrigins bool `yaml:"strictOrigins"`
 	} `yaml:"app"`
 	Server struct {
 		Scheme         string   `yaml:"scheme"`
@@ -201,6 +206,16 @@ func validate() error {
 		}
 	default:
 		return fmt.Errorf("unsupported authentication.type %q, must be LOCAL or OIDC", String("authentication.type"))
+	}
+
+	if Bool("app.strictOrigins") {
+		frontend, err := url.Parse(strings.TrimSpace(String("app.frontendUrl")))
+		if err != nil || (frontend.Scheme != "http" && frontend.Scheme != "https") || frontend.Hostname() == "" {
+			return fmt.Errorf("app.frontendUrl must be a full http(s) URL when app.strictOrigins is true, got %q", String("app.frontendUrl"))
+		}
+		if strings.TrimSpace(String("server.host")) == "" {
+			return fmt.Errorf("server.host must be set when app.strictOrigins is true")
+		}
 	}
 
 	if Bool("authentication.emailVerification.enabled") {

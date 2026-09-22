@@ -16,6 +16,10 @@ type ShelfRepository interface {
 	ListByUserId(userId string) ([]model.Shelf, error)
 	Get(id string) (*model.Shelf, error)
 	GetByPath(path string) (*model.Shelf, error)
+	// GetByDomain resolves a shelf by the domain it is served on. domain must
+	// already be normalized (see domain.NormalizeDomain), which is what makes
+	// a plain equality check enough.
+	GetByDomain(domain string) (*model.Shelf, error)
 	// GetByUsernameAndPath resolves /<username>/<path>, used instead of
 	// GetByPath while app.userBasedPaths is enabled.
 	GetByUsernameAndPath(username, path string) (*model.Shelf, error)
@@ -24,6 +28,10 @@ type ShelfRepository interface {
 	// public lookup does. PathInUseByUser is the same restricted to one owner.
 	PathInUse(path, exceptShelfId string) (bool, error)
 	PathInUseByUser(userId, path, exceptShelfId string) (bool, error)
+	// DomainInUse reports whether a shelf other than exceptShelfId (which may
+	// be empty) already has this normalized domain, so an empty exceptShelfId
+	// asks whether any shelf has it.
+	DomainInUse(domain, exceptShelfId string) (bool, error)
 	// ListPathCollisions returns every shelf whose path is also used by at
 	// least one other shelf - only possible after user-based paths were
 	// switched off again.
@@ -206,6 +214,25 @@ func (r *shelfRepository) GetByPath(path string) (*model.Shelf, error) {
 	return &shelf, nil
 }
 
+func (r *shelfRepository) GetByDomain(domain string) (*model.Shelf, error) {
+	query, err := buildSqlStatements(shelfSelect + `WHERE s.domain = ?`)
+	if err != nil {
+		return nil, err
+	}
+
+	row := r.Engine.QueryRowContext(context.TODO(), query, domain)
+	shelf, err := scanShelf(row.Scan)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &shelf, nil
+}
+
 func (r *shelfRepository) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
 	query, err := buildSqlStatements(shelfSelect + `WHERE u.username = ? AND LOWER(s.path) = LOWER(?)`)
 	if err != nil {
@@ -254,6 +281,23 @@ func (r *shelfRepository) PathInUseByUser(userId, path, exceptShelfId string) (b
 
 	var count int
 	if err := r.Engine.QueryRowContext(context.TODO(), query, userId, path, exceptShelfId).Scan(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *shelfRepository) DomainInUse(domain, exceptShelfId string) (bool, error) {
+	query, err := buildSqlStatements(`
+		SELECT COUNT(*)
+		FROM shelf
+		WHERE domain = ? AND id <> ?
+	`)
+	if err != nil {
+		return false, err
+	}
+
+	var count int
+	if err := r.Engine.QueryRowContext(context.TODO(), query, domain, exceptShelfId).Scan(&count); err != nil {
 		return false, err
 	}
 	return count > 0, nil

@@ -51,6 +51,15 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+	if config.Bool("app.strictOrigins") {
+		router.Use(hostGuard())
+		corsConfig.AllowAllOrigins = false
+		corsConfig.AllowOriginFunc = newOriginPolicy(svc).allowed
+		zap.L().Info("strict origins are enabled",
+			zap.String("frontendUrl", config.String("app.frontendUrl")),
+			zap.String("serverHost", config.String("server.host")),
+			zap.Bool("serverPortIsChecked", config.Bool("domain.openapi.usePort")))
+	}
 	router.Use(cors.New(corsConfig))
 	api := humagin.New(router, humaConfig)
 	api.UseMiddleware(NewAuthenticationMiddleware(api))
@@ -268,6 +277,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/shelves/by-path/{path}",
 		Tags:        []string{"Shelf"},
 	}, GetPublicShelfByPath(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-public-shelf-by-domain",
+		Summary:     "Get public shelf by domain",
+		Description: "Get the public-safe view of the shelf that is served on a domain of its own, for example profile.example.com or profile.example.com:9443. The domain is normalized first (lowercased, without a trailing dot or slash, without :80 or :443). Used to render that shelf when the frontend is reached on the domain, and requires no authentication. Unlike the lookups by path it doesn't depend on app.userBasedPaths.",
+		Path:        "/v1/shelves/by-domain/{domain}",
+		Tags:        []string{"Shelf"},
+	}, GetPublicShelfByDomain(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-public-shelf-by-username-and-path",

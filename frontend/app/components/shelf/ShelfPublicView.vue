@@ -2,9 +2,13 @@
 import type { Link, PublicShelf, Section } from '~~/api'
 
 const props = defineProps<{
-  path: string
+  // The shelf is found by its path, or - when it is served on a domain of its
+  // own - by that domain, in which case there is no path.
+  path?: string
   // Set for /<username>/<path> URLs (app.userBasedPaths), absent for /<path>.
   username?: string
+  // Set when the page is being viewed on the shelf's own domain.
+  domain?: string
 }>()
 
 const { t } = useI18n()
@@ -55,9 +59,11 @@ async function load() {
 
   try {
     const api = useApi()
-    const resolvedShelf = props.username
-      ? await api.shelf.getPublicShelfByUsernameAndPath({ username: props.username, path: props.path })
-      : await api.shelf.getPublicShelfByPath({ path: props.path })
+    const resolvedShelf = props.domain
+      ? await api.shelf.getPublicShelfByDomain({ domain: props.domain })
+      : props.username
+        ? await api.shelf.getPublicShelfByUsernameAndPath({ username: props.username, path: props.path ?? '' })
+        : await api.shelf.getPublicShelfByPath({ path: props.path ?? '' })
     shelf.value = resolvedShelf
     themeVars.value = resolvedShelf.theme ?? {}
 
@@ -77,7 +83,7 @@ async function load() {
 onMounted(load)
 
 // Nuxt reuses this component when only the route params change.
-watch(() => [props.username, props.path], load)
+watch(() => [props.username, props.path, props.domain], load)
 
 useSeoMeta({
   title: () => shelf.value?.title,

@@ -228,3 +228,42 @@ func Test_Validate_PasswordResetDisabledNeedsNoSmtp(t *testing.T) {
 
 	require.NoError(t, validate())
 }
+
+func Test_Validate_StrictOriginsNeedsTheInstanceUrls(t *testing.T) {
+	strict := func() {
+		Reset()
+		Set("authentication.jwtSecret", "some-secret")
+		Set("authentication.type", "LOCAL")
+		Set("authentication.emailVerification.enabled", false)
+		Set("authentication.passwordReset.enabled", false)
+		Set("app.strictOrigins", true)
+		Set("app.frontendUrl", "https://linkshelf.example.com")
+		Set("server.host", "api.example.com")
+	}
+
+	strict()
+	require.NoError(t, validate())
+
+	for _, bad := range []string{"", "   ", "linkshelf.example.com", "ftp://linkshelf.example.com", "https://", "://nope"} {
+		strict()
+		Set("app.frontendUrl", bad)
+		require.ErrorContains(t, validate(), "app.frontendUrl", "frontendUrl %q", bad)
+	}
+
+	strict()
+	Set("server.host", "")
+	require.ErrorContains(t, validate(), "server.host")
+}
+
+func Test_Validate_WithoutStrictOriginsTheUrlsMayBeEmpty(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.type", "LOCAL")
+	Set("authentication.emailVerification.enabled", false)
+	Set("authentication.passwordReset.enabled", false)
+	Set("app.strictOrigins", false)
+	Set("app.frontendUrl", "")
+	Set("server.host", "")
+
+	require.NoError(t, validate())
+}

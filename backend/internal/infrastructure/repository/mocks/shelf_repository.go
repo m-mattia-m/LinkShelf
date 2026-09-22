@@ -70,6 +70,21 @@ func (mr *MockShelfRepositoryMockRecorder) Delete(s any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockShelfRepository)(nil).Delete), s)
 }
 
+// DomainInUse mocks base method.
+func (m *MockShelfRepository) DomainInUse(domain, exceptShelfId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DomainInUse", domain, exceptShelfId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DomainInUse indicates an expected call of DomainInUse.
+func (mr *MockShelfRepositoryMockRecorder) DomainInUse(domain, exceptShelfId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DomainInUse", reflect.TypeOf((*MockShelfRepository)(nil).DomainInUse), domain, exceptShelfId)
+}
+
 // Get mocks base method.
 func (m *MockShelfRepository) Get(id string) (*model.Shelf, error) {
 	m.ctrl.T.Helper()
@@ -83,6 +98,21 @@ func (m *MockShelfRepository) Get(id string) (*model.Shelf, error) {
 func (mr *MockShelfRepositoryMockRecorder) Get(id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockShelfRepository)(nil).Get), id)
+}
+
+// GetByDomain mocks base method.
+func (m *MockShelfRepository) GetByDomain(domain string) (*model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByDomain", domain)
+	ret0, _ := ret[0].(*model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByDomain indicates an expected call of GetByDomain.
+func (mr *MockShelfRepositoryMockRecorder) GetByDomain(domain any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByDomain", reflect.TypeOf((*MockShelfRepository)(nil).GetByDomain), domain)
 }
 
 // GetByPath mocks base method.

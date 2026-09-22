@@ -35,6 +35,10 @@ export interface DeleteShelfRequest {
     shelfId: string;
 }
 
+export interface GetPublicShelfByDomainRequest {
+    domain: string;
+}
+
 export interface GetPublicShelfByPathRequest {
     path: string;
 }
@@ -106,6 +110,45 @@ export class ShelfApi extends runtime.BaseAPI {
      */
     async deleteShelf(requestParameters: DeleteShelfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteShelfRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Get the public-safe view of the shelf that is served on a domain of its own, for example profile.example.com or profile.example.com:9443. The domain is normalized first (lowercased, without a trailing dot or slash, without :80 or :443). Used to render that shelf when the frontend is reached on the domain, and requires no authentication. Unlike the lookups by path it doesn\'t depend on app.userBasedPaths.
+     * Get public shelf by domain
+     */
+    async getPublicShelfByDomainRaw(requestParameters: GetPublicShelfByDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublicShelf>> {
+        if (requestParameters['domain'] == null) {
+            throw new runtime.RequiredError(
+                'domain',
+                'Required parameter "domain" was null or undefined when calling getPublicShelfByDomain().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/v1/shelves/by-domain/{domain}`;
+        urlPath = urlPath.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PublicShelfFromJSON(jsonValue));
+    }
+
+    /**
+     * Get the public-safe view of the shelf that is served on a domain of its own, for example profile.example.com or profile.example.com:9443. The domain is normalized first (lowercased, without a trailing dot or slash, without :80 or :443). Used to render that shelf when the frontend is reached on the domain, and requires no authentication. Unlike the lookups by path it doesn\'t depend on app.userBasedPaths.
+     * Get public shelf by domain
+     */
+    async getPublicShelfByDomain(requestParameters: GetPublicShelfByDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublicShelf> {
+        const response = await this.getPublicShelfByDomainRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

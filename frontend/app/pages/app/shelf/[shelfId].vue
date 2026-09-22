@@ -25,7 +25,10 @@ const shelf = ref<Shelf>()
 const loading = ref(true)
 
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
-const publicPath = computed(() => shelf.value ? publicShelfPath(shelf.value, websiteSettings.value?.userBasedPaths ?? false) : '')
+const origin = useRequestURL().origin
+const publicUrl = computed(() => shelf.value
+  ? publicShelfUrl(shelf.value, { userBasedPaths: websiteSettings.value?.userBasedPaths ?? false, origin })
+  : '')
 const notFound = ref(false)
 
 // Local, unsaved drag order - dragging a section or link only ever mutates
@@ -183,9 +186,11 @@ async function createSection() {
           >
             {{ shelf.description }}
           </p>
-          <p class="text-sm text-dimmed">
-            <span v-if="shelf.path">{{ publicPath }}</span>
-            <span v-if="shelf.domain">{{ shelf.path ? ' · ' : '' }}{{ shelf.domain }}</span>
+          <p
+            v-if="publicUrl"
+            class="text-sm text-dimmed"
+          >
+            {{ publicUrl }}
           </p>
         </div>
 
@@ -195,8 +200,9 @@ async function createSection() {
             icon="i-lucide-external-link"
             color="neutral"
             variant="outline"
-            :href="publicPath || '/'"
+            :href="publicUrl || '/'"
             target="_blank"
+            rel="noopener"
           />
           <UButton
             :label="t('app.shelf.detail.edit')"

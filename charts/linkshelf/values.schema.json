@@ -117,6 +117,9 @@
                 "enabled": {
                     "type": "boolean"
                 },
+                "extraHosts": {
+                    "type": "array"
+                },
                 "frontend": {
                     "type": "object",
                     "properties": {
@@ -402,6 +405,9 @@
                     "type": "integer"
                 }
             }
+        },
+        "strictOrigins": {
+            "type": "boolean"
         },
         "tolerations": {
             "type": "array"

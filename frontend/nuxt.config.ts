@@ -37,9 +37,9 @@ export default defineNuxtConfig({
     }
   },
 
-  routeRules: {
-    '/': { prerender: true }
-  },
+  // "/" is deliberately not prerendered (or cached per path): when the frontend
+  // is reached on the domain of a shelf it shows that shelf, so what "/" renders
+  // depends on the host and a static copy would serve one host's page to all.
 
   compatibilityDate: '2025-01-15',
 

@@ -13,6 +13,14 @@ import (
 type ShelfService interface {
 	Get(id, callerUserId string, isAdmin bool) (*model.Shelf, error)
 	GetByPath(path string) (*model.Shelf, error)
+	// GetByDomain is the public lookup for a shelf served on its own domain.
+	// It returns nil for a domain no shelf has, and for a value that can't be
+	// a domain at all.
+	GetByDomain(domain string) (*model.Shelf, error)
+	// IsDomainRegistered reports whether any shelf is served on domain, which
+	// is what decides if a browser origin on that domain may call the API
+	// (see app.strictOrigins).
+	IsDomainRegistered(domain string) (bool, error)
 	GetByUsernameAndPath(username, path string) (*model.Shelf, error)
 	List(callerUserId string, isAdmin bool) ([]model.Shelf, error)
 	Create(callerUserId string, u *model.Shelf) (string, error)
@@ -93,6 +101,33 @@ func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
 	return shelf, nil
 }
 
+// GetByDomain is GetByPath for a shelf that is served on a domain of its own.
+// Unlike a path lookup it doesn't depend on app.userBasedPaths, since a domain
+// is unique on the whole instance either way.
+func (s *shelfServiceImpl) GetByDomain(domain string) (*model.Shelf, error) {
+	domain = NormalizeDomain(domain)
+	if ValidateDomain(domain) != nil {
+		return nil, nil
+	}
+
+	shelf, err := s.Repository.ShelfRepository.GetByDomain(domain)
+	if err != nil || shelf == nil {
+		return shelf, err
+	}
+	if err := s.annotatePublicTheme(shelf); err != nil {
+		return nil, err
+	}
+	return shelf, nil
+}
+
+func (s *shelfServiceImpl) IsDomainRegistered(domain string) (bool, error) {
+	domain = NormalizeDomain(domain)
+	if ValidateDomain(domain) != nil {
+		return false, nil
+	}
+	return s.Repository.ShelfRepository.DomainInUse(domain, "")
+}
+
 // GetByUsernameAndPath is GetByPath for /<username>/<path>, and only answers
 // while app.userBasedPaths is on.
 func (s *shelfServiceImpl) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
@@ -148,6 +183,69 @@ func (s *shelfServiceImpl) validatePath(path, ownerId, exceptShelfId string) err
 	return nil
 }
 
+// validateDomain checks a shelf's domain before it is saved: the format, that
+// it isn't one of this instance's own hosts, and that no other shelf has it.
+// An empty domain (a shelf that is only reachable through its path) is always
+// fine.
+func (s *shelfServiceImpl) validateDomain(domain, exceptShelfId string) error {
+	domain, err := checkShelfDomain(domain)
+	if err != nil || domain == "" {
+		return err
+	}
+
+	taken, err := s.Repository.ShelfRepository.DomainInUse(domain, exceptShelfId)
+	if err != nil {
+		return err
+	}
+	if taken {
+		return fmt.Errorf("%w: the domain %q is already in use", ErrConflict, domain)
+	}
+	return nil
+}
+
+// validateLocation checks how a shelf is reached before it is saved: through
+// exactly one of a path or a domain, never both and never neither. It also
+// leaves request.Domain in its normalized form, which is what gets stored.
+//
+// existing is the shelf as it is now, or nil when creating one. Only a
+// changed path or domain is checked, so a shelf that already sits on a value
+// that is no longer allowed (a path a later release reserved, or a shelf
+// created before a shelf had to choose one of the two) can still have its
+// title or theme edited.
+func (s *shelfServiceImpl) validateLocation(request, existing *model.Shelf, ownerId string) error {
+	request.Domain = NormalizeDomain(request.Domain)
+
+	exceptShelfId := ""
+	pathChanged, domainChanged := true, true
+	if existing != nil {
+		exceptShelfId = existing.Id
+		pathChanged = request.Path != existing.Path
+		domainChanged = request.Domain != existing.Domain
+	}
+	if !pathChanged && !domainChanged {
+		return nil
+	}
+
+	switch {
+	case request.Path != "" && request.Domain != "":
+		return fmt.Errorf("%w: a shelf has either a path or a domain, not both", ErrInvalidInput)
+	case request.Path == "" && request.Domain == "":
+		return fmt.Errorf("%w: a shelf needs a path or a domain", ErrInvalidInput)
+	}
+
+	if pathChanged {
+		if err := s.validatePath(request.Path, ownerId, exceptShelfId); err != nil {
+			return err
+		}
+	}
+	if domainChanged {
+		if err := s.validateDomain(request.Domain, exceptShelfId); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // List returns every shelf for an admin, or only the caller's own shelves otherwise.
 func (s *shelfServiceImpl) List(callerUserId string, isAdmin bool) ([]model.Shelf, error) {
 	if isAdmin {
@@ -180,7 +278,7 @@ func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf
 	if config.Bool("app.userBasedPaths") && shelfRequest.Path != "" && user.Username == "" {
 		return "", fmt.Errorf("%w: set a username before creating a shelf with a path", ErrInvalidInput)
 	}
-	if err := s.validatePath(shelfRequest.Path, callerUserId, ""); err != nil {
+	if err := s.validateLocation(shelfRequest, nil, callerUserId); err != nil {
 		return "", err
 	}
 
@@ -214,13 +312,8 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 		return nil, err
 	}
 
-	// Only a changed path is checked, so a shelf that already sits on a path
-	// that is no longer allowed (for example one that a later release
-	// reserved) can still have its title or theme edited.
-	if shelfRequest.Path != existing.Path {
-		if err := s.validatePath(shelfRequest.Path, existing.UserId, shelfId); err != nil {
-			return nil, err
-		}
+	if err := s.validateLocation(shelfRequest, existing, existing.UserId); err != nil {
+		return nil, err
 	}
 
 	shelfRequest.Id = shelfId

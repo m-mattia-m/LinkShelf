@@ -17,6 +17,7 @@ func Test_Unit_Shelf_Creation_Success(t *testing.T) {
 	shelfRequest := &model.Shelf{
 		PublicShelf: model.PublicShelf{
 			Title: "shelf-title-test",
+			Path:  "shelf-path-test",
 		},
 	}
 
@@ -27,8 +28,13 @@ func Test_Unit_Shelf_Creation_Success(t *testing.T) {
 
 	svc.ShelfRepository.
 		EXPECT().
+		PathInUse("shelf-path-test", "").
+		Return(false, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
 		Create(&model.Shelf{
-			PublicShelf: model.PublicShelf{Title: "shelf-title-test"},
+			PublicShelf: model.PublicShelf{Title: "shelf-title-test", Path: "shelf-path-test"},
 			UserId:      "user-uuid-test",
 		}).
 		Return("shelf-uuid-test", nil)
@@ -44,13 +50,18 @@ func Test_Unit_Shelf_Creation_Failure(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	shelfRequest := &model.Shelf{
-		PublicShelf: model.PublicShelf{Title: "shelf-title-test"},
+		PublicShelf: model.PublicShelf{Title: "shelf-title-test", Path: "shelf-path-test"},
 	}
 
 	svc.UserRepository.
 		EXPECT().
 		Get("user-uuid-test").
 		Return(&model.User{Id: "user-uuid-test"}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		PathInUse("shelf-path-test", "").
+		Return(false, nil)
 
 	svc.ShelfRepository.
 		EXPECT().
@@ -463,7 +474,7 @@ func Test_Unit_Shelf_Creation_ThemeAssignable(t *testing.T) {
 	defer svc.Ctrl.Finish()
 
 	shelfRequest := &model.Shelf{
-		PublicShelf: model.PublicShelf{Title: "shelf-title-test"},
+		PublicShelf: model.PublicShelf{Title: "shelf-title-test", Path: "shelf-path-test"},
 		ThemeId:     "theme-uuid-test",
 	}
 
@@ -476,6 +487,11 @@ func Test_Unit_Shelf_Creation_ThemeAssignable(t *testing.T) {
 		EXPECT().
 		Get("theme-uuid-test").
 		Return(&model.Theme{Id: "theme-uuid-test", Scope: model.ThemeScopeUser, OwnerUserId: "user-uuid-test"}, nil)
+
+	svc.ShelfRepository.
+		EXPECT().
+		PathInUse("shelf-path-test", "").
+		Return(false, nil)
 
 	svc.ShelfRepository.
 		EXPECT().
@@ -652,6 +668,10 @@ func shelfWithPath(path string) *model.Shelf {
 	return &model.Shelf{PublicShelf: model.PublicShelf{Title: "shelf-title-test", Path: path}}
 }
 
+func shelfWithDomain(domain string) *model.Shelf {
+	return &model.Shelf{PublicShelf: model.PublicShelf{Title: "shelf-title-test"}, Domain: domain}
+}
+
 func Test_Unit_Shelf_Creation_PathRules_UserBasedPathsOff(t *testing.T) {
 	t.Run("a free path is accepted", func(t *testing.T) {
 		svc := NewMockService(t)
@@ -712,17 +732,18 @@ func Test_Unit_Shelf_Creation_PathRules_UserBasedPathsOff(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("an empty path skips every check", func(t *testing.T) {
+	t.Run("a shelf with neither a path nor a domain is rejected", func(t *testing.T) {
 		svc := NewMockService(t)
 		defer svc.Ctrl.Finish()
 		userBasedPaths(t, false)
 
 		svc.UserRepository.EXPECT().Get("user-1").Return(&model.User{Id: "user-1"}, nil)
-		svc.ShelfRepository.EXPECT().Create(gomock.Any()).Return("shelf-1", nil)
 
-		_, err := svc.Service.ShelfService.Create("user-1", shelfWithPath(""))
+		id, err := svc.Service.ShelfService.Create("user-1", shelfWithPath(""))
 
-		require.NoError(t, err)
+		require.ErrorIs(t, err, ErrInvalidInput)
+		require.ErrorContains(t, err, "path or a domain")
+		require.Empty(t, id)
 	})
 
 	t.Run("a failing lookup is returned", func(t *testing.T) {
@@ -800,9 +821,10 @@ func Test_Unit_Shelf_Creation_PathRules_UserBasedPathsOn(t *testing.T) {
 		userBasedPaths(t, true)
 
 		svc.UserRepository.EXPECT().Get("user-1").Return(&model.User{Id: "user-1"}, nil)
+		svc.ShelfRepository.EXPECT().DomainInUse("profile.example.com", "").Return(false, nil)
 		svc.ShelfRepository.EXPECT().Create(gomock.Any()).Return("shelf-1", nil)
 
-		_, err := svc.Service.ShelfService.Create("user-1", shelfWithPath(""))
+		_, err := svc.Service.ShelfService.Create("user-1", shelfWithDomain("profile.example.com"))
 
 		require.NoError(t, err)
 	})

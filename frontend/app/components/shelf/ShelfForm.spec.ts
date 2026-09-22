@@ -191,6 +191,120 @@ describe('ShelfForm', () => {
     })
   })
 
+  describe('a path or a domain, never both', () => {
+    function lastEmitted(emitted: () => Record<string, unknown[]>) {
+      const events = emitted()['update:modelValue'] as unknown[][]
+      return events[events.length - 1]![0] as Record<string, unknown>
+    }
+
+    async function openDomainTab() {
+      screen.getByRole('tab', { name: 'Domain' })
+        .dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+      await new Promise(resolve => setTimeout(resolve, 0))
+    }
+
+    it('opens on the Domain tab for a shelf that only has a domain', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: '', domain: 'profile.example.com' }) }
+      })
+
+      expect(screen.getByRole('textbox', { name: 'Domain' })).toHaveValue('profile.example.com')
+      expect(screen.queryByRole('textbox', { name: 'Path' })).not.toBeInTheDocument()
+    })
+
+    it('sends only the path while the Path tab is open', async () => {
+      const { emitted } = await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'my-shelf', domain: '' }) }
+      })
+
+      await fireEvent.update(screen.getByLabelText('Title'), 'Renamed')
+
+      expect(lastEmitted(emitted)).toMatchObject({ title: 'Renamed', path: 'my-shelf', domain: '' })
+    })
+
+    it('sends only the domain, normalized, while the Domain tab is open', async () => {
+      const { emitted } = await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'my-shelf', domain: '' }) }
+      })
+
+      await openDomainTab()
+      await fireEvent.update(screen.getByRole('textbox', { name: 'Domain' }), '  Profile.Example.COM.:443/ ')
+
+      expect(lastEmitted(emitted)).toMatchObject({ path: '', domain: 'profile.example.com' })
+    })
+
+    it('rewrites the typed domain to its normalized form when the field loses focus', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: '', domain: 'profile.example.com' }) }
+      })
+
+      const input = screen.getByRole('textbox', { name: 'Domain' })
+      await fireEvent.update(input, 'PROFILE.Example.com:9443/')
+      await fireEvent.blur(input)
+
+      expect(input).toHaveValue('profile.example.com:9443')
+    })
+
+    it('shows the address the domain will be reached at', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: '', domain: 'Profile.example.com' }) }
+      })
+
+      expect(screen.getByText(/https:\/\/profile\.example\.com - point the domain/)).toBeInTheDocument()
+    })
+
+    it('warns about a shelf that has both and says which one saving keeps', async () => {
+      const { emitted } = await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'my-shelf', domain: 'profile.example.com' }) }
+      })
+
+      expect(screen.getByText('Path and domain')).toBeInTheDocument()
+      expect(screen.getByText(/Saving keeps the path and clears the other/)).toBeInTheDocument()
+
+      await fireEvent.update(screen.getByLabelText('Title'), 'Renamed')
+      expect(lastEmitted(emitted)).toMatchObject({ path: 'my-shelf', domain: '' })
+    })
+
+    it('does not warn about a shelf that has only one', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: 'my-shelf', domain: '' }) }
+      })
+
+      expect(screen.queryByText('Path and domain')).not.toBeInTheDocument()
+    })
+
+    it('validates the domain, and only on the Domain tab', async () => {
+      const valid = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: '', domain: 'Profile.Example.com:9443' }) }
+      })
+      expect(await valid.vm.validate()).toBe(true)
+
+      for (const domain of ['localhost', '1.2.3.4', '*.example.com', 'https://a.example.com', 'a.example.com:0']) {
+        const invalid = await mountSuspended(ShelfForm, {
+          props: { modelValue: buildShelfProp({ title: 'Title', path: '', domain }) }
+        })
+        expect(await invalid.vm.validate(), domain).toBe(false)
+      }
+    })
+
+    it('requires a domain on the Domain tab and a path on the Path tab', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: '', domain: '' }) }
+      })
+      // No domain, and the form defaults to the Path tab, which is empty too.
+      expect(await wrapper.vm.validate()).toBe(false)
+    })
+
+    it('ignores what is typed on the tab that is not in use', async () => {
+      // A shelf from before the exclusive rule: the junk domain is dropped on save.
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: 'valid-path', domain: 'not a domain' }) }
+      })
+
+      expect(await wrapper.vm.validate()).toBe(true)
+    })
+  })
+
   describe('path rules and URL', () => {
     function setUserBasedPaths(enabled: boolean) {
       useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: enabled })
