@@ -10,6 +10,7 @@ Name | Type
 `description` | string
 `domain` | string
 `icon` | string
+`noIndex` | boolean
 `path` | string
 `themeId` | string
 `title` | string
@@ -25,6 +26,7 @@ const example = {
   "description": null,
   "domain": null,
   "icon": null,
+  "noIndex": null,
   "path": null,
   "themeId": null,
   "title": null,

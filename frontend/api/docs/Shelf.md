@@ -12,6 +12,7 @@ Name | Type
 `domain` | string
 `icon` | string
 `id` | string
+`noIndex` | boolean
 `path` | string
 `theme` | { [key: string]: string; }
 `themeId` | string
@@ -33,6 +34,7 @@ const example = {
   "domain": null,
   "icon": null,
   "id": null,
+  "noIndex": null,
   "path": null,
   "theme": null,
   "themeId": null,

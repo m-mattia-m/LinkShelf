@@ -44,6 +44,12 @@ export interface ShelfBase {
      */
     icon?: string;
     /**
+     * When true, the shelf's public page asks search engines not to index it. The instance itself, and every other shelf, is unaffected.
+     * @type {boolean}
+     * @memberof ShelfBase
+     */
+    noIndex?: boolean;
+    /**
      * 
      * @type {string}
      * @memberof ShelfBase
@@ -85,6 +91,7 @@ export function ShelfBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         'description': json['description'] == null ? undefined : json['description'],
         'domain': json['domain'] == null ? undefined : json['domain'],
         'icon': json['icon'] == null ? undefined : json['icon'],
+        'noIndex': json['noIndex'] == null ? undefined : json['noIndex'],
         'path': json['path'] == null ? undefined : json['path'],
         'themeId': json['themeId'] == null ? undefined : json['themeId'],
         'title': json['title'],
@@ -105,6 +112,7 @@ export function ShelfBaseToJSONTyped(value?: Omit<ShelfBase, '$schema'> | null, 
         'description': value['description'],
         'domain': value['domain'],
         'icon': value['icon'],
+        'noIndex': value['noIndex'],
         'path': value['path'],
         'themeId': value['themeId'],
         'title': value['title'],

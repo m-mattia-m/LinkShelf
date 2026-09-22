@@ -9,13 +9,15 @@ import (
 
 func Test_MapShelfBaseToShelfPointer(t *testing.T) {
 	base := model.ShelfBase{
-		Title: "test-shelf",
+		Title:   "test-shelf",
+		NoIndex: true,
 	}
 
 	result := MapShelfBaseToShelfPointer(base)
 
 	require.NotNil(t, result)
 	require.Equal(t, base.Title, result.Title)
+	require.True(t, result.NoIndex)
 }
 
 func Test_MapShelfToShelfResponse(t *testing.T) {

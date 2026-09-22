@@ -10,6 +10,7 @@ Name | Type
 `description` | string
 `icon` | string
 `id` | string
+`noIndex` | boolean
 `path` | string
 `theme` | { [key: string]: string; }
 `title` | string
@@ -25,6 +26,7 @@ const example = {
   "description": null,
   "icon": null,
   "id": null,
+  "noIndex": null,
   "path": null,
   "theme": null,
   "title": null,

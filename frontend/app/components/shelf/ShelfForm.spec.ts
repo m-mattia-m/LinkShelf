@@ -87,6 +87,35 @@ describe('ShelfForm', () => {
     expect(lastEvent[0]).toMatchObject({ title: 'New Title' })
   })
 
+  describe('hide from search engines', () => {
+    it('defaults to off for a shelf that has never set it', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ noIndex: false }) }
+      })
+
+      expect(screen.getByLabelText('Hide from search engines')).not.toBeChecked()
+    })
+
+    it('reflects an existing shelf that already opted out of indexing', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ noIndex: true }) }
+      })
+
+      expect(screen.getByLabelText('Hide from search engines')).toBeChecked()
+    })
+
+    it('emits the toggled value', async () => {
+      const { emitted } = await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ noIndex: false }) }
+      })
+
+      await fireEvent.click(screen.getByLabelText('Hide from search engines'))
+
+      const events = emitted()['update:modelValue'] as unknown[][]
+      expect(events[events.length - 1]![0]).toMatchObject({ noIndex: true })
+    })
+  })
+
   // The Select's visible current-value text is duplicated by a hidden
   // native <option> Reka UI renders for form semantics, so scope to the
   // visible value slot to avoid ambiguous text matches.

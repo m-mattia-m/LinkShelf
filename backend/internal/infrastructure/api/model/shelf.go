@@ -14,6 +14,11 @@ type PublicShelf struct {
 	Icon        string            `json:"icon" bson:"icon"`
 	Path        string            `json:"path" bson:"path"`
 	Theme       map[string]string `json:"theme" bson:"theme"`
+	// NoIndex is true when the owner has opted this shelf's public page out
+	// of search engine indexing. The public page uses it to render a
+	// "noindex" robots meta tag - it never affects the instance's own
+	// robots.txt, which stays permissive.
+	NoIndex bool `json:"noIndex" bson:"noIndex"`
 }
 
 type Shelf struct {
@@ -47,6 +52,9 @@ type ShelfBase struct {
 	Description string `json:"description" bson:"description" required:"false"`
 	ThemeId     string `json:"themeId" bson:"themeId" required:"false"`
 	Icon        string `json:"icon" bson:"icon" required:"false"`
+	// NoIndex opts this shelf's public page out of search engine indexing.
+	// Defaults to false (crawlable) when omitted.
+	NoIndex bool `json:"noIndex" bson:"noIndex" required:"false" doc:"When true, the shelf's public page asks search engines not to index it. The instance itself, and every other shelf, is unaffected."`
 }
 
 type ShelfRequestBody struct {

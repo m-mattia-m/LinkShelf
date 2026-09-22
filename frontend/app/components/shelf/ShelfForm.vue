@@ -78,7 +78,8 @@ const form = reactive({
   domain: props.modelValue?.domain ?? '',
   path: props.modelValue?.path ?? '',
   icon: props.modelValue?.icon ?? '',
-  themeId: props.modelValue?.themeId ?? ''
+  themeId: props.modelValue?.themeId ?? '',
+  noIndex: props.modelValue?.noIndex ?? false
 })
 
 // Each of path and domain is only checked while its tab is the one in use - a
@@ -182,7 +183,8 @@ watch(
       // A missing theme's id no longer matches any picker option, which
       // would otherwise show the raw stale id as the selection - the alert
       // above already says it's gone, so just clear it instead.
-      themeId: newShelf.themeMissing ? '' : newShelf.themeId
+      themeId: newShelf.themeMissing ? '' : newShelf.themeId,
+      noIndex: newShelf.noIndex
     })
     mode.value = modeOf(newShelf)
   },
@@ -241,6 +243,15 @@ watch(
         v-model="form.icon"
         placeholder="i-lucide-book-open"
       />
+    </UFormField>
+
+    <UFormField
+      label="Hide from search engines"
+      name="noIndex"
+      class="pt-4"
+      help="When on, this shelf's public page asks Google and other search engines not to index it. The rest of this LinkShelf instance is unaffected."
+    >
+      <USwitch v-model="form.noIndex" />
     </UFormField>
 
     <UAlert

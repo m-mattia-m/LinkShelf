@@ -85,9 +85,14 @@ onMounted(load)
 // Nuxt reuses this component when only the route params change.
 watch(() => [props.username, props.path, props.domain], load)
 
+// robots is only set when the owner opted this shelf out of indexing -
+// leaving it unset (rather than always "index") is deliberate, since an
+// explicit "index" would override an instance-wide robots policy a host
+// might set some other way, which is none of this component's business.
 useSeoMeta({
   title: () => shelf.value?.title,
-  description: () => shelf.value?.description
+  description: () => shelf.value?.description,
+  robots: () => shelf.value?.noIndex ? 'noindex' : undefined
 })
 </script>
 

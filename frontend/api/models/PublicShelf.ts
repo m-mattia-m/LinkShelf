@@ -45,6 +45,12 @@ export interface PublicShelf {
     id: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof PublicShelf
+     */
+    noIndex: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof PublicShelf
      */
@@ -70,6 +76,7 @@ export function instanceOfPublicShelf(value: object): value is PublicShelf {
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('noIndex' in value) || value['noIndex'] === undefined) return false;
     if (!('path' in value) || value['path'] === undefined) return false;
     if (!('theme' in value) || value['theme'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
@@ -90,6 +97,7 @@ export function PublicShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'description': json['description'],
         'icon': json['icon'],
         'id': json['id'],
+        'noIndex': json['noIndex'],
         'path': json['path'],
         'theme': json['theme'],
         'title': json['title'],
@@ -110,6 +118,7 @@ export function PublicShelfToJSONTyped(value?: Omit<PublicShelf, '$schema'> | nu
         'description': value['description'],
         'icon': value['icon'],
         'id': value['id'],
+        'noIndex': value['noIndex'],
         'path': value['path'],
         'theme': value['theme'],
         'title': value['title'],

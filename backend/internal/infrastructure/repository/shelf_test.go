@@ -28,6 +28,7 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 		"user_id",
 		"username",
 		"created_user_based_paths",
+		"no_index",
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
@@ -38,6 +39,7 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 		"icon-test",
 		"user-uuid-test",
 		"owner-name",
+		false,
 		false,
 	)
 
@@ -125,6 +127,7 @@ func Test_ShelfRepository_Get_Success(t *testing.T) {
 		"user_id",
 		"username",
 		"created_user_based_paths",
+		"no_index",
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
@@ -135,6 +138,7 @@ func Test_ShelfRepository_Get_Success(t *testing.T) {
 		"icon-test",
 		"user-uuid-test",
 		"owner-name",
+		false,
 		false,
 	)
 
@@ -205,6 +209,7 @@ func Test_ShelfRepository_Create_Success(t *testing.T) {
 			"icon-test",
 			"user-uuid-test",
 			false,
+			false,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -244,6 +249,7 @@ func Test_ShelfRepository_Update_Success(t *testing.T) {
 			"updated-desc",
 			"light",
 			"updated-icon",
+			false,
 			"shelf-uuid-test",
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -329,6 +335,7 @@ func Test_ShelfRepository_GetByPath_Success(t *testing.T) {
 		"user_id",
 		"username",
 		"created_user_based_paths",
+		"no_index",
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
@@ -339,6 +346,7 @@ func Test_ShelfRepository_GetByPath_Success(t *testing.T) {
 		"icon-test",
 		"user-uuid-test",
 		"owner-name",
+		false,
 		false,
 	)
 
@@ -380,9 +388,9 @@ func Test_ShelfRepository_ListByUserId_Success(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index",
 	}).AddRow(
-		"shelf-uuid-test", "test-shelf", "/test", "example.com", "description-test", "dark", "icon-test", "user-uuid-test", "owner-name", false,
+		"shelf-uuid-test", "test-shelf", "/test", "example.com", "description-test", "dark", "icon-test", "user-uuid-test", "owner-name", false, false,
 	)
 
 	mock.ExpectQuery(`(?s)FROM\s+shelf s.*WHERE s\.user_id =`).
@@ -422,9 +430,9 @@ func Test_ShelfRepository_List_FillsOwnerUsername(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index",
 	}).AddRow(
-		"shelf-uuid-test", "test-shelf", "my-path", nil, "", nil, "", "user-uuid-test", "owner-name", false,
+		"shelf-uuid-test", "test-shelf", "my-path", nil, "", nil, "", "user-uuid-test", "owner-name", false, false,
 	)
 	mock.ExpectQuery(`(?s)FROM\s+shelf s\s+JOIN\s+"user" u ON u\.id = s\.user_id`).WillReturnRows(rows)
 
@@ -444,9 +452,9 @@ func Test_ShelfRepository_GetByUsernameAndPath_Success(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index",
 	}).AddRow(
-		"shelf-uuid-test", "test-shelf", "my-path", nil, "", nil, "", "user-uuid-test", "alice", false,
+		"shelf-uuid-test", "test-shelf", "my-path", nil, "", nil, "", "user-uuid-test", "alice", false, false,
 	)
 	mock.ExpectQuery(`(?s)WHERE u\.username = .* AND LOWER\(s\.path\) = LOWER`).
 		WithArgs("alice", "my-path").
@@ -575,10 +583,10 @@ func Test_ShelfRepository_ReadsAndStoresTheCreationMode(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index",
 	}).
-		AddRow("shelf-1", "Old", "old-path", nil, "", nil, "", "user-1", "alice", false).
-		AddRow("shelf-2", "New", "new-path", nil, "", nil, "", "user-1", "alice", true)
+		AddRow("shelf-1", "Old", "old-path", nil, "", nil, "", "user-1", "alice", false, false).
+		AddRow("shelf-2", "New", "new-path", nil, "", nil, "", "user-1", "alice", true, false)
 	mock.ExpectQuery(`FROM\s+shelf`).WillReturnRows(rows)
 
 	shelves, err := repo.List()
@@ -588,7 +596,7 @@ func Test_ShelfRepository_ReadsAndStoresTheCreationMode(t *testing.T) {
 	require.True(t, shelves[1].CreatedWithUserBasedPaths)
 
 	mock.ExpectExec("INSERT INTO shelf").
-		WithArgs(sqlmock.AnyArg(), "Created", nil, nil, "", nil, "", "user-1", true).
+		WithArgs(sqlmock.AnyArg(), "Created", nil, nil, "", nil, "", "user-1", true, false).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	_, err = repo.Create(&model.Shelf{
@@ -609,7 +617,7 @@ func Test_ShelfRepository_UpdateNeverTouchesTheCreationMode(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	// The UPDATE statement must not mention the column at all.
-	mock.ExpectExec(`^\s*UPDATE shelf\s+SET title = \$1,\s+path = \$2,\s+domain = \$3,\s+description = \$4,\s+theme_id = \$5,\s+icon = \$6\s+WHERE id = \$7\s*$`).
+	mock.ExpectExec(`^\s*UPDATE shelf\s+SET title = \$1,\s+path = \$2,\s+domain = \$3,\s+description = \$4,\s+theme_id = \$5,\s+icon = \$6,\s+no_index = \$7\s+WHERE id = \$8\s*$`).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err = repo.Update(&model.Shelf{
@@ -629,9 +637,9 @@ func Test_ShelfRepository_GetByDomain_Success(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index",
 	}).AddRow(
-		"shelf-uuid-test", "test-shelf", nil, "profile.example.com", "description-test", "", "icon-test", "user-uuid-test", "owner-name", false,
+		"shelf-uuid-test", "test-shelf", nil, "profile.example.com", "description-test", "", "icon-test", "user-uuid-test", "owner-name", false, false,
 	)
 
 	mock.ExpectQuery(`(?s)FROM\s+shelf s.*WHERE s\.domain =`).
