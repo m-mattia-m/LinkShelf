@@ -118,11 +118,7 @@
                     "type": "boolean"
                 },
                 "extraHosts": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "minLength": 1
-                    }
+                    "type": "array"
                 },
                 "frontend": {
                     "type": "object",
