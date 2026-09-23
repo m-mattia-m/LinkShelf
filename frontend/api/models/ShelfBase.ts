@@ -38,6 +38,18 @@ export interface ShelfBase {
      */
     domain?: string;
     /**
+     * Optional custom text shown in the footer instead of "Powered by LinkShelf", when FooterEnabled is true. Rendered as a restricted subset of Markdown: bold, italic, and links only.
+     * @type {string}
+     * @memberof ShelfBase
+     */
+    footerCustomText?: string;
+    /**
+     * Whether the shelf's public page shows a footer at all. Defaults to true - the shelf's public page shows the default "Powered by LinkShelf" footer, or FooterCustomText when set.
+     * @type {boolean}
+     * @memberof ShelfBase
+     */
+    footerEnabled?: boolean;
+    /**
      * 
      * @type {string}
      * @memberof ShelfBase
@@ -90,6 +102,8 @@ export function ShelfBaseFromJSONTyped(json: any, ignoreDiscriminator: boolean):
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
         'description': json['description'] == null ? undefined : json['description'],
         'domain': json['domain'] == null ? undefined : json['domain'],
+        'footerCustomText': json['footerCustomText'] == null ? undefined : json['footerCustomText'],
+        'footerEnabled': json['footerEnabled'] == null ? undefined : json['footerEnabled'],
         'icon': json['icon'] == null ? undefined : json['icon'],
         'noIndex': json['noIndex'] == null ? undefined : json['noIndex'],
         'path': json['path'] == null ? undefined : json['path'],
@@ -111,6 +125,8 @@ export function ShelfBaseToJSONTyped(value?: Omit<ShelfBase, '$schema'> | null, 
         
         'description': value['description'],
         'domain': value['domain'],
+        'footerCustomText': value['footerCustomText'],
+        'footerEnabled': value['footerEnabled'],
         'icon': value['icon'],
         'noIndex': value['noIndex'],
         'path': value['path'],

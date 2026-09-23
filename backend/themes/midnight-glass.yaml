@@ -1,0 +1,8 @@
+name: Midnight Glass
+config: |
+  --shelf-bg: linear-gradient(160deg, #0f172a, #1e293b);
+  --shelf-text: #f1f5f9;
+  --shelf-link-bg: #1e293b;
+  --shelf-link-text: #f8fafc;
+  --shelf-link-radius: 1rem;
+  --shelf-font-family: 'Inter', sans-serif;

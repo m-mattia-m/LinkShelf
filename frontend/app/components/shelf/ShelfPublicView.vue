@@ -39,6 +39,7 @@ const hasAnyLinks = computed(() => links.value.length > 0)
 // layout can't receive props from its page and these need to live on the
 // layout's own root element for its background/text color to react to them.
 const themeVars = useState<Record<string, string>>('public-shelf-theme-vars', () => ({}))
+const footer = useState<{ enabled: boolean, customText: string }>('public-shelf-footer', () => ({ enabled: true, customText: '' }))
 
 // A link's own color always has a DB-level default of "#000000" rather than
 // being genuinely unset, so there's no way to tell "user picked black" apart
@@ -66,6 +67,7 @@ async function load() {
         : await api.shelf.getPublicShelfByPath({ path: props.path ?? '' })
     shelf.value = resolvedShelf
     themeVars.value = resolvedShelf.theme ?? {}
+    footer.value = { enabled: resolvedShelf.footerEnabled ?? true, customText: resolvedShelf.footerCustomText ?? '' }
 
     const [sectionList, linkList] = await Promise.all([
       api.section.getSections({ shelfId: resolvedShelf.id }),

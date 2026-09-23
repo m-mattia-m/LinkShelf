@@ -19,6 +19,14 @@ type PublicShelf struct {
 	// "noindex" robots meta tag - it never affects the instance's own
 	// robots.txt, which stays permissive.
 	NoIndex bool `json:"noIndex" bson:"noIndex"`
+	// FooterEnabled is whether the shelf's public page shows a footer at all.
+	// When true and FooterCustomText is empty, it shows the default "Powered
+	// by LinkShelf" footer instead.
+	FooterEnabled bool `json:"footerEnabled" bson:"footerEnabled"`
+	// FooterCustomText, when set, replaces the default "Powered by LinkShelf"
+	// footer. Rendered by the frontend as a restricted subset of Markdown
+	// (bold, italic, links only).
+	FooterCustomText string `json:"footerCustomText" bson:"footerCustomText"`
 }
 
 type Shelf struct {
@@ -55,6 +63,12 @@ type ShelfBase struct {
 	// NoIndex opts this shelf's public page out of search engine indexing.
 	// Defaults to false (crawlable) when omitted.
 	NoIndex bool `json:"noIndex" bson:"noIndex" required:"false" doc:"When true, the shelf's public page asks search engines not to index it. The instance itself, and every other shelf, is unaffected."`
+	// FooterEnabled defaults to false when omitted, which is only correct for
+	// a client that always sends it explicitly (the web UI defaults new
+	// shelves to true itself). Existing shelves keep the DB column's own
+	// default of true regardless.
+	FooterEnabled    bool   `json:"footerEnabled" bson:"footerEnabled" required:"false" doc:"Whether the shelf's public page shows a footer at all. Defaults to true - the shelf's public page shows the default \"Powered by LinkShelf\" footer, or FooterCustomText when set."`
+	FooterCustomText string `json:"footerCustomText" bson:"footerCustomText" required:"false" maxLength:"500" doc:"Optional custom text shown in the footer instead of \"Powered by LinkShelf\", when FooterEnabled is true. Rendered as a restricted subset of Markdown: bold, italic, and links only."`
 }
 
 type ShelfRequestBody struct {

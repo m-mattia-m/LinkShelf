@@ -116,6 +116,53 @@ describe('ShelfForm', () => {
     })
   })
 
+  describe('footer', () => {
+    it('defaults to shown with an empty custom text field for a new shelf', async () => {
+      await renderSuspended(ShelfForm)
+
+      expect(screen.getByLabelText('Show footer')).toBeChecked()
+      expect(screen.getByLabelText('Custom footer text')).toHaveValue('')
+    })
+
+    it('reflects an existing shelf that disabled its footer', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ footerEnabled: false }) }
+      })
+
+      expect(screen.getByLabelText('Show footer')).not.toBeChecked()
+    })
+
+    it('hides the custom text field once the footer is turned off', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ footerEnabled: true }) }
+      })
+      expect(screen.getByLabelText('Custom footer text')).toBeInTheDocument()
+
+      await fireEvent.click(screen.getByLabelText('Show footer'))
+
+      expect(screen.queryByLabelText('Custom footer text')).not.toBeInTheDocument()
+    })
+
+    it('emits the typed custom footer text', async () => {
+      const { emitted } = await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ footerEnabled: true, footerCustomText: '' }) }
+      })
+
+      await fireEvent.update(screen.getByLabelText('Custom footer text'), '**Thanks for visiting!**')
+
+      const events = emitted()['update:modelValue'] as unknown[][]
+      expect(events[events.length - 1]![0]).toMatchObject({ footerCustomText: '**Thanks for visiting!**' })
+    })
+
+    it('rejects custom footer text over 500 characters', async () => {
+      const wrapper = await mountSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ title: 'Title', path: 'valid-path', footerEnabled: true, footerCustomText: 'a'.repeat(501) }) }
+      })
+
+      expect(await wrapper.vm.validate()).toBe(false)
+    })
+  })
+
   // The Select's visible current-value text is duplicated by a hidden
   // native <option> Reka UI renders for form semantics, so scope to the
   // visible value slot to avoid ambiguous text matches.

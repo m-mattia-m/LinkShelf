@@ -1,0 +1,8 @@
+name: Amber Blaze
+config: |
+  --shelf-bg: linear-gradient(135deg, #b91c1c, #f97316, #facc15);
+  --shelf-text: #fffbeb;
+  --shelf-link-bg: #7f1d1d;
+  --shelf-link-text: #fef08a;
+  --shelf-link-radius: 0.75rem;
+  --shelf-font-family: 'Manrope', sans-serif;

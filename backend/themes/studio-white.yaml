@@ -1,0 +1,8 @@
+name: Studio White
+config: |
+  --shelf-bg: #fafaf9;
+  --shelf-text: #18181b;
+  --shelf-link-bg: #18181b;
+  --shelf-link-text: #fafafa;
+  --shelf-link-radius: 1.5rem;
+  --shelf-font-family: 'Manrope', sans-serif;

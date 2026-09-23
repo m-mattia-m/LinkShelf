@@ -8,6 +8,8 @@ Name | Type
 ------------ | -------------
 `$schema` | string
 `description` | string
+`footerCustomText` | string
+`footerEnabled` | boolean
 `icon` | string
 `id` | string
 `noIndex` | boolean
@@ -24,6 +26,8 @@ import type { PublicShelf } from ''
 const example = {
   "$schema": null,
   "description": null,
+  "footerCustomText": null,
+  "footerEnabled": null,
   "icon": null,
   "id": null,
   "noIndex": null,

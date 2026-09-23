@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"backend/internal/config"
@@ -268,4 +269,78 @@ func Test_Unit_LoadInstanceThemeFile_MalformedYAML(t *testing.T) {
 	_, err := loadInstanceThemeFile(filepath.Join(dir, "broken.yaml"), "broken")
 
 	require.ErrorContains(t, err, "parse yaml")
+}
+
+// bundledThemesDir is backend/themes - the "modern chic" theme pack
+// config.default.yaml's themes.directory points at by default (see
+// SyncInstanceThemes's doc comment).
+func bundledThemesDir(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.Abs("../../themes")
+	require.NoError(t, err)
+	return dir
+}
+
+// Guards against a typo or an out-of-range value creeping into one of the
+// bundled theme files: every file must load and validate the same way an
+// admin-authored one would, and no two may claim the same display name.
+func Test_Unit_BundledThemes_AllValidAndUniquelyNamed(t *testing.T) {
+	dir := bundledThemesDir(t)
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+
+	names := make(map[string]bool)
+	count := 0
+	for _, entry := range entries {
+		if entry.IsDir() || strings.ToLower(filepath.Ext(entry.Name())) != ".yaml" {
+			continue
+		}
+		sourceFile := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+
+		theme, err := loadInstanceThemeFile(filepath.Join(dir, entry.Name()), sourceFile)
+
+		require.NoError(t, err, "theme file %q", entry.Name())
+		require.False(t, names[theme.Name], "duplicate theme name %q", theme.Name)
+		names[theme.Name] = true
+		count++
+	}
+
+	require.GreaterOrEqual(t, count, 5, "expected at least 5 bundled themes")
+	// Not a real design constraint, just a sanity guard against a copy-paste
+	// leaving duplicate-in-all-but-name files behind.
+	require.LessOrEqual(t, count, 25, "expected at most 25 bundled themes")
+}
+
+// End-to-end through SyncInstanceThemes itself (not just the per-file
+// loader), pointed at the real bundled directory rather than a temp one -
+// proves config.default.yaml's own default actually works.
+func Test_Unit_SyncInstanceThemes_BundledThemesDirectory(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dir := bundledThemesDir(t)
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+
+	themeRepository := mocks.NewMockThemeRepository(ctrl)
+	repo := &repository.Repository{ThemeRepository: themeRepository}
+
+	config.Reset()
+	config.Set("themes.directory", dir)
+
+	var upserted []string
+	themeRepository.EXPECT().
+		UpsertInstanceBySourceFile(gomock.Any()).
+		DoAndReturn(func(theme *model.Theme) error {
+			upserted = append(upserted, theme.SourceFile)
+			return nil
+		}).
+		Times(len(entries))
+
+	themeRepository.EXPECT().
+		DeleteInstanceNotIn(gomock.Any()).
+		Return(nil)
+
+	require.NoError(t, SyncInstanceThemes(repo))
+	require.Len(t, upserted, len(entries))
 }

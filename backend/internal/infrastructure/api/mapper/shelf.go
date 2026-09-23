@@ -7,11 +7,13 @@ import (
 func MapShelfBaseToShelfPointer(base model.ShelfBase) *model.Shelf {
 	return &model.Shelf{
 		PublicShelf: model.PublicShelf{
-			Title:       base.Title,
-			Description: base.Description,
-			Icon:        base.Icon,
-			Path:        base.Path,
-			NoIndex:     base.NoIndex,
+			Title:            base.Title,
+			Description:      base.Description,
+			Icon:             base.Icon,
+			Path:             base.Path,
+			NoIndex:          base.NoIndex,
+			FooterEnabled:    base.FooterEnabled,
+			FooterCustomText: base.FooterCustomText,
 		},
 		Domain:  base.Domain,
 		ThemeId: base.ThemeId,

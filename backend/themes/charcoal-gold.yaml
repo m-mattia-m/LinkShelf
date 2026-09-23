@@ -1,0 +1,8 @@
+name: Charcoal Gold
+config: |
+  --shelf-bg: linear-gradient(160deg, #1c1917, #2b241c);
+  --shelf-text: #f5efe0;
+  --shelf-link-bg: #c9a227;
+  --shelf-link-text: #1c1917;
+  --shelf-link-radius: 0.5rem;
+  --shelf-font-family: 'Cormorant Garamond', serif;

@@ -1,0 +1,8 @@
+name: Sunset Gradient
+config: |
+  --shelf-bg: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6);
+  --shelf-text: #ffffff;
+  --shelf-link-bg: #ffffff;
+  --shelf-link-text: #7c3aed;
+  --shelf-link-radius: 999px;
+  --shelf-font-family: 'Poppins', sans-serif;

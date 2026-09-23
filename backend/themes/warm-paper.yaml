@@ -1,0 +1,8 @@
+name: Warm Paper
+config: |
+  --shelf-bg: #faf3e7;
+  --shelf-text: #3f2d1c;
+  --shelf-link-bg: #c2703d;
+  --shelf-link-text: #fff7ed;
+  --shelf-link-radius: 0.75rem;
+  --shelf-font-family: 'Fraunces', serif;

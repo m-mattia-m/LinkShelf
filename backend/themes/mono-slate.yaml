@@ -1,0 +1,8 @@
+name: Mono Slate
+config: |
+  --shelf-bg: #f4f4f5;
+  --shelf-text: #18181b;
+  --shelf-link-bg: #18181b;
+  --shelf-link-text: #fafafa;
+  --shelf-link-radius: 0px;
+  --shelf-font-family: 'JetBrains Mono', monospace;

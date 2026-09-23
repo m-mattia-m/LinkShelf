@@ -48,6 +48,18 @@ export interface Shelf {
      * @type {string}
      * @memberof Shelf
      */
+    footerCustomText: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Shelf
+     */
+    footerEnabled: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof Shelf
+     */
     icon: string;
     /**
      * 
@@ -112,6 +124,8 @@ export function instanceOfShelf(value: object): value is Shelf {
     if (!('createdWithUserBasedPaths' in value) || value['createdWithUserBasedPaths'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
     if (!('domain' in value) || value['domain'] === undefined) return false;
+    if (!('footerCustomText' in value) || value['footerCustomText'] === undefined) return false;
+    if (!('footerEnabled' in value) || value['footerEnabled'] === undefined) return false;
     if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('noIndex' in value) || value['noIndex'] === undefined) return false;
@@ -139,6 +153,8 @@ export function ShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean): She
         'createdWithUserBasedPaths': json['createdWithUserBasedPaths'],
         'description': json['description'],
         'domain': json['domain'],
+        'footerCustomText': json['footerCustomText'],
+        'footerEnabled': json['footerEnabled'],
         'icon': json['icon'],
         'id': json['id'],
         'noIndex': json['noIndex'],
@@ -166,6 +182,8 @@ export function ShelfToJSONTyped(value?: Omit<Shelf, '$schema'> | null, ignoreDi
         'createdWithUserBasedPaths': value['createdWithUserBasedPaths'],
         'description': value['description'],
         'domain': value['domain'],
+        'footerCustomText': value['footerCustomText'],
+        'footerEnabled': value['footerEnabled'],
         'icon': value['icon'],
         'id': value['id'],
         'noIndex': value['noIndex'],

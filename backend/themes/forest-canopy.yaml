@@ -1,0 +1,8 @@
+name: Forest Canopy
+config: |
+  --shelf-bg: linear-gradient(160deg, #14532d, #166534);
+  --shelf-text: #f0fdf4;
+  --shelf-link-bg: #f0fdf4;
+  --shelf-link-text: #14532d;
+  --shelf-link-radius: 1rem;
+  --shelf-font-family: 'Karla', sans-serif;

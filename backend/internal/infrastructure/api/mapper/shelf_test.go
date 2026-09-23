@@ -9,8 +9,10 @@ import (
 
 func Test_MapShelfBaseToShelfPointer(t *testing.T) {
 	base := model.ShelfBase{
-		Title:   "test-shelf",
-		NoIndex: true,
+		Title:            "test-shelf",
+		NoIndex:          true,
+		FooterEnabled:    true,
+		FooterCustomText: "Made with love",
 	}
 
 	result := MapShelfBaseToShelfPointer(base)
@@ -18,6 +20,8 @@ func Test_MapShelfBaseToShelfPointer(t *testing.T) {
 	require.NotNil(t, result)
 	require.Equal(t, base.Title, result.Title)
 	require.True(t, result.NoIndex)
+	require.True(t, result.FooterEnabled)
+	require.Equal(t, "Made with love", result.FooterCustomText)
 }
 
 func Test_MapShelfToShelfResponse(t *testing.T) {

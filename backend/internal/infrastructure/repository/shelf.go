@@ -53,7 +53,7 @@ type PathCollision struct {
 // the same way. It is a plain fragment rather than a column list so each
 // query can append its own WHERE.
 const shelfSelect = `
-		SELECT s.id, s.title, s.path, s.domain, s.description, s.theme_id, s.icon, s.user_id, u.username, s.created_user_based_paths, s.no_index
+		SELECT s.id, s.title, s.path, s.domain, s.description, s.theme_id, s.icon, s.user_id, u.username, s.created_user_based_paths, s.no_index, s.footer_enabled, s.footer_custom_text
 		FROM shelf s
 		JOIN "user" u ON u.id = s.user_id
 `
@@ -105,6 +105,8 @@ func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 		&username,
 		&shelf.CreatedWithUserBasedPaths,
 		&shelf.NoIndex,
+		&shelf.FooterEnabled,
+		&shelf.FooterCustomText,
 	)
 	if err != nil {
 		return model.Shelf{}, err
@@ -344,8 +346,8 @@ func (r *shelfRepository) ListPathCollisions() ([]PathCollision, error) {
 
 func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO shelf (id, title, path, domain, description, theme_id, icon, user_id, created_user_based_paths, no_index)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO shelf (id, title, path, domain, description, theme_id, icon, user_id, created_user_based_paths, no_index, footer_enabled, footer_custom_text)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return "", err
@@ -370,6 +372,8 @@ func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 		s.UserId,
 		s.CreatedWithUserBasedPaths,
 		s.NoIndex,
+		s.FooterEnabled,
+		s.FooterCustomText,
 	)
 	if err != nil {
 		return "", err
@@ -387,7 +391,9 @@ func (r *shelfRepository) Update(s *model.Shelf) error {
 			description = ?,
 			theme_id = ?,
 			icon = ?,
-			no_index = ?
+			no_index = ?,
+			footer_enabled = ?,
+			footer_custom_text = ?
 		WHERE id = ?
 	`)
 	if err != nil {
@@ -404,6 +410,8 @@ func (r *shelfRepository) Update(s *model.Shelf) error {
 		nullIfEmpty(s.ThemeId),
 		s.Icon,
 		s.NoIndex,
+		s.FooterEnabled,
+		s.FooterCustomText,
 		s.Id,
 	)
 	if err != nil {
