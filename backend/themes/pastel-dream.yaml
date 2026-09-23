@@ -1,0 +1,8 @@
+name: Pastel Dream
+config: |
+  --shelf-bg: linear-gradient(135deg, #e9d5ff, #bbf7d0);
+  --shelf-text: #581c87;
+  --shelf-link-bg: #ffffff;
+  --shelf-link-text: #581c87;
+  --shelf-link-radius: 1.25rem;
+  --shelf-font-family: 'Quicksand', sans-serif;

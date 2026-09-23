@@ -2,10 +2,25 @@
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale, locales, setLocale } = useI18n()
 const { user, ensureUser } = useCurrentUser()
 const authStore = useAuthStore()
 const router = useRouter()
+
+// ULocaleSelect's `locales` prop is typed for @nuxt/ui's own Locale<M> (with
+// `dir`/`messages` for its internal component strings), not @nuxtjs/i18n's
+// app-content locale list this app actually configures - there's no de-CH
+// @nuxt/ui locale pack to wire up here, so this intentionally only supplies
+// code/name and casts past the mismatch. Kept in sync with the same switcher
+// in AppLayout.vue's footer - both change the one global app locale.
+const availableLocales = computed(() => {
+  const mapped = locales.value.map(l => ({
+    code: l.code,
+    name: l.name ?? l.code
+  }))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return mapped as any
+})
 
 const items = computed<NavigationMenuItem[][]>(() => [
   [
@@ -90,6 +105,11 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   ],
   [
     {
+      label: 'Language',
+      slot: 'language',
+      onSelect: (e: Event) => e.preventDefault()
+    },
+    {
       label: 'Dark mode',
       slot: 'color-mode',
       onSelect: (e: Event) => e.preventDefault()
@@ -148,6 +168,27 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
           :items="userMenuItems"
           class="w-full"
         >
+          <template #language>
+            <div
+              class="flex w-full items-center justify-between gap-2"
+              @click.stop
+            >
+              <span class="flex items-center gap-2">
+                <UIcon
+                  name="i-lucide-languages"
+                  class="size-4 shrink-0"
+                />
+                <span>Language</span>
+              </span>
+              <ULocaleSelect
+                :model-value="locale"
+                :locales="availableLocales"
+                class="w-32"
+                @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH')"
+              />
+            </div>
+          </template>
+
           <template #color-mode>
             <div
               class="flex w-full items-center justify-between gap-2"

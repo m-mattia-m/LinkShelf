@@ -10,8 +10,11 @@ Name | Type
 `createdWithUserBasedPaths` | boolean
 `description` | string
 `domain` | string
+`footerCustomText` | string
+`footerEnabled` | boolean
 `icon` | string
 `id` | string
+`noIndex` | boolean
 `path` | string
 `theme` | { [key: string]: string; }
 `themeId` | string
@@ -31,8 +34,11 @@ const example = {
   "createdWithUserBasedPaths": null,
   "description": null,
   "domain": null,
+  "footerCustomText": null,
+  "footerEnabled": null,
   "icon": null,
   "id": null,
+  "noIndex": null,
   "path": null,
   "theme": null,
   "themeId": null,

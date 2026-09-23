@@ -45,7 +45,13 @@ themes:
   # that theme on the next restart; leave empty to skip instance themes
   # entirely. Mount a host directory here the same way compose.dev.yaml
   # mounts config.default.yaml.
-  directory: ""
+  #
+  # Defaults to the "modern chic" theme pack this repo ships in
+  # backend/themes/ (copied to /app/themes in the container image - see
+  # .container/Containerfile), so every fresh install gets a handful of
+  # ready-to-use instance themes out of the box. Point this at your own
+  # directory instead (or set it back to "") to replace or turn them off.
+  directory: "themes"
 assets:
   # Directory of static files (e.g. theme background images) an instance
   # admin wants to make available to themes, scanned once at startup and

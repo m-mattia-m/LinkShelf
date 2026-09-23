@@ -1,7 +1,7 @@
 import { mountSuspended, renderSuspended } from '@nuxt/test-utils/runtime'
 import { fireEvent, screen, waitFor, within } from '@testing-library/vue'
 import { HttpResponse, http } from 'msw'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import draggable from 'vuedraggable'
 import { LinkOrderResponseBodyToJSON, LinkToJSON, SectionOrderResponseBodyToJSON, SectionToJSON, ShelfToJSON } from '~~/api'
 import type { SettingPageBody } from '~~/api'
@@ -35,6 +35,12 @@ beforeEach(() => {
   useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: false })
   mockShelfDetail()
 })
+
+// "Open" lives inside the "Share" dropdown rather than as a standalone link.
+async function openShareMenuItem(name: string) {
+  await fireEvent.click(screen.getByRole('button', { name: 'Share' }))
+  return screen.findByRole('menuitem', { name })
+}
 
 // Nuxt UI's alert has no ARIA role, so "no alert" is checked by its titles.
 function expectNoUrlAlert() {
@@ -74,7 +80,7 @@ describe('shelf detail page', () => {
         expect(screen.getByText('My Shelf')).toBeInTheDocument()
       })
       expectNoUrlAlert()
-      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `${ORIGIN}/my-shelf`)
+      expect(await openShareMenuItem('Open')).toHaveAttribute('href', `${ORIGIN}/my-shelf`)
     })
 
     it('puts the owner\'s username in the URL and explains the change for a shelf created before user-based paths were on', async () => {
@@ -88,7 +94,7 @@ describe('shelf detail page', () => {
       })
       expect(screen.getByText(`${ORIGIN}/alice/my-shelf`)).toBeInTheDocument()
       expect(screen.getByText(/Links without the username, like \/my-shelf, no longer work/)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `${ORIGIN}/alice/my-shelf`)
+      expect(await openShareMenuItem('Open')).toHaveAttribute('href', `${ORIGIN}/alice/my-shelf`)
     })
 
     it('shows no alert for a shelf created while user-based paths were already on', async () => {
@@ -102,7 +108,7 @@ describe('shelf detail page', () => {
       })
       expectNoUrlAlert()
       // The URL itself still has the username in it.
-      expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `${ORIGIN}/alice/my-shelf`)
+      expect(await openShareMenuItem('Open')).toHaveAttribute('href', `${ORIGIN}/alice/my-shelf`)
     })
 
     it('warns that a reserved path cannot be reached', async () => {
@@ -130,7 +136,7 @@ describe('shelf detail page', () => {
         expect(screen.getByText('https://profile.example.com:9443')).toBeInTheDocument()
       })
       expectNoUrlAlert()
-      const open = screen.getByRole('link', { name: 'Open' })
+      const open = await openShareMenuItem('Open')
       expect(open).toHaveAttribute('href', 'https://profile.example.com:9443')
       expect(open).toHaveAttribute('target', '_blank')
     })
@@ -143,6 +149,37 @@ describe('shelf detail page', () => {
       const alert = await screen.findByText('This path can\'t be reached')
       const title = screen.getByRole('heading', { name: 'My Shelf' })
       expect(alert.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+  })
+
+  describe('the Share menu', () => {
+    it('copies the public URL to the clipboard', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } })
+
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+      await waitFor(() => {
+        expect(screen.getByText('My Shelf')).toBeInTheDocument()
+      })
+
+      const copyItem = await openShareMenuItem('Copy URL')
+      await fireEvent.click(copyItem)
+
+      expect(writeText).toHaveBeenCalledWith(`${ORIGIN}/my-shelf`)
+
+      vi.unstubAllGlobals()
+    })
+
+    it('opens the QR code modal', async () => {
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+      await waitFor(() => {
+        expect(screen.getByText('My Shelf')).toBeInTheDocument()
+      })
+
+      const qrItem = await openShareMenuItem('QR code')
+      await fireEvent.click(qrItem)
+
+      expect(await screen.findByRole('button', { name: 'Download PNG' })).toBeInTheDocument()
     })
   })
 

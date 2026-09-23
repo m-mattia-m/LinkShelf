@@ -28,6 +28,7 @@
     "better-sqlite3": "^13.0.3",
     "nuxt": "^4.5.2",
     "pinia": "^4.0.3",
+    "qr-code-styling": "^1.9.2",
     "valibot": "^1.4.2",
     "vuedraggable": "^4.1.0"
   },

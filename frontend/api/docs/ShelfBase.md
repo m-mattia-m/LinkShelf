@@ -9,7 +9,10 @@ Name | Type
 `$schema` | string
 `description` | string
 `domain` | string
+`footerCustomText` | string
+`footerEnabled` | boolean
 `icon` | string
+`noIndex` | boolean
 `path` | string
 `themeId` | string
 `title` | string
@@ -24,7 +27,10 @@ const example = {
   "$schema": null,
   "description": null,
   "domain": null,
+  "footerCustomText": null,
+  "footerEnabled": null,
   "icon": null,
+  "noIndex": null,
   "path": null,
   "themeId": null,
   "title": null,

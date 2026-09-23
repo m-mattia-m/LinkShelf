@@ -36,6 +36,18 @@ export interface PublicShelf {
      * @type {string}
      * @memberof PublicShelf
      */
+    footerCustomText: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PublicShelf
+     */
+    footerEnabled: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof PublicShelf
+     */
     icon: string;
     /**
      * 
@@ -43,6 +55,12 @@ export interface PublicShelf {
      * @memberof PublicShelf
      */
     id: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PublicShelf
+     */
+    noIndex: boolean;
     /**
      * 
      * @type {string}
@@ -68,8 +86,11 @@ export interface PublicShelf {
  */
 export function instanceOfPublicShelf(value: object): value is PublicShelf {
     if (!('description' in value) || value['description'] === undefined) return false;
+    if (!('footerCustomText' in value) || value['footerCustomText'] === undefined) return false;
+    if (!('footerEnabled' in value) || value['footerEnabled'] === undefined) return false;
     if (!('icon' in value) || value['icon'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
+    if (!('noIndex' in value) || value['noIndex'] === undefined) return false;
     if (!('path' in value) || value['path'] === undefined) return false;
     if (!('theme' in value) || value['theme'] === undefined) return false;
     if (!('title' in value) || value['title'] === undefined) return false;
@@ -88,8 +109,11 @@ export function PublicShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
         'description': json['description'],
+        'footerCustomText': json['footerCustomText'],
+        'footerEnabled': json['footerEnabled'],
         'icon': json['icon'],
         'id': json['id'],
+        'noIndex': json['noIndex'],
         'path': json['path'],
         'theme': json['theme'],
         'title': json['title'],
@@ -108,8 +132,11 @@ export function PublicShelfToJSONTyped(value?: Omit<PublicShelf, '$schema'> | nu
     return {
         
         'description': value['description'],
+        'footerCustomText': value['footerCustomText'],
+        'footerEnabled': value['footerEnabled'],
         'icon': value['icon'],
         'id': value['id'],
+        'noIndex': value['noIndex'],
         'path': value['path'],
         'theme': value['theme'],
         'title': value['title'],

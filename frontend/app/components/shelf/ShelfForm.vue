@@ -78,7 +78,14 @@ const form = reactive({
   domain: props.modelValue?.domain ?? '',
   path: props.modelValue?.path ?? '',
   icon: props.modelValue?.icon ?? '',
-  themeId: props.modelValue?.themeId ?? ''
+  themeId: props.modelValue?.themeId ?? '',
+  noIndex: props.modelValue?.noIndex ?? false,
+  // A shelf being created has never chosen either yet, so it gets the
+  // defaults that reproduce today's only behavior: footer shown, default
+  // text. An existing shelf always reflects what it actually has, even if
+  // that happens to be the same values.
+  footerEnabled: props.modelValue?.footerEnabled ?? true,
+  footerCustomText: props.modelValue?.footerCustomText ?? ''
 })
 
 // Each of path and domain is only checked while its tab is the one in use - a
@@ -119,7 +126,8 @@ const schema = v.object({
       'This path is used by a page of this app. Please choose another one'
     )
   ),
-  icon: v.string()
+  icon: v.string(),
+  footerCustomText: v.pipe(v.string(), v.maxLength(500, 'Must be at most 500 characters'))
 })
 
 // The URL the shelf will get: /<username>/<path> with user-based paths, else
@@ -182,7 +190,13 @@ watch(
       // A missing theme's id no longer matches any picker option, which
       // would otherwise show the raw stale id as the selection - the alert
       // above already says it's gone, so just clear it instead.
-      themeId: newShelf.themeMissing ? '' : newShelf.themeId
+      themeId: newShelf.themeMissing ? '' : newShelf.themeId,
+      // ?? default guards a shelf object that predates these fields (e.g. a
+      // stale cached response) the same way the form's own initial value
+      // above does, rather than clobbering it with undefined.
+      noIndex: newShelf.noIndex ?? false,
+      footerEnabled: newShelf.footerEnabled ?? true,
+      footerCustomText: newShelf.footerCustomText ?? ''
     })
     mode.value = modeOf(newShelf)
   },
@@ -240,6 +254,37 @@ watch(
       <IconPicker
         v-model="form.icon"
         placeholder="i-lucide-book-open"
+      />
+    </UFormField>
+
+    <UCheckbox
+      v-model="form.noIndex"
+      name="noIndex"
+      class="pt-4"
+      label="Hide from search engines"
+      description="When on, this shelf's public page asks Google and other search engines not to index it. The rest of this LinkShelf instance is unaffected."
+    />
+
+    <UCheckbox
+      v-model="form.footerEnabled"
+      name="footerEnabled"
+      class="pt-4"
+      label="Show footer"
+      description="Turn off to hide the footer on this shelf's public page entirely, including the default 'Powered by LinkShelf' credit."
+    />
+
+    <UFormField
+      v-if="form.footerEnabled"
+      label="Custom footer text"
+      name="footerCustomText"
+      class="pt-4"
+      help="Replaces the default 'Powered by LinkShelf' credit. Leave empty to keep it. Supports **bold**, *italic* and [links](https://example.com)."
+    >
+      <UTextarea
+        v-model="form.footerCustomText"
+        class="w-full"
+        :rows="2"
+        placeholder="Powered by LinkShelf"
       />
     </UFormField>
 

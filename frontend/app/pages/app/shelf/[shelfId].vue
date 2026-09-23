@@ -6,6 +6,7 @@ import { useShelfStore } from '~/stores/shelf'
 import { useSectionStore } from '~/stores/section'
 import { useLinkStore } from '~/stores/link'
 import ShelfFormDialog from '~/components/shelf/ShelfFormDialog.vue'
+import ShelfQrCodeModal from '~/components/shelf/ShelfQrCodeModal.vue'
 import SectionCard from '~/components/shelf/ShelfSectionCard.vue'
 
 definePageMeta({
@@ -30,6 +31,25 @@ const publicUrl = computed(() => shelf.value
   ? publicShelfUrl(shelf.value, { userBasedPaths: websiteSettings.value?.userBasedPaths ?? false, origin })
   : '')
 const notFound = ref(false)
+
+const toast = useToast()
+const qrOpen = ref(false)
+
+async function copyPublicUrl() {
+  if (!publicUrl.value) return
+  try {
+    await navigator.clipboard.writeText(publicUrl.value)
+    toast.add({ title: t('app.shelf.detail.copiedToast'), color: 'success' })
+  } catch {
+    toast.add({ title: t('app.shelf.detail.copyFailedToast'), color: 'error' })
+  }
+}
+
+const shareItems = computed(() => [
+  [{ label: t('app.shelf.detail.open'), icon: 'i-lucide-external-link', to: publicUrl.value || undefined, target: '_blank', disabled: !publicUrl.value }],
+  [{ label: t('app.shelf.detail.copyUrl'), icon: 'i-lucide-copy', disabled: !publicUrl.value, onSelect: copyPublicUrl }],
+  [{ label: t('app.shelf.detail.qrCode'), icon: 'i-lucide-qr-code', disabled: !publicUrl.value, onSelect: () => { qrOpen.value = true } }]
+])
 
 // Local, unsaved drag order - dragging a section or link only ever mutates
 // these; nothing is persisted until "Save order" is clicked. Re-derived from
@@ -195,15 +215,14 @@ async function createSection() {
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <UButton
-            :label="t('app.shelf.detail.open')"
-            icon="i-lucide-external-link"
-            color="neutral"
-            variant="outline"
-            :href="publicUrl || '/'"
-            target="_blank"
-            rel="noopener"
-          />
+          <UDropdownMenu :items="shareItems">
+            <UButton
+              :label="t('app.shelf.detail.share')"
+              icon="i-lucide-share-2"
+              color="neutral"
+              variant="outline"
+            />
+          </UDropdownMenu>
           <UButton
             :label="t('app.shelf.detail.edit')"
             icon="i-lucide-pencil"
@@ -280,6 +299,12 @@ async function createSection() {
         mode="edit"
         :shelf="shelf"
         @saved="onShelfSaved"
+      />
+
+      <ShelfQrCodeModal
+        v-model:open="qrOpen"
+        :url="publicUrl"
+        :title="shelf.title"
       />
 
       <ConfirmDialog

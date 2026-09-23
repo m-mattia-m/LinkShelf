@@ -1,0 +1,8 @@
+name: Nordic Sky
+config: |
+  --shelf-bg: #90e0ef;
+  --shelf-text: #134074;
+  --shelf-link-bg: #134074;
+  --shelf-link-text: #ffffff;
+  --shelf-link-radius: 1rem;
+  --shelf-font-family: 'Inter', sans-serif;

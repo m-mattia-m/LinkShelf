@@ -40,6 +40,7 @@ const shelfHost = useState<string | null | undefined>('shelf-host')
       :description="$t('home.welcome.description')"
       orientation="horizontal"
       :links="links"
+      :ui="{ root: 'rounded-none' }"
     >
       <img
         src="/presentation.webp"

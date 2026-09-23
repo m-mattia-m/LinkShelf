@@ -1,0 +1,8 @@
+name: Neon Nights
+config: |
+  --shelf-bg: linear-gradient(160deg, #0a0a0a, #1a0b2e);
+  --shelf-text: #f5f5f5;
+  --shelf-link-bg: #22d3ee;
+  --shelf-link-text: #0a0a0a;
+  --shelf-link-radius: 999px;
+  --shelf-font-family: 'Space Grotesk', sans-serif;
