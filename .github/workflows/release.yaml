@@ -232,6 +232,11 @@ jobs:
     needs: [release, build-and-push]
     runs-on: ubuntu-latest
 
+    # pages.yaml pushes the landing page to the same branch.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+
     permissions:
       contents: write
 

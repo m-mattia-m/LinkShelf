@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LinkShelf</title>
+  <meta name="description" content="LinkShelf, an open-source alternative to Linktree: installation with Docker or Helm, and documentation.">
+  <link rel="icon" href="https://raw.githubusercontent.com/m-mattia-m/LinkShelf/main/branding/LinkShelf.png">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1f2328;
+      --muted: #59636e;
+      --border: #d1d9e0;
+      --code-bg: #f6f8fa;
+      --link: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #9198a1;
+        --border: #3d444d;
+        --code-bg: #151b23;
+        --link: #4493f8;
+      }
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; }
+    h3 { margin: 24px 0 4px; font-size: 1.05rem; }
+    h2 { margin: 32px 0 8px; font-size: 1.25rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    p { margin: 8px 0; }
+    a { color: var(--link); }
+    .muted { color: var(--muted); }
+    pre {
+      margin: 12px 0;
+      padding: 12px 16px;
+      overflow-x: auto;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    code { padding: 1px 5px; background: var(--code-bg); border-radius: 4px; font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre code { padding: 0; background: none; }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LinkShelf</h1>
+    <p class="muted">An open-source alternative to Linktree.
+      <a href="https://github.com/m-mattia-m/LinkShelf">Source on GitHub</a></p>
+
+    <h2>Installation</h2>
+    <p>LinkShelf ships as one image with frontend and backend and needs a Postgres or MySQL database.
+      Pick the variant that fits your setup, the full guides are in the
+      <a href="https://github.com/m-mattia-m/LinkShelf/tree/main/frontend/content/docs/self-hosting">documentation on GitHub</a>.</p>
+
+    <h3>Docker</h3>
+    <p>Run the image <code>ghcr.io/m-mattia-m/linkshelf:latest</code> with Docker Compose. The compose file and
+      all settings are described in the
+      <a href="https://github.com/m-mattia-m/LinkShelf/blob/main/frontend/content/docs/self-hosting/docker.md">Docker guide</a>.</p>
+
+    <h3>Kubernetes (Helm chart)</h3>
+    <p>This site is the Helm chart repository:</p>
+    <pre>helm repo add linkshelf https://m-mattia-m.github.io/LinkShelf
+helm repo update
+helm install linkshelf linkshelf/linkshelf</pre>
+    <p>The chart needs existing Kubernetes Secrets and a database. See the
+      <a href="https://github.com/m-mattia-m/LinkShelf/blob/main/frontend/content/docs/self-hosting/kubernetes.md">Kubernetes guide</a>
+      and the <a href="https://github.com/m-mattia-m/LinkShelf/tree/main/charts/linkshelf">chart README</a>
+      for the required values. The raw repository index is <a href="index.yaml">index.yaml</a>.</p>
+
+    <h2>Documentation</h2>
+    <ul>
+      <li><a href="https://github.com/m-mattia-m/LinkShelf/blob/main/frontend/content/docs/self-hosting/getting-started.md">Self-hosting</a></li>
+      <li><a href="https://github.com/m-mattia-m/LinkShelf/blob/main/frontend/content/docs/self-hosting/configuration.md">Configuration</a></li>
+      <li><a href="https://github.com/m-mattia-m/LinkShelf/blob/main/frontend/content/docs/self-hosting/custom-domains.md">Custom domains</a></li>
+      <li><a href="https://github.com/m-mattia-m/LinkShelf/blob/main/frontend/content/docs/usage/getting-started.md">Usage</a></li>
+      <li><a href="https://github.com/m-mattia-m/LinkShelf/releases">Releases</a></li>
+    </ul>
+  </main>
+</body>
+</html>
