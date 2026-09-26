@@ -29,9 +29,12 @@ jobs:
       # highest bump in the group.
       - name: Enable auto-merge for patch/minor updates
         if: >-
+          !startsWith(github.head_ref, 'dependabot/helm/') &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor') &&
-          !startsWith(github.head_ref, 'dependabot/helm/')
+          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+          (steps.metadata.outputs.package-ecosystem == 'docker' &&
+          steps.metadata.outputs.update-type == '' &&
+          contains(github.event.pull_request.title, '` to `')))
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
