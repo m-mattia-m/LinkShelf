@@ -1,17 +1,78 @@
-name: Release – Test, Coverage & Publish
+name: Release – Plan, Test, Version & Publish
 
+# The version is derived by semantic-release from the Conventional Commits on
+# main (see .releaserc.json), never picked by hand. Triggers:
+#   - push to main from anyone but Dependabot: releases right away and sweeps
+#     up any dependency updates that are still waiting
+#   - weekly cron: releases whatever Dependabot merged since the last release
+#   - manual run (workflow_dispatch)
+# Dependabot's own merges never trigger a run, so a week of dependency updates
+# ends up in one release instead of one release per PR.
 on:
-  release:
-    types: [created]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 2'
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: linkshelf
-  IMAGE_TAG: ${{ github.event.release.tag_name }}
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
+# Runs must not overlap (two releases would race for the same next version),
+# and a queued run must not be cancelled: it still has to pick up its commits.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  # Dry run: is there anything releasable since the last tag? Saves the test
+  # suite and image build for pushes (docs, chore, ...) that produce no release.
+  plan:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'push' || github.event.head_commit.author.name != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+
+    # write, not read: semantic-release verifies push access even in a dry run.
+    permissions:
+      contents: write
+
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+
+      - name: Determine next version (dry run)
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx --yes semantic-release@24 --dry-run 2>&1 | tee plan.log
+          version=$(sed -n 's/.*The next release version is \(.*\)$/\1/p' plan.log | tail -1)
+          if [ -n "$version" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "Next release: v$version" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "No releasable changes since the last release." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   test-and-coverage:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
     runs-on: ubuntu-latest
 
     permissions:
@@ -75,21 +136,60 @@ jobs:
           threshold-total: 0
           debug: true
 
-          # On a release, github.ref_name is the tag, not a branch.
-          git-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: ${{ github.event.repository.default_branch }}
+  # Creates the tag and the GitHub Release (with generated notes). Everything
+  # after this job builds from that tag. With GITHUB_TOKEN the release event
+  # doesn't trigger other workflows, which is why build and chart publishing
+  # live in this same workflow and receive the tag as a job output.
+  release:
+    needs: [plan, test-and-coverage]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+
+      - name: Create release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx --yes semantic-release@24 2>&1 | tee release.log
+          tag=$(sed -n 's/.*Created tag \(v[^ ]*\).*/\1/p' release.log | tail -1)
+          if [ -z "$tag" ]; then
+            echo "semantic-release did not create a tag"; exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Released $tag" >> "$GITHUB_STEP_SUMMARY"
 
   build-and-push:
-    needs: test-and-coverage
+    needs: release
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       packages: write
 
+    env:
+      IMAGE_TAG: ${{ needs.release.outputs.tag }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.tag }}
 
       - name: Set up QEMU for cross-arch emulation
         run: |
@@ -129,7 +229,7 @@ jobs:
 
   publish-chart:
     # The chart defaults to the image built above, so publish it afterwards.
-    needs: build-and-push
+    needs: [release, build-and-push]
     runs-on: ubuntu-latest
 
     permissions:
@@ -137,11 +237,13 @@ jobs:
 
     env:
       CR_VERSION: 1.8.1
+      IMAGE_TAG: ${{ needs.release.outputs.tag }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ needs.release.outputs.tag }}
           fetch-depth: 0
 
       - name: Configure Git
@@ -155,7 +257,7 @@ jobs:
             git switch --orphan gh-pages
             git commit --allow-empty -m "chore: initialize gh-pages"
             git push origin gh-pages
-            git switch --detach "$GITHUB_SHA"
+            git switch --detach "$IMAGE_TAG"
           fi
 
       - name: Stamp chart version

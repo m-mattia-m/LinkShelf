@@ -16,9 +16,9 @@ documentation, your help is appreciated. Please follow the guidelines below to e
    ```
 4. **Make Your Changes**: Implement your changes in the codebase. Ensure your code follows the project's coding standards.
 5. **Test Your Changes**: Run existing tests and add new tests if necessary to verify your changes work as expected.
-6. **Commit Your Changes**: Commit your changes with a descriptive commit message:
+6. **Commit Your Changes**: Commit your changes with a descriptive [Conventional Commit](https://www.conventionalcommits.org) message. Releases are generated from these messages (see [Releases](#releases)):
    ```bash
-   git commit -m "Add feature X"
+   git commit -m "feat: add feature X"
    ```
 7. **Push to Your Fork**: Push your changes to your forked repository:
    ```bash
@@ -26,6 +26,19 @@ documentation, your help is appreciated. Please follow the guidelines below to e
    ```
 8. **Create a Pull Request**: Go to the original repository and create a pull request from your forked repository.
 
+
+## Releases
+
+Versions and release notes are generated automatically by [semantic-release](https://semantic-release.org) from the commit messages on `main`. The repository squash-merges, so **the pull request title is the commit message** and must be a Conventional Commit (checked by the `pr-title` workflow):
+
+| PR title | Release |
+| --- | --- |
+| `fix: ...`, `perf: ...`, `fix(deps): ...` | patch (`0.1.0` → `0.1.1`) |
+| `feat: ...` | minor (`0.1.1` → `0.2.0`) |
+| `feat!: ...` or a `BREAKING CHANGE:` footer | minor while the version is below `1.0.0`, major afterwards |
+| `docs:`, `chore:`, `ci:`, `test:`, `refactor:`, `style:`, `build:` | no release |
+
+A release is cut when a non-Dependabot commit lands on `main`, every Tuesday at 06:00 UTC, or on demand via the *Release* workflow (*Run workflow*). Dependabot's weekly, grouped dependency updates are merged automatically once CI is green and are collected into the next release. There is no need to create tags or GitHub releases by hand.
 
 ## Development Setup
 

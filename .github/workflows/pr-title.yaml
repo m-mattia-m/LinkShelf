@@ -1,0 +1,23 @@
+name: PR title
+
+# The repo squash-merges with the PR title as the commit message, and
+# semantic-release derives the next version from those messages
+# (feat -> minor, fix -> patch, "!"/BREAKING CHANGE -> breaking). A title that
+# isn't a Conventional Commit would silently produce no release.
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+
+    steps:
+      # pull_request_target only reads the PR metadata, nothing from the PR is
+      # checked out or executed.
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
