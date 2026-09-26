@@ -176,6 +176,44 @@ jobs:
           commit_message: update frontend badge .badges/main/coverage-frontend.svg
           file_pattern: .badges/main/coverage-frontend.svg
 
+  # Builds the release image for both architectures without pushing it, so a
+  # broken base-image bump (Dependabot's docker ecosystem) or a Containerfile
+  # change can't auto-merge unnoticed. Mirrors build-and-push in release.yaml.
+  container:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up QEMU for cross-arch emulation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+      - name: Install buildah
+        run: |
+          sudo apt-get install -y buildah
+          buildah version
+
+      - name: Build multi-arch OCI image (not pushed)
+        run: |
+          buildah manifest create "$IMAGE_NAME"
+
+          for arch in amd64 arm64; do
+            buildah build \
+              --arch "$arch" \
+              --os linux \
+              --manifest "$IMAGE_NAME" \
+              --file .container/Containerfile \
+              --build-arg "IMAGE_NAME=$IMAGE_NAME" \
+              --build-arg "IMAGE_TAG=ci-${GITHUB_SHA::7}" \
+              .
+          done
+
   chart:
     runs-on: ubuntu-latest
 
