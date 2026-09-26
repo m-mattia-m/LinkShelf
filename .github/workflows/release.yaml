@@ -294,4 +294,8 @@ jobs:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cr upload --owner "$OWNER" --git-repo "${GITHUB_REPOSITORY#*/}" --make-release-latest=false --skip-existing
+          # cr index writes a temp file next to its index path but does not
+          # create that directory itself (chart-releaser-action does the same
+          # mkdir), and the freshly initialised gh-pages branch has no index.
+          mkdir -p .cr-index
           cr index --owner "$OWNER" --git-repo "${GITHUB_REPOSITORY#*/}" --push
