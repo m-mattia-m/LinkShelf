@@ -1,0 +1,51 @@
+name: Pages – Chart repository landing page
+
+# The gh-pages branch is the Helm chart repository (index.yaml is written there
+# by release.yaml). This publishes the static landing page for
+# https://m-mattia-m.github.io/LinkShelf/ from .github/pages/ without touching
+# index.yaml or the chart packages.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/pages/**'
+      - '.github/workflows/pages.yaml'
+  workflow_dispatch:
+
+# release.yaml's publish-chart job pushes to the same branch.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy landing page
+        run: cp .github/pages/index.html gh-pages/index.html
+
+      - name: Commit and push
+        working-directory: gh-pages
+        run: |
+          if git status --porcelain | grep -q .; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "chore: update landing page"
+            git push origin gh-pages
+          else
+            echo "landing page is already up to date"
+          fi
