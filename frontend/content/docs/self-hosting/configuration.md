@@ -58,7 +58,10 @@ themes:
   # that theme on the next restart; leave empty to skip instance themes
   # entirely. Mount a host directory here the same way compose.dev.yaml
   # mounts config.default.yaml.
-  directory: ""
+  #
+  # Defaults to the 13 themes the image ships in /app/themes. Point this at
+  # your own directory to replace them, or set it to "" to turn them off.
+  directory: "themes"
 assets:
   # Directory of static files (e.g. theme background images) an instance
   # admin wants to make available to themes, scanned once at startup and
@@ -181,3 +184,30 @@ the setting on and no `smtp.host` or `smtp.from`. On an instance without email, 
   minute.
 - The bootstrap admin's password is set from `authentication.bootstrapAdmin.password` on every start, so it overwrites a
   reset one. Change it in the config instead.
+
+## Themes and assets
+
+Instance themes are the ones every user can pick. They come from YAML files, one theme per file:
+
+```yaml
+name: Midnight Glass
+config: |
+  --shelf-bg: linear-gradient(160deg, #0f172a, #1e293b);
+  --shelf-text: #f1f5f9;
+  --shelf-link-bg: #1e293b;
+  --shelf-link-text: #f8fafc;
+  --shelf-link-radius: 1rem;
+  --shelf-font-family: 'Inter', sans-serif;
+```
+
+Properties are listed under [Themes](/docs/usage/themes#create-one).
+
+1. Mount a directory with your files, for example at `/app/my-themes`
+2. Set `themes.directory` (`APP_THEMES_DIRECTORY`) to it
+3. Restart. Files are read once at startup, and a removed file removes its theme.
+
+Background images work the same way:
+
+1. Mount a directory with the images, for example at `/app/my-images`
+2. Set `assets.directory` (`APP_ASSETS_DIRECTORY`) to it
+3. Use `/images/<file>` as `--shelf-bg-image`. The prefix is `assets.basePath`.

@@ -5,12 +5,18 @@ order: 1
 navigation: true
 ---
 
-Welcome to the documentation section! Here you'll find guides, tutorials, and reference materials to help you get the
-most out of our platform. Whether you're a beginner or an experienced user, our comprehensive resources are designed to
-assist you in navigating and utilizing all the features available. Explore the sections below to find the information
-you need.
+## Start here
 
-## Getting Started
+- [Usage](/docs/usage/getting-started): build and share a shelf
+- [Self-hosting](/docs/self-hosting/getting-started): run your own instance
+- [Cloud](/docs/cloud/getting-started): not available yet
 
-There are two ways you can start, either use your [cloud](/docs/cloud/getting-started) solution or you can [self-hosted](/docs/self-hosting/getting-started)
-version.
+## Guides
+
+- [Shelves](/docs/usage/shelves): paths, domains, sections, links, footer
+- [Themes](/docs/usage/themes): create, import, export
+- [Admin](/docs/usage/admin): users, pages, email
+- [Docker](/docs/self-hosting/docker)
+- [Kubernetes](/docs/self-hosting/kubernetes)
+- [Configuration](/docs/self-hosting/configuration)
+- [Custom domains](/docs/self-hosting/custom-domains)
