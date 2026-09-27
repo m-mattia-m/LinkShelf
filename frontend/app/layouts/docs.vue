@@ -21,7 +21,7 @@ const items = [
     <div class="block lg:hidden">
       <UAccordion
         :items="items"
-        class="border-b border-gray-200 px-6"
+        class="border-b border-default px-6"
       >
         <template #menu>
           <DocsSidebar />
@@ -30,7 +30,7 @@ const items = [
     </div>
 
     <div class="min-h-screen flex">
-      <div class="hidden lg:block w-56 min-w-56 max-w-56 border-r border-gray-200 bg-white">
+      <div class="hidden lg:block w-56 min-w-56 max-w-56 border-r border-default bg-default">
         <DocsSidebar />
       </div>
 
@@ -39,7 +39,7 @@ const items = [
       <div
         v-if="page?.body?.toc?.links?.length"
         id="toc"
-        class="hidden lg:block w-56 min-w-56 max-w-56 border-l border-gray-200 bg-white -pl-4"
+        class="hidden lg:block w-56 min-w-56 max-w-56 border-l border-default bg-default -pl-4"
       >
         <UContentToc
           :links="page.body.toc.links"

@@ -66,6 +66,7 @@ export default defineNuxtConfig({
       { code: 'en', name: 'English', file: 'en.json' },
       { code: 'de', name: 'Deutsch', file: 'de.json' },
       { code: 'de-CH', name: 'Schwiizerdütsch', file: 'de-CH.json' }
-    ]
+    ],
+    detectBrowserLanguage: false
   }
 })
