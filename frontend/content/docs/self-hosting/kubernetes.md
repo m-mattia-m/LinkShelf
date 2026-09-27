@@ -17,17 +17,55 @@ kubectl create secret generic linkshelf-db \
   --from-literal=username=linkshelf \
   --from-literal=password=change-me \
   --from-literal=database=linkshelf
+```
 
-helm install linkshelf linkshelf/linkshelf \
-  --set secrets.existingSecret.name=linkshelf-secrets \
-  --set database.existingSecret.name=linkshelf-db
+There is no dedicated "secrets" section in the chart's values - a secret is just an `env` entry that uses `valueFrom`
+instead of `value`, plain Kubernetes syntax:
+
+```yaml
+# values.yaml
+env:
+  - name: AUTHENTICATION_JWTSECRET
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: jwt-secret
+  - name: DATABASE_HOST
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: host
+  - name: DATABASE_PORT
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: port
+  - name: DATABASE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: password
+  - name: DATABASE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: database
+```
+
+```bash
+helm install linkshelf linkshelf/linkshelf -f values.yaml
 ```
 
 Then open it with `kubectl port-forward svc/linkshelf 3000:3000 8085:8085`, or enable the ingress. The frontend and the
 backend need their own host, because the browser talks to the backend directly.
 
-Email verification is on by default. Configure SMTP or turn it off with
-`--set env.APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED=false`, otherwise new accounts can't log in.
+Email verification is on by default. Configure SMTP, or turn it off by adding
+`{name: AUTHENTICATION_EMAILVERIFICATION_ENABLED, value: "false"}` to `env`, otherwise new accounts can't log in.
 
 The chart can also deploy a Postgres for testing, and it works on OpenShift with your own database. Ingress, SMTP,
 secrets and everything else are described in the

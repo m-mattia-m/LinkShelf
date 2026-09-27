@@ -1,5 +1,5 @@
 {{- include "linkshelf.validate" . }}
-{{- $secretEnvNames := include "linkshelf.secretEnvNames" . | fromYaml }}
+{{- $env := include "linkshelf.env" . | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,72 +43,9 @@ spec:
             - name: backend
               containerPort: 8085
           env:
-            {{- range $name, $value := (include "linkshelf.env" . | fromYaml) }}
+            {{- range $name := (keys $env | sortAlpha) }}
             - name: {{ $name }}
-              value: {{ $value | quote }}
-            {{- end }}
-            {{- range $name, $envName := $secretEnvNames }}
-            {{- with include "linkshelf.secretKey" (dict "root" $ "name" $name) }}
-            - name: {{ $envName }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.secrets.existingSecret.name }}
-                  key: {{ . }}
-            {{- end }}
-            {{- end }}
-            {{- if .Values.postgresql.enabled }}
-            {{- $user := .Values.postgresql.userDatabase }}
-            {{- $dbSecret := $user.existingSecret }}
-            - name: APP_DATABASE_HOST
-              value: {{ include "linkshelf.postgresql.fullname" . | quote }}
-            - name: APP_DATABASE_PORT
-              value: {{ .Values.postgresql.service.port | default 5432 | quote }}
-            - name: APP_DATABASE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ default "USERDB_USER" ($user.user).secretKey }}
-            - name: APP_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ default "USERDB_PASSWORD" ($user.password).secretKey }}
-            - name: APP_DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ default "POSTGRES_DB" ($user.name).secretKey }}
-            {{- else }}
-            {{- $dbSecret := .Values.database.existingSecret.name }}
-            {{- $keys := .Values.database.existingSecret.keys }}
-            - name: APP_DATABASE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ $keys.host }}
-            - name: APP_DATABASE_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ $keys.port }}
-            - name: APP_DATABASE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ $keys.username }}
-            - name: APP_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ $keys.password }}
-            - name: APP_DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $dbSecret }}
-                  key: {{ $keys.database }}
-            {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
+              {{- toYaml (get $env $name) | nindent 14 }}
             {{- end }}
           {{- with .Values.extraEnvFrom }}
           envFrom:

@@ -63,7 +63,7 @@ authentication:
   type: LOCAL # LOCAL # OIDC
   # jwtSecret signs the access tokens this backend issues itself, no matter
   # which auth type is active below. Override this in production via the
-  # APP_AUTHENTICATION_JWTSECRET environment variable - never ship the
+  # AUTHENTICATION_JWTSECRET environment variable - never ship the
   # default value.
   jwtSecret: "change-me-to-a-long-random-value-in-production"
   accessTokenExpiryMinutes: 5

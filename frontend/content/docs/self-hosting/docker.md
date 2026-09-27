@@ -14,16 +14,16 @@ services:
       - "3000:3000" # frontend
       - "8085:8085" # backend
     environment:
-      APP_DATABASE_ENGINE: POSTGRES
-      APP_DATABASE_HOST: postgres
-      APP_DATABASE_PORT: 5432
-      APP_DATABASE_PASSWORD: linkshelf # change
-      APP_AUTHENTICATION_JWTSECRET: change-me-to-a-long-random-value
-      APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
-      APP_AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD: change-me
+      DATABASE_ENGINE: POSTGRES
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_PASSWORD: linkshelf # change
+      AUTHENTICATION_JWTSECRET: change-me-to-a-long-random-value
+      AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
+      AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD: change-me
       # No SMTP? Then turn these off, or new users can't sign in.
-      # APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED: false
-      # APP_AUTHENTICATION_PASSWORDRESET_ENABLED: false
+      # AUTHENTICATION_EMAILVERIFICATION_ENABLED: false
+      # AUTHENTICATION_PASSWORDRESET_ENABLED: false
     depends_on:
       # The backend exits if its first DB ping fails, so wait for postgres.
       postgres:
@@ -60,10 +60,10 @@ Open `http://localhost:3000` and sign in with the bootstrap admin.
 The browser talks to the backend directly, so it needs a public address of its own:
 
 - `NUXT_PUBLIC_API_BASE`: public URL of the backend, e.g. `https://api.example.com`
-- `APP_APP_FRONTENDURL`: public URL of the frontend, used in emails
-- `APP_SERVER_HOST`: public host of the backend
+- `APP_FRONTENDURL`: public URL of the frontend, used in emails
+- `SERVER_HOST`: public host of the backend
 
-Add `APP_APP_STRICTORIGINS=true` to lock the API to those addresses, see
+Add `APP_STRICTORIGINS=true` to lock the API to those addresses, see
 [Strict origins](/docs/self-hosting/configuration#strict-origins).
 
 ## Config file

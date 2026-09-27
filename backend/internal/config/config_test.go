@@ -10,7 +10,7 @@ import (
 
 func Test_LoadConfig_Success_ReadsDefaultsFromTestYaml(t *testing.T) {
 	Reset()
-	require.NoError(t, os.Unsetenv("APP_DATABASE_HOST"))
+	require.NoError(t, os.Unsetenv("DATABASE_HOST"))
 
 	require.NoError(t, LoadConfig())
 
@@ -22,8 +22,8 @@ func Test_LoadConfig_Success_ReadsDefaultsFromTestYaml(t *testing.T) {
 
 func Test_LoadConfig_EnvVarOverridesFile(t *testing.T) {
 	Reset()
-	require.NoError(t, os.Setenv("APP_DATABASE_HOST", "env-override-host"))
-	defer func() { _ = os.Unsetenv("APP_DATABASE_HOST") }()
+	require.NoError(t, os.Setenv("DATABASE_HOST", "env-override-host"))
+	defer func() { _ = os.Unsetenv("DATABASE_HOST") }()
 
 	require.NoError(t, LoadConfig())
 
@@ -32,10 +32,10 @@ func Test_LoadConfig_EnvVarOverridesFile(t *testing.T) {
 
 func Test_LoadConfig_EnvVarOverridesCamelCaseKeys(t *testing.T) {
 	Reset()
-	t.Setenv("APP_AUTHENTICATION_JWTSECRET", "from-env")
-	t.Setenv("APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL", "env@example.com")
-	t.Setenv("APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED", "false")
-	t.Setenv("APP_SMTP_TLSMODE", "starttls")
+	t.Setenv("AUTHENTICATION_JWTSECRET", "from-env")
+	t.Setenv("AUTHENTICATION_BOOTSTRAPADMIN_EMAIL", "env@example.com")
+	t.Setenv("AUTHENTICATION_EMAILVERIFICATION_ENABLED", "false")
+	t.Setenv("SMTP_TLSMODE", "starttls")
 
 	require.NoError(t, LoadConfig())
 
@@ -53,8 +53,8 @@ func Test_LoadConfig_UserBasedPathsIsOffByDefaultAndSettableFromTheEnvironment(t
 	require.Equal(t, "admin", String("authentication.bootstrapAdmin.username"))
 
 	Reset()
-	t.Setenv("APP_APP_USERBASEDPATHS", "true")
-	t.Setenv("APP_AUTHENTICATION_BOOTSTRAPADMIN_USERNAME", "root-admin")
+	t.Setenv("APP_USERBASEDPATHS", "true")
+	t.Setenv("AUTHENTICATION_BOOTSTRAPADMIN_USERNAME", "root-admin")
 	require.NoError(t, LoadConfig())
 
 	require.True(t, Bool("app.userBasedPaths"))

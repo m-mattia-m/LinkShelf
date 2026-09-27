@@ -1,6 +1,9 @@
-secrets:
-  existingSecret:
-    name: linkshelf-secrets
+env:
+  - name: AUTHENTICATION_JWTSECRET
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: jwt-secret
 postgresql:
   enabled: true
   settings:

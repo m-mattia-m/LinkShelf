@@ -5,9 +5,9 @@ order: 6
 
 ## Configuration Options
 
-All options are available via YAML configuration and can be overwritten via environment variables. Every variable
-starts with `APP_`, followed by the key path. For example `app.name` in yaml is overridden by the environment variable
-`APP_APP_NAME`, and `database.host` by `APP_DATABASE_HOST`.
+All options are available via YAML configuration and can be overwritten via environment variables. Every variable is
+the key path, upper-cased with underscores instead of dots. For example `app.name` in yaml is overridden by the
+environment variable `APP_NAME`, and `database.host` by `DATABASE_HOST`.
 
 ```yaml
 app:
@@ -73,7 +73,7 @@ authentication:
   type: LOCAL # LOCAL # OIDC
   # jwtSecret signs the access tokens this backend issues itself, no matter
   # which auth type is active below. Override this in production via the
-  # APP_AUTHENTICATION_JWTSECRET environment variable - never ship the
+  # AUTHENTICATION_JWTSECRET environment variable - never ship the
   # default value.
   jwtSecret: "change-me-to-a-long-random-value-in-production"
   accessTokenExpiryMinutes: 5
@@ -132,7 +132,7 @@ smtp:
 
 By default a shelf is available at `/<path>`, and every path is unique on the instance. That fits a private instance.
 
-Set `app.userBasedPaths` to `true` (or `APP_APP_USERBASEDPATHS=true`) and shelves live at `/<username>/<path>` instead,
+Set `app.userBasedPaths` to `true` (or `APP_USERBASEDPATHS=true`) and shelves live at `/<username>/<path>` instead,
 so two users can both have `/profile`.
 
 - Every account has a username: lowercase letters, numbers and hyphens, 3 to 30 characters. Words LinkShelf uses itself,
@@ -151,7 +151,7 @@ so two users can both have `/profile`.
 ## Strict origins
 
 By default the API accepts calls from any website. Set `app.strictOrigins` to `true`
-(`APP_APP_STRICTORIGINS=true`) to lock it to your instance:
+(`APP_STRICTORIGINS=true`) to lock it to your instance:
 
 - **Browsers.** A page may only call the API if it was loaded from `app.frontendUrl`, or from the domain of a shelf (see
   [Custom domains](/docs/self-hosting/custom-domains)). Any other website gets a `403`. A `http://` shelf domain is only
@@ -176,7 +176,7 @@ automatically once the ingress is enabled, see [Kubernetes](/docs/self-hosting/k
 While `authentication.passwordReset.enabled` is `true` (the default), the sign-in page offers "Forgot password?". It
 emails a link that lets the user choose a new password. That needs working email, so LinkShelf refuses to start with
 the setting on and no `smtp.host` or `smtp.from`. On an instance without email, set it to `false`
-(`APP_AUTHENTICATION_PASSWORDRESET_ENABLED=false`).
+(`AUTHENTICATION_PASSWORDRESET_ENABLED=false`).
 
 - The link is valid for `authentication.passwordReset.tokenExpiryMinutes` (60 by default) and works once.
 - Changing the password signs the user out on every device.
@@ -203,11 +203,11 @@ config: |
 Properties are listed under [Themes](/docs/usage/themes#create-one).
 
 1. Mount a directory with your files, for example at `/app/my-themes`
-2. Set `themes.directory` (`APP_THEMES_DIRECTORY`) to it
+2. Set `themes.directory` (`THEMES_DIRECTORY`) to it
 3. Restart. Files are read once at startup, and a removed file removes its theme.
 
 Background images work the same way:
 
 1. Mount a directory with the images, for example at `/app/my-images`
-2. Set `assets.directory` (`APP_ASSETS_DIRECTORY`) to it
+2. Set `assets.directory` (`ASSETS_DIRECTORY`) to it
 3. Use `/images/<file>` as `--shelf-bg-image`. The prefix is `assets.basePath`.
