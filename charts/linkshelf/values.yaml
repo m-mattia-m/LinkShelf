@@ -70,6 +70,11 @@ env: []
   # Shelves live at /<username>/<path> instead of /<path>:
   # - name: APP_USERBASEDPATHS
   #   value: "true"
+  # Make the instance itself reachable on another domain too, besides the
+  # ingress.frontend.host it's derived from (also add it to ingress.extraHosts
+  # and ingress.tls):
+  # - name: APP_ADDITIONALORIGINS
+  #   value: "https://links.example.org"
 
 # Bring your own database, with DATABASE_HOST/_PORT/_USERNAME/_PASSWORD/_NAME
 # in env above. Ignored when postgresql.enabled is true.

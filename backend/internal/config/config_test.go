@@ -62,6 +62,26 @@ func Test_LoadConfig_UserBasedPathsIsOffByDefaultAndSettableFromTheEnvironment(t
 	require.True(t, Get().App.UserBasedPaths)
 }
 
+func Test_LoadConfig_EnvVarSplitsListValues(t *testing.T) {
+	Reset()
+	t.Setenv("SERVER_TRUSTEDPROXIES", "127.0.0.1, 10.0.0.0/8 ,")
+	t.Setenv("APP_ADDITIONALORIGINS", "https://links.example.org,https://links.example.net")
+
+	require.NoError(t, LoadConfig())
+
+	require.Equal(t, []string{"127.0.0.1", "10.0.0.0/8"}, Strings("server.trustedProxies"))
+	require.Equal(t, []string{"https://links.example.org", "https://links.example.net"}, Strings("app.additionalOrigins"))
+}
+
+func Test_LoadConfig_EnvVarSingleListValue(t *testing.T) {
+	Reset()
+	t.Setenv("APP_ADDITIONALORIGINS", "https://links.example.org")
+
+	require.NoError(t, LoadConfig())
+
+	require.Equal(t, []string{"https://links.example.org"}, Strings("app.additionalOrigins"))
+}
+
 func Test_LoadConfig_ConfigurationFilePathOverridesDefault(t *testing.T) {
 	Reset()
 
@@ -253,6 +273,29 @@ func Test_Validate_StrictOriginsNeedsTheInstanceUrls(t *testing.T) {
 	strict()
 	Set("server.host", "")
 	require.ErrorContains(t, validate(), "server.host")
+}
+
+func Test_Validate_StrictOriginsAdditionalOriginsMustBeFullUrls(t *testing.T) {
+	strict := func() {
+		Reset()
+		Set("authentication.jwtSecret", "some-secret")
+		Set("authentication.type", "LOCAL")
+		Set("authentication.emailVerification.enabled", false)
+		Set("authentication.passwordReset.enabled", false)
+		Set("app.strictOrigins", true)
+		Set("app.frontendUrl", "https://linkshelf.example.com")
+		Set("server.host", "api.example.com")
+	}
+
+	strict()
+	Set("app.additionalOrigins", []string{"https://links.example.org", "http://links.example.net"})
+	require.NoError(t, validate())
+
+	for _, bad := range []string{"linkshelf.example.com", "ftp://linkshelf.example.com", "https://", "://nope"} {
+		strict()
+		Set("app.additionalOrigins", []string{"https://links.example.org", bad})
+		require.ErrorContains(t, validate(), "app.additionalOrigins", "additionalOrigins %q", bad)
+	}
 }
 
 func Test_Validate_WithoutStrictOriginsTheUrlsMayBeEmpty(t *testing.T) {

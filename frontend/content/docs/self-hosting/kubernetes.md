@@ -103,3 +103,8 @@ With the ingress enabled the chart also turns on `app.strictOrigins`, so the API
 to browsers from the frontend or from a shelf's domain, see [Strict origins](/docs/self-hosting/configuration#strict-origins).
 Set `strictOrigins: false` in the values to keep the API open.
 
+To make the instance itself, not a shelf, reachable on another domain too, add it to `ingress.extraHosts` and
+`ingress.tls` the same way, and also add it to `app.additionalOrigins` (env `APP_ADDITIONALORIGINS`, comma-separated for
+more than one) so browsers loaded from it may still call the API. See [Reachable on more than one
+domain](/docs/self-hosting/configuration#reachable-on-more-than-one-domain).
+

@@ -7,7 +7,8 @@ order: 6
 
 All options are available via YAML configuration and can be overwritten via environment variables. Every variable is
 the key path, upper-cased with underscores instead of dots. For example `app.name` in yaml is overridden by the
-environment variable `APP_NAME`, and `database.host` by `DATABASE_HOST`.
+environment variable `APP_NAME`, and `database.host` by `DATABASE_HOST`. A list, like `server.trustedProxies` or
+`app.additionalOrigins`, is set as a comma-separated value, e.g. `APP_ADDITIONALORIGINS=https://a.example.com,https://b.example.com`.
 
 ```yaml
 app:
@@ -16,6 +17,11 @@ app:
   environment: production
   logo: <base64-encoded-logo-or-path>
   frontendUrl: "http://localhost:3000"
+  # Other full http(s) origins the instance is also reachable on, besides
+  # frontendUrl (e.g. a second domain pointed at the same frontend). Only
+  # used while strictOrigins is true. A shelf's own domain doesn't belong
+  # here, that is handled automatically.
+  additionalOrigins: []
   # When true, a shelf's public URL is /<username>/<path>, so two users can
   # both own /profile. When false (the default) it is /<path>, unique across
   # the whole instance - the simpler choice for a single-user or private
@@ -23,10 +29,11 @@ app:
   # share a path.
   userBasedPaths: false
   # When true, the API only accepts what belongs to this instance:
-  #   - browsers may call it only from the origin of frontendUrl, or from the
-  #     domain of a shelf that has one (so a shelf served on its own domain can
-  #     still load its content). Requests without an Origin header, such as
-  #     the frontend's server-side calls or curl, are not affected.
+  #   - browsers may call it only from the origin of frontendUrl, one of
+  #     additionalOrigins, or from the domain of a shelf that has one (so a
+  #     shelf served on its own domain can still load its content). Requests
+  #     without an Origin header, such as the frontend's server-side calls or
+  #     curl, are not affected.
   #   - it only answers requests whose Host is server.host (plus server.port
   #     when domain.openapi.usePort is true). Anything else gets a 421. The
   #     health endpoints are always exempt so probes that use a pod IP work.
@@ -82,6 +89,7 @@ authentication:
     # Idempotently created/refreshed on every startup with role=admin.
     # Leave email and password empty to skip bootstrapping an admin account.
     email: admin@example.com
+    # Must not exceed 72 bytes - bcrypt, used to hash it, ignores anything past that.
     password: "change-me"
     # Applied as configured, without the checks a user-chosen username goes
     # through (so it may be a reserved word such as "admin").
@@ -153,10 +161,10 @@ so two users can both have `/profile`.
 By default the API accepts calls from any website. Set `app.strictOrigins` to `true`
 (`APP_STRICTORIGINS=true`) to lock it to your instance:
 
-- **Browsers.** A page may only call the API if it was loaded from `app.frontendUrl`, or from the domain of a shelf (see
-  [Custom domains](/docs/self-hosting/custom-domains)). Any other website gets a `403`. A `http://` shelf domain is only
-  accepted when `frontendUrl` itself starts with `http://`. A domain that was just added or removed takes up to a minute
-  to count.
+- **Browsers.** A page may only call the API if it was loaded from `app.frontendUrl`, one of `app.additionalOrigins`, or
+  from the domain of a shelf (see [Custom domains](/docs/self-hosting/custom-domains)). Any other website gets a `403`.
+  A `http://` shelf domain is only accepted when `frontendUrl` itself starts with `http://`; `additionalOrigins` are
+  each checked with their own scheme instead. A domain that was just added or removed takes up to a minute to count.
 - **Host.** The API only answers requests addressed to `server.host`. Anything else gets a `421 Misdirected Request`
   without a body. `server.port` is only compared when `domain.openapi.usePort` is `true`, because behind a proxy the
   public address usually has no port. If a trusted proxy from `server.trustedProxies` sends `X-Forwarded-Host`, that is
@@ -167,9 +175,29 @@ By default the API accepts calls from any website. Set `app.strictOrigins` to `t
 This limits which *websites* can use the API from a visitor's browser. It is not authentication, every endpoint still
 checks its own token.
 
-LinkShelf refuses to start with the setting on unless `app.frontendUrl` is a full `http(s)` URL and `server.host` is set,
-and it logs what it allows. Set both to your real public addresses first. In the Helm chart it is switched on
-automatically once the ingress is enabled, see [Kubernetes](/docs/self-hosting/kubernetes#custom-domains).
+LinkShelf refuses to start with the setting on unless `app.frontendUrl` and every entry of `app.additionalOrigins` are
+full `http(s)` URLs and `server.host` is set, and it logs what it allows. Set them to your real public addresses first.
+In the Helm chart it is switched on automatically once the ingress is enabled, see
+[Kubernetes](/docs/self-hosting/kubernetes#custom-domains).
+
+### Reachable on more than one domain
+
+The instance itself, not a shelf, can be reachable on more than one domain - for example `linkshelf.example.com` and
+`links.example.org` pointed at the same frontend. `app.frontendUrl` stays the one canonical address (it's what
+verification and password reset emails link to); list every other domain as a full origin in `app.additionalOrigins`,
+for example:
+
+```yaml
+app:
+  frontendUrl: "https://linkshelf.example.com"
+  additionalOrigins:
+    - "https://links.example.org"
+```
+
+This only affects `app.strictOrigins`' CORS check - it has nothing to do with `app.frontendUrl` itself, and getting the
+traffic there is still up to your infrastructure, the same three steps as a [shelf's custom
+domain](/docs/self-hosting/custom-domains#set-it-up): DNS, routing the domain to the frontend, and a TLS certificate. In
+the Helm chart, add the domain to `ingress.extraHosts` and to `ingress.tls`, and set `APP_ADDITIONALORIGINS` in `env`.
 
 ## Password reset
 

@@ -90,6 +90,10 @@ func (c *domainCache) set(domain string, registered bool) {
 // originPolicy answers whether a browser origin may call the API.
 type originPolicy struct {
 	frontendOrigin string
+	// additionalOrigins are other origins the instance itself is reachable
+	// on (app.additionalOrigins), canonicalized the same way frontendOrigin
+	// is, so they're let through without a database lookup too.
+	additionalOrigins map[string]bool
 	// allowHttpDomains lets a shelf domain be called over plain http too. That
 	// is only for development and LAN setups, so it follows the frontend: an
 	// instance that runs on http:// itself has nothing to protect by being
@@ -101,11 +105,21 @@ type originPolicy struct {
 
 func newOriginPolicy(svc *domain.Service) *originPolicy {
 	frontend, _ := url.Parse(strings.TrimSpace(config.String("app.frontendUrl")))
+
+	additional := make(map[string]bool)
+	for _, origin := range config.Strings("app.additionalOrigins") {
+		parsed, _ := url.Parse(strings.TrimSpace(origin))
+		if canonical := canonicalOrigin(parsed); canonical != "" {
+			additional[canonical] = true
+		}
+	}
+
 	return &originPolicy{
-		frontendOrigin:   canonicalOrigin(frontend),
-		allowHttpDomains: frontend != nil && frontend.Scheme == "http",
-		registered:       svc.ShelfService.IsDomainRegistered,
-		cache:            newDomainCache(),
+		frontendOrigin:    canonicalOrigin(frontend),
+		additionalOrigins: additional,
+		allowHttpDomains:  frontend != nil && frontend.Scheme == "http",
+		registered:        svc.ShelfService.IsDomainRegistered,
+		cache:             newDomainCache(),
 	}
 }
 
@@ -137,7 +151,7 @@ func (p *originPolicy) allowed(origin string) bool {
 	if canonical == "" || (parsed.Path != "" && parsed.Path != "/") {
 		return false
 	}
-	if canonical == p.frontendOrigin {
+	if canonical == p.frontendOrigin || p.additionalOrigins[canonical] {
 		return true
 	}
 

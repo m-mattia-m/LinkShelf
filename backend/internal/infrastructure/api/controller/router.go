@@ -57,6 +57,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		corsConfig.AllowOriginFunc = newOriginPolicy(svc).allowed
 		zap.L().Info("strict origins are enabled",
 			zap.String("frontendUrl", config.String("app.frontendUrl")),
+			zap.Strings("additionalOrigins", config.Strings("app.additionalOrigins")),
 			zap.String("serverHost", config.String("server.host")),
 			zap.Bool("serverPortIsChecked", config.Bool("domain.openapi.usePort")))
 	}

@@ -129,6 +129,25 @@ answers requests for the `apiUrl` host, and only browsers from `frontendUrl` or 
 chart sets `APP_STRICTORIGINS`, `SERVER_HOST` and `SERVER_SCHEME` for that. Set it to `false` to keep the
 API open. Without an ingress it has no effect.
 
+**A second domain for the instance itself.** To make the instance (not a shelf) reachable on another domain too, e.g.
+`links.example.org` besides `frontendUrl`, add it to `ingress.extraHosts` and `ingress.tls` like a shelf's custom
+domain, and also allowlist it for CORS with `APP_ADDITIONALORIGINS` in `env` (comma-separated for more than one):
+
+```yaml
+ingress:
+  extraHosts:
+    - links.example.org
+  tls:
+    - secretName: linkshelf-tls
+      hosts:
+        - linkshelf.example.com
+        - api.linkshelf.example.com
+        - links.example.org
+env:
+  - name: APP_ADDITIONALORIGINS
+    value: "https://links.example.org"
+```
+
 **Themes and assets.** Mount the directories with `extraVolumes` and `extraVolumeMounts` and point
 `THEMES_DIRECTORY` and `ASSETS_DIRECTORY` at them.
 
