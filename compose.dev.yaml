@@ -7,13 +7,13 @@ services:
       - "3000:3000"
       - "8085:8085"
     environment:
-      - APP_DATABASE_HOST=postgres
+      - DATABASE_HOST=postgres
       # Inside the compose network postgres/mailpit listen on their container
       # ports, not the ports published to the host above.
-      - APP_DATABASE_PORT=5432
-      - APP_SMTP_HOST=mailpit
-      - APP_SMTP_PORT=1025
-      - APP_SMTP_TLSMODE=none
+      - DATABASE_PORT=5432
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - SMTP_TLSMODE=none
     volumes:
       - ./backend/config.default.yaml:/app/config.default.yaml
     depends_on:

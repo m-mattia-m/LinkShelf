@@ -14,13 +14,10 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-const envPrefix = "APP_"
-
 // configFileEnvVar points to a second config file that overwrites the
-// default, e.g. CONFIGURATION_FILE_PATH=config.prod.yaml. It is unprefixed
-// (not APP_CONFIGURATION_FILE_PATH) since it selects which config to load
-// rather than being a value within it, and is deliberately not picked up by
-// the APP_-prefixed env.Provider below.
+// default, e.g. CONFIGURATION_FILE_PATH=config.prod.yaml. It selects which
+// config to load rather than being a value within it, so it is read directly
+// via os.Getenv instead of going through the env.Provider below.
 const configFileEnvVar = "CONFIGURATION_FILE_PATH"
 
 var searchPaths = []string{".", "..", "../..", "../../..", "../../../..", "backend", "./backend"}
@@ -133,7 +130,8 @@ type Configuration struct {
 // LoadConfig loads configuration in three layers, each overriding the previous one:
 //  1. config.default.yaml (or config.test.yaml when running under `go test`)
 //  2. the file CONFIGURATION_FILE_PATH points to, if that env var is set
-//  3. environment variables prefixed with APP_ (dots replace underscores, e.g. APP_DATABASE_HOST)
+//  3. environment variables named after the key path, dots replaced by
+//     underscores and upper-cased, e.g. database.host -> DATABASE_HOST
 func LoadConfig() error {
 	baseName := "config.default.yaml"
 	if isRunningTests() {
@@ -157,26 +155,27 @@ func LoadConfig() error {
 		}
 	}
 
-	if err := k.Load(env.Provider(envPrefix, ".", envKeyMapper(k.Keys())), nil); err != nil {
+	if err := k.Load(env.Provider("", ".", envKeyMapper(k.Keys())), nil); err != nil {
 		return err
 	}
 
 	return validate()
 }
 
-// envKeyMapper turns an APP_ environment variable name into a config key.
-// Env var names cannot carry capitals, so APP_AUTHENTICATION_JWTSECRET would
-// otherwise become "authentication.jwtsecret" - a different koanf key than the
+// envKeyMapper turns an environment variable name into a config key. Env var
+// names cannot carry capitals, so AUTHENTICATION_JWTSECRET would otherwise
+// become "authentication.jwtsecret" - a different koanf key than the
 // "authentication.jwtSecret" every config.String() call reads. Matching the
 // lowercased path against the keys the files already defined restores the
-// original casing; unknown keys fall back to the plain lowercased path.
+// original casing; unknown keys fall back to the plain lowercased path (which
+// then does not match anything in the Configuration struct and is ignored).
 func envKeyMapper(existing []string) func(string) string {
 	byLower := make(map[string]string, len(existing))
 	for _, key := range existing {
 		byLower[strings.ToLower(key)] = key
 	}
 	return func(s string) string {
-		key := strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(s, envPrefix)), "_", ".")
+		key := strings.ReplaceAll(strings.ToLower(s), "_", ".")
 		if original, ok := byLower[key]; ok {
 			return original
 		}

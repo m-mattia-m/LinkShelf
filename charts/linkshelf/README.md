@@ -16,8 +16,9 @@ helm repo add linkshelf https://m-mattia-m.github.io/LinkShelf
 helm repo update
 ```
 
-Create the Secrets first. The database Secret needs the keys `host`, `port`, `username`, `password` and `database`,
-and `jwt-secret` signs the login tokens. The key names are configurable.
+Create the Secrets first. There is no dedicated "secrets" section - a secret is just an `env` entry that uses
+`valueFrom` instead of `value`, plain Kubernetes syntax, so point it at whatever Secret you (or External Secrets)
+already created.
 
 ```bash
 kubectl create secret generic linkshelf-db \
@@ -33,12 +34,37 @@ kubectl create secret generic linkshelf-secrets \
 
 ```yaml
 # values.yaml
-secrets:
-  existingSecret:
-    name: linkshelf-secrets
-database:
-  existingSecret:
-    name: linkshelf-db
+env:
+  - name: AUTHENTICATION_JWTSECRET
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: jwt-secret
+  - name: DATABASE_HOST
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: host
+  - name: DATABASE_PORT
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: port
+  - name: DATABASE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: password
+  - name: DATABASE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: database
 ingress:
   enabled: true
   className: nginx
@@ -63,27 +89,31 @@ Without an ingress the release notes show how to reach it with `kubectl port-for
 
 Every option is documented in [values.yaml](values.yaml), and `values.schema.json` rejects wrong values on install.
 
-**Settings.** Anything in the backend config file can be set as an environment variable through `env`, for example
-`smtp.host` becomes `APP_SMTP_HOST`. The keys are listed in
+**Settings.** Anything in the backend config file can be set as an environment variable in `env`, native Kubernetes
+`env` syntax (`value` or `valueFrom`), for example `smtp.host` becomes `SMTP_HOST`. The keys are listed in
 [config.default.yaml](https://github.com/m-mattia-m/LinkShelf/blob/main/backend/config.default.yaml). Email
 verification is on by default, so either set up SMTP or turn it off:
 
 ```yaml
 env:
-  APP_SMTP_HOST: smtp.example.com
-  APP_SMTP_FROM: no-reply@example.com
-  # APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED: "false"
+  - name: SMTP_HOST
+    value: smtp.example.com
+  - name: SMTP_FROM
+    value: no-reply@example.com
+  # - name: AUTHENTICATION_EMAILVERIFICATION_ENABLED
+  #   value: "false"
 ```
 
-**Secrets.** `secrets.existingSecret.name` and its `jwtSecret` key are required. The bootstrap admin from the image is
-switched off. To get an admin, set `APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL` in `env` and name the key of the password
-in `secrets.existingSecret.keys.bootstrapAdminPassword`. Its username is `admin`, change it with
-`APP_AUTHENTICATION_BOOTSTRAPADMIN_USERNAME`. That account does not need email verification, so it works
-before SMTP is set up. `smtpPassword` and `oidcClientSecret` work the same way, leave a key empty if you don't use it.
+**Secrets.** There is no separate "secrets" section - use `valueFrom.secretKeyRef` on the `env` entry instead of
+`value`, exactly like a Pod spec. `AUTHENTICATION_JWTSECRET` is required. The bootstrap admin from the image is
+switched off; to get an admin, add `AUTHENTICATION_BOOTSTRAPADMIN_EMAIL` and `AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD`
+to `env`. Its username is `admin`, change it with `AUTHENTICATION_BOOTSTRAPADMIN_USERNAME`. That account does not need
+email verification, so it works before SMTP is set up. `SMTP_PASSWORD` and `AUTHENTICATION_OIDC_CLIENTSECRET` work the
+same way, leave them out if you don't use them.
 
-**Database.** Point `database.existingSecret.name` to a Secret with the connection details (key names are configurable
-under `database.existingSecret.keys`). Set `database.engine` to `MYSQL` for MySQL and `database.params` for extra
-connection parameters such as `sslmode=require`.
+**Database.** Add `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `DATABASE_NAME` to
+`env` (all 5 are required, each can come from a different Secret). Set `database.engine` to `MYSQL` for MySQL and
+`database.params` for extra connection parameters such as `sslmode=require`.
 
 **Ingress.** The browser talks to the backend directly, so the frontend and the backend need their own host. The
 chart derives `frontendUrl`, `apiUrl` and `oidcRedirectUrl` from these hosts and uses `https` when a host is listed
@@ -96,11 +126,11 @@ balancer in front of it may overwrite it, otherwise shelves only work through th
 
 **Strict origins.** With the ingress enabled, `strictOrigins` (default `true`) locks the API to the instance: it only
 answers requests for the `apiUrl` host, and only browsers from `frontendUrl` or from a shelf's domain may call it. The
-chart sets `APP_APP_STRICTORIGINS`, `APP_SERVER_HOST` and `APP_SERVER_SCHEME` for that. Set it to `false` to keep the
+chart sets `APP_STRICTORIGINS`, `SERVER_HOST` and `SERVER_SCHEME` for that. Set it to `false` to keep the
 API open. Without an ingress it has no effect.
 
 **Themes and assets.** Mount the directories with `extraVolumes` and `extraVolumeMounts` and point
-`APP_THEMES_DIRECTORY` and `APP_ASSETS_DIRECTORY` at them.
+`THEMES_DIRECTORY` and `ASSETS_DIRECTORY` at them.
 
 **Anything else.** `additionalResources` takes a list of manifests, as maps or as strings. Both are rendered with
 `tpl`, so `{{ .Release.Name }}` works.
@@ -137,7 +167,8 @@ postgresql:
 ```
 
 There is no backup, replication or upgrade handling. Use your own database for anything you care about. It cannot be
-combined with `database.existingSecret`.
+combined with setting `DATABASE_HOST`/`DATABASE_PORT`/`DATABASE_USERNAME`/`DATABASE_PASSWORD`/`DATABASE_NAME` in `env`
+yourself.
 
 ## OpenShift
 

@@ -20,8 +20,8 @@ cover:
 cover-full:
 	go list ./... | grep -Ev '/(mocks|config|cmd|migrations)' | xargs go test -coverprofile=coverage.unit.out
 	go list -tags=integration ./... | grep -Ev '/(mocks|config|cmd|migrations)' | xargs go test -tags=integration -coverprofile=coverage.integration.out
-	APP_DATABASE_ENGINE=postgres go test -tags=realdb -run RealDB -count=1 -coverprofile=coverage.realdb.postgres.out backend/internal/infrastructure/repository
-	APP_DATABASE_ENGINE=mysql go test -tags=realdb -run RealDB -count=1 -coverprofile=coverage.realdb.mysql.out backend/internal/infrastructure/repository
+	DATABASE_ENGINE=postgres go test -tags=realdb -run RealDB -count=1 -coverprofile=coverage.realdb.postgres.out backend/internal/infrastructure/repository
+	DATABASE_ENGINE=mysql go test -tags=realdb -run RealDB -count=1 -coverprofile=coverage.realdb.mysql.out backend/internal/infrastructure/repository
 	echo "mode: atomic" > coverage.out
 	grep -h -v "^mode:" coverage.unit.out coverage.integration.out coverage.realdb.postgres.out coverage.realdb.mysql.out >> coverage.out
 	@echo "-------------------------------"

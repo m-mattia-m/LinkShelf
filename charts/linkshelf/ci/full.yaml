@@ -1,17 +1,49 @@
-secrets:
-  existingSecret:
-    name: linkshelf-secrets
-    keys:
-      jwtSecret: jwt
-      bootstrapAdminPassword: admin-password
-      smtpPassword: smtp-password
 env:
-  APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
+  - name: AUTHENTICATION_JWTSECRET
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: jwt
+  - name: AUTHENTICATION_BOOTSTRAPADMIN_EMAIL
+    value: admin@example.com
+  - name: AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: admin-password
+  - name: SMTP_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: smtp-password
+  - name: DATABASE_HOST
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: host
+  - name: DATABASE_PORT
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: port
+  - name: DATABASE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: password
+  - name: DATABASE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: database
 database:
   engine: MYSQL
   params: charset=utf8mb4&parseTime=true
-  existingSecret:
-    name: linkshelf-db
 ingress:
   enabled: true
   className: nginx

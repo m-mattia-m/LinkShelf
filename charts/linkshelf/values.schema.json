@@ -21,43 +21,12 @@
                         "MYSQL"
                     ]
                 },
-                "existingSecret": {
-                    "type": "object",
-                    "properties": {
-                        "keys": {
-                            "type": "object",
-                            "properties": {
-                                "database": {
-                                    "type": "string"
-                                },
-                                "host": {
-                                    "type": "string"
-                                },
-                                "password": {
-                                    "type": "string"
-                                },
-                                "port": {
-                                    "type": "string"
-                                },
-                                "username": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "name": {
-                            "type": "string"
-                        }
-                    }
-                },
                 "params": {
                     "type": "string"
                 }
             }
         },
         "env": {
-            "type": "object"
-        },
-        "extraEnv": {
             "type": "array"
         },
         "extraEnvFrom": {
@@ -287,36 +256,6 @@
                             "type": "string"
                         },
                         "memory": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "secrets": {
-            "type": "object",
-            "properties": {
-                "existingSecret": {
-                    "type": "object",
-                    "properties": {
-                        "keys": {
-                            "type": "object",
-                            "properties": {
-                                "bootstrapAdminPassword": {
-                                    "type": "string"
-                                },
-                                "jwtSecret": {
-                                    "type": "string"
-                                },
-                                "oidcClientSecret": {
-                                    "type": "string"
-                                },
-                                "smtpPassword": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "name": {
                             "type": "string"
                         }
                     }

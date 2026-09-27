@@ -25,55 +25,59 @@ oidcRedirectUrl: ""
 # addresses. Set it to false to keep the API open.
 strictOrigins: true
 
-# Non-sensitive settings as environment variables. Every key of the backend
-# config file maps to APP_<KEY_PATH>, e.g. smtp.host -> APP_SMTP_HOST. See
-# backend/config.default.yaml for all keys. Values set here win over the
-# values the chart derives.
-env: {}
-  # APP_SMTP_HOST: smtp.example.com
-  # APP_SMTP_PORT: "587"
-  # APP_SMTP_FROM: no-reply@example.com
-  # APP_SMTP_TLSMODE: starttls
-  # APP_AUTHENTICATION_REGISTRATIONENABLED: "false"
-  # APP_AUTHENTICATION_EMAILVERIFICATION_ENABLED: "false"
-  # APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
-  # APP_AUTHENTICATION_BOOTSTRAPADMIN_USERNAME: admin
+# All backend config as a list of container environment variables, in plain
+# Kubernetes syntax: a literal "value", or "valueFrom" for anything that
+# should come from a Secret (the chart never renders one itself - point this
+# at whatever you, or something like External Secrets, already created).
+# There is no separate "secrets" section: a secret is just an env entry that
+# uses valueFrom instead of value, so nothing has to be kept in sync across
+# sections. Entries here win over the values the chart derives (e.g. the
+# ingress-derived URLs, or database.engine below).
+#
+# Every key of the backend config file maps to its dotted path, upper-cased
+# with underscores, e.g. smtp.host -> SMTP_HOST, app.name -> APP_NAME. See
+# backend/config.default.yaml for all keys. AUTHENTICATION_JWTSECRET is
+# required. Bring your own database (below) needs DATABASE_HOST, _PORT,
+# _USERNAME, _PASSWORD and _NAME here too, unless postgresql.enabled is true.
+env: []
+  # - name: AUTHENTICATION_JWTSECRET
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: linkshelf-secrets
+  #       key: jwt-secret
+  # - name: SMTP_HOST
+  #   value: smtp.example.com
+  # - name: SMTP_FROM
+  #   value: no-reply@example.com
+  # - name: SMTP_TLSMODE
+  #   value: starttls
+  # - name: AUTHENTICATION_REGISTRATIONENABLED
+  #   value: "false"
+  # - name: AUTHENTICATION_EMAILVERIFICATION_ENABLED
+  #   value: "false"
+  # - name: AUTHENTICATION_BOOTSTRAPADMIN_EMAIL
+  #   value: admin@example.com
+  # - name: AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: linkshelf-secrets
+  #       key: admin-password
+  # - name: AUTHENTICATION_BOOTSTRAPADMIN_USERNAME
+  #   value: admin
   # "Forgot password?" needs working email (smtp). Turn it off without:
-  # APP_AUTHENTICATION_PASSWORDRESET_ENABLED: "false"
+  # - name: AUTHENTICATION_PASSWORDRESET_ENABLED
+  #   value: "false"
   # Shelves live at /<username>/<path> instead of /<path>:
-  # APP_APP_USERBASEDPATHS: "true"
+  # - name: APP_USERBASEDPATHS
+  #   value: "true"
 
-# The chart never renders a Secret. Create the Secrets yourself, for example
-# with External Secrets, Sealed Secrets or kubectl, and reference them here.
-
-# Sensitive app settings, all in one Secret.
-secrets:
-  existingSecret:
-    name: ""
-    # Key names inside that Secret. jwtSecret signs the access tokens and is
-    # required. Leave the others empty if you don't use them.
-    keys:
-      jwtSecret: jwt-secret
-      # Only used together with APP_AUTHENTICATION_BOOTSTRAPADMIN_EMAIL in env.
-      bootstrapAdminPassword: ""
-      smtpPassword: ""
-      oidcClientSecret: ""
-
-# Bring your own database. The Secret has to hold the connection details.
-# Ignored when postgresql.enabled is true.
+# Bring your own database, with DATABASE_HOST/_PORT/_USERNAME/_PASSWORD/_NAME
+# in env above. Ignored when postgresql.enabled is true.
 database:
   engine: POSTGRES # @schema enum:[POSTGRES,MYSQL]
   # Extra connection parameters, e.g. sslmode=require. Empty keeps the image
   # default.
   params: ""
-  existingSecret:
-    name: ""
-    keys:
-      host: host
-      port: port
-      username: username
-      password: password
-      database: database
 
 # Optional Postgres from the groundhog2k/postgres chart, meant for evaluation.
 # Not supported on OpenShift, bring your own database there. All values under
@@ -184,7 +188,8 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
-extraEnv: []
+# Whole ConfigMaps/Secrets imported as env vars, native Kubernetes envFrom
+# syntax. For individual variables, add to env above instead.
 extraEnvFrom: []
 extraVolumes: []
 extraVolumeMounts: []

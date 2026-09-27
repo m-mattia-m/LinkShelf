@@ -1,9 +1,36 @@
-secrets:
-  existingSecret:
-    name: linkshelf-secrets
-database:
-  existingSecret:
-    name: linkshelf-db
+env:
+  - name: AUTHENTICATION_JWTSECRET
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-secrets
+        key: jwt-secret
+  - name: DATABASE_HOST
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: host
+  - name: DATABASE_PORT
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: port
+  - name: DATABASE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: username
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: password
+  - name: DATABASE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: linkshelf-db
+        key: database
+  - name: FOO
+    value: bar
 additionalResources:
   - apiVersion: v1
     kind: ConfigMap
@@ -18,9 +45,6 @@ additionalResources:
       name: {{ .Release.Name }}-from-string
     data:
       chart: {{ .Chart.Name }}
-extraEnv:
-  - name: FOO
-    value: bar
 extraVolumes:
   - name: themes
     configMap:
