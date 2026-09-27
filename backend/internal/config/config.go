@@ -36,14 +36,23 @@ type Configuration struct {
 		Environment string `yaml:"environment"`
 		Logo        string `yaml:"logo"`
 		// FrontendUrl is where verification/invite emails point their links
-		// (e.g. "<FrontendUrl>/auth/verify-email?token=...").
+		// (e.g. "<FrontendUrl>/auth/verify-email?token=...") - the instance's
+		// one canonical address.
 		FrontendUrl string `yaml:"frontendUrl"`
+		// AdditionalOrigins are other full http(s) origins the instance is
+		// also reachable on (e.g. a second domain pointed at the same
+		// frontend), besides FrontendUrl. Only used while StrictOrigins is
+		// true: a browser calling the API from one of these is let through
+		// the same way it would be from FrontendUrl's origin. A shelf's own
+		// domain doesn't belong here, that is handled automatically.
+		AdditionalOrigins []string `yaml:"additionalOrigins"`
 		// UserBasedPaths switches public shelf URLs from /<path> to
 		// /<username>/<path>.
 		UserBasedPaths bool `yaml:"userBasedPaths"`
 		// StrictOrigins locks the API to this instance's own hosts: browsers
-		// may only call it from FrontendUrl's origin or from a shelf's own
-		// domain, and it only answers requests addressed to Server.Host.
+		// may only call it from FrontendUrl's origin, one of
+		// AdditionalOrigins, or a shelf's own domain, and it only answers
+		// requests addressed to Server.Host.
 		StrictOrigins bool `yaml:"strictOrigins"`
 	} `yaml:"app"`
 	Server struct {
@@ -155,7 +164,7 @@ func LoadConfig() error {
 		}
 	}
 
-	if err := k.Load(env.Provider("", ".", envKeyMapper(k.Keys())), nil); err != nil {
+	if err := k.Load(env.ProviderWithValue("", ".", envValueMapper(k)), nil); err != nil {
 		return err
 	}
 
@@ -180,6 +189,32 @@ func envKeyMapper(existing []string) func(string) string {
 			return original
 		}
 		return key
+	}
+}
+
+// envValueMapper wraps envKeyMapper to also convert the value: a key that is
+// a list in the already-loaded config (e.g. server.trustedProxies,
+// app.additionalOrigins) is split on commas instead of becoming a single
+// one-element string, which is what a plain env.Provider would otherwise do
+// (silently discarding it, since a bare string isn't a []string). Blank
+// entries, from a trailing comma or stray whitespace, are dropped.
+func envValueMapper(k *koanf.Koanf) func(key, value string) (string, interface{}) {
+	toKey := envKeyMapper(k.Keys())
+	return func(rawKey, rawValue string) (string, interface{}) {
+		key := toKey(rawKey)
+		switch k.Get(key).(type) {
+		case []any, []string:
+			parts := strings.Split(rawValue, ",")
+			out := make([]string, 0, len(parts))
+			for _, part := range parts {
+				if part = strings.TrimSpace(part); part != "" {
+					out = append(out, part)
+				}
+			}
+			return key, out
+		default:
+			return key, rawValue
+		}
 	}
 }
 
@@ -211,6 +246,13 @@ func validate() error {
 		frontend, err := url.Parse(strings.TrimSpace(String("app.frontendUrl")))
 		if err != nil || (frontend.Scheme != "http" && frontend.Scheme != "https") || frontend.Hostname() == "" {
 			return fmt.Errorf("app.frontendUrl must be a full http(s) URL when app.strictOrigins is true, got %q", String("app.frontendUrl"))
+		}
+		for _, origin := range Strings("app.additionalOrigins") {
+			origin = strings.TrimSpace(origin)
+			parsed, err := url.Parse(origin)
+			if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" {
+				return fmt.Errorf("app.additionalOrigins must be full http(s) URLs, got %q", origin)
+			}
 		}
 		if strings.TrimSpace(String("server.host")) == "" {
 			return fmt.Errorf("server.host must be set when app.strictOrigins is true")

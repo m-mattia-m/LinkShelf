@@ -64,7 +64,9 @@ The browser talks to the backend directly, so it needs a public address of its o
 - `SERVER_HOST`: public host of the backend
 
 Add `APP_STRICTORIGINS=true` to lock the API to those addresses, see
-[Strict origins](/docs/self-hosting/configuration#strict-origins).
+[Strict origins](/docs/self-hosting/configuration#strict-origins). To also reach the instance on another domain, add it
+to `APP_ADDITIONALORIGINS` (comma-separated for more than one), see [Reachable on more than one
+domain](/docs/self-hosting/configuration#reachable-on-more-than-one-domain).
 
 ## Config file
 

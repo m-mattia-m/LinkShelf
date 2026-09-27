@@ -3,6 +3,11 @@ app:
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: production
   frontendUrl: "http://localhost:3000"
+  # Other full http(s) origins the instance is also reachable on, besides
+  # frontendUrl (e.g. a second domain pointed at the same frontend). Only
+  # used while strictOrigins is true. A shelf's own domain doesn't belong
+  # here, that is handled automatically.
+  additionalOrigins: []
   # When true, a shelf's public URL is /<username>/<path>, so two users can
   # both own /profile. When false (the default) it is /<path>, unique across
   # the whole instance - the simpler choice for a single-user or private
@@ -10,10 +15,11 @@ app:
   # share a path.
   userBasedPaths: false
   # When true, the API only accepts what belongs to this instance:
-  #   - browsers may call it only from the origin of frontendUrl, or from the
-  #     domain of a shelf that has one (so a shelf served on its own domain can
-  #     still load its content). Requests without an Origin header, such as
-  #     the frontend's server-side calls or curl, are not affected.
+  #   - browsers may call it only from the origin of frontendUrl, one of
+  #     additionalOrigins, or from the domain of a shelf that has one (so a
+  #     shelf served on its own domain can still load its content). Requests
+  #     without an Origin header, such as the frontend's server-side calls or
+  #     curl, are not affected.
   #   - it only answers requests whose Host is server.host (plus server.port
   #     when domain.openapi.usePort is true). Anything else gets a 421. The
   #     health endpoints are always exempt so probes that use a pod IP work.
@@ -72,6 +78,7 @@ authentication:
     # Idempotently created/refreshed on every startup with role=admin.
     # Leave email and password empty to skip bootstrapping an admin account.
     email: admin@example.com
+    # Must not exceed 72 bytes - bcrypt, used to hash it, ignores anything past that.
     password: "change-me"
     # Applied as configured, without the checks a user-chosen username goes
     # through (so it may be a reserved word such as "admin").

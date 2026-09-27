@@ -13,12 +13,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testOriginPolicy(frontendUrl string, registered map[string]bool) (*originPolicy, *int) {
+func testOriginPolicy(frontendUrl string, registered map[string]bool, additionalOrigins ...string) (*originPolicy, *int) {
 	parsed, _ := url.Parse(frontendUrl)
+	additional := make(map[string]bool)
+	for _, origin := range additionalOrigins {
+		other, _ := url.Parse(origin)
+		additional[canonicalOrigin(other)] = true
+	}
 	calls := 0
 	return &originPolicy{
-		frontendOrigin:   canonicalOrigin(parsed),
-		allowHttpDomains: parsed.Scheme == "http",
+		frontendOrigin:    canonicalOrigin(parsed),
+		additionalOrigins: additional,
+		allowHttpDomains:  parsed.Scheme == "http",
 		registered: func(domain string) (bool, error) {
 			calls++
 			return registered[domain], nil
@@ -58,6 +64,15 @@ func Test_Unit_OriginPolicy_Allowed(t *testing.T) {
 		require.True(t, policy.allowed("https://linkshelf.example.com"))
 		require.True(t, policy.allowed("https://LinkShelf.example.com:443"))
 		require.Zero(t, *calls, "the frontend origin needs no database lookup")
+	})
+
+	t.Run("an additional origin", func(t *testing.T) {
+		policy, calls := testOriginPolicy("https://linkshelf.example.com", registered, "https://links.example.org")
+
+		require.True(t, policy.allowed("https://links.example.org"))
+		require.True(t, policy.allowed("https://Links.Example.org:443"))
+		require.Zero(t, *calls, "an additional origin needs no database lookup")
+		require.False(t, policy.allowed("https://not-listed.example.org"))
 	})
 
 	t.Run("a registered shelf domain over https", func(t *testing.T) {
@@ -216,6 +231,7 @@ func strictRouter(t *testing.T, svc *MockService) http.Handler {
 	require.NoError(t, config.LoadConfig())
 	config.Set("app.strictOrigins", true)
 	config.Set("app.frontendUrl", "https://linkshelf.example.com")
+	config.Set("app.additionalOrigins", []string{"https://links.example.org"})
 	config.Set("server.host", "api.example.com")
 	config.Set("domain.openapi.usePort", false)
 	config.Set("server.trustedProxies", []string{"127.0.0.1"})
@@ -308,6 +324,13 @@ func Test_Router_StrictOrigins_Cors(t *testing.T) {
 		router.ServeHTTP(rec, strictRequest("api.example.com", "https://linkshelf.example.com"))
 		require.Equal(t, http.StatusOK, rec.Code)
 		require.Equal(t, "https://linkshelf.example.com", rec.Header().Get("Access-Control-Allow-Origin"))
+	})
+
+	t.Run("an additional origin may call the API", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, strictRequest("api.example.com", "https://links.example.org"))
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, "https://links.example.org", rec.Header().Get("Access-Control-Allow-Origin"))
 	})
 
 	t.Run("a shelf domain may call the API", func(t *testing.T) {

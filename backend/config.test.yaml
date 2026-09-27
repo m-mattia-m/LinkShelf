@@ -3,6 +3,7 @@ app:
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: development
   frontendUrl: "http://localhost:3000"
+  additionalOrigins: []
   userBasedPaths: false
 server:
   scheme: http

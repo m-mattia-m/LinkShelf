@@ -8,6 +8,9 @@ A shelf can be served on a domain of its own. If LinkShelf runs at `linkshelf.ex
 
 This works the same on an instance with and without [user-based paths](/docs/self-hosting/configuration#user-based-paths).
 
+This page is about a domain for one shelf. To make the *instance itself* reachable on more than one domain, see
+[Reachable on more than one domain](/docs/self-hosting/configuration#reachable-on-more-than-one-domain) instead.
+
 ## The rules
 
 - A shelf is reached through **either a path or a domain**, never both. In the shelf form, the tab that is open when
