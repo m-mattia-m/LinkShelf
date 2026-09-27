@@ -1,0 +1,11 @@
+{{- if .Values.configFile }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "linkshelf.fullname" . }}-config
+  labels:
+    {{- include "linkshelf.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- toYaml .Values.configFile | nindent 4 }}
+{{- end }}

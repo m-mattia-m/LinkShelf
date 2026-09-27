@@ -151,6 +151,22 @@ env:
 **Themes and assets.** Mount the directories with `extraVolumes` and `extraVolumeMounts` and point
 `THEMES_DIRECTORY` and `ASSETS_DIRECTORY` at them.
 
+**Config file.** `env` covers most settings, but some are awkward as a single flattened variable, e.g.
+`server.trustedProxies` (a list) or a full `oidc` block. `configFile` takes the same nested YAML shape as
+[config.default.yaml](https://github.com/m-mattia-m/LinkShelf/blob/main/backend/config.default.yaml) and is rendered
+into a ConfigMap. When it's non-empty the chart mounts it and points `CONFIGURATION_FILE_PATH` at it automatically -
+no manual wiring needed, and `env` entries still win over the same key here. Never put secrets in it, a ConfigMap is
+plain text - use `env` with `valueFrom.secretKeyRef` for those instead.
+
+```yaml
+configFile:
+  server:
+    trustedProxies:
+      - 10.0.0.0/8
+  logging:
+    level: debug
+```
+
 **Anything else.** `additionalResources` takes a list of manifests, as maps or as strings. Both are rendered with
 `tpl`, so `{{ .Release.Name }}` works.
 

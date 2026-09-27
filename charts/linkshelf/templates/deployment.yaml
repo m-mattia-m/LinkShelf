@@ -62,12 +62,23 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- if .Values.configFile }}
+            - name: config
+              mountPath: {{ include "linkshelf.configFilePath" . }}
+              subPath: config.yaml
+              readOnly: true
+            {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- if .Values.configFile }}
+        - name: config
+          configMap:
+            name: {{ include "linkshelf.fullname" . }}-config
+        {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

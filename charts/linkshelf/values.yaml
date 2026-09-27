@@ -76,6 +76,22 @@ env: []
   # - name: APP_ADDITIONALORIGINS
   #   value: "https://links.example.org"
 
+# Overwrite the whole backend config file instead of (or in addition to) individual
+# env entries above. Whatever is set here is rendered into a ConfigMap and becomes
+# the second of the backend's three config layers - config.default.yaml, then this
+# file, then env vars - so entries in `env` above still win over the same key here.
+# Useful for settings that are awkward as a single env var, e.g. server.trustedProxies
+# or a full oidc block. When this is non-empty the chart automatically mounts the
+# ConfigMap and points CONFIGURATION_FILE_PATH at it, unless you already set that key
+# in env yourself. Never put secrets here, a ConfigMap is plain text - use env with
+# valueFrom.secretKeyRef instead. See backend/config.default.yaml for all keys.
+configFile: {}
+  # server:
+  #   trustedProxies:
+  #     - 10.0.0.0/8
+  # logging:
+  #   level: debug
+
 # Bring your own database, with DATABASE_HOST/_PORT/_USERNAME/_PASSWORD/_NAME
 # in env above. Ignored when postgresql.enabled is true.
 database:

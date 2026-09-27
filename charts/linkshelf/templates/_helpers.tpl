@@ -82,6 +82,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
+{{/* Mount path of the ConfigMap rendered from .Values.configFile, see configmap.yaml. */}}
+{{- define "linkshelf.configFilePath" -}}
+/etc/linkshelf/config.yaml
+{{- end }}
+
 {{/*
 Merged environment as a dict of NAME -> {value: ...} or {valueFrom: {...}},
 i.e. one native Kubernetes EnvVar minus its "name" (which is the dict key).
@@ -118,6 +123,9 @@ Rendered as YAML.
 {{- $env = set $env "DATABASE_USERNAME" (dict "valueFrom" (dict "secretKeyRef" (dict "name" $dbSecret "key" (default "USERDB_USER" ($user.user).secretKey)))) }}
 {{- $env = set $env "DATABASE_PASSWORD" (dict "valueFrom" (dict "secretKeyRef" (dict "name" $dbSecret "key" (default "USERDB_PASSWORD" ($user.password).secretKey)))) }}
 {{- $env = set $env "DATABASE_NAME" (dict "valueFrom" (dict "secretKeyRef" (dict "name" $dbSecret "key" (default "POSTGRES_DB" ($user.name).secretKey)))) }}
+{{- end }}
+{{- if .Values.configFile }}
+{{- $env = set $env "CONFIGURATION_FILE_PATH" (dict "value" (include "linkshelf.configFilePath" .)) }}
 {{- end }}
 {{- range $entry := .Values.env }}
 {{- $env = set $env $entry.name (omit $entry "name") }}

@@ -1,18 +1,12 @@
 name: Release – Plan, Test, Version & Publish
 
 # The version is derived by semantic-release from the Conventional Commits on
-# main (see .releaserc.json), never picked by hand. Triggers:
-#   - push to main from anyone but Dependabot: releases right away and sweeps
-#     up any dependency updates that are still waiting
-#   - weekly cron: releases whatever Dependabot merged since the last release
-#   - manual run (workflow_dispatch)
-# Dependabot's own merges never trigger a run, so a week of dependency updates
-# ends up in one release instead of one release per PR.
+# main (see .releaserc.json), never picked by hand. Releases only happen on a
+# manual run (workflow_dispatch): merging to main never triggers one by
+# itself, so any number of merged changes sit on main until you decide to
+# release them together, and semantic-release bundles all commits since the
+# last tag into that one release.
 on:
-  push:
-    branches: [main]
-  schedule:
-    - cron: '0 6 * * 2'
   workflow_dispatch:
 
 env:
@@ -30,9 +24,7 @@ jobs:
   # Dry run: is there anything releasable since the last tag? Saves the test
   # suite and image build for pushes (docs, chore, ...) that produce no release.
   plan:
-    if: >-
-      github.ref == 'refs/heads/main' &&
-      (github.event_name != 'push' || github.event.head_commit.author.name != 'dependabot[bot]')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     # write, not read: semantic-release verifies push access even in a dry run.

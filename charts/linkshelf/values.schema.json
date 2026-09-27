@@ -11,6 +11,9 @@
         "apiUrl": {
             "type": "string"
         },
+        "configFile": {
+            "type": "object"
+        },
         "database": {
             "type": "object",
             "properties": {
