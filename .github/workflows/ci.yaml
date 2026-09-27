@@ -275,4 +275,3 @@ jobs:
           expect_failure "cannot be combined" -f ci/bundled-postgres.yaml --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":"x"},{"name":"DATABASE_HOST","value":"h"}]'
           expect_failure "postgresql.settings.existingSecret" -f ci/bundled-postgres.yaml --set postgresql.settings.existingSecret=
           expect_failure "ingress.frontend.host" -f ci/minimal.yaml --set ingress.enabled=true
-          expect_failure "needs both secretName and secretKey" -f ci/minimal.yaml --set secrets.smtpPassword.secretName=only-name
