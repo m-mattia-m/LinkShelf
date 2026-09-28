@@ -270,8 +270,19 @@ jobs:
 
           expect_failure "AUTHENTICATION_JWTSECRET"
           expect_failure "AUTHENTICATION_JWTSECRET" --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":""}]'
-          expect_failure "configure a database" --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":"x"}]'
-          expect_failure "AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD" --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":"x"},{"name":"DATABASE_HOST","value":"h"},{"name":"DATABASE_PORT","value":"5432"},{"name":"DATABASE_USERNAME","value":"u"},{"name":"DATABASE_PASSWORD","value":"p"},{"name":"DATABASE_NAME","value":"d"},{"name":"AUTHENTICATION_BOOTSTRAPADMIN_EMAIL","value":"a@b.c"}]'
+          expect_failure "AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD" --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":"x"},{"name":"AUTHENTICATION_BOOTSTRAPADMIN_EMAIL","value":"a@b.c"}]'
           expect_failure "cannot be combined" -f ci/bundled-postgres.yaml --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":"x"},{"name":"DATABASE_HOST","value":"h"}]'
           expect_failure "postgresql.settings.existingSecret" -f ci/bundled-postgres.yaml --set postgresql.settings.existingSecret=
           expect_failure "ingress.frontend.host" -f ci/minimal.yaml --set ingress.enabled=true
+
+          # A bring-your-own database has no env requirement of its own (unlike
+          # AUTHENTICATION_JWTSECRET, which is a secret this chart insists on via
+          # env/Secret) - the non-secret parts are just as valid set via configFile,
+          # and the chart must not fail the template just because it can't see them
+          # there. If the database really is unconfigured, the backend's own startup
+          # DB connection attempt is what reports that, not this chart.
+          if ! helm template ci . \
+            --set-json 'env=[{"name":"AUTHENTICATION_JWTSECRET","value":"x"},{"name":"DATABASE_USERNAME","value":"u"},{"name":"DATABASE_PASSWORD","value":"p"}]' \
+            --set-json 'configFile={"database":{"host":"h","port":5432,"name":"d"}}' > /dev/null; then
+            echo "expected helm template to succeed with the database configured via configFile"; exit 1
+          fi
