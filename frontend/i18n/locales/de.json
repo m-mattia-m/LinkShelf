@@ -29,6 +29,9 @@
   "auth.signUp.registrationDisabled": "Die Registrierung ist derzeit deaktiviert. Bitte wende dich für eine Einladung an einen Administrator.",
   "auth.signUp.checkEmail.title": "Prüfe deine E-Mails",
   "auth.signUp.checkEmail.description": "Wir haben einen Bestätigungslink an deine E-Mail-Adresse gesendet. Klicke darauf, um die Einrichtung deines Kontos abzuschliessen.",
+  "auth.signUp.emailDeliveryFailed.title": "Konto erstellt",
+  "auth.signUp.emailDeliveryFailed.description": "Dein Konto wurde erstellt, aber wir konnten die Bestätigungs-E-Mail nicht senden. Bitte versuche es erneut.",
+  "auth.signUp.emailDeliveryFailed.resend": "E-Mail erneut senden",
 
   "auth.callback.completing": "Anmeldung wird abgeschlossen ...",
   "auth.callback.failed": "Die Anmeldung konnte nicht abgeschlossen werden.",

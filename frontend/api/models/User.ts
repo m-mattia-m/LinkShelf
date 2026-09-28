@@ -36,6 +36,12 @@ export interface User {
      * @type {boolean}
      * @memberof User
      */
+    emailDeliveryFailed?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof User
+     */
     emailVerified: boolean;
     /**
      * 
@@ -101,6 +107,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         
         '$schema': json['$schema'] == null ? undefined : json['$schema'],
         'email': json['email'],
+        'emailDeliveryFailed': json['email_delivery_failed'] == null ? undefined : json['email_delivery_failed'],
         'emailVerified': json['email_verified'],
         'firstName': json['first_name'],
         'hasPassword': json['has_password'],
@@ -123,6 +130,7 @@ export function UserToJSONTyped(value?: Omit<User, '$schema'> | null, ignoreDisc
     return {
         
         'email': value['email'],
+        'email_delivery_failed': value['emailDeliveryFailed'],
         'email_verified': value['emailVerified'],
         'first_name': value['firstName'],
         'has_password': value['hasPassword'],

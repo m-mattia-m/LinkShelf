@@ -8,6 +8,7 @@ Name | Type
 ------------ | -------------
 `$schema` | string
 `email` | string
+`emailDeliveryFailed` | boolean
 `emailVerified` | boolean
 `firstName` | string
 `hasPassword` | boolean
@@ -25,6 +26,7 @@ import type { User } from ''
 const example = {
   "$schema": null,
   "email": null,
+  "emailDeliveryFailed": null,
   "emailVerified": null,
   "firstName": null,
   "hasPassword": null,

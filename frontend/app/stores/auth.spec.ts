@@ -53,7 +53,7 @@ describe('useAuthStore', () => {
 
       const result = await store.register({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
 
-      expect(result).toEqual({ pendingVerification: false })
+      expect(result).toEqual({ pendingVerification: false, emailDeliveryFailed: false })
       expect(store.isAuthenticated).toBe(true)
     })
 
@@ -66,8 +66,20 @@ describe('useAuthStore', () => {
 
       const result = await store.register({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
 
-      expect(result).toEqual({ pendingVerification: true })
+      expect(result).toEqual({ pendingVerification: true, emailDeliveryFailed: false })
       expect(store.isAuthenticated).toBe(false)
+    })
+
+    it('passes emailDeliveryFailed through when the backend could not send the initial email', async () => {
+      server.use(
+        http.post(`${BASE}/v1/users`, () => HttpResponse.json(UserToJSON(buildUser({ emailDeliveryFailed: true })))),
+        http.post(`${BASE}/v1/auth/login`, () => errorResponse(403, 'email not verified'))
+      )
+      const store = useAuthStore()
+
+      const result = await store.register({ email: 'new@example.com', username: 'new-user', firstName: 'New', lastName: 'User', password: 'secret123' })
+
+      expect(result).toEqual({ pendingVerification: true, emailDeliveryFailed: true })
     })
 
     it('rethrows a non-403 failure from the follow-up login', async () => {
