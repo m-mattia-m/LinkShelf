@@ -5,9 +5,8 @@ export const USERNAME_MAX_LENGTH = 30
 export const USERNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
 
 /**
- * The shape of a username, mirroring the backend (see
- * backend/internal/domain/username.go). Reserved words are only checked
- * there - the response explains which one was rejected.
+ * The shape of a username, mirroring backend/internal/domain/username.go.
+ * Reserved words are only checked by the backend.
  */
 export function usernameSchema() {
   return v.pipe(

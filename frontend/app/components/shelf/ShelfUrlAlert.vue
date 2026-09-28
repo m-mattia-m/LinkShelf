@@ -11,13 +11,8 @@ const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody |
 
 const userBasedPaths = computed(() => websiteSettings.value?.userBasedPaths ?? false)
 
-// A shelf that only has a domain has no path to warn about.
-//
-// The URL notice is only for a shelf whose URL changed shape since it was
-// created: links shared back then have stopped working. A shelf created under
-// the current setting has never had another kind of URL, so there is nothing
-// to say about it. A reserved path is reported first because it is worse -
-// the shelf can't be reached at all.
+// Only shown for a shelf with a path whose URL changed shape since it was
+// created. A reserved path is reported first because the shelf is unreachable.
 const state = computed<'nowUserBased' | 'noLongerUserBased' | 'reserved' | null>(() => {
   if (!props.shelf.path) return null
   if (!userBasedPaths.value && isRouteReservedPath(props.shelf.path)) return 'reserved'

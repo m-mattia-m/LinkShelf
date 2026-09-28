@@ -7,12 +7,8 @@ const { user, ensureUser } = useCurrentUser()
 const authStore = useAuthStore()
 const router = useRouter()
 
-// ULocaleSelect's `locales` prop is typed for @nuxt/ui's own Locale<M> (with
-// `dir`/`messages` for its internal component strings), not @nuxtjs/i18n's
-// app-content locale list this app actually configures - there's no de-CH
-// @nuxt/ui locale pack to wire up here, so this intentionally only supplies
-// code/name and casts past the mismatch. Kept in sync with the same switcher
-// in AppLayout.vue's footer - both change the one global app locale.
+// ULocaleSelect expects @nuxt/ui's Locale type, which has no de-CH pack, so
+// only code/name are supplied and the type is cast. Same as in AppLayout.vue.
 const availableLocales = computed(() => {
   const mapped = locales.value.map(l => ({
     code: l.code,

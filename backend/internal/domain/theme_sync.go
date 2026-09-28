@@ -15,21 +15,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// SyncInstanceThemes reconciles the theme table's instance-scoped rows with
-// the YAML files in the configured themes directory (config
-// "themes.directory"), run once at startup. Each file is one theme with a
-// "name" and a "config" (the same "--property: value;" text a user-authored
-// theme uses - both scopes share one validator and one rendering path). A
-// file's base name (without extension) is its stable identity: adding a file
-// creates a theme, removing one deletes it, editing one updates it in place -
-// all only take effect on the next restart, matching how the rest of this
-// app's config already loads once at startup.
-//
-// A malformed file (bad YAML, missing name/config, or config that fails
-// ValidateThemeConfig) is skipped with a logged error - it never blocks the
-// rest of the directory from loading or the application from starting. If
-// the directory isn't configured (or doesn't exist), this is a no-op: an
-// admin who doesn't want instance themes simply never sets it.
+// SyncInstanceThemes reconciles the instance-scoped themes with the YAML files
+// in themes.directory at startup. Each file has a "name" and a "config", and
+// its base name is the theme's identity: adding, removing or editing a file
+// creates, deletes or updates the theme. Malformed files are logged and
+// skipped. An unset or missing directory is a no-op.
 func SyncInstanceThemes(repo *repository.Repository) error {
 	dir := strings.TrimSpace(config.String("themes.directory"))
 	if dir == "" {

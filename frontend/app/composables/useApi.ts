@@ -19,10 +19,8 @@ export function useApi() {
   const runtimeConfig = useRuntimeConfig()
   const authStore = useAuthStore()
 
-  // Only requests that already carried a Bearer token (i.e. protected
-  // endpoints) are eligible for a refresh-and-retry - auth endpoints
-  // (login/refresh/logout/oidc) never send one, so this can't recurse into
-  // itself when a refresh attempt is what 401s.
+  // Only requests that carried a Bearer token are retried after a refresh.
+  // Auth endpoints never send one, so a failing refresh can't recurse.
   const customFetch: typeof fetch = async (input, init) => {
     const response = await fetch(input, init)
 
@@ -40,11 +38,8 @@ export function useApi() {
       return response
     }
 
-    // Overwrite the header on a Headers object, then hand fetch a plain record
-    // with exactly one key per header. Spreading the old headers next to a
-    // differently-cased "Authorization" key would send both values, which
-    // browsers merge into "Bearer <old>, Bearer <new>" - a token the backend
-    // rejects.
+    // Set the header on a Headers object so there's exactly one Authorization
+    // key; a differently-cased duplicate would send both tokens.
     const headers = new Headers(init?.headers)
     headers.set('Authorization', `Bearer ${authStore.accessToken}`)
     return fetch(input, { ...init, headers: Object.fromEntries(headers.entries()) })

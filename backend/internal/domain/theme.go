@@ -27,11 +27,8 @@ type ThemeService interface {
 	// ListAllUserScoped is the admin moderation view across every user's
 	// themes. Route-level Metadata gates this to admins.
 	ListAllUserScoped() ([]model.Theme, error)
-	// Resolve returns a theme's validated property map for rendering. An
-	// empty themeId resolves to (nil, false, nil) - no theme selected, render
-	// the built-in default look. A themeId that no longer matches any theme
-	// resolves to (nil, true, nil) - missing, same default look, but the
-	// caller (the shelf edit page) should tell the owner to pick a new one.
+	// Resolve returns a theme's validated property map. An empty themeId gives
+	// (nil, false, nil); an id that no longer exists gives (nil, true, nil).
 	Resolve(themeId string) (config map[string]string, missing bool, err error)
 	// ValidateAssignable checks that shelfOwnerUserId may set a shelf's theme
 	// to themeId: unset, any instance theme, or a user theme owned by

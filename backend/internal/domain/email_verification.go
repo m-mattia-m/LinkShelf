@@ -131,11 +131,8 @@ func (s *emailVerificationServiceImpl) send(userId, email, action string) error 
 		sendErr = s.mailer.Send(verifyEmailMessage(email, rawToken))
 	}
 
-	// This is the single choke point every issuance flow (initial send,
-	// resend, password reset) goes through, so logging here catches a broken
-	// SMTP setup regardless of which one triggered it - several callers treat
-	// a failed send as best-effort and discard this return value, which would
-	// otherwise make the failure invisible everywhere.
+	// Log here because every issuance flow passes through and several callers
+	// discard the error as best-effort.
 	if sendErr != nil {
 		zap.L().Error("failed to send account email", zap.String("action", action), zap.Error(sendErr))
 	}

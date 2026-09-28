@@ -1,9 +1,6 @@
 <script setup lang="ts">
-// Icon names are generated from the installed @iconify-json/lucide and
-// @iconify-json/simple-icons packages - see public/icon-names.json. Loaded
-// lazily (only once the picker is actually opened) and cached across every
-// instance of this component via useState, so opening a second picker on the
-// same page is instant.
+// Icon names come from public/icon-names.json, loaded lazily on first open
+// and shared across instances via useState.
 interface IconNameSets {
   'lucide': string[]
   'simple-icons': string[]

@@ -1,17 +1,9 @@
-// A shelf can be served on a domain of its own: when the frontend is reached
-// on such a domain, `/` shows that shelf instead of the landing page. This is
-// the lookup that decides whether the host of a request is one of those.
-//
-// It runs on the Nuxt server, once per page request, in front of every render,
-// so it is answered from a small in-memory cache: the main host, which is
-// almost every request, costs one backend call a minute. Content is never
-// cached here, only the yes/no - the shelf itself is fetched fresh by the
-// page, so an edit shows up immediately, while a domain that was just added
-// or removed takes up to a minute to.
+// Decides whether a request's host is the domain of a shelf, so `/` can show
+// that shelf instead of the landing page. It runs on the Nuxt server for every
+// page request, so only the yes/no is cached, for up to a minute.
 
 const CACHE_TTL_MS = 60_000
-// The Host header is chosen by whoever sends the request, so the cache can't be
-// allowed to grow with it.
+// The Host header is client-controlled, so the cache size is capped.
 const CACHE_MAX_ENTRIES = 1024
 const REQUEST_TIMEOUT_MS = 3_000
 
@@ -33,11 +25,9 @@ export function clearShelfHostCache() {
 }
 
 /**
- * The host a request was addressed to, as the visitor typed it. Behind a proxy
- * or load balancer that rewrites Host, the original is in X-Forwarded-Host
- * (possibly a list, first one wins), so that is preferred. Anyone can send that
- * header, but the worst it can do is show a public shelf under another host,
- * so it needs no trusted-proxy list.
+ * The host a request was addressed to, preferring X-Forwarded-Host (first
+ * entry). Spoofing it can only show a public shelf under another host, so no
+ * trusted-proxy list is needed.
  */
 export function requestHost(headers: Record<string, string | string[] | undefined>): string {
   const pick = (name: string) => {
@@ -59,13 +49,9 @@ function remember(host: string, domain: string | null, now: number) {
 }
 
 /**
- * The normalized domain of the shelf served on `host`, or null when the host
- * isn't a shelf's domain - which is the case for the instance's own host, and
- * for anything that couldn't be a domain at all (localhost, an IP, junk), none
- * of which ever reaches the backend.
- *
- * A backend that can't be reached also gives null, and isn't remembered: the
- * main site has to keep working when this lookup can't.
+ * The normalized domain of the shelf served on `host`, or null. Hosts that
+ * can't be a domain never reach the backend. An unreachable backend also
+ * gives null and isn't cached, so the main site keeps working.
  */
 export async function resolveShelfHost(host: string, apiBase: string, options: ResolveOptions = {}): Promise<string | null> {
   const fetchFn = options.fetchFn ?? fetch

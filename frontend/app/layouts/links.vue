@@ -1,18 +1,12 @@
 <script setup lang="ts">
 const { t } = useI18n()
 
-// Set by the page component (via the same key) once it resolves the
-// shelf's theme - a plain object of "--shelf-*" CSS custom properties, or
-// {} when no theme is selected/it no longer exists. Shared via useState
-// (rather than props) because a Nuxt layout can't receive props from its
-// page, and CSS custom properties only cascade to descendants, so they have
-// to be set here on the layout's own root element - the page's own content
-// is a descendant of it and picks them up automatically.
+// "--shelf-*" CSS custom properties of the shelf's theme, set by the page.
+// useState because a layout can't receive props from its page, and the
+// properties have to be set on this root element to cascade.
 const themeVars = useState<Record<string, string>>('public-shelf-theme-vars', () => ({}))
 
-// Shared with ShelfPublicView.vue the same way theme vars are (see above) -
-// defaults to "on, no custom text" so the page shows today's only behavior
-// (the default footer) until the shelf has actually loaded.
+// Set by ShelfPublicView.vue; defaults to the default footer until it loads.
 const footer = useState<{ enabled: boolean, customText: string }>('public-shelf-footer', () => ({ enabled: true, customText: '' }))
 const footerHtml = computed(() => footer.value.customText ? renderRestrictedMarkdown(footer.value.customText) : '')
 
@@ -26,19 +20,13 @@ const rootStyle = computed(() => {
   }
   if (vars['--shelf-font-family']) style.fontFamily = vars['--shelf-font-family']
 
-  // --shelf-bg may be a plain color or a CSS gradient (see the backend's
-  // validateColorOrGradient) - setting both longhands lets each accept
-  // whichever one it actually is, since a gradient is only valid for
-  // backgroundImage and a plain color only for backgroundColor; the
-  // browser silently drops whichever one doesn't apply. Two longhands
-  // (rather than the "background" shorthand) also means this can't reset
-  // the theme's own --shelf-bg-image below.
+  // --shelf-bg may be a color or a gradient; set both longhands and the
+  // browser drops whichever one doesn't apply.
   if (vars['--shelf-bg']) {
     style.backgroundColor = vars['--shelf-bg']
     style.backgroundImage = vars['--shelf-bg']
   }
-  // A theme's own background photo always wins over --shelf-bg's own
-  // image-typed value (a gradient).
+  // A theme's background photo wins over a --shelf-bg gradient.
   if (vars['--shelf-bg-image']) style.backgroundImage = `url(${vars['--shelf-bg-image']})`
 
   return style

@@ -60,11 +60,8 @@ const columns: FooterColumn[] = [
   }
 ]
 const { locale, locales, setLocale } = useI18n()
-// ULocaleSelect's `locales` prop is typed for @nuxt/ui's own Locale<M> (with
-// `dir`/`messages` for its internal component strings), not @nuxtjs/i18n's
-// app-content locale list this app actually configures - there's no de-CH
-// @nuxt/ui locale pack to wire up here, so this intentionally only supplies
-// code/name and casts past the mismatch.
+// ULocaleSelect expects @nuxt/ui's Locale type, which has no de-CH pack, so
+// only code/name are supplied and the type is cast.
 const availableLocales = computed(() => {
   const mapped = locales.value.map(l => ({
     code: l.code,

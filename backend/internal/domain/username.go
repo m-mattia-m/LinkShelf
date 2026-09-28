@@ -21,11 +21,9 @@ const (
 // on both Postgres and MySQL.
 var usernamePattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
 
-// routeReservedNames are the words a top-level URL segment already belongs to:
-// the frontend's static pages and the backend's own endpoints. A username
-// with one of these names would shadow (or be shadowed by) that route, and
-// with user-based paths off a shelf path with one of these names could never
-// be reached.
+// routeReservedNames are top-level URL segments already used by the frontend
+// or backend. A username or (with user-based paths off) a shelf path with one
+// of these names would clash with the route.
 var routeReservedNames = map[string]struct{}{
 	"app": {}, "auth": {}, "docs": {}, "cloud": {}, "about": {}, "contact": {},
 	"imprint": {}, "privacy-policy": {}, "terms-of-use": {},
@@ -123,11 +121,9 @@ func emailLocalPart(email string) string {
 	return email[:at]
 }
 
-// availableUsername derives a valid, unused username from the first candidate
-// that yields anything after sanitizing, falling back to "member" ("user" is
-// itself reserved). When the
-// result is too short, reserved or taken it appends -2, -3, ... until one
-// works, shortening the base so the suffix always fits.
+// availableUsername derives an unused username from the first candidate that
+// survives sanitizing, falling back to "member". If the result is too short,
+// reserved or taken, it appends -2, -3, ... until one works.
 func availableUsername(repo *repository.Repository, candidates ...string) (string, error) {
 	base := "member"
 	for _, candidate := range candidates {

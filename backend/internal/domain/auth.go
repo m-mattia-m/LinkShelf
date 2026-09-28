@@ -175,13 +175,9 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		return s.issueTokenPair(record.Id, record.Role)
 	}
 
-	// First-time external login: auto-link to an existing local user matched
-	// by email, or auto-provision a brand-new one. Both paths require the
-	// provider to vouch for the email - without it, auto-linking would let
-	// anyone claim another user's account just by typing their email at the
-	// provider, and auto-provisioning would let anyone sign up with an email
-	// they don't own. The two failure cases are kept as distinct errors so
-	// the message doesn't claim an account exists when it doesn't.
+	// First-time external login: link to an existing user by email, or
+	// provision a new one. Both require a provider-verified email, otherwise
+	// anyone could claim another user's account or an email they don't own.
 	existing, err := s.Repository.UserRepository.FindByEmail(identity.Email)
 	if err != nil {
 		return nil, err

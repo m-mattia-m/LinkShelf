@@ -47,20 +47,14 @@ func New() Mailer {
 	}
 }
 
-// fromHeader is what goes in the message's From: header - just the bare
-// address, or "Display Name" <address> when smtp.fromName is set. This must
-// never be used for the SMTP envelope (MAIL FROM): that command only accepts
-// a bare address, and a display name there gets the whole send rejected by
-// the server.
+// fromHeader is the message's From: header. Never use it for the SMTP
+// envelope (MAIL FROM), which only accepts a bare address.
 func (m *smtpMailer) fromHeader() string {
 	return FormatFromHeader(m.from, m.fromName)
 }
 
-// FormatFromHeader formats an address and optional display name the same
-// way a message's From: header is built, e.g. `"Display Name" <addr>`, or
-// just `addr` when name is blank. Exported so the admin-only email delivery
-// info endpoint can show exactly what recipients will see, without
-// duplicating this formatting.
+// FormatFromHeader returns `"Display Name" <addr>`, or just `addr` when name
+// is blank.
 func FormatFromHeader(address, name string) string {
 	if strings.TrimSpace(name) == "" {
 		return address

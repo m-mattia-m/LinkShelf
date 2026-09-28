@@ -23,9 +23,8 @@ function decodeAccessToken(token: string): AccessTokenClaims | null {
   }
 }
 
-// Once the session is gone an /app page can't do anything useful. The route
-// middleware only runs on navigation, so without this the user stays on a page
-// whose requests all fail. Sign-in sends them back here afterwards.
+// The route middleware only runs on navigation, so a lost session on an /app
+// page has to redirect here.
 function redirectToSignIn() {
   if (!import.meta.client) return
   const route = useRouter().currentRoute.value
@@ -33,10 +32,8 @@ function redirectToSignIn() {
   navigateTo({ path: '/auth/sign-in', query: { redirect: route.fullPath } })
 }
 
-// In-flight refreshes, keyed by Pinia instance: one per app in the browser and
-// one per request on the server, so nothing leaks between users. The store
-// itself is not a usable key - the object an action sees as `this` is not the
-// same one from call to call.
+// In-flight refreshes, keyed by Pinia instance so nothing leaks between users
+// on the server. The store itself isn't a stable key.
 const refreshes = new WeakMap<object, Promise<boolean>>()
 
 export const useAuthStore = defineStore('authStore', {
@@ -63,9 +60,8 @@ export const useAuthStore = defineStore('authStore', {
 
   actions: {
     /**
-     * Restores tokens saved by a previous session. Client-only: tokens live
-     * in localStorage, never in a cookie, so there's nothing to restore
-     * during SSR.
+     * Restores tokens saved by a previous session. Client-only, since tokens
+     * live in localStorage.
      */
     init() {
       if (this.initialized || !import.meta.client) return
@@ -100,17 +96,9 @@ export const useAuthStore = defineStore('authStore', {
       await this.fetchUser()
     },
 
-    // Registration always creates the account, but logging straight in
-    // afterward only works if email verification is off (or the account
-    // happens to already be verified) - when it's on, the fresh account
-    // can't log in yet, so that specific 403 is reported back as
-    // "pendingVerification" instead of being thrown like any other failure.
-    //
-    // emailDeliveryFailed means the account was created but the backend
-    // could not send the initial verification email (e.g. broken SMTP) - the
-    // caller must not tell the user to "check their email" in that case,
-    // since none was sent; it should ask them to retry (resendVerification)
-    // instead.
+    // Logging in right after registering fails with 403 while email
+    // verification is pending, which is reported as pendingVerification.
+    // emailDeliveryFailed means the verification email could not be sent.
     async register(userCreate: UserCreate): Promise<{ pendingVerification: boolean, emailDeliveryFailed: boolean }> {
       const api = useApi()
       const created = await api.user.postCreateUser({ userCreate })
@@ -126,8 +114,7 @@ export const useAuthStore = defineStore('authStore', {
       }
     },
 
-    // Always resolves - the backend never reveals whether the address
-    // exists, is already verified, or was rate-limited.
+    // Always resolves; the backend never reveals whether the address exists.
     async resendVerification(email: string): Promise<void> {
       const api = useApi()
       await api.auth.postResendVerification({ resendVerificationRequest: { email } })
@@ -140,14 +127,9 @@ export const useAuthStore = defineStore('authStore', {
     },
 
     /**
-     * Exchanges the refresh token for a new pair (single-use rotation on the
-     * backend - the old refresh token stops working the moment this call
-     * succeeds). Clears the session on failure.
-     *
-     * Concurrent callers share one exchange: a page load fires several
-     * requests at once, and if each of them refreshed on its own, every call
-     * after the first would present an already-spent token, fail, and wipe
-     * the session that the first call had just renewed.
+     * Exchanges the single-use refresh token for a new pair and clears the
+     * session on failure. Concurrent callers share one exchange, otherwise
+     * every call after the first would present a spent token.
      */
     refresh(): Promise<boolean> {
       const pinia = getActivePinia()!
@@ -199,10 +181,8 @@ export const useAuthStore = defineStore('authStore', {
     },
 
     /**
-     * Completes an OIDC login/link. When the caller is already authenticated,
-     * this links the external identity to the current account instead of
-     * logging in as a different one - matching the backend's callback
-     * behavior, which branches on whether a Bearer token was sent.
+     * Completes an OIDC login. When already authenticated, this links the
+     * external identity to the current account instead.
      */
     async completeOidcLogin(code: string, state: string): Promise<void> {
       const api = useApi()

@@ -11,11 +11,8 @@ import (
 	"strings"
 )
 
-// linkHostPattern matches a domain.tld-shaped host: at least two
-// dot-separated labels (letters/digits/hyphens, no leading/trailing hyphen)
-// with the last one (the TLD) being at least 2 letters. Deliberately not
-// restricted to a fixed TLD allowlist, since custom/non-standard TLDs may be
-// valid here too.
+// linkHostPattern matches a domain.tld-shaped host with a TLD of at least 2
+// letters. There is deliberately no TLD allowlist.
 var linkHostPattern = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`)
 
 // validateLinkURL accepts a URL with or without a scheme (defaulting to

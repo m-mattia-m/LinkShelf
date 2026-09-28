@@ -68,12 +68,8 @@ function actionItems(theme: Theme) {
   ]
 }
 
-/**
- * Import reads a plain-text config file the user exported earlier (or wrote
- * by hand) and opens the create dialog pre-filled with it - it always
- * creates a NEW theme, never overwrites an existing one. Validation is the
- * same as the regular create flow (server-side, same schema as the editor).
- */
+// Import opens the create dialog pre-filled from an exported config file. It
+// always creates a new theme.
 const importFileInput = ref<HTMLInputElement>()
 const importInitial = ref<ThemeBase>()
 const importOpen = ref(false)

@@ -41,12 +41,8 @@ const hasAnyLinks = computed(() => links.value.length > 0)
 const themeVars = useState<Record<string, string>>('public-shelf-theme-vars', () => ({}))
 const footer = useState<{ enabled: boolean, customText: string }>('public-shelf-footer', () => ({ enabled: true, customText: '' }))
 
-// A link's own color always has a DB-level default of "#000000" rather than
-// being genuinely unset, so there's no way to tell "user picked black" apart
-// from "user never touched this." Treating that default as "no override"
-// lets a theme's --shelf-link-bg show through for links nobody has
-// customized, rather than every untouched link staying hardcoded black
-// regardless of the shelf's theme.
+// A link's color defaults to "#000000" in the DB, so black is treated as "no
+// override" to let the theme's --shelf-link-bg show through.
 function linkBackgroundStyle(link: Link): Record<string, string> {
   if (link.color && link.color.toLowerCase() !== '#000000') {
     return { backgroundColor: link.color }
@@ -87,10 +83,8 @@ onMounted(load)
 // Nuxt reuses this component when only the route params change.
 watch(() => [props.username, props.path, props.domain], load)
 
-// robots is only set when the owner opted this shelf out of indexing -
-// leaving it unset (rather than always "index") is deliberate, since an
-// explicit "index" would override an instance-wide robots policy a host
-// might set some other way, which is none of this component's business.
+// robots is only set when the shelf opted out of indexing, so an
+// instance-wide robots policy isn't overridden.
 useSeoMeta({
   title: () => shelf.value?.title,
   description: () => shelf.value?.description,

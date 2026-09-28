@@ -20,24 +20,20 @@ const (
 
 var (
 	// domainLabelPattern is one DNS label: letters, digits and hyphens, not
-	// starting or ending with a hyphen (RFC 1123). Domains are always stored
-	// lowercase, which is what lets a plain UNIQUE column act
-	// case-insensitively on both Postgres and MySQL.
+	// starting or ending with a hyphen (RFC 1123).
 	domainLabelPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
-	// domainTldPattern is the last label: letters only (so an IP address like
-	// 1.2.3.4 can never pass), or a punycode-encoded international TLD.
+	// domainTldPattern is the last label: letters only (so IP addresses never
+	// pass), or a punycode-encoded international TLD.
 	domainTldPattern = regexp.MustCompile(`^([a-z]{2,}|xn--[a-z0-9]([a-z0-9-]*[a-z0-9])?)$`)
 	// domainPortPattern is a port without leading zeros, so "0443" can't be
 	// used to dodge the default-port stripping in NormalizeDomain.
 	domainPortPattern = regexp.MustCompile(`^[1-9][0-9]{0,4}$`)
 )
 
-// NormalizeDomain brings a domain into the one form it is stored and compared
-// in: trimmed, lowercased, without a trailing slash or dot, and without the
-// default ports :80 and :443 (browsers leave those out of the Host header, so
-// "example.com:443" and "example.com" are the same site). It never rejects
-// anything - ValidateDomain judges the result. The frontend implements the
-// same rules in app/utils/shelfDomain.ts, keep them in step.
+// NormalizeDomain trims and lowercases a domain and strips a trailing slash or
+// dot and the default ports :80 and :443. It never rejects anything; see
+// ValidateDomain. frontend/shared/utils/shelfDomain.ts implements the same
+// rules, keep them in step.
 func NormalizeDomain(raw string) string {
 	s := strings.ToLower(strings.TrimSpace(raw))
 	s = strings.TrimRight(s, "/")
@@ -55,8 +51,7 @@ func NormalizeDomain(raw string) string {
 }
 
 // ValidateDomain checks an already normalized domain: a DNS name with a
-// letters-only (or punycode) top-level domain and an optional port, so no IP
-// addresses, no "localhost", no wildcards, no scheme and no path.
+// letters-only (or punycode) TLD and an optional port.
 func ValidateDomain(domain string) error {
 	if strings.Contains(domain, "://") || strings.Contains(domain, "/") {
 		return fmt.Errorf("%w: a domain must not contain a scheme or a path", ErrInvalidInput)
@@ -93,16 +88,9 @@ func ValidateDomain(domain string) error {
 	return nil
 }
 
-// reservedShelfDomains are the hosts a shelf can't claim: the ones this
-// instance itself is served on, since a shelf there would take over the app.
-// Both the host alone and host:port are listed for each, so the app is
-// protected however the operator wrote its URL. A value that isn't set
-// contributes nothing (an instance that never configured its URLs accepts
-// every domain).
-//
-// Only the frontend and the API host are known here. The API host is harmless
-// to claim (requests to it never reach the frontend), but reserving it keeps
-// the rule easy to explain.
+// reservedShelfDomains are the hosts this instance itself is served on, with
+// and without port, so a shelf can't take over the app. Unset URLs contribute
+// nothing.
 func reservedShelfDomains() map[string]struct{} {
 	reserved := make(map[string]struct{})
 	add := func(host, port string) {
@@ -129,10 +117,8 @@ func reservedShelfDomains() map[string]struct{} {
 	return reserved
 }
 
-// checkShelfDomain normalizes domain and checks it: the format, and that it
-// isn't one of this instance's own hosts. It returns the normalized value to
-// store. It does not check whether the domain is taken - that needs the
-// database.
+// checkShelfDomain normalizes and validates domain and rejects this
+// instance's own hosts. It does not check whether the domain is taken.
 func checkShelfDomain(domain string) (string, error) {
 	domain = NormalizeDomain(domain)
 	if domain == "" {

@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import type { ButtonProps } from '#ui/components/Button.vue'
 
-const links = ref<ButtonProps[]>([
+const { t } = useI18n()
+
+const links = computed<ButtonProps[]>(() => [
   {
-    label: 'Get started',
+    label: t('home.welcome.getStarted'),
     color: 'primary',
     to: '/app',
     trailingIcon: 'i-lucide-arrow-right',
     size: 'xl'
   },
   {
-    label: 'Source code',
+    label: t('home.welcome.sourceCode'),
     color: 'neutral',
     variant: 'subtle',
     leadingIcon: 'i-uil-github',
@@ -19,13 +21,41 @@ const links = ref<ButtonProps[]>([
   }
 ])
 
+const features = computed(() => [
+  { icon: 'i-lucide-folder-plus', title: t('home.features.shelves.title'), description: t('home.features.shelves.description') },
+  { icon: 'i-lucide-users', title: t('home.features.users.title'), description: t('home.features.users.description') },
+  { icon: 'i-lucide-globe', title: t('home.features.domains.title'), description: t('home.features.domains.description') },
+  { icon: 'i-lucide-paintbrush', title: t('home.features.themes.title'), description: t('home.features.themes.description') },
+  { icon: 'i-lucide-qr-code', title: t('home.features.qrCodes.title'), description: t('home.features.qrCodes.description') },
+  { icon: 'i-lucide-file-text', title: t('home.features.footer.title'), description: t('home.features.footer.description') },
+  { icon: 'i-lucide-server', title: t('home.features.selfHosting.title'), description: t('home.features.selfHosting.description') },
+  { icon: 'i-lucide-layout-dashboard', title: t('home.features.admin.title'), description: t('home.features.admin.description') },
+  { icon: 'i-lucide-shield-check', title: t('home.features.oidc.title'), description: t('home.features.oidc.description') }
+])
+
+const ctaLinks = computed<ButtonProps[]>(() => [
+  {
+    label: t('home.cta.docs'),
+    to: '/docs/self-hosting/getting-started',
+    trailingIcon: 'i-lucide-book-open',
+    color: 'primary'
+  },
+  {
+    label: t('home.cta.github'),
+    to: 'https://github.com/m-mattia-m/linkshelf',
+    target: '_blank',
+    icon: 'i-simple-icons-github',
+    color: 'neutral',
+    variant: 'outline'
+  }
+])
+
 definePageMeta({
   layout: 'landingpage'
 })
 
-// The domain of the shelf this host serves, set by middleware/shelf-host.global.ts
-// (which also switches to the layout a shelf page uses), or null on the
-// instance's own host.
+// The domain of the shelf this host serves, or null on the instance's own
+// host. Set by middleware/shelf-host.global.ts.
 const shelfHost = useState<string | null | undefined>('shelf-host')
 </script>
 
@@ -53,68 +83,17 @@ const shelfHost = useState<string | null | undefined>('shelf-host')
 
     <UPageSection
       id="features"
-      title="Everything you need to organize your links"
-      description="LinkShelf helps you collect, manage, and share your favorite links with powerful organization tools, flexible customization, and rock-solid infrastructure."
-      :features="[{
-        icon: 'i-lucide-folder-plus',
-        title: 'Unlimited collections',
-        description: 'Create and organize unlimited collections of links without restrictions. Keep everything structured exactly the way you want.'
-      }, {
-        icon: 'i-lucide-user-circle',
-        title: 'Accounts & sync',
-        description: 'Access your links across all devices with user accounts. Your collections stay in sync wherever you go.'
-      }, {
-        icon: 'i-lucide-globe',
-        title: 'Custom domains',
-        description: 'Use your own domain for one or multiple collections and share them professionally with clients, teams, or the public.'
-      }, {
-        icon: 'i-lucide-paintbrush',
-        title: 'Themes & customization',
-        description: 'Personalize the look and layout of your collections with multiple themes and flexible customization options.'
-      }, {
-        icon: 'i-lucide-smartphone',
-        title: 'Responsive by design',
-        description: 'Optimized for desktop and mobile devices so your links are always accessible, fast, and easy to use.'
-      }, {
-        icon: 'i-lucide-file-text',
-        title: 'Markdown support',
-        description: 'Add rich descriptions and notes to your links using Markdown for better context and clarity.'
-      }, {
-        icon: 'i-lucide-server',
-        title: 'Self-host & scale',
-        description: 'Self-host LinkShelf with full control over your data. Deploy easily on Kubernetes with support for PostgreSQL and MySQL.'
-      }, {
-        icon: 'i-lucide-layout-dashboard',
-        title: 'Admin dashboard',
-        description: 'Manage users, links, collections, and settings from a powerful and intuitive admin interface.'
-      }, {
-        icon: 'i-lucide-shield-check',
-        title: 'Secure & open',
-        description: 'Built with security in mind, supporting OpenID Connect (OIDC) authentication and fully open source for transparency and extensibility.'
-      }]"
+      :title="$t('home.features.title')"
+      :description="$t('home.features.description')"
+      :features="features"
     />
 
     <UPageSection>
       <UPageCTA
-        title="Ready to organize your links?"
-        description="Get started with LinkShelf in minutes. Use our managed cloud plan for zero setup, or self-host if you want full control."
+        :title="$t('home.cta.title')"
+        :description="$t('home.cta.description')"
         variant="subtle"
-        :links="[
-          {
-            label: 'Start with LinkShelf Cloud',
-            to: '/cloud',
-            trailingIcon: 'i-lucide-cloud',
-            color: 'primary'
-          },
-          {
-            label: 'Self-host on GitHub',
-            to: 'https://github.com/m-mattia-m/linkshelf',
-            target: '_blank',
-            icon: 'i-simple-icons-github',
-            color: 'neutral',
-            variant: 'outline'
-          }
-        ]"
+        :links="ctaLinks"
       />
     </UPageSection>
   </div>

@@ -148,10 +148,8 @@ describe('ShelfSectionCard', () => {
     })
   })
 
-  // Simulating a real HTML5 drag-and-drop gesture is unreliable in
-  // jsdom/happy-dom, so these exercise vuedraggable's actual wiring by
-  // triggering its emitted events directly instead (mountSuspended, rather
-  // than renderSuspended, so wrapper.findComponent() is available).
+  // HTML5 drag-and-drop is unreliable in happy-dom, so vuedraggable's events
+  // are triggered directly (mountSuspended for findComponent()).
   describe('drag-and-drop reordering', () => {
     it('emits "reordered" when the draggable list reports a drag end', async () => {
       const links = [buildLink({ id: 'link-1', order: 0 }), buildLink({ id: 'link-2', order: 1 })]

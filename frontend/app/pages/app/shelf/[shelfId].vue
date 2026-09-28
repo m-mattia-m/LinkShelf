@@ -51,11 +51,8 @@ const shareItems = computed(() => [
   [{ label: t('app.shelf.detail.qrCode'), icon: 'i-lucide-qr-code', disabled: !publicUrl.value, onSelect: () => { qrOpen.value = true } }]
 ])
 
-// Local, unsaved drag order - dragging a section or link only ever mutates
-// these; nothing is persisted until "Save order" is clicked. Re-derived from
-// the stores whenever they refetch (create/delete/initial load), which also
-// discards any in-progress unsaved drag in the rare case one of those
-// happens concurrently.
+// Local drag order, persisted only on "Save order". Re-derived whenever the
+// stores refetch.
 const orderedSections = ref<Section[]>([])
 const linkOrders = reactive<Record<string, Link[]>>({})
 const orderDirty = ref(false)

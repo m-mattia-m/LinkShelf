@@ -38,10 +38,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ShelfBase): void
 }>()
 
-// A shelf is reached through a path or through a domain of its own, never
-// both. The tab that is open when the form is saved decides which one is kept
-// and the other is sent empty, so the backend's "exactly one" rule can never
-// surprise anyone who filled in both.
+// A shelf is reached through a path or a domain, never both. The open tab
+// decides which one is saved; the other is sent empty.
 type Mode = 'path' | 'domain'
 
 const tabItems = [
@@ -80,10 +78,7 @@ const form = reactive({
   icon: props.modelValue?.icon ?? '',
   themeId: props.modelValue?.themeId ?? '',
   noIndex: props.modelValue?.noIndex ?? false,
-  // A shelf being created has never chosen either yet, so it gets the
-  // defaults that reproduce today's only behavior: footer shown, default
-  // text. An existing shelf always reflects what it actually has, even if
-  // that happens to be the same values.
+  // New shelves default to showing the default footer.
   footerEnabled: props.modelValue?.footerEnabled ?? true,
   footerCustomText: props.modelValue?.footerCustomText ?? ''
 })

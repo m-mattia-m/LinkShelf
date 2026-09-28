@@ -4,47 +4,33 @@ type User struct {
 	Id string `json:"id" bson:"id"`
 	UserBase
 	EmailVerified bool `json:"email_verified" bson:"email_verified"`
-	// HasPassword is false for an admin-invited account that hasn't
-	// completed registration yet (set-password link not used) - the
-	// frontend uses this plus EmailVerified to show an Active/Pending
-	// verification/Invited status.
+	// HasPassword is false for an admin-invited account that hasn't set a
+	// password yet.
 	HasPassword bool `json:"has_password" bson:"has_password"`
-	// EmailDeliveryFailed is only ever set to true by CreateUser, when the
-	// account was created but its initial verification/invite email could
-	// not be sent (e.g. broken SMTP config) - the frontend must not tell the
-	// caller to "check their email" in that case, since none was sent.
-	// Always false from every other endpoint.
+	// EmailDeliveryFailed is set only by CreateUser, when the account was
+	// created but its verification/invite email could not be sent.
 	EmailDeliveryFailed bool `json:"email_delivery_failed,omitempty" bson:"-"`
 }
 
 type UserBase struct {
 	Email string `json:"email" bson:"email" required:"true"`
-	// Username is lowercase letters, digits and hyphens, and is part of a
-	// shelf's public URL when app.userBasedPaths is enabled. Reserved words
-	// and taken names are rejected by the domain layer, which also owns the
-	// rules below - the schema only documents and pre-checks the shape.
+	// Username is part of a shelf's public URL when app.userBasedPaths is
+	// enabled. Reserved and taken names are rejected by the domain layer.
 	Username  string `json:"username" bson:"username" required:"true" minLength:"3" maxLength:"30" pattern:"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" patternDescription:"lowercase letters, numbers, and hyphens, not starting or ending with a hyphen"`
 	FirstName string `json:"first_name" bson:"first_name" required:"true"`
 	LastName  string `json:"last_name" bson:"last_name" required:"true"`
-	// Role is only ever applied when the caller is an authenticated admin -
-	// silently ignored (self-registration, self profile-update) otherwise.
-	// Enforced in the domain layer, not by this schema.
-	Role string `json:"role" bson:"role" doc:"The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise." required:"false"`
+	Role      string `json:"role" bson:"role" doc:"The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise." required:"false"`
 }
 
 type UserCreate struct {
 	UserBase
-	// Password is required for self-registration, but may be omitted when an
-	// admin creates the account - it's then created passwordless/"invited",
-	// and the invite email's link is the only way to set one. Enforced in
-	// the domain layer, not by this schema.
+	// Password is required for self-registration but optional when an admin
+	// creates the account, which then gets an invite link instead.
 	Password string `json:"password" bson:"password" required:"false"`
 }
 
 type UserRequestBody struct {
-	// Optional: when present and valid for an admin, the create request may
-	// also set the new user's role. Absent (self-registration), the role is
-	// always "user".
+	// Authorization is optional; an admin caller may also set the new user's role.
 	Authorization string     `header:"Authorization"`
 	Body          UserCreate `json:"body" bson:"body"`
 }

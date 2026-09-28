@@ -6,11 +6,7 @@ const props = withDefaults(defineProps<{
   mode?: 'create' | 'edit'
   theme?: Theme
   initial?: ThemeBase
-  // Suppresses the dialog's own default trigger button - for a usage that's
-  // opened purely programmatically (e.g. the import flow, which only sets
-  // `initial` once a file is picked, so `!initial` alone can't tell "the
-  // import dialog" apart from "the create dialog" while no file is chosen
-  // yet).
+  // Hides the default trigger button for programmatic use (e.g. import).
   hideTrigger?: boolean
 }>(), {
   mode: 'create',

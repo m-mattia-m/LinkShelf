@@ -80,39 +80,6 @@ func Test_ShelfRepository_List_NoRows(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-//func Test_ShelfRepository_List_ScanError(t *testing.T) {
-//	db, mock, err := sqlmock.New()
-//	require.NoError(t, err)
-//	defer db.Close()
-//
-//	repo := &shelfRepository{Engine: db}
-//
-//	// Force type mismatch: string into int field
-//	rows := sqlmock.NewRows([]string{
-//		"id",
-//		"title",
-//		"description",
-//		"theme",
-//		"icon",
-//		"user_id",
-//	}).AddRow(
-//		123,
-//		"test-shelf",
-//		"description",
-//		"dark",
-//		"icon",
-//		"user-id",
-//	)
-//
-//	mock.ExpectQuery(`FROM\s+shelf`).
-//		WillReturnRows(rows)
-//
-//	shelf, err := repo.List()
-//
-//	require.Error(t, err)
-//	require.Nil(t, shelf)
-//}
-
 func Test_ShelfRepository_Get_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -179,25 +146,6 @@ func Test_ShelfRepository_Get_NoRows(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, shelf)
 }
-
-//func Test_ShelfRepository_Get_QueryError(t *testing.T) {
-//	db, mock, err := sqlmock.New()
-//	require.NoError(t, err)
-//	defer db.Close()
-//
-//	repo := &shelfRepository{Engine: db}
-//
-//	// Match only the FROM clause (stable)
-//	mock.ExpectQuery(`FROM\s+shelf`).
-//		WithArgs("shelf-uuid-test").
-//		WillReturnError(errors.New("query failed"))
-//
-//	shelf, err := repo.Get("shelf-uuid-test")
-//
-//	require.Error(t, err)
-//	require.Nil(t, shelf)
-//	require.NoError(t, mock.ExpectationsWereMet())
-//}
 
 func Test_ShelfRepository_Create_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()

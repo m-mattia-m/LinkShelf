@@ -14,7 +14,7 @@ describe('landing page', () => {
     await renderSuspended(IndexPage)
 
     expect(screen.getByText('Getting started sharing links.')).toBeInTheDocument()
-    expect(screen.getByText(/LinkShelf is an Open Source Linktree alternative/)).toBeInTheDocument()
+    expect(screen.getByText(/LinkShelf is an open source Linktree alternative/)).toBeInTheDocument()
   })
 
   it('links "Get started" to the app and "Source code" to GitHub', async () => {
@@ -27,18 +27,18 @@ describe('landing page', () => {
   it('renders the features section', async () => {
     await renderSuspended(IndexPage)
 
-    expect(screen.getByText('Everything you need to organize your links')).toBeInTheDocument()
-    expect(screen.getByText('Unlimited collections')).toBeInTheDocument()
+    expect(screen.getByText('Everything you need to share your links')).toBeInTheDocument()
+    expect(screen.getByText('Shelves and sections')).toBeInTheDocument()
     expect(screen.getByText('Custom domains')).toBeInTheDocument()
-    expect(screen.getByText('Self-host & scale')).toBeInTheDocument()
+    expect(screen.getByText('Self-hosted')).toBeInTheDocument()
   })
 
-  it('renders the closing call-to-action with cloud and self-host links', async () => {
+  it('renders the closing call-to-action with docs and GitHub links', async () => {
     await renderSuspended(IndexPage)
 
-    expect(screen.getByText('Ready to organize your links?')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Start with LinkShelf Cloud/ })).toHaveAttribute('href', '/cloud')
-    expect(screen.getByRole('link', { name: /Self-host on GitHub/ })).toHaveAttribute('href', 'https://github.com/m-mattia-m/linkshelf')
+    expect(screen.getByText('Ready to host your own?')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Read the docs/ })).toHaveAttribute('href', '/docs/self-hosting/getting-started')
+    expect(screen.getByRole('link', { name: /View on GitHub/ })).toHaveAttribute('href', 'https://github.com/m-mattia-m/linkshelf')
   })
 })
 

@@ -19,10 +19,8 @@ const color = ref('#000000')
 const shape = ref<DotType>('square')
 const downloading = ref<'svg' | 'png' | null>(null)
 
-// The big "eyes" (corner squares/dots) don't share the --dots-- style names,
-// so each shape maps to the closest-looking corner pair rather than a 1:1
-// property - otherwise picking "Dots" would still leave sharp square eyes,
-// which reads as unfinished rather than as one cohesive style.
+// Corner squares/dots don't share the dot style names, so each shape maps to
+// the closest-looking corner pair.
 const cornerStylesByShape: Record<DotType, { square: CornerSquareType, dot: CornerDotType }> = {
   'square': { square: 'square', dot: 'square' },
   'rounded': { square: 'extra-rounded', dot: 'dot' },
@@ -33,9 +31,7 @@ const cornerStylesByShape: Record<DotType, { square: CornerSquareType, dot: Corn
 }
 
 const previewEl = ref<HTMLElement>()
-// qr-code-styling renders straight to the DOM (canvas/svg) rather than
-// through Vue's own reactivity, so the instance is plain, unreactive state
-// kept alongside the component instead of in a ref.
+// qr-code-styling renders straight to the DOM, so the instance isn't reactive.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let qrCode: any
 

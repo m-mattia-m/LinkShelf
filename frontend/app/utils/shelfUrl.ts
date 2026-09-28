@@ -1,7 +1,6 @@
-// Top-level words the frontend or the backend already answers, so a shelf
-// with this path can never be reached while user-based paths are off.
-// Mirrors routeReservedNames in backend/internal/domain/username.go (the
-// backend additionally reserves the configured assets base path).
+// Top-level words the frontend or backend already routes, so a shelf with
+// this path is unreachable while user-based paths are off. Mirrors
+// routeReservedNames in backend/internal/domain/username.go.
 const ROUTE_RESERVED_PATHS = new Set([
   'app', 'auth', 'docs', 'cloud', 'about', 'contact', 'imprint', 'privacy-policy', 'terms-of-use',
   'api', 'v1', 'swagger', 'health', 'images'
@@ -21,15 +20,9 @@ export function publicShelfPath(shelf: { path?: string, username?: string }, use
 }
 
 /**
- * The address a shelf is opened at: https://<domain> for a shelf that is served
- * on a domain of its own, otherwise the instance's own origin plus the shelf's
- * path. Empty for a shelf that has neither, which the backend doesn't allow
- * anymore.
- *
- * A shelf that has both (created before it had to choose one) opens at its
- * path, the same way the edit form shows it first. A domain is always shown
- * with https:// - putting a shelf on a domain without TLS isn't something to
- * point people towards.
+ * The address a shelf is opened at: the instance's origin plus the shelf's
+ * path, or https://<domain> for a domain-only shelf. A shelf with both opens
+ * at its path.
  */
 export function publicShelfUrl(
   shelf: { path?: string, domain?: string, username?: string },

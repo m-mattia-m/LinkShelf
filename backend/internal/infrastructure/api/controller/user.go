@@ -11,11 +11,9 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-// CreateUser is public (self-registration), but also doubles as the
-// admin-facing "add a user" endpoint: when called with a valid admin Bearer
-// token, the request may also set the new user's role. Since the operation
-// carries no Security requirement, the middleware never validates this
-// token for us - it's checked manually here, same pattern as OidcCallback.
+// CreateUser is public (self-registration) and also the admin "add a user"
+// endpoint: a valid admin Bearer token may set the new user's role. The
+// operation has no Security requirement, so the token is checked here.
 func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
 		isAdmin := false
