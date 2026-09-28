@@ -25,6 +25,23 @@ oidcRedirectUrl: ""
 # addresses. Set it to false to keep the API open.
 strictOrigins: true
 
+# Optional, cookie-free visitor analytics via Plausible (https://plausible.io).
+# Disabled by default - whether to track visitors is the instance owner's
+# call, not the chart's.
+plausible:
+  enabled: false
+  # The site identifier registered in Plausible. Recommended to set
+  # explicitly; falls back to the request's hostname when empty.
+  domain: ""
+  # Plausible instance to send events to. Defaults to Plausible Cloud
+  # (https://plausible.io) when empty - point this at your own self-hosted
+  # Plausible instance instead.
+  apiHost: ""
+  # Proxies the Plausible script and API calls through this app's own domain
+  # (under /_plausible) instead of apiHost directly, to reduce ad-blocker
+  # interference.
+  proxy: false
+
 # All backend config as a list of container environment variables, in plain
 # Kubernetes syntax: a literal "value", or "valueFrom" for anything that
 # should come from a Secret (the chart never renders one itself - point this

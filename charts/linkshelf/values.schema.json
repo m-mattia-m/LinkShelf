@@ -133,6 +133,23 @@
         "oidcRedirectUrl": {
             "type": "string"
         },
+        "plausible": {
+            "type": "object",
+            "properties": {
+                "apiHost": {
+                    "type": "string"
+                },
+                "domain": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "proxy": {
+                    "type": "boolean"
+                }
+            }
+        },
         "podAnnotations": {
             "type": "object"
         },

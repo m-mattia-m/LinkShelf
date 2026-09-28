@@ -106,6 +106,15 @@ Rendered as YAML.
 {{- with (include "linkshelf.frontendUrl" .) }}{{ $env = set $env "APP_FRONTENDURL" (dict "value" .) }}{{ end }}
 {{- with (include "linkshelf.apiUrl" .) }}{{ $env = set $env "NUXT_PUBLIC_API_BASE" (dict "value" .) }}{{ end }}
 {{- with (include "linkshelf.oidcRedirectUrl" .) }}{{ $env = set $env "AUTHENTICATION_OIDC_REDIRECTURL" (dict "value" .) }}{{ end }}
+{{- /* Optional Plausible Analytics, disabled by default - an instance owner's choice. */}}
+{{- if .Values.plausible.enabled }}
+{{- $env = set $env "NUXT_PUBLIC_PLAUSIBLE_ENABLED" (dict "value" "true") }}
+{{- end }}
+{{- with .Values.plausible.domain }}{{ $env = set $env "NUXT_PUBLIC_PLAUSIBLE_DOMAIN" (dict "value" .) }}{{ end }}
+{{- with .Values.plausible.apiHost }}{{ $env = set $env "NUXT_PUBLIC_PLAUSIBLE_API_HOST" (dict "value" .) }}{{ end }}
+{{- if .Values.plausible.proxy }}
+{{- $env = set $env "NUXT_PUBLIC_PLAUSIBLE_PROXY" (dict "value" "true") }}
+{{- end }}
 {{- /* Strict origins need the real public addresses, which only an ingress guarantees. The backend answers on the host of apiUrl. */}}
 {{- if and .Values.strictOrigins .Values.ingress.enabled (include "linkshelf.frontendUrl" .) (include "linkshelf.apiUrl" .) }}
 {{- $api := urlParse (include "linkshelf.apiUrl" .) }}
