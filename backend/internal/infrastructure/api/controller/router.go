@@ -14,6 +14,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	healthLivenessPath  = "/health/liveness"
+	healthReadinessPath = "/health/readiness"
+)
+
 func Router(svc *domain.Service) (*gin.Engine, error) {
 	if config.String("app.environment") == "production" || config.String("app.environment") == "prod" {
 		gin.SetMode(gin.ReleaseMode)
@@ -47,7 +52,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		},
 	}
 
-	router := gin.Default()
+	// Kubernetes hits these every few seconds, which would otherwise drown out
+	// every other access log line.
+	healthPaths := []string{healthLivenessPath, healthReadinessPath}
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: healthPaths}))
+	zap.L().Info("access logging is disabled for health check endpoints", zap.Strings("paths", healthPaths))
+
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
@@ -65,10 +77,10 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	api := humagin.New(router, humaConfig)
 	api.UseMiddleware(NewAuthenticationMiddleware(api))
 
-	router.GET("/health/liveness", func(c *gin.Context) {
+	router.GET(healthLivenessPath, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "alive"})
 	})
-	router.GET("/health/readiness", func(c *gin.Context) {
+	router.GET(healthReadinessPath, func(c *gin.Context) {
 		// You can add your readiness checks here (e.g., database connection)
 		c.JSON(http.StatusOK, gin.H{"status": "ready"})
 	})
