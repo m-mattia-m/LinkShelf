@@ -5,6 +5,7 @@ import (
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/mapper"
 	"backend/internal/infrastructure/api/model"
+	"backend/internal/infrastructure/mailer"
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -79,7 +80,7 @@ func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *st
 			Body: model.EmailDeliveryInfo{
 				Enabled: config.Bool("authentication.emailVerification.enabled"),
 				Host:    config.String("smtp.host"),
-				From:    config.String("smtp.from"),
+				From:    mailer.FormatFromHeader(config.String("smtp.from"), config.String("smtp.fromName")),
 			},
 		}, nil
 	}

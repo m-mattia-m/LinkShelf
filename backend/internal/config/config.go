@@ -129,6 +129,13 @@ type Configuration struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password" json:"-"`
 		From     string `yaml:"from"`
+		// FromName is the optional display name shown alongside From, e.g.
+		// "LinkShelf by Fermion" for a From of "no-reply@example.com" ->
+		// `"LinkShelf by Fermion" <no-reply@example.com>` in the email
+		// header. It is never sent as part of the SMTP envelope address
+		// (MAIL FROM), only the header - some servers reject a display name
+		// there. Left blank, the From header is just the bare address.
+		FromName string `yaml:"fromName"`
 		// TlsMode is "none", "starttls", or "tls" (implicit TLS). Anything
 		// else (including blank/unset) is treated as "tls" - the secure
 		// choice - by the mailer, not silently as "none".
