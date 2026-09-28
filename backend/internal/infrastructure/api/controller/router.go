@@ -20,6 +20,8 @@ const (
 )
 
 func Router(svc *domain.Service) (*gin.Engine, error) {
+	installErrorLogging()
+
 	if config.String("app.environment") == "production" || config.String("app.environment") == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}

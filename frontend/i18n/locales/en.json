@@ -29,6 +29,9 @@
   "auth.signUp.registrationDisabled": "Registration is currently disabled. Please contact an administrator for an invite.",
   "auth.signUp.checkEmail.title": "Check your email",
   "auth.signUp.checkEmail.description": "We've sent a verification link to your email address. Click it to finish setting up your account.",
+  "auth.signUp.emailDeliveryFailed.title": "Account created",
+  "auth.signUp.emailDeliveryFailed.description": "Your account was created, but we couldn't send the verification email. Please try again.",
+  "auth.signUp.emailDeliveryFailed.resend": "Resend email",
 
   "auth.callback.completing": "Completing sign-in...",
   "auth.callback.failed": "Sign-in could not be completed.",

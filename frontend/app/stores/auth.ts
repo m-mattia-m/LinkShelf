@@ -105,16 +105,22 @@ export const useAuthStore = defineStore('authStore', {
     // happens to already be verified) - when it's on, the fresh account
     // can't log in yet, so that specific 403 is reported back as
     // "pendingVerification" instead of being thrown like any other failure.
-    async register(userCreate: UserCreate): Promise<{ pendingVerification: boolean }> {
+    //
+    // emailDeliveryFailed means the account was created but the backend
+    // could not send the initial verification email (e.g. broken SMTP) - the
+    // caller must not tell the user to "check their email" in that case,
+    // since none was sent; it should ask them to retry (resendVerification)
+    // instead.
+    async register(userCreate: UserCreate): Promise<{ pendingVerification: boolean, emailDeliveryFailed: boolean }> {
       const api = useApi()
-      await api.user.postCreateUser({ userCreate })
+      const created = await api.user.postCreateUser({ userCreate })
 
       try {
         await this.login(userCreate.email, userCreate.password ?? '')
-        return { pendingVerification: false }
+        return { pendingVerification: false, emailDeliveryFailed: !!created.emailDeliveryFailed }
       } catch (err) {
         if (err instanceof ResponseError && err.response.status === 403) {
-          return { pendingVerification: true }
+          return { pendingVerification: true, emailDeliveryFailed: !!created.emailDeliveryFailed }
         }
         throw err
       }

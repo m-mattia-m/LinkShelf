@@ -41,6 +41,9 @@ const fields = [
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 const pendingVerification = ref(false)
+const emailDeliveryFailed = ref(false)
+const registeredEmail = ref<string | null>(null)
+const resending = ref(false)
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
   loading.value = true
@@ -56,6 +59,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
     if (result.pendingVerification) {
       pendingVerification.value = true
+      emailDeliveryFailed.value = result.emailDeliveryFailed
+      registeredEmail.value = payload.data.email
       return
     }
 
@@ -67,6 +72,20 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     errorMessage.value = result.message
   } finally {
     loading.value = false
+  }
+}
+
+async function resend() {
+  if (!registeredEmail.value) return
+  resending.value = true
+  try {
+    await authStore.resendVerification(registeredEmail.value)
+    const toast = useToast()
+    toast.add({ title: t('auth.signIn.pendingVerification.resendSuccess'), color: 'success' })
+  } catch (err) {
+    await handleApiError(err)
+  } finally {
+    resending.value = false
   }
 }
 </script>
@@ -85,7 +104,34 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       />
 
       <div
-        v-if="pendingVerification"
+        v-if="pendingVerification && emailDeliveryFailed"
+        class="flex flex-col items-center gap-4 text-center py-8"
+      >
+        <UIcon
+          name="i-lucide-mail-warning"
+          class="size-12 text-warning"
+        />
+        <h1 class="text-xl text-highlighted">
+          {{ t('auth.signUp.emailDeliveryFailed.title') }}
+        </h1>
+        <p class="text-muted">
+          {{ t('auth.signUp.emailDeliveryFailed.description') }}
+        </p>
+        <UButton
+          :label="t('auth.signUp.emailDeliveryFailed.resend')"
+          color="warning"
+          variant="subtle"
+          :loading="resending"
+          @click="resend"
+        />
+        <ULink
+          to="/auth/sign-in"
+          class="text-primary font-medium"
+        >{{ t('auth.signUp.signInLink') }}</ULink>
+      </div>
+
+      <div
+        v-else-if="pendingVerification"
         class="flex flex-col items-center gap-4 text-center py-8"
       >
         <UIcon

@@ -13,6 +13,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // resendCooldown throttles both the explicit resend endpoint and the
@@ -119,14 +121,26 @@ func (s *emailVerificationServiceImpl) send(userId, email, action string) error 
 		return err
 	}
 
+	var sendErr error
 	switch action {
 	case repository.EmailActionSetPassword:
-		return s.mailer.Send(setPasswordMessage(email, rawToken))
+		sendErr = s.mailer.Send(setPasswordMessage(email, rawToken))
 	case repository.EmailActionResetPassword:
-		return s.mailer.Send(resetPasswordMessage(email, rawToken))
+		sendErr = s.mailer.Send(resetPasswordMessage(email, rawToken))
 	default:
-		return s.mailer.Send(verifyEmailMessage(email, rawToken))
+		sendErr = s.mailer.Send(verifyEmailMessage(email, rawToken))
 	}
+
+	// This is the single choke point every issuance flow (initial send,
+	// resend, password reset) goes through, so logging here catches a broken
+	// SMTP setup regardless of which one triggered it - several callers treat
+	// a failed send as best-effort and discard this return value, which would
+	// otherwise make the failure invisible everywhere.
+	if sendErr != nil {
+		zap.L().Error("failed to send account email", zap.String("action", action), zap.Error(sendErr))
+	}
+
+	return sendErr
 }
 
 // tokenLifetime is how long a freshly issued link works. A reset link is

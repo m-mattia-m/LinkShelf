@@ -29,6 +29,9 @@
   "auth.signUp.registrationDisabled": "D Registrierig isch im Moment deaktiviert. Bitte wend dich für ä Iladig a än Administrator.",
   "auth.signUp.checkEmail.title": "Lueg i dini E-Mails",
   "auth.signUp.checkEmail.description": "Mir hend än Bestätigungslink a dini E-Mail-Adressä gsendet. Klick druf, zum d Iirichtig vo dim Konto abzschlüsse.",
+  "auth.signUp.emailDeliveryFailed.title": "Konto erstellt",
+  "auth.signUp.emailDeliveryFailed.description": "Dis Konto isch erstellt worde, aber mir hend d Bestätigigs-E-Mail nöd chöne schickä. Bitte versuech's nomal.",
+  "auth.signUp.emailDeliveryFailed.resend": "E-Mail nomal schickä",
 
   "auth.callback.completing": "D Aamäldig wird abgschlosse ...",
   "auth.callback.failed": "D Aamäldig het nöd chöne abgschlosse werde.",

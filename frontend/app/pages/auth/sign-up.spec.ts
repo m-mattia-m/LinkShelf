@@ -78,6 +78,37 @@ describe('sign-up page', () => {
     expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
   })
 
+  it('shows a warning instead of the check-your-email view when the initial email could not be sent', async () => {
+    server.use(
+      http.post(`${BASE}/v1/users`, () => HttpResponse.json(UserToJSON(buildUser({ emailDeliveryFailed: true })))),
+      http.post(`${BASE}/v1/auth/login`, () => errorResponse(403, 'email not verified'))
+    )
+
+    await renderSuspended(SignUpPage)
+
+    await fillForm()
+    await fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Account created')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Check your email')).not.toBeInTheDocument()
+    expect(useAuthStore().isAuthenticated).toBe(false)
+
+    let resendCalledWith: unknown
+    server.use(http.post(`${BASE}/v1/auth/resend-verification`, async ({ request }) => {
+      resendCalledWith = await request.json()
+      return new HttpResponse(null, { status: 204 })
+    }))
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Resend email' }))
+
+    await waitFor(() => {
+      expect(resendCalledWith).toEqual({ email: 'ada@example.com' })
+    })
+    expect(screen.getByRole('button', { name: 'Resend email' })).not.toHaveAttribute('aria-disabled')
+  })
+
   it('shows a validation error for a short password without calling the API', async () => {
     let called = false
     server.use(http.post(`${BASE}/v1/users`, () => {

@@ -9,6 +9,12 @@ type User struct {
 	// frontend uses this plus EmailVerified to show an Active/Pending
 	// verification/Invited status.
 	HasPassword bool `json:"has_password" bson:"has_password"`
+	// EmailDeliveryFailed is only ever set to true by CreateUser, when the
+	// account was created but its initial verification/invite email could
+	// not be sent (e.g. broken SMTP config) - the frontend must not tell the
+	// caller to "check their email" in that case, since none was sent.
+	// Always false from every other endpoint.
+	EmailDeliveryFailed bool `json:"email_delivery_failed,omitempty" bson:"-"`
 }
 
 type UserBase struct {

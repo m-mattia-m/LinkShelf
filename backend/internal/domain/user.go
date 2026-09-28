@@ -99,8 +99,13 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 
 	if verificationEnabled {
 		// Best-effort: a failed send shouldn't undo an already-created
-		// account - "resend" is the recovery path.
-		_ = s.Domain.EmailVerificationService.SendInitial(user)
+		// account - "resend" is the recovery path. The failure itself is
+		// logged inside SendInitial/send; what the caller gets back here is
+		// just the yes/no signal needed to tell the new user it didn't go
+		// out, instead of leaving them waiting on an email that never comes.
+		if err := s.Domain.EmailVerificationService.SendInitial(user); err != nil {
+			user.EmailDeliveryFailed = true
+		}
 	}
 
 	return user, nil
