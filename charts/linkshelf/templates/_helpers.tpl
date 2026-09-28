@@ -173,13 +173,18 @@ Rendered as YAML.
 {{- if not (and .Values.postgresql.settings.existingSecret .Values.postgresql.userDatabase.existingSecret) }}
 {{- fail "postgresql.enabled needs postgresql.settings.existingSecret and postgresql.userDatabase.existingSecret" }}
 {{- end }}
-{{- else }}
-{{- range $name := (list "DATABASE_HOST" "DATABASE_PORT" "DATABASE_USERNAME" "DATABASE_PASSWORD" "DATABASE_NAME") }}
-{{- if ne "true" (include "linkshelf.envConfigured" (dict "env" $env "name" $name)) }}
-{{- fail (printf "configure a database: set %s in env, or postgresql.enabled=true" $name) }}
 {{- end }}
-{{- end }}
-{{- end }}
+{{- /*
+Deliberately no "bring your own database" requiredness check here: unlike
+AUTHENTICATION_JWTSECRET (a secret this chart insists comes from env/Secret,
+never a plaintext ConfigMap), DATABASE_HOST/_PORT/_USERNAME/_PASSWORD/_NAME
+are ordinary config and just as validly set via configFile (the ConfigMap)
+as via env - linkshelf.envConfigured only sees env, so it can't tell a
+configFile-only setup from a genuinely missing one, and failing here would
+reject valid configurations. If the database is really unconfigured, the
+backend's own startup DB connection attempt reports that clearly - no need
+to guess about it at template time.
+*/}}
 {{- if .Values.ingress.enabled }}
 {{- if not (and .Values.ingress.frontend.host .Values.ingress.backend.host) }}
 {{- fail "ingress.enabled needs ingress.frontend.host and ingress.backend.host" }}

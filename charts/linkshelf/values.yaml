@@ -54,8 +54,12 @@ plausible:
 # Every key of the backend config file maps to its dotted path, upper-cased
 # with underscores, e.g. smtp.host -> SMTP_HOST, app.name -> APP_NAME. See
 # backend/config.default.yaml for all keys. AUTHENTICATION_JWTSECRET is
-# required. Bring your own database (below) needs DATABASE_HOST, _PORT,
-# _USERNAME, _PASSWORD and _NAME here too, unless postgresql.enabled is true.
+# required and must be set here (or via valueFrom.secretKeyRef) - never in
+# configFile below, which becomes a plaintext ConfigMap. Bring your own
+# database (below) needs DATABASE_HOST, _PORT, _USERNAME, _PASSWORD and _NAME
+# too, unless postgresql.enabled is true - here or in configFile, whichever
+# suits (non-secret values only; keep the password here via
+# valueFrom.secretKeyRef).
 env: []
   # - name: AUTHENTICATION_JWTSECRET
   #   valueFrom:
@@ -110,7 +114,8 @@ configFile: {}
   #   level: debug
 
 # Bring your own database, with DATABASE_HOST/_PORT/_USERNAME/_PASSWORD/_NAME
-# in env above. Ignored when postgresql.enabled is true.
+# in env above (or configFile below, for the non-secret ones). Ignored when
+# postgresql.enabled is true.
 database:
   engine: POSTGRES # @schema enum:[POSTGRES,MYSQL]
   # Extra connection parameters, e.g. sslmode=require. Empty keeps the image

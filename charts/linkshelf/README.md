@@ -112,8 +112,12 @@ email verification, so it works before SMTP is set up. `SMTP_PASSWORD` and `AUTH
 same way, leave them out if you don't use them.
 
 **Database.** Add `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `DATABASE_NAME` to
-`env` (all 5 are required, each can come from a different Secret). Set `database.engine` to `MYSQL` for MySQL and
-`database.params` for extra connection parameters such as `sslmode=require`.
+`env` (each can come from a different Secret) - or put the non-secret ones (`DATABASE_HOST`, `DATABASE_PORT`,
+`DATABASE_NAME`) in `configFile` instead, whichever suits; keep `DATABASE_USERNAME`/`DATABASE_PASSWORD` in `env` via
+`valueFrom.secretKeyRef`. The chart doesn't enforce any of this at template time - it can't tell a `configFile`-only
+setup from a genuinely missing one, so it leaves that to the backend, which fails clearly at startup if the database
+is actually unreachable or misconfigured. Set `database.engine` to `MYSQL` for MySQL and `database.params` for extra
+connection parameters such as `sslmode=require`.
 
 **Ingress.** The browser talks to the backend directly, so the frontend and the backend need their own host. The
 chart derives `frontendUrl`, `apiUrl` and `oidcRedirectUrl` from these hosts and uses `https` when a host is listed
