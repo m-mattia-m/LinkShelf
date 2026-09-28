@@ -8,6 +8,7 @@ import (
 	"backend/internal/config"
 	"crypto/tls"
 	"fmt"
+	"net/mail"
 	"net/smtp"
 	"strings"
 )
@@ -29,6 +30,7 @@ type smtpMailer struct {
 	username string
 	password string
 	from     string
+	fromName string
 	tlsMode  string
 }
 
@@ -40,8 +42,30 @@ func New() Mailer {
 		username: config.String("smtp.username"),
 		password: config.String("smtp.password"),
 		from:     config.String("smtp.from"),
+		fromName: config.String("smtp.fromName"),
 		tlsMode:  normalizeTlsMode(config.String("smtp.tlsMode")),
 	}
+}
+
+// fromHeader is what goes in the message's From: header - just the bare
+// address, or "Display Name" <address> when smtp.fromName is set. This must
+// never be used for the SMTP envelope (MAIL FROM): that command only accepts
+// a bare address, and a display name there gets the whole send rejected by
+// the server.
+func (m *smtpMailer) fromHeader() string {
+	return FormatFromHeader(m.from, m.fromName)
+}
+
+// FormatFromHeader formats an address and optional display name the same
+// way a message's From: header is built, e.g. `"Display Name" <addr>`, or
+// just `addr` when name is blank. Exported so the admin-only email delivery
+// info endpoint can show exactly what recipients will see, without
+// duplicating this formatting.
+func FormatFromHeader(address, name string) string {
+	if strings.TrimSpace(name) == "" {
+		return address
+	}
+	return (&mail.Address{Name: name, Address: address}).String()
 }
 
 // normalizeTlsMode treats anything other than an exact "none"/"starttls" as
@@ -65,7 +89,7 @@ func (m *smtpMailer) Send(msg Message) error {
 		auth = smtp.PlainAuth("", m.username, m.password, m.host)
 	}
 
-	body := buildMessage(m.from, msg)
+	body := buildMessage(m.fromHeader(), msg)
 
 	switch m.tlsMode {
 	case "none":
@@ -136,9 +160,9 @@ func sendWithClient(client *smtp.Client, auth smtp.Auth, from, to string, body [
 
 const mimeBoundary = "linkshelf-mail-boundary"
 
-func buildMessage(from string, msg Message) []byte {
+func buildMessage(fromHeader string, msg Message) []byte {
 	var b strings.Builder
-	fmt.Fprintf(&b, "From: %s\r\n", from)
+	fmt.Fprintf(&b, "From: %s\r\n", fromHeader)
 	fmt.Fprintf(&b, "To: %s\r\n", msg.To)
 	fmt.Fprintf(&b, "Subject: %s\r\n", msg.Subject)
 	fmt.Fprintf(&b, "MIME-Version: 1.0\r\n")

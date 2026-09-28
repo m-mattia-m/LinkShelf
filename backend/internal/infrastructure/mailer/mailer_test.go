@@ -34,3 +34,21 @@ func Test_BuildMessage(t *testing.T) {
 	require.Contains(t, body, "<a href=\"https://example.com/verify?token=abc\">here</a>")
 	require.True(t, strings.HasSuffix(body, "--"+mimeBoundary+"--\r\n"))
 }
+
+func Test_FromHeader(t *testing.T) {
+	// No display name configured: the header is just the bare address, same
+	// as the envelope.
+	m := &smtpMailer{from: "no-reply@example.com"}
+	require.Equal(t, "no-reply@example.com", m.fromHeader())
+
+	// A display name is quoted/escaped per RFC 5322 and only ever affects the
+	// header - the envelope address (m.from, used separately for MAIL FROM)
+	// stays untouched.
+	m = &smtpMailer{from: "no-reply@example.com", fromName: "LinkShelf by Fermion"}
+	require.Equal(t, `"LinkShelf by Fermion" <no-reply@example.com>`, m.fromHeader())
+	require.Equal(t, "no-reply@example.com", m.from)
+
+	// Blank/whitespace-only fromName behaves like it wasn't set at all.
+	m = &smtpMailer{from: "no-reply@example.com", fromName: "   "}
+	require.Equal(t, "no-reply@example.com", m.fromHeader())
+}

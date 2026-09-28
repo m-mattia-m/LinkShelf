@@ -121,5 +121,10 @@ smtp:
   username: ""
   password: ""
   from: "no-reply@linkshelf.local"
+  # Optional display name shown next to `from` in the email client, e.g.
+  # "LinkShelf by Fermion" -> `"LinkShelf by Fermion" <no-reply@linkshelf.local>`.
+  # Only ever used in that header, never in the SMTP envelope address - leave
+  # blank to send just the bare address as the From header too.
+  fromName: ""
   # none | starttls | tls - Mailpit speaks plain SMTP with no TLS at all.
   tlsMode: none
