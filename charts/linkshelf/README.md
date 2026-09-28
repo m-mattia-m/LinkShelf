@@ -167,6 +167,11 @@ configFile:
     level: debug
 ```
 
+**Resource usage.** The chart's `resources` defaults (100m CPU / 192Mi memory requested, 512Mi memory limit) are
+generous headroom, not a sizing guide. A basic instance with little traffic has been observed running at around
+15m CPU and 40MB memory - tune `resources` down from there if you're running many small instances and want to pack
+them tighter.
+
 **Anything else.** `additionalResources` takes a list of manifests, as maps or as strings. Both are rendered with
 `tpl`, so `{{ .Release.Name }}` works.
 
