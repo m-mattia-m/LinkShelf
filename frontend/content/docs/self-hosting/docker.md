@@ -68,6 +68,26 @@ Add `APP_STRICTORIGINS=true` to lock the API to those addresses, see
 to `APP_ADDITIONALORIGINS` (comma-separated for more than one), see [Reachable on more than one
 domain](/docs/self-hosting/configuration#reachable-on-more-than-one-domain).
 
+## Analytics
+
+Optional, cookie-free visitor analytics via [Plausible](https://plausible.io), disabled by default - turning it on is
+an instance owner's decision, not something a visitor's browser can be asked about.
+
+- `NUXT_PUBLIC_PLAUSIBLE_ENABLED`: set to `true` to turn tracking on
+- `NUXT_PUBLIC_PLAUSIBLE_DOMAIN`: the site identifier registered in Plausible. Recommended to set explicitly,
+  especially if the instance is reachable on more than one domain; falls back to the request's hostname when unset
+- `NUXT_PUBLIC_PLAUSIBLE_API_HOST`: your Plausible instance, e.g. `https://plausible.example.com` for self-hosted.
+  Defaults to Plausible Cloud (`https://plausible.io`) when unset
+- `NUXT_PUBLIC_PLAUSIBLE_PROXY`: set to `true` to route the script and API calls through this app's own domain
+  (under `/_plausible`) instead of `NUXT_PUBLIC_PLAUSIBLE_API_HOST` directly, to reduce ad-blocker interference
+
+```yaml
+    environment:
+      NUXT_PUBLIC_PLAUSIBLE_ENABLED: "true"
+      NUXT_PUBLIC_PLAUSIBLE_DOMAIN: links.example.org
+      NUXT_PUBLIC_PLAUSIBLE_API_HOST: https://plausible.example.org
+```
+
 ## Config file
 
 To use a file instead of environment variables, mount it and point to it:

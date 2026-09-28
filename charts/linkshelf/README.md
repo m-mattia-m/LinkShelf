@@ -148,6 +148,20 @@ env:
     value: "https://links.example.org"
 ```
 
+**Plausible Analytics.** Optional, cookie-free visitor analytics, disabled by default. Turn it on with
+`plausible.enabled: true`. Set `plausible.domain` to the site identifier registered in Plausible - if left empty it
+falls back to the request's hostname, which works but is recommended to set explicitly when the instance is reachable
+on more than one domain. Point `plausible.apiHost` at your own self-hosted Plausible instance; it defaults to
+Plausible Cloud (`https://plausible.io`) when empty. `plausible.proxy` routes the script and API calls through this
+app's own domain instead, to reduce ad-blocker interference.
+
+```yaml
+plausible:
+  enabled: true
+  domain: links.example.org
+  apiHost: https://plausible.example.org
+```
+
 **Themes and assets.** Mount the directories with `extraVolumes` and `extraVolumeMounts` and point
 `THEMES_DIRECTORY` and `ASSETS_DIRECTORY` at them.
 

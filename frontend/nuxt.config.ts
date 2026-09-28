@@ -9,7 +9,8 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/mdc',
     '@nuxt/content',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/plausible'
   ],
 
   devtools: {
@@ -68,5 +69,13 @@ export default defineNuxtConfig({
       { code: 'de-CH', name: 'Schwiizerdütsch', file: 'de-CH.json' }
     ],
     detectBrowserLanguage: false
+  },
+
+  // Disabled by default: instance owners opt in via NUXT_PUBLIC_PLAUSIBLE_ENABLED.
+  // `domain` is left unset here so it falls back to window.location.hostname
+  // (see @nuxtjs/plausible), which is always correct for a self-hosted deployment.
+  plausible: {
+    enabled: false,
+    proxyBaseEndpoint: '/_plausible'
   }
 })
