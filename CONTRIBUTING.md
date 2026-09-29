@@ -15,6 +15,11 @@
    ```
 5. Push the branch to your fork and open a pull request against `main`.
 
+## License
+
+By contributing, you agree that your contributions are licensed under the Apache License 2.0, which allows them to be
+included in LinkShelf under the AGPL-3.0. See [LICENSING.md](LICENSING.md#contributions).
+
 ## Releases
 
 Versions and release notes are generated automatically by [semantic-release](https://semantic-release.org) from the
