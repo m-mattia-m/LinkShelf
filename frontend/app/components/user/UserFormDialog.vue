@@ -26,10 +26,10 @@ const shelfStore = useShelfStore()
 const saving = ref(false)
 const userBasedPaths = computed(() => websiteSettings.value?.userBasedPaths ?? false)
 
-const roleOptions = [
-  { label: 'User', value: 'user' },
-  { label: 'Admin', value: 'admin' }
-]
+const roleOptions = computed(() => [
+  { label: t('app.settings.users.roles.user'), value: 'user' },
+  { label: t('app.settings.users.roles.admin'), value: 'admin' }
+])
 
 const form = reactive({
   firstName: props.user?.firstName ?? '',
@@ -64,22 +64,22 @@ watch(open, async (isOpen) => {
 const canInviteWithoutPassword = computed(() => websiteSettings.value?.emailVerificationEnabled ?? false)
 
 const createSchema = computed(() => v.object({
-  firstName: v.pipe(v.string(), v.nonEmpty('Required')),
-  lastName: v.pipe(v.string(), v.nonEmpty('Required')),
+  firstName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+  lastName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   username: usernameSchema(),
-  email: v.pipe(v.string(), v.nonEmpty('Required'), v.email('Must be a valid email address')),
-  password: canInviteWithoutPassword.value ? v.string() : v.pipe(v.string(), v.nonEmpty('Required')),
+  email: emailSchema(),
+  password: canInviteWithoutPassword.value ? v.string() : v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   role: v.picklist(['user', 'admin'])
 }))
 
-const editSchema = v.object({
-  firstName: v.pipe(v.string(), v.nonEmpty('Required')),
-  lastName: v.pipe(v.string(), v.nonEmpty('Required')),
+const editSchema = computed(() => v.object({
+  firstName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+  lastName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   username: usernameSchema(),
-  email: v.pipe(v.string(), v.nonEmpty('Required'), v.email('Must be a valid email address')),
+  email: emailSchema(),
   password: v.string(),
   role: v.picklist(['user', 'admin'])
-})
+}))
 
 // Renaming a user changes the URL of every shelf of theirs that has a path.
 // An admin sees all shelves, so they can be counted here.
@@ -96,7 +96,7 @@ const usernameChangeWarning = computed(() => {
     : t('app.settings.users.form.usernameChangeWarningMany', { count: affectedShelves.value })
 })
 
-const schema = computed(() => (props.mode === 'create' ? createSchema.value : editSchema))
+const schema = computed(() => (props.mode === 'create' ? createSchema.value : editSchema.value))
 
 const formRef = ref<{
   validate: () => Promise<unknown>
@@ -144,13 +144,13 @@ async function save(close: () => void) {
 <template>
   <UModal
     v-model:open="open"
-    :title="mode === 'edit' ? 'Edit user' : 'New user'"
+    :title="mode === 'edit' ? t('app.settings.users.edit') : t('app.settings.users.new')"
     :ui="{ footer: 'justify-end' }"
   >
     <UButton
       v-if="mode === 'create'"
       icon="i-lucide-plus"
-      label="New"
+      :label="t('common.new')"
     />
 
     <template #body>
@@ -161,7 +161,7 @@ async function save(close: () => void) {
         class="flex flex-col gap-4"
       >
         <UFormField
-          label="First name"
+          :label="t('app.settings.users.columns.firstName')"
           name="firstName"
           required
         >
@@ -172,7 +172,7 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="Last name"
+          :label="t('app.settings.users.columns.lastName')"
           name="lastName"
           required
         >
@@ -202,7 +202,7 @@ async function save(close: () => void) {
         />
 
         <UFormField
-          label="Email"
+          :label="t('app.settings.users.columns.email')"
           name="email"
           required
         >
@@ -228,7 +228,7 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="Role"
+          :label="t('app.profile.role')"
           name="role"
           required
         >
@@ -244,13 +244,13 @@ async function save(close: () => void) {
 
     <template #footer="{ close }">
       <UButton
-        label="Cancel"
+        :label="t('common.cancel')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Submit"
+        :label="t('common.submit')"
         color="neutral"
         :loading="saving"
         @click="save(close)"

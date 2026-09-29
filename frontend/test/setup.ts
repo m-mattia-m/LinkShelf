@@ -4,11 +4,8 @@ import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from './mocks/server'
 import { resetFactoryCounter } from './mocks/factories'
 
-// Node's built-in `localStorage`/`sessionStorage` (enabled by @nuxt/test-utils'
-// "nuxt" vitest environment) is only functional when Node is started with
-// `--localstorage-file=<path>` - without it, the objects exist but every
-// method throws. Replace both with a plain in-memory implementation so
-// app code (e.g. the auth store) can use them like a real browser would.
+// Node's built-in localStorage/sessionStorage throw without
+// --localstorage-file, so replace them with in-memory implementations.
 class MemoryStorage implements Storage {
   private store = new Map<string, string>()
 
@@ -37,10 +34,7 @@ class MemoryStorage implements Storage {
   }
 }
 
-// Assigning `globalThis.localStorage = ...` directly throws once the
-// environment models `localStorage` as a real getter-only accessor (as
-// actual browsers do) - Object.defineProperty replaces the accessor outright
-// instead of trying to write through it.
+// defineProperty, because the storage globals may be getter-only accessors.
 Object.defineProperty(globalThis, 'localStorage', { value: new MemoryStorage(), writable: true, configurable: true })
 Object.defineProperty(globalThis, 'sessionStorage', { value: new MemoryStorage(), writable: true, configurable: true })
 

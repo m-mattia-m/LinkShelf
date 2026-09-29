@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { default: false })
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const saving = ref(false)
 
@@ -26,17 +27,17 @@ watch(open, (isOpen) => {
   form.confirmPassword = ''
 })
 
-const schema = v.pipe(
+const schema = computed(() => v.pipe(
   v.object({
-    oldPassword: v.pipe(v.string(), v.nonEmpty('Required')),
-    newPassword: v.pipe(v.string(), v.nonEmpty('Required')),
-    confirmPassword: v.pipe(v.string(), v.nonEmpty('Required'))
+    oldPassword: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+    newPassword: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+    confirmPassword: v.pipe(v.string(), v.nonEmpty(t('validation.required')))
   }),
   v.forward(
-    v.check(data => data.newPassword === data.confirmPassword, 'Passwords do not match'),
+    v.check(data => data.newPassword === data.confirmPassword, t('validation.passwordsMismatch')),
     ['confirmPassword']
   )
-)
+))
 
 const formRef = ref<{
   validate: () => Promise<unknown>
@@ -59,7 +60,7 @@ async function save(close: () => void) {
       newPassword: form.newPassword
     })
     const toast = useToast()
-    toast.add({ title: 'Password updated', color: 'success' })
+    toast.add({ title: t('app.password.updated'), color: 'success' })
     close()
   } catch (err) {
     await handleApiError(err, formRef.value)
@@ -72,7 +73,7 @@ async function save(close: () => void) {
 <template>
   <UModal
     v-model:open="open"
-    title="Change password"
+    :title="t('app.profile.changePassword')"
     :ui="{ footer: 'justify-end' }"
   >
     <template #body>
@@ -83,7 +84,7 @@ async function save(close: () => void) {
         class="flex flex-col gap-4"
       >
         <UFormField
-          label="Current password"
+          :label="t('app.password.current')"
           name="oldPassword"
           required
         >
@@ -95,7 +96,7 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="New password"
+          :label="t('auth.setPassword.password')"
           name="newPassword"
           required
         >
@@ -107,7 +108,7 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="Confirm new password"
+          :label="t('auth.resetPassword.confirmPassword')"
           name="confirmPassword"
           required
         >
@@ -122,13 +123,13 @@ async function save(close: () => void) {
 
     <template #footer="{ close }">
       <UButton
-        label="Cancel"
+        :label="t('common.cancel')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Submit"
+        :label="t('common.submit')"
         color="neutral"
         :loading="saving"
         @click="save(close)"

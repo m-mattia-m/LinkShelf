@@ -94,12 +94,8 @@ describe('ShelfLinkFormDialog', () => {
     expect(emitted().saved).toBeFalsy()
   })
 
-  // Not covered: typing an invalid hex string into the color field to
-  // exercise the color schema's regex-rejection branch. UColorPicker's own
-  // v-model wiring (its writable `pickedColor` computed, synced on mount via
-  // vueuse's watchPausable) normalizes any unparsable color string back to a
-  // valid hex (e.g. "#FFFFFF") before the form's own validation ever sees
-  // the bad value, so this branch can't be reached by simulating typing.
+  // Not covered: an invalid hex in the color field. UColorPicker normalizes
+  // it to a valid hex before the form's validation sees it.
 
   it('clears a set color back to the "Set a color" button', async () => {
     const { baseElement } = await renderSuspended(ShelfLinkFormDialog, {

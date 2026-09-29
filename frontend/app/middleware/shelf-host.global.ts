@@ -1,9 +1,6 @@
-// When the frontend is reached on the domain of a shelf, `/` shows that shelf
-// instead of the landing page. This finds out which host it is being reached
-// on and shares the answer through the 'shelf-host' state: the shelf's domain,
-// or null for the instance's own host. See shared/utils/shelfHost.ts.
-//
-// Everything else on such a host falls through to the normal pages.
+// Shares via the 'shelf-host' state whether the frontend is reached on a
+// shelf's domain (so `/` shows that shelf) or on the instance's own host
+// (null). See shared/utils/shelfHost.ts.
 export default defineNuxtRouteMiddleware(async (to) => {
   const shelfHost = useState<string | null | undefined>('shelf-host', () => undefined)
 

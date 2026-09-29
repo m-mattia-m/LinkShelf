@@ -40,11 +40,9 @@ func NewShelfService(repository *repository.Repository, domain *Service) ShelfSe
 	}
 }
 
-// annotateThemeMissing sets ThemeMissing so the edit page can tell "never
-// picked a theme" apart from "the one picked is gone" - it deliberately
-// leaves the resolved Theme config map unset here, since the authenticated
-// edit view doesn't render with it (no live preview - see design notes),
-// only the public view (annotatePublicTheme) does.
+// annotateThemeMissing sets ThemeMissing so the edit page can tell "no theme
+// picked" apart from "the picked theme is gone". The Theme map is only needed
+// by the public view (annotatePublicTheme).
 func (s *shelfServiceImpl) annotateThemeMissing(shelf *model.Shelf) error {
 	_, missing, err := s.Domain.ThemeService.Resolve(shelf.ThemeId)
 	if err != nil {
@@ -145,15 +143,10 @@ func (s *shelfServiceImpl) GetByUsernameAndPath(username, path string) (*model.S
 	return shelf, nil
 }
 
-// validatePath checks a shelf's path before it is saved. Which rules apply
-// depends on app.userBasedPaths:
-//   - on: the path lives behind the owner's username, so it only has to be
-//     unique among that owner's shelves and no word is off limits.
-//   - off: the path is a top-level URL, so it must be unique across the whole
-//     instance and must not be a word the frontend or backend already routes.
-//
-// An empty path (a shelf that is only reachable through its domain) is always
-// fine.
+// validatePath checks a shelf's path before it is saved. With
+// app.userBasedPaths on, it only has to be unique among the owner's shelves;
+// off, it must be unique across the instance and not a reserved route. An
+// empty path (domain-only shelf) is always fine.
 func (s *shelfServiceImpl) validatePath(path, ownerId, exceptShelfId string) error {
 	if path == "" {
 		return nil
@@ -203,15 +196,10 @@ func (s *shelfServiceImpl) validateDomain(domain, exceptShelfId string) error {
 	return nil
 }
 
-// validateLocation checks how a shelf is reached before it is saved: through
-// exactly one of a path or a domain, never both and never neither. It also
-// leaves request.Domain in its normalized form, which is what gets stored.
-//
-// existing is the shelf as it is now, or nil when creating one. Only a
-// changed path or domain is checked, so a shelf that already sits on a value
-// that is no longer allowed (a path a later release reserved, or a shelf
-// created before a shelf had to choose one of the two) can still have its
-// title or theme edited.
+// validateLocation checks that exactly one of path and domain is set and
+// normalizes request.Domain. existing is nil when creating. Only changed
+// values are checked, so a shelf on a value that is no longer allowed can
+// still be edited.
 func (s *shelfServiceImpl) validateLocation(request, existing *model.Shelf, ownerId string) error {
 	request.Domain = NormalizeDomain(request.Domain)
 
@@ -254,11 +242,9 @@ func (s *shelfServiceImpl) List(callerUserId string, isAdmin bool) ([]model.Shel
 	return s.Repository.ShelfRepository.ListByUserId(callerUserId)
 }
 
-// Create always assigns ownership to the caller - a client can never create a
-// shelf on someone else's behalf. It first re-verifies the caller's user
-// still exists, guarding the rare case of a still-valid JWT for a since-
-// deleted user (the DB's user_id foreign key would otherwise surface as a
-// raw constraint-violation error instead of a clean 404).
+// Create assigns ownership to the caller and re-checks that the caller still
+// exists, so a valid JWT for a deleted user yields a 404 instead of a foreign
+// key error.
 func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf) (string, error) {
 	user, err := s.Repository.UserRepository.Get(callerUserId)
 	if err != nil {

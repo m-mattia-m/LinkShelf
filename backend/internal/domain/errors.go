@@ -10,8 +10,7 @@ var (
 	ErrNotFound = errors.New("not found")
 	// ErrInvalidRole means a caller tried to set a role other than "user" or "admin".
 	ErrInvalidRole = errors.New("invalid role")
-	// ErrInvalidInput means a request field failed a business-rule validation
-	// (as opposed to the basic required/type checks huma already enforces).
+	// ErrInvalidInput means a request field failed a business-rule validation.
 	ErrInvalidInput = errors.New("invalid input")
 	// ErrConflict means the request is valid but clashes with something that
 	// already exists, such as a taken username or shelf path.
@@ -20,12 +19,9 @@ var (
 	// while authentication.passwordReset.enabled is false.
 	ErrPasswordResetDisabled = errors.New("password reset is currently disabled")
 	// ErrRegistrationDisabled means a caller tried to self-register while
-	// authentication.registrationEnabled is false. Admin-created accounts
-	// and OIDC auto-provisioning are unaffected by this toggle.
+	// authentication.registrationEnabled is false.
 	ErrRegistrationDisabled = errors.New("registration is currently disabled")
-	// ErrEmailVerificationPending means the account exists and the supplied
-	// password (if any) checked out, but it can't log in yet because its
-	// email hasn't been verified (or, for an admin-invited account, no
-	// password has been set yet). A fresh link is sent whenever this is hit.
+	// ErrEmailVerificationPending means the account can't log in until its
+	// email is verified (or, if admin-invited, a password is set).
 	ErrEmailVerificationPending = errors.New("this account's email address has not been verified yet")
 )

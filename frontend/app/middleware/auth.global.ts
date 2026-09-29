@@ -1,6 +1,4 @@
-// Tokens live in localStorage only (no cookie/session), so there's nothing to
-// check during SSR - this only enforces on the client, after hydration has
-// had a chance to restore a saved session.
+// Tokens live in localStorage only, so this only runs on the client.
 export default defineNuxtRouteMiddleware((to) => {
   if (!import.meta.client) return
 
@@ -9,11 +7,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const isAppRoute = to.path.startsWith('/app')
   const isAuthRoute = to.path.startsWith('/auth')
-  // These complete a token-based email link, which must work regardless of
-  // whether the browser happens to have an unrelated active session (e.g. an
-  // admin testing an invite, or a user checking the link on a device where
-  // they're logged into a different account) - same reasoning that already
-  // exempts the OIDC callback below.
+  // Token-based email links must work even with an unrelated active session.
   const isTokenActionRoute = to.path === '/auth/callback' || to.path === '/auth/verify-email' || to.path === '/auth/set-password' || to.path === '/auth/reset-password'
 
   if (isAppRoute && !authStore.isAuthenticated) {

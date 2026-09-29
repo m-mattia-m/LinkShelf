@@ -18,6 +18,7 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { default: false })
 
+const { t } = useI18n()
 const linkStore = useLinkStore()
 const saving = ref(false)
 
@@ -36,9 +37,9 @@ watch(open, (isOpen) => {
   form.color = props.link?.color ?? ''
 })
 
-const schema = v.object({
-  title: v.pipe(v.string('Title is required'), v.nonEmpty('Title is required')),
-  link: v.pipe(v.string('URL is required'), v.nonEmpty('URL is required')),
+const schema = computed(() => v.object({
+  title: v.pipe(v.string(t('validation.titleRequired')), v.nonEmpty(t('validation.titleRequired'))),
+  link: v.pipe(v.string(t('validation.urlRequired')), v.nonEmpty(t('validation.urlRequired'))),
   icon: v.string(),
   // Empty is valid too - it means "no color set", so the shelf's theme (or
   // the default look) decides how the link renders instead.
@@ -46,10 +47,10 @@ const schema = v.object({
     v.string(),
     v.check(
       value => value === '' || /^#[0-9a-fA-F]{6}$/.test(value),
-      'Must be a hex color, e.g. #588157'
+      t('validation.hexColor')
     )
   )
-})
+}))
 
 const formRef = ref<{
   validate: () => Promise<unknown>
@@ -92,7 +93,7 @@ async function save(close: () => void) {
 <template>
   <UModal
     v-model:open="open"
-    title="Link"
+    :title="t('app.link.form.title')"
     :ui="{ footer: 'justify-end' }"
   >
     <template #body>
@@ -103,7 +104,7 @@ async function save(close: () => void) {
         class="flex flex-col gap-4"
       >
         <UFormField
-          label="Title"
+          :label="t('app.link.form.name')"
           name="title"
           required
         >
@@ -114,7 +115,7 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="URL"
+          :label="t('app.link.form.url')"
           name="link"
           required
         >
@@ -126,9 +127,9 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="Icon"
+          :label="t('app.shelf.form.icon')"
           name="icon"
-          help="Optional - leave empty for no icon."
+          :help="t('app.shelf.form.iconHelp')"
         >
           <IconPicker
             v-model="form.icon"
@@ -137,9 +138,9 @@ async function save(close: () => void) {
         </UFormField>
 
         <UFormField
-          label="Color"
+          :label="t('app.link.form.color')"
           name="color"
-          help="Optional - leave unset to use the shelf's theme (or the default look)."
+          :help="t('app.link.form.colorHelp')"
         >
           <div
             v-if="form.color"
@@ -159,13 +160,13 @@ async function save(close: () => void) {
               size="sm"
               color="neutral"
               variant="ghost"
-              aria-label="Clear color"
+              :aria-label="t('app.link.form.clearColor')"
               @click="form.color = ''"
             />
           </div>
           <UButton
             v-else
-            label="Set a color"
+            :label="t('app.link.form.setColor')"
             icon="i-lucide-palette"
             color="neutral"
             variant="outline"
@@ -177,13 +178,13 @@ async function save(close: () => void) {
 
     <template #footer="{ close }">
       <UButton
-        label="Cancel"
+        :label="t('common.cancel')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Submit"
+        :label="t('common.submit')"
         color="neutral"
         :loading="saving"
         @click="save(close)"

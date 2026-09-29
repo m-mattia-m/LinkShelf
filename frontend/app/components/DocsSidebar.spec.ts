@@ -11,10 +11,8 @@ mockNuxtImport('queryCollection', () => {
   })
 })
 
-// useAsyncData caches its result under an auto-generated key that is stable
-// across renders within the same Nuxt app (one app per test file here) -
-// clear it before every test so each one actually re-invokes the mocked
-// queryCollection() above instead of reusing a previous test's cached data.
+// useAsyncData caches per Nuxt app (one per test file), so clear it to make
+// each test re-invoke the mocked queryCollection().
 beforeEach(() => {
   clearNuxtData()
 })

@@ -8,12 +8,8 @@ import { useAuthStore } from './auth'
 
 const BASE = 'http://localhost:8085'
 
-// The "nuxt" vitest environment boots one Nuxt app (and thus one Pinia
-// instance) per test file, so creating a fresh Pinia per test would leave
-// it disconnected from the store instance auto-imports elsewhere in the app
-// resolve to. Resetting the existing store's state is what actually starts
-// each test clean - $reset() re-runs the store's own state() factory,
-// including `initialized`, which the "init" tests below depend on.
+// The "nuxt" environment has one Pinia per test file, so reset the existing
+// store (including `initialized`) instead of creating a fresh Pinia.
 beforeEach(() => {
   useAuthStore().$reset()
 })

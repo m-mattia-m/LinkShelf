@@ -12,23 +12,15 @@ const router = useRouter()
 const authStore = useAuthStore()
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
-const schema = v.object({
-  firstName: v.pipe(v.string('First name is required'), v.nonEmpty('First name is required')),
-  lastName: v.pipe(v.string('Last name is required'), v.nonEmpty('Last name is required')),
+const schema = computed(() => v.object({
+  firstName: requiredStringSchema('validation.firstNameRequired'),
+  lastName: requiredStringSchema('validation.lastNameRequired'),
   username: usernameSchema(),
-  email: v.pipe(
-    v.string('Email is required'),
-    v.nonEmpty('Email is required'),
-    v.email('Please enter a valid email')
-  ),
-  password: v.pipe(
-    v.string('Password is required'),
-    v.nonEmpty('Password is required'),
-    v.minLength(8, 'Must be at least 8 characters')
-  )
-})
+  email: emailSchema(),
+  password: newPasswordSchema()
+}))
 
-type Schema = v.InferOutput<typeof schema>
+type Schema = v.InferOutput<typeof schema.value>
 
 const fields = [
   { name: 'firstName', type: 'text' as const, label: t('auth.signUp.firstName'), required: true },

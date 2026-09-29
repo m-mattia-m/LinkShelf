@@ -41,16 +41,10 @@ func (s *userServiceImpl) Get(id string) (*model.User, error) {
 	return s.Repository.UserRepository.Get(id)
 }
 
-// Create always registers a "user" role account unless the caller is an
-// authenticated admin explicitly requesting a different one - self
-// registration can never grant itself elevated access.
-//
-// Self-registration always requires a password and is rejected outright when
-// authentication.registrationEnabled is false (admin-created accounts and
-// OIDC auto-provisioning are unaffected by that toggle). An admin, however,
-// may create a passwordless "invited" account when email verification is
-// enabled - completing registration by setting a password is then the only
-// way in, via the emailed set-password link.
+// Create registers a "user" account unless an admin caller requests another
+// role. Self-registration requires a password and
+// authentication.registrationEnabled. An admin may create a passwordless
+// "invited" account when email verification is enabled.
 func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*model.User, error) {
 	if !callerIsAdmin && !config.Bool("authentication.registrationEnabled") {
 		return nil, ErrRegistrationDisabled
@@ -98,11 +92,8 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 	}
 
 	if verificationEnabled {
-		// Best-effort: a failed send shouldn't undo an already-created
-		// account - "resend" is the recovery path. The failure itself is
-		// logged inside SendInitial/send; what the caller gets back here is
-		// just the yes/no signal needed to tell the new user it didn't go
-		// out, instead of leaving them waiting on an email that never comes.
+		// Best-effort: a failed send doesn't undo the account ("resend"
+		// recovers), but the caller is told so it doesn't wait for an email.
 		if err := s.Domain.EmailVerificationService.SendInitial(user); err != nil {
 			user.EmailDeliveryFailed = true
 		}
@@ -132,11 +123,8 @@ func (s *userServiceImpl) Update(userId string, userRequest *model.User, callerI
 		role = validated
 	}
 
-	// Only a changed username is checked, so saving an unrelated profile
-	// change never fails because of a name that was fine when it was chosen.
-	// Shelves keep their path: their public URL is built from the owner's
-	// current username, so a rename moves every URL at once and old ones stop
-	// resolving.
+	// Only a changed username is checked. Renaming moves every shelf URL,
+	// since they are built from the current username.
 	if userRequest.Username != existing.Username {
 		if err := validateUsername(userRequest.Username); err != nil {
 			return nil, err

@@ -80,10 +80,12 @@ describe('validateShelfDomain', () => {
     expect(validateShelfDomain(domain)).toEqual(expect.any(String))
   })
 
-  it('says what is wrong in a way a person can act on', () => {
-    expect(validateShelfDomain('https://a.example.com')).toContain('without https://')
-    expect(validateShelfDomain('example')).toContain('full domain name')
-    expect(validateShelfDomain('a.example.com:99999')).toContain('port')
-    expect(validateShelfDomain('a.example.c0m')).toContain('top-level domain')
+  it('returns the i18n key of what is wrong', () => {
+    expect(validateShelfDomain('https://a.example.com')).toBe('validation.domain.withScheme')
+    expect(validateShelfDomain('example')).toBe('validation.domain.notFull')
+    expect(validateShelfDomain('a.example.com:99999')).toBe('validation.domain.port')
+    expect(validateShelfDomain('a.example.c0m')).toBe('validation.domain.tld')
+    expect(validateShelfDomain(`${'a.'.repeat(130)}com`)).toBe('validation.domain.tooLong')
+    expect(validateShelfDomain('pro_file.example.com')).toBe('validation.domain.invalidLabel')
   })
 })

@@ -31,12 +31,8 @@ export function errorResponse(status: number, detail: string, errors: ErrorDetai
 
 const BASE = 'http://localhost:8085'
 
-// The generated OpenAPI models are camelCase in TypeScript but several of
-// them serialize to snake_case (or otherwise-renamed) JSON on the wire -
-// see api/models/*.ts's own *FromJSON()/*ToJSON() pairs. Every handler here
-// runs its body through the matching *ToJSON() converter so responses match
-// exactly what the real backend sends, instead of hand-written JSON that
-// silently drifts from the wire format.
+// Bodies go through the generated *ToJSON() converters so responses match the
+// backend's wire format (several fields are snake_case).
 export const handlers = [
   // --- Auth ---
   http.post(`${BASE}/v1/auth/login`, () => HttpResponse.json(TokenPairToJSON(buildTokenPair()))),

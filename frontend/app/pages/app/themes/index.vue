@@ -7,6 +7,7 @@ definePageMeta({
   layout: 'app'
 })
 
+const { t } = useI18n()
 const themeStore = useThemeStore()
 const loading = ref(true)
 
@@ -62,18 +63,14 @@ function exportTheme(theme: Theme) {
 
 function actionItems(theme: Theme) {
   return [
-    [{ label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => openEdit(theme) }],
-    [{ label: 'Export', icon: 'i-lucide-download', onSelect: () => exportTheme(theme) }],
-    [{ label: 'Delete', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(theme) }]
+    [{ label: t('common.edit'), icon: 'i-lucide-pencil', onSelect: () => openEdit(theme) }],
+    [{ label: t('app.theme.export'), icon: 'i-lucide-download', onSelect: () => exportTheme(theme) }],
+    [{ label: t('common.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(theme) }]
   ]
 }
 
-/**
- * Import reads a plain-text config file the user exported earlier (or wrote
- * by hand) and opens the create dialog pre-filled with it - it always
- * creates a NEW theme, never overwrites an existing one. Validation is the
- * same as the regular create flow (server-side, same schema as the editor).
- */
+// Import opens the create dialog pre-filled from an exported config file. It
+// always creates a new theme.
 const importFileInput = ref<HTMLInputElement>()
 const importInitial = ref<ThemeBase>()
 const importOpen = ref(false)
@@ -99,12 +96,12 @@ async function onImportFileSelected(event: Event) {
   <div>
     <div class="flex justify-between items-center gap-2">
       <h1 class="text-2xl text-highlighted pb-4">
-        Themes
+        {{ t('app.theme.title') }}
       </h1>
 
       <div class="flex items-center gap-2">
         <UButton
-          label="Import"
+          :label="t('app.theme.import')"
           icon="i-lucide-upload"
           color="neutral"
           variant="outline"
@@ -122,7 +119,7 @@ async function onImportFileSelected(event: Event) {
     </div>
 
     <p class="text-sm text-muted pb-6">
-      Themes only affect a shelf's public page, never the app itself. Your themes are private - if you want to share one, export it and send the file to whoever wants to import it.
+      {{ t('app.theme.intro') }}
     </p>
 
     <div
@@ -142,10 +139,10 @@ async function onImportFileSelected(event: Event) {
         class="pb-6"
       >
         <h2 class="text-sm font-medium text-dimmed pb-2">
-          Instance themes
+          {{ t('app.shelf.form.instanceThemes') }}
         </h2>
         <p class="text-xs text-dimmed pb-2">
-          Provided by your instance admin. Managed via server config, not here.
+          {{ t('app.theme.instanceHelp') }}
         </p>
         <div class="flex flex-col divide-y divide-default rounded-lg border border-default">
           <div
@@ -158,7 +155,7 @@ async function onImportFileSelected(event: Event) {
               color="neutral"
               variant="subtle"
             >
-              Instance
+              {{ t('app.theme.instanceBadge') }}
             </UBadge>
           </div>
         </div>
@@ -166,7 +163,7 @@ async function onImportFileSelected(event: Event) {
 
       <div>
         <h2 class="text-sm font-medium text-dimmed pb-2">
-          Your themes
+          {{ t('app.shelf.form.yourThemes') }}
         </h2>
 
         <div
@@ -174,7 +171,7 @@ async function onImportFileSelected(event: Event) {
           class="flex flex-col items-center gap-4 py-16 text-center"
         >
           <p class="text-muted">
-            You haven't created any themes yet.
+            {{ t('app.theme.empty') }}
           </p>
           <ThemeFormDialog mode="create" />
         </div>
@@ -194,7 +191,7 @@ async function onImportFileSelected(event: Event) {
                 icon="i-lucide-ellipsis-vertical"
                 color="neutral"
                 variant="ghost"
-                aria-label="Actions"
+                :aria-label="t('common.actions')"
               />
             </UDropdownMenu>
           </div>
@@ -217,8 +214,8 @@ async function onImportFileSelected(event: Event) {
 
     <ConfirmDialog
       v-model:open="deleteOpen"
-      title="Delete theme?"
-      :description="`Delete “${deletingTheme?.name}”? Any shelf using it will fall back to the default look. This cannot be undone.`"
+      :title="t('app.theme.deleteConfirm.title')"
+      :description="t('app.theme.deleteConfirm.description', { name: deletingTheme?.name })"
       :loading="deleting"
       @confirm="confirmDelete"
     />

@@ -6,11 +6,7 @@ const props = withDefaults(defineProps<{
   mode?: 'create' | 'edit'
   theme?: Theme
   initial?: ThemeBase
-  // Suppresses the dialog's own default trigger button - for a usage that's
-  // opened purely programmatically (e.g. the import flow, which only sets
-  // `initial` once a file is picked, so `!initial` alone can't tell "the
-  // import dialog" apart from "the create dialog" while no file is chosen
-  // yet).
+  // Hides the default trigger button for programmatic use (e.g. import).
   hideTrigger?: boolean
 }>(), {
   mode: 'create',
@@ -23,6 +19,7 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { default: false })
 
+const { t } = useI18n()
 const themeStore = useThemeStore()
 
 const formModel = ref<ThemeBase>()
@@ -56,13 +53,13 @@ async function save(close: () => void) {
 <template>
   <UModal
     v-model:open="open"
-    :title="mode === 'edit' ? 'Edit theme' : 'New theme'"
+    :title="mode === 'edit' ? t('app.theme.edit') : t('app.theme.new')"
     :ui="{ footer: 'justify-end' }"
   >
     <UButton
       v-if="mode === 'create' && !hideTrigger"
       icon="i-lucide-plus"
-      label="New theme"
+      :label="t('app.theme.new')"
     />
 
     <template #body>
@@ -76,13 +73,13 @@ async function save(close: () => void) {
 
     <template #footer="{ close }">
       <UButton
-        label="Cancel"
+        :label="t('common.cancel')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Save"
+        :label="t('common.save')"
         color="neutral"
         :loading="saving"
         @click="save(close)"

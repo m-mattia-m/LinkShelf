@@ -6,7 +6,14 @@ export interface ApiErrorResult {
   fieldErrors: FormError[]
 }
 
+// Resolved before the first await, while the Nuxt app context is still set.
+function translator(): (key: string) => string {
+  const i18n = tryUseNuxtApp()?.$i18n
+  return key => (i18n ? i18n.t(key) : key)
+}
+
 export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
+  const t = translator()
   if (err instanceof ResponseError) {
     try {
       const body = await err.response.clone().json() as ErrorModel
@@ -17,11 +24,8 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
           message: detail.message!
         }))
 
-      // huma's top-level "detail" is a generic label (e.g. "validation
-      // failed") - the actual reason lives in each item of "errors". Prefer
-      // those so the toast is useful even when a field doesn't currently
-      // render on the form (e.g. an unexpected/removed property) and the
-      // per-field red-state below has nowhere to attach to.
+      // huma's top-level "detail" is generic (e.g. "validation failed"), so
+      // prefer the specific messages in "errors".
       const specificMessages = (body.errors ?? [])
         .filter(detail => detail.message)
         .map(detail => detail.location
@@ -30,7 +34,7 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
 
       const message = specificMessages.length > 0
         ? specificMessages.join('; ')
-        : (body.detail || 'Something went wrong.')
+        : (body.detail || t('common.somethingWentWrong'))
 
       return { message, fieldErrors }
     } catch {
@@ -42,15 +46,16 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
     return { message: err.message, fieldErrors: [] }
   }
 
-  return { message: 'Something went wrong.', fieldErrors: [] }
+  return { message: t('common.somethingWentWrong'), fieldErrors: [] }
 }
 
 export async function handleApiError(err: unknown, formRef?: { setErrors: (errs: FormError[]) => void } | null): Promise<ApiErrorResult> {
   const toast = useToast()
+  const t = translator()
   const result = await parseApiError(err)
 
   toast.add({
-    title: 'Error',
+    title: t('common.error'),
     description: result.message,
     color: 'error'
   })

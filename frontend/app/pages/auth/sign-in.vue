@@ -14,16 +14,12 @@ const route = useRoute()
 const authStore = useAuthStore()
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
-const schema = v.object({
-  email: v.pipe(
-    v.string('Email is required'),
-    v.nonEmpty('Email is required'),
-    v.email('Please enter a valid email')
-  ),
-  password: v.pipe(v.string('Password is required'), v.nonEmpty('Password is required'))
-})
+const schema = computed(() => v.object({
+  email: emailSchema(),
+  password: requiredStringSchema('validation.passwordRequired')
+}))
 
-type Schema = v.InferOutput<typeof schema>
+type Schema = v.InferOutput<typeof schema.value>
 
 const fields = [
   { name: 'email', type: 'text' as const, label: t('auth.signIn.email'), required: true },

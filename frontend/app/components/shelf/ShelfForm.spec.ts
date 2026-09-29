@@ -30,10 +30,8 @@ function buildShelfProp(overrides: Partial<Shelf> = {}): Shelf {
 beforeEach(() => {
   const themeStore = useThemeStore()
   themeStore.$reset()
-  // ShelfForm fetches themes on mount whenever the store isn't loaded yet.
-  // Default to "already loaded" so most tests don't trigger that fetch (and
-  // its unawaited promise can't bleed into a later test) - the "theme
-  // selection" tests below opt back into the unloaded state explicitly.
+  // Default to "themes loaded" so most tests skip the on-mount fetch; the
+  // theme selection tests opt out explicitly.
   themeStore.loaded = true
 })
 

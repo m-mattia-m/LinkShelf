@@ -2,20 +2,21 @@
 definePageMeta({
   layout: 'landingpage'
 })
+
+const { t } = useI18n()
 </script>
 
 <template>
   <div class="my-8 mx-4 sm:mx-6 lg:mx-8">
     <h1 class="text-4xl text-highlighted pb-4">
-      Cloud
+      {{ t('nav.cloud') }}
     </h1>
     <p>
-      Unfortunately this plan is not available yet. We work on the cloud plan which we look forward to release. If you
-      want to support the development think about sponsoring the developers.
+      {{ t('cloud.notAvailable') }}
       <NuxtLink
         class="text-primary"
         to="https://github.com/sponsors/m-mattia-m"
-      >Sponsoring</NuxtLink>
+      >{{ t('cloud.sponsor') }}</NuxtLink>
     </p>
   </div>
 </template>

@@ -41,10 +41,8 @@ describe('useApi', () => {
   })
 
   it('sends exactly one Authorization header on the retry', async () => {
-    // Real browsers (and Node) merge two differently-cased "Authorization"
-    // entries into "Bearer <old>, Bearer <new>", which the backend rejects.
-    // The test environment's fetch silently keeps only the last one, so the
-    // request is inspected as it is handed to fetch instead of as received.
+    // The test fetch keeps only the last of two differently-cased
+    // Authorization entries, so inspect the request as handed to fetch.
     const authStore = useAuthStore()
     authStore.setTokens(buildTokenPair({ accessToken: 'stale-token', refreshToken: 'refresh-1' }))
     server.use(

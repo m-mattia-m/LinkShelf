@@ -199,7 +199,7 @@ const columns = computed<TableColumn<User>[]>(() => {
             icon="i-lucide-ellipsis-vertical"
             color="neutral"
             variant="ghost"
-            aria-label="Actions"
+            :aria-label="t('common.actions')"
             :loading="actionLoading === row.original.id"
           />
         </UDropdownMenu>

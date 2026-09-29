@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { DotType, CornerDotType, CornerSquareType } from 'qr-code-styling'
 
+const { t } = useI18n()
+
 const open = defineModel<boolean>('open', { default: false })
 
 const props = defineProps<{
@@ -8,21 +10,19 @@ const props = defineProps<{
   title?: string
 }>()
 
-const shapeOptions: { label: string, value: DotType }[] = [
-  { label: 'Square', value: 'square' },
-  { label: 'Rounded', value: 'rounded' },
-  { label: 'Extra rounded', value: 'extra-rounded' },
-  { label: 'Dots', value: 'dots' }
-]
+const shapeOptions = computed<{ label: string, value: DotType }[]>(() => [
+  { label: t('app.shelf.qr.shapes.square'), value: 'square' },
+  { label: t('app.shelf.qr.shapes.rounded'), value: 'rounded' },
+  { label: t('app.shelf.qr.shapes.extraRounded'), value: 'extra-rounded' },
+  { label: t('app.shelf.qr.shapes.dots'), value: 'dots' }
+])
 
 const color = ref('#000000')
 const shape = ref<DotType>('square')
 const downloading = ref<'svg' | 'png' | null>(null)
 
-// The big "eyes" (corner squares/dots) don't share the --dots-- style names,
-// so each shape maps to the closest-looking corner pair rather than a 1:1
-// property - otherwise picking "Dots" would still leave sharp square eyes,
-// which reads as unfinished rather than as one cohesive style.
+// Corner squares/dots don't share the dot style names, so each shape maps to
+// the closest-looking corner pair.
 const cornerStylesByShape: Record<DotType, { square: CornerSquareType, dot: CornerDotType }> = {
   'square': { square: 'square', dot: 'square' },
   'rounded': { square: 'extra-rounded', dot: 'dot' },
@@ -33,9 +33,7 @@ const cornerStylesByShape: Record<DotType, { square: CornerSquareType, dot: Corn
 }
 
 const previewEl = ref<HTMLElement>()
-// qr-code-styling renders straight to the DOM (canvas/svg) rather than
-// through Vue's own reactivity, so the instance is plain, unreactive state
-// kept alongside the component instead of in a ref.
+// qr-code-styling renders straight to the DOM, so the instance isn't reactive.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let qrCode: any
 
@@ -95,8 +93,8 @@ async function download(extension: 'svg' | 'png') {
 <template>
   <UModal
     v-model:open="open"
-    title="QR code"
-    :description="title ? `Scan to open &quot;${title}&quot;` : 'Scan to open this shelf'"
+    :title="t('app.shelf.detail.qrCode')"
+    :description="title ? t('app.shelf.qr.scanTitle', { title }) : t('app.shelf.qr.scan')"
   >
     <template #body>
       <div class="flex flex-col items-center gap-6">
@@ -106,7 +104,7 @@ async function download(extension: 'svg' | 'png') {
         />
 
         <div class="w-full flex flex-col gap-4">
-          <UFormField label="Color">
+          <UFormField :label="t('app.link.form.color')">
             <div class="flex items-center gap-2">
               <UColorPicker
                 v-model="color"
@@ -120,7 +118,7 @@ async function download(extension: 'svg' | 'png') {
             </div>
           </UFormField>
 
-          <UFormField label="Shape">
+          <UFormField :label="t('app.shelf.qr.shape')">
             <USelect
               v-model="shape"
               :items="shapeOptions"
@@ -134,13 +132,13 @@ async function download(extension: 'svg' | 'png') {
 
     <template #footer="{ close }">
       <UButton
-        label="Close"
+        :label="t('common.close')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Download SVG"
+        :label="t('app.shelf.qr.downloadSvg')"
         icon="i-lucide-download"
         color="neutral"
         variant="outline"
@@ -148,7 +146,7 @@ async function download(extension: 'svg' | 'png') {
         @click="download('svg')"
       />
       <UButton
-        label="Download PNG"
+        :label="t('app.shelf.qr.downloadPng')"
         icon="i-lucide-download"
         :loading="downloading === 'png'"
         @click="download('png')"

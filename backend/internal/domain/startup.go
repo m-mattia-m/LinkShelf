@@ -7,11 +7,8 @@ import (
 	"strings"
 )
 
-// BackfillUsernames gives every user that has no username one derived from
-// their email address. It runs on every startup and only touches rows that are
-// still NULL, so in practice it does real work once: for accounts that existed
-// before usernames did. A username is collected for every account whether or
-// not app.userBasedPaths is on, and nothing else fills it in for those.
+// BackfillUsernames derives a username from the email address for every user
+// that has none, i.e. accounts created before usernames existed.
 func BackfillUsernames(repo *repository.Repository) error {
 	users, err := repo.UserRepository.ListWithoutUsername()
 	if err != nil {
@@ -32,10 +29,8 @@ func BackfillUsernames(repo *repository.Repository) error {
 }
 
 // EnsureUniquePaths refuses to start when app.userBasedPaths is off but two
-// shelves share a path. That state only arises by switching the setting off
-// after it was on: /<path> would then be ambiguous, so one of the shelves
-// could never be reached. The database can't prevent it (its constraint is
-// per owner, see migration 0008), so it is checked here instead.
+// shelves share a path, which happens after switching the setting off. The
+// database constraint is per owner (migration 0008), so it can't catch this.
 func EnsureUniquePaths(repo *repository.Repository) error {
 	if config.Bool("app.userBasedPaths") {
 		return nil

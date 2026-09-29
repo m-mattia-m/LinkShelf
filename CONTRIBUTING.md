@@ -1,33 +1,19 @@
 # Contributing
 
-We welcome contributions from the community! Whether you're fixing a bug, adding a new feature, or improving
-documentation, your help is appreciated. Please follow the guidelines below to ensure a smooth contribution process.
-
-## How to Contribute
-
-1. **Fork the Repository**: Start by forking the repository to your own GitHub account.
-2. **Clone the Forked Repository**: Clone your forked repository to your local machine using:
+1. Fork the repository and clone your fork:
    ```bash
-   git clone https://github.com/m-mattia-m/LinkShelf
+   git clone https://github.com/<your-username>/LinkShelf
    ```
-3. **Create a New Branch**: Create a new branch for your feature or bug fix:
+2. Create a branch:
    ```bash
    git checkout -b my-feature-branch
    ```
-4. **Make Your Changes**: Implement your changes in the codebase. Ensure your code follows the project's coding
-   standards.
-5. **Test Your Changes**: Run existing tests and add new tests if necessary to verify your changes work as expected.
-6. **Commit Your Changes**: Commit your changes with a
-   descriptive [Conventional Commit](https://www.conventionalcommits.org) message. Releases are generated from these
-   messages (see [Releases](#releases)):
+3. Make your changes, and add or update tests.
+4. Commit with a [Conventional Commit](https://www.conventionalcommits.org) message (see [Releases](#releases)):
    ```bash
    git commit -m "feat: add feature X"
    ```
-7. **Push to Your Fork**: Push your changes to your forked repository:
-   ```bash
-   git push origin my-feature-branch
-   ```
-8. **Create a Pull Request**: Go to the original repository and create a pull request from your forked repository.
+5. Push the branch to your fork and open a pull request against `main`.
 
 ## Releases
 

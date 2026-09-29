@@ -54,18 +54,14 @@ onMounted(async () => {
   }
 })
 
-const schema = v.object({
-  firstName: v.pipe(v.string('First name is required'), v.nonEmpty('First name is required')),
-  lastName: v.pipe(v.string('Last name is required'), v.nonEmpty('Last name is required')),
+const schema = computed(() => v.object({
+  firstName: requiredStringSchema('validation.firstNameRequired'),
+  lastName: requiredStringSchema('validation.lastNameRequired'),
   username: usernameSchema(),
-  email: v.pipe(
-    v.string('Email is required'),
-    v.nonEmpty('Email is required'),
-    v.email('Please enter a valid email')
-  )
-})
+  email: emailSchema()
+}))
 
-type Schema = v.InferOutput<typeof schema>
+type Schema = v.InferOutput<typeof schema.value>
 
 function onSubmit(payload: FormSubmitEvent<Schema>) {
   if (!user.value) return

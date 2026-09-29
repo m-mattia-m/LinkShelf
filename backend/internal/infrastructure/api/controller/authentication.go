@@ -34,11 +34,8 @@ func IsAdminFromContext(ctx context.Context) bool {
 	return role == model.RoleAdmin
 }
 
-// NewAuthenticationMiddleware validates our own JWT for any operation that
-// declares a Security requirement. Operations without one (Security == nil,
-// the huma default) are public and skip authentication entirely. This is the
-// only check performed regardless of authentication.type - LOCAL and OIDC
-// logins both end up with the same kind of token.
+// NewAuthenticationMiddleware validates our own JWT for every operation that
+// declares a Security requirement. LOCAL and OIDC logins issue the same token.
 func NewAuthenticationMiddleware(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		op := ctx.Operation()

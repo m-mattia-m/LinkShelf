@@ -41,11 +41,8 @@ export const useSettingStore = defineStore('settingStore', {
       this.loaded = true
     },
 
-    // Only the keys that actually changed since the last load are sent, all
-    // in a single batched request - skipped entirely if nothing changed.
-    // Never throws: a request-level failure (network/5xx) is reported the
-    // same way a per-item validation failure is, so the caller only has one
-    // path to handle.
+    // Sends only changed keys in one batched request. Never throws: request
+    // failures are reported like per-item validation failures.
     async updateMany(languageCode: string, entries: SettingKeyValue[]): Promise<SettingUpdateFailure[]> {
       const api = useApi()
 

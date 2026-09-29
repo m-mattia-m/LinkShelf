@@ -7,12 +7,8 @@ const { user, ensureUser } = useCurrentUser()
 const authStore = useAuthStore()
 const router = useRouter()
 
-// ULocaleSelect's `locales` prop is typed for @nuxt/ui's own Locale<M> (with
-// `dir`/`messages` for its internal component strings), not @nuxtjs/i18n's
-// app-content locale list this app actually configures - there's no de-CH
-// @nuxt/ui locale pack to wire up here, so this intentionally only supplies
-// code/name and casts past the mismatch. Kept in sync with the same switcher
-// in AppLayout.vue's footer - both change the one global app locale.
+// ULocaleSelect expects @nuxt/ui's Locale type, which has no de-CH pack, so
+// only code/name are supplied and the type is cast. Same as in AppLayout.vue.
 const availableLocales = computed(() => {
   const mapped = locales.value.map(l => ({
     code: l.code,
@@ -25,19 +21,19 @@ const availableLocales = computed(() => {
 const items = computed<NavigationMenuItem[][]>(() => [
   [
     {
-      label: 'Dashboard',
+      label: t('app.dashboard.title'),
       to: '/app',
       exact: true,
       icon: 'uil-home-alt'
     },
     {
-      label: 'Shelf',
+      label: t('app.shelf.title'),
       to: '/app/shelf',
       icon: 'uil-books',
       active: route.path.startsWith('/app/shelf')
     },
     {
-      label: 'Themes',
+      label: t('app.theme.title'),
       to: '/app/themes',
       icon: 'uil-palette',
       active: route.path.startsWith('/app/themes')
@@ -47,22 +43,22 @@ const items = computed<NavigationMenuItem[][]>(() => [
     // so there's no point showing the link.
     ...(authStore.isAdmin
       ? [{
-          label: 'Settings',
+          label: t('app.settings.title'),
           defaultOpen: true,
           icon: 'uil-cog',
           children: [
             {
-              label: 'General',
+              label: t('app.nav.general'),
               to: '/app/settings',
               exact: true
             },
             {
-              label: 'Users',
+              label: t('app.settings.users.title'),
               to: '/app/settings/users',
               exact: true
             },
             {
-              label: 'Themes',
+              label: t('app.theme.title'),
               to: '/app/settings/themes',
               exact: true
             }
@@ -98,19 +94,19 @@ async function signOut() {
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
-      label: 'Account settings',
+      label: t('app.nav.accountSettings'),
       icon: 'i-lucide-user-cog',
       to: '/app/profile'
     }
   ],
   [
     {
-      label: 'Language',
+      label: t('app.nav.language'),
       slot: 'language',
       onSelect: (e: Event) => e.preventDefault()
     },
     {
-      label: 'Dark mode',
+      label: t('app.nav.darkMode'),
       slot: 'color-mode',
       onSelect: (e: Event) => e.preventDefault()
     }
@@ -184,7 +180,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                 :model-value="locale"
                 :locales="availableLocales"
                 class="w-32"
-                @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH')"
+                @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH' | 'es')"
               />
             </div>
           </template>

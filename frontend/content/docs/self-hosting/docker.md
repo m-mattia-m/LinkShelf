@@ -70,16 +70,15 @@ domain](/docs/self-hosting/configuration#reachable-on-more-than-one-domain).
 
 ## Analytics
 
-Optional, cookie-free visitor analytics via [Plausible](https://plausible.io), disabled by default - turning it on is
-an instance owner's decision, not something a visitor's browser can be asked about.
+Optional, cookie-free visitor analytics via [Plausible](https://plausible.io), off by default.
 
-- `NUXT_PUBLIC_PLAUSIBLE_ENABLED`: set to `true` to turn tracking on
-- `NUXT_PUBLIC_PLAUSIBLE_DOMAIN`: the site identifier registered in Plausible. Recommended to set explicitly,
-  especially if the instance is reachable on more than one domain; falls back to the request's hostname when unset
-- `NUXT_PUBLIC_PLAUSIBLE_API_HOST`: your Plausible instance, e.g. `https://plausible.example.com` for self-hosted.
-  Defaults to Plausible Cloud (`https://plausible.io`) when unset
-- `NUXT_PUBLIC_PLAUSIBLE_PROXY`: set to `true` to route the script and API calls through this app's own domain
-  (under `/_plausible`) instead of `NUXT_PUBLIC_PLAUSIBLE_API_HOST` directly, to reduce ad-blocker interference
+- `NUXT_PUBLIC_PLAUSIBLE_ENABLED`: `true` to turn it on
+- `NUXT_PUBLIC_PLAUSIBLE_DOMAIN`: the site identifier registered in Plausible. Falls back to the request's hostname,
+  so set it when the instance is reachable on more than one domain
+- `NUXT_PUBLIC_PLAUSIBLE_API_HOST`: your Plausible instance, e.g. `https://plausible.example.com`. Defaults to
+  `https://plausible.io`
+- `NUXT_PUBLIC_PLAUSIBLE_PROXY`: `true` to route the script and API calls through this app's own domain
+  (under `/_plausible`), to reduce ad-blocker interference
 
 ```yaml
     environment:

@@ -9,6 +9,7 @@ const props = defineProps<{
   modelValue?: Shelf
 }>()
 
+const { t } = useI18n()
 const { user: currentUser } = useCurrentUser()
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 const userBasedPaths = computed(() => websiteSettings.value?.userBasedPaths ?? false)
@@ -25,12 +26,12 @@ onMounted(() => {
 const NO_THEME_VALUE = '__none__'
 
 const themeItems = computed<SelectItem[]>(() => [
-  { label: 'No theme (default look)', value: NO_THEME_VALUE },
+  { label: t('app.shelf.form.noTheme'), value: NO_THEME_VALUE },
   ...(themeStore.instance.length
-    ? [{ type: 'label' as const, label: 'Instance themes' }, ...themeStore.instance.map(t => ({ label: t.name, value: t.id }))]
+    ? [{ type: 'label' as const, label: t('app.shelf.form.instanceThemes') }, ...themeStore.instance.map(t => ({ label: t.name, value: t.id }))]
     : []),
   ...(themeStore.mine.length
-    ? [{ type: 'label' as const, label: 'Your themes' }, ...themeStore.mine.map(t => ({ label: t.name, value: t.id }))]
+    ? [{ type: 'label' as const, label: t('app.shelf.form.yourThemes') }, ...themeStore.mine.map(t => ({ label: t.name, value: t.id }))]
     : [])
 ])
 
@@ -38,26 +39,24 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ShelfBase): void
 }>()
 
-// A shelf is reached through a path or through a domain of its own, never
-// both. The tab that is open when the form is saved decides which one is kept
-// and the other is sent empty, so the backend's "exactly one" rule can never
-// surprise anyone who filled in both.
+// A shelf is reached through a path or a domain, never both. The open tab
+// decides which one is saved; the other is sent empty.
 type Mode = 'path' | 'domain'
 
-const tabItems = [
+const tabItems = computed(() => [
   {
-    label: 'Path',
+    label: t('app.shelf.form.path'),
     icon: 'i-lucide-link',
     slot: 'path',
     value: 'path'
   },
   {
-    label: 'Domain',
+    label: t('app.shelf.form.domain'),
     icon: 'i-lucide-globe',
     slot: 'domain',
     value: 'domain'
   }
-]
+])
 
 // A shelf that only has a domain opens on the Domain tab. One that has both
 // (created before a shelf had to choose) opens on Path, like everywhere else.
@@ -80,55 +79,52 @@ const form = reactive({
   icon: props.modelValue?.icon ?? '',
   themeId: props.modelValue?.themeId ?? '',
   noIndex: props.modelValue?.noIndex ?? false,
-  // A shelf being created has never chosen either yet, so it gets the
-  // defaults that reproduce today's only behavior: footer shown, default
-  // text. An existing shelf always reflects what it actually has, even if
-  // that happens to be the same values.
+  // New shelves default to showing the default footer.
   footerEnabled: props.modelValue?.footerEnabled ?? true,
   footerCustomText: props.modelValue?.footerCustomText ?? ''
 })
 
 // Each of path and domain is only checked while its tab is the one in use - a
 // half-typed value on the other tab is thrown away on save anyway.
-const schema = v.object({
-  title: v.pipe(v.string(), v.nonEmpty('Required')),
+const schema = computed(() => v.object({
+  title: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   description: v.string(),
   domain: v.pipe(
     v.string(),
     v.check(
       value => mode.value !== 'domain' || normalizeShelfDomain(value) !== '',
-      'Please enter a domain (e.g. profile.example.com)'
+      t('validation.domain.missing')
     ),
     v.check(
       value => mode.value !== 'domain' || validateShelfDomain(normalizeShelfDomain(value)) === null,
-      issue => validateShelfDomain(normalizeShelfDomain(String(issue.input))) ?? 'Please enter a valid domain'
+      issue => t(validateShelfDomain(normalizeShelfDomain(String(issue.input))) ?? 'validation.domain.invalid')
     ),
     v.check(
       value => mode.value !== 'domain' || normalizeShelfDomain(value) !== ownHost,
-      'This is the address of this LinkShelf instance itself. Please choose another domain'
+      t('validation.domain.ownHost')
     )
   ),
   path: v.pipe(
     v.string(),
     v.check(
       value => mode.value !== 'path' || value.trim() !== '',
-      'Please enter a path'
+      t('validation.path.missing')
     ),
     v.check(
       value => mode.value !== 'path' || /^[a-zA-Z0-9-]*$/.test(value),
-      'Path may only contain letters, numbers, and hyphens'
+      t('validation.path.invalid')
     ),
     // Behind a username nothing is off limits. Top-level, the words the app
     // itself answers can't be used - except on a shelf that already has
     // one, so its other fields stay editable (the backend does the same).
     v.check(
       value => mode.value !== 'path' || userBasedPaths.value || value === props.modelValue?.path || !isRouteReservedPath(value),
-      'This path is used by a page of this app. Please choose another one'
+      t('validation.path.reserved')
     )
   ),
   icon: v.string(),
-  footerCustomText: v.pipe(v.string(), v.maxLength(500, 'Must be at most 500 characters'))
-})
+  footerCustomText: v.pipe(v.string(), v.maxLength(500, t('validation.maxLength', { max: 500 })))
+}))
 
 // The URL the shelf will get: /<username>/<path> with user-based paths, else
 // /<path>. A shelf being edited keeps its owner's username - an admin may be
@@ -141,7 +137,7 @@ const pathHelp = computed(() => userBasedPaths.value
 const domainHelp = computed(() => {
   const domain = normalizeShelfDomain(form.domain)
   const shown = domain ? `https://${domain}` : 'https://<domain>'
-  return `${shown} - point the domain's DNS at this LinkShelf instance and route it to the frontend.`
+  return t('app.shelf.form.domainHelp', { url: shown })
 })
 
 const selectedThemeId = computed({
@@ -224,7 +220,7 @@ watch(
     :state="form"
   >
     <UFormField
-      label="Title"
+      :label="t('app.shelf.form.title')"
       name="title"
       required
     >
@@ -235,7 +231,7 @@ watch(
     </UFormField>
 
     <UFormField
-      label="Description"
+      :label="t('app.shelf.form.description')"
       name="description"
       class="pt-4"
     >
@@ -246,10 +242,10 @@ watch(
     </UFormField>
 
     <UFormField
-      label="Icon"
+      :label="t('app.shelf.form.icon')"
       name="icon"
       class="pt-4"
-      help="Optional - leave empty for no icon."
+      :help="t('app.shelf.form.iconHelp')"
     >
       <IconPicker
         v-model="form.icon"
@@ -261,30 +257,30 @@ watch(
       v-model="form.noIndex"
       name="noIndex"
       class="pt-4"
-      label="Hide from search engines"
-      description="When on, this shelf's public page asks Google and other search engines not to index it. The rest of this LinkShelf instance is unaffected."
+      :label="t('app.shelf.form.noIndex')"
+      :description="t('app.shelf.form.noIndexHelp')"
     />
 
     <UCheckbox
       v-model="form.footerEnabled"
       name="footerEnabled"
       class="pt-4"
-      label="Show footer"
-      description="Turn off to hide the footer on this shelf's public page entirely, including the default 'Powered by LinkShelf' credit."
+      :label="t('app.shelf.form.showFooter')"
+      :description="t('app.shelf.form.showFooterHelp')"
     />
 
     <UFormField
       v-if="form.footerEnabled"
-      label="Custom footer text"
+      :label="t('app.shelf.form.footerText')"
       name="footerCustomText"
       class="pt-4"
-      help="Replaces the default 'Powered by LinkShelf' credit. Leave empty to keep it. Supports **bold**, *italic* and [links](https://example.com)."
+      :help="t('app.shelf.form.footerTextHelp')"
     >
       <UTextarea
         v-model="form.footerCustomText"
         class="w-full"
         :rows="2"
-        placeholder="Powered by LinkShelf"
+        :placeholder="t('linkpage.poweredBy')"
       />
     </UFormField>
 
@@ -293,16 +289,16 @@ watch(
       color="warning"
       variant="subtle"
       icon="i-lucide-triangle-alert"
-      title="Theme unavailable"
-      description="The theme this shelf was using no longer exists. Pick another one below."
+      :title="t('app.shelf.form.themeMissing.title')"
+      :description="t('app.shelf.form.themeMissing.description')"
       class="mt-4"
     />
 
     <UFormField
-      label="Theme"
+      :label="t('app.shelf.form.theme')"
       name="themeId"
       class="pt-4"
-      help="Only affects this shelf's public page, never the app."
+      :help="t('app.shelf.form.themeHelp')"
     >
       <USelect
         v-model="selectedThemeId"
@@ -317,14 +313,13 @@ watch(
       color="warning"
       variant="subtle"
       icon="i-lucide-triangle-alert"
-      title="Path and domain"
-      :description="`This shelf has both a path and a domain, and a shelf can only have one of them. Saving keeps the ${mode} and clears the other.`"
+      :title="t('app.shelf.form.hadBoth.title')"
+      :description="t(mode === 'path' ? 'app.shelf.form.hadBoth.keepsPath' : 'app.shelf.form.hadBoth.keepsDomain')"
       class="mt-4"
     />
 
     <p class="pt-4 text-sm text-muted">
-      A shelf is reached through either a path on this site or a domain of its own. The tab that is open when you save
-      is used, the other one is cleared.
+      {{ t('app.shelf.form.pathOrDomain') }}
     </p>
 
     <UTabs
@@ -334,7 +329,7 @@ watch(
     >
       <template #domain>
         <UFormField
-          label="Domain"
+          :label="t('app.shelf.form.domain')"
           name="domain"
           :help="domainHelp"
         >
@@ -349,7 +344,7 @@ watch(
 
       <template #path>
         <UFormField
-          label="Path"
+          :label="t('app.shelf.form.path')"
           name="path"
           :help="pathHelp"
         >

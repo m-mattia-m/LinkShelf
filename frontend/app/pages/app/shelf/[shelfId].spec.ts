@@ -254,13 +254,8 @@ describe('shelf detail page', () => {
       expect(screen.getByText('My Shelf')).toBeInTheDocument()
     })
 
-    // The page's own "Delete" trigger always renders before the (closed)
-    // confirm dialog's own "Delete" button in DOM order, so take the first
-    // match rather than risk an ambiguous getByRole.
-    // The page's own outline "Delete" trigger stays mounted even once the
-    // dialog opens (unlike a dropdown menu item, which closes), so scoping
-    // just to `container` still leaves both it and the dialog's own solid
-    // "Delete" button matching - scope precisely by role first instead.
+    // Both the page's trigger and the dialog's button are named "Delete", so
+    // each is queried within its own container.
     await fireEvent.click(within(container as HTMLElement).getByRole('button', { name: 'Delete' }))
 
     const dialog = await within(baseElement as HTMLElement).findByRole('dialog', { hidden: true })
@@ -320,15 +315,9 @@ describe('shelf detail page', () => {
       })
     )
 
-    // mountSuspended (not renderSuspended) so wrapper.findComponent() can
-    // reach the draggable list directly - simulating a real HTML5 drag
-    // gesture is unreliable in jsdom, so the drag-end event is triggered
-    // directly instead. Its result isn't attached to document.body, so
-    // queries are scoped to wrapper.element rather than the global screen.
-    // The page's template has no single root (separate v-if/v-else-if
-    // branches for loading/not-found/loaded), so wrapper.element itself
-    // changes once loading finishes - re-derive the scope on each use
-    // rather than caching it, or it keeps pointing at the discarded skeleton.
+    // mountSuspended for findComponent(); drag-end is triggered directly since
+    // HTML5 drag is unreliable in jsdom. The template has no single root, so
+    // re-derive the query scope from wrapper.element on each use.
     const wrapper = await mountSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
     // waitFor's MutationObserver watches document.body by default, but this
     // tree is detached from it - fall back to a plain wait for the initial

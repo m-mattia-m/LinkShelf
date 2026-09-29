@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 const open = defineModel<boolean>('open', { default: false })
 
 withDefaults(defineProps<{
@@ -9,8 +11,8 @@ withDefaults(defineProps<{
   color?: 'error' | 'primary' | 'neutral'
   loading?: boolean
 }>(), {
-  confirmLabel: 'Delete',
-  cancelLabel: 'Cancel',
+  confirmLabel: undefined,
+  cancelLabel: undefined,
   color: 'error',
   loading: false
 })
@@ -37,13 +39,13 @@ const emit = defineEmits<{
 
     <template #footer="{ close }">
       <UButton
-        :label="cancelLabel"
+        :label="cancelLabel ?? t('common.cancel')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        :label="confirmLabel"
+        :label="confirmLabel ?? t('common.delete')"
         :color="color"
         :loading="loading"
         @click="emit('confirm')"

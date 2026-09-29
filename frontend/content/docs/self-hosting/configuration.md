@@ -178,14 +178,13 @@ checks its own token.
 LinkShelf refuses to start with the setting on unless `app.frontendUrl` and every entry of `app.additionalOrigins` are
 full `http(s)` URLs and `server.host` is set, and it logs what it allows. Set them to your real public addresses first.
 In the Helm chart it is switched on automatically once the ingress is enabled, see
-[Kubernetes](/docs/self-hosting/kubernetes#custom-domains).
+[Kubernetes](/docs/self-hosting/kubernetes#strict-origins).
 
 ### Reachable on more than one domain
 
-The instance itself, not a shelf, can be reachable on more than one domain - for example `linkshelf.example.com` and
-`links.example.org` pointed at the same frontend. `app.frontendUrl` stays the one canonical address (it's what
-verification and password reset emails link to); list every other domain as a full origin in `app.additionalOrigins`,
-for example:
+The instance itself, not a shelf, can be reachable on more than one domain, for example `linkshelf.example.com` and
+`links.example.org`. `app.frontendUrl` stays the canonical address that emails link to; list every other domain as a
+full origin in `app.additionalOrigins`:
 
 ```yaml
 app:
@@ -194,10 +193,9 @@ app:
     - "https://links.example.org"
 ```
 
-This only affects `app.strictOrigins`' CORS check - it has nothing to do with `app.frontendUrl` itself, and getting the
-traffic there is still up to your infrastructure, the same three steps as a [shelf's custom
-domain](/docs/self-hosting/custom-domains#set-it-up): DNS, routing the domain to the frontend, and a TLS certificate. In
-the Helm chart, add the domain to `ingress.extraHosts` and to `ingress.tls`, and set `APP_ADDITIONALORIGINS` in `env`.
+This only affects the `app.strictOrigins` CORS check. Getting the traffic there takes the same steps as a [shelf's
+custom domain](/docs/self-hosting/custom-domains#set-it-up). In the Helm chart, add the domain to `ingress.extraHosts`
+and `ingress.tls`, and set `APP_ADDITIONALORIGINS` in `env`.
 
 ## Password reset
 

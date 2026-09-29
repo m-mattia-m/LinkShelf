@@ -49,8 +49,8 @@ describe('AppLayout', () => {
   it('renders the contributors credit line in the footer', async () => {
     await renderSuspended(AppLayout)
 
-    expect(screen.getByText('contributers')).toBeInTheDocument()
-    expect(screen.getByText('contributers').closest('a')).toHaveAttribute('href', 'https://github.com/m-mattia-m/LinkShelf/graphs/contributors')
+    expect(screen.getByText('contributors')).toBeInTheDocument()
+    expect(screen.getByText('contributors').closest('a')).toHaveAttribute('href', 'https://github.com/m-mattia-m/LinkShelf/graphs/contributors')
   })
 
   it('hides footer links for sections the site owner has not enabled', async () => {

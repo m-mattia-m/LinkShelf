@@ -1,8 +1,6 @@
-// Package oidcclient wraps a single, generically-configured OIDC provider:
+// Package oidcclient wraps a single, generically configured OIDC provider:
 // discovery, a PKCE-protected authorization-code flow, and ID token
-// verification. It intentionally has no knowledge of any specific provider
-// (Google, Okta, Zitadel, ...) — whatever is configured under
-// authentication.oidc is used as-is.
+// verification.
 package oidcclient
 
 import (
@@ -38,11 +36,8 @@ type Client struct {
 	oauth     oauth2.Config
 }
 
-// New performs OIDC discovery against the configured issuer. It's called
-// once at startup when authentication.type is OIDC, so a misconfigured
-// issuer fails fast instead of on the first login attempt. stateRepo persists
-// PKCE state/verifier pairs so any backend replica can complete a login
-// started on another one - no in-memory or sticky-session requirement.
+// New performs OIDC discovery at startup so a misconfigured issuer fails fast.
+// stateRepo persists PKCE state so any backend replica can complete a login.
 func New(ctx context.Context, stateRepo repository.OidcStateRepository) (*Client, error) {
 	issuer := config.String("authentication.oidc.issuer")
 	provider, err := oidc.NewProvider(ctx, issuer)
@@ -115,13 +110,8 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 		return nil, fmt.Errorf("id_token verification failed: %w", err)
 	}
 
-	// The ID token is only guaranteed to carry 'sub' - whether it also
-	// carries profile/email claims depends on provider-specific
-	// configuration (e.g. Zitadel only embeds them in the ID token when the
-	// application is explicitly set up to do so; by default they are only
-	// available from the userinfo endpoint). The userinfo endpoint is the
-	// standards-based way to get them regardless of that setting, so it is
-	// always used as the source of truth for anything beyond the subject.
+	// The ID token is only guaranteed to carry 'sub'; profile and email claims
+	// depend on provider configuration, so userinfo is the source of truth.
 	userInfo, err := c.provider.UserInfo(ctx, oauth2.StaticTokenSource(token))
 	if err != nil {
 		return nil, fmt.Errorf("fetching userinfo failed: %w", err)

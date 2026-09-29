@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import * as v from 'valibot'
+import type * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({
@@ -11,26 +11,9 @@ const route = useRoute()
 
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : null))
 
-const schema = v.pipe(
-  v.object({
-    password: v.pipe(
-      v.string('Password is required'),
-      v.nonEmpty('Password is required'),
-      v.minLength(8, 'Must be at least 8 characters')
-    ),
-    confirmPassword: v.pipe(v.string('Please confirm your password'), v.nonEmpty('Please confirm your password'))
-  }),
-  v.forward(
-    v.partialCheck(
-      [['password'], ['confirmPassword']],
-      input => input.password === input.confirmPassword,
-      'Passwords do not match'
-    ),
-    ['confirmPassword']
-  )
-)
+const schema = computed(() => passwordWithConfirmationSchema())
 
-type Schema = v.InferOutput<typeof schema>
+type Schema = v.InferOutput<typeof schema.value>
 
 const fields = [
   { name: 'password', type: 'password' as const, label: t('auth.resetPassword.password'), required: true },

@@ -1,7 +1,5 @@
-// Package migrations embeds per-engine SQL migration sets. The two sets are
-// equivalent in effect but not line-for-line identical - each uses its
-// engine's own identifier quoting and DDL syntax (e.g. Postgres's
-// ON CONFLICT vs MySQL's INSERT IGNORE). Minimum supported versions:
+// Package migrations embeds per-engine SQL migration sets. They are equivalent
+// in effect but use each engine's own syntax. Minimum supported versions:
 // Postgres 13+, MySQL 8.0+.
 package migrations
 

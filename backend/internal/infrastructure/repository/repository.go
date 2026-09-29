@@ -230,11 +230,8 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	return sqlDSN, driver, migrateDSN, nil
 }
 
-// pgQuotedIdentifiers lists identifiers that are quoted Postgres-style (e.g.
-// "user") in the source query text because they're reserved words there (
-// "user" collides with Postgres's USER/CURRENT_USER keyword, "order" with
-// ORDER BY). MySQL reserves the same words but quotes identifiers with
-// backticks instead, so buildSqlStatements rewrites them for that driver.
+// pgQuotedIdentifiers are reserved words quoted Postgres-style in the query
+// text; buildSqlStatements rewrites them to backticks for MySQL.
 var pgQuotedIdentifiers = strings.NewReplacer(`"user"`, "`user`", `"order"`, "`order`")
 
 func buildSqlStatements(query string) (string, error) {

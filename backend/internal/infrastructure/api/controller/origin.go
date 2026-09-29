@@ -15,20 +15,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// This file implements app.strictOrigins: the API only serves what belongs to
-// this instance. Two independent checks make that up.
+// This file implements app.strictOrigins with two checks:
+//   - originPolicy decides which browser origins may call the API (CORS):
+//     app.frontendUrl's origin and every shelf domain.
+//   - hostGuard only answers requests addressed to server.host.
 //
-//   - originPolicy decides which browser origins may call the API (CORS): the
-//     origin of app.frontendUrl, and the domain of any shelf that is served on
-//     one - a shelf page on its own domain loads its content from the API in
-//     the visitor's browser, so its origin has to be let through.
-//   - hostGuard only answers requests that are addressed to server.host, so
-//     the API can't be reached through some other name that happens to point
-//     at it.
-//
-// Neither is authentication: a request without an Origin header (curl, the
-// frontend's server-side calls) is not a CORS request and is left alone, and
-// every endpoint still checks its own token.
+// Neither is authentication: requests without an Origin header are left alone,
+// and every endpoint still checks its own token.
 
 const (
 	// domainCacheTtl is how long a "is this a shelf domain?" answer is

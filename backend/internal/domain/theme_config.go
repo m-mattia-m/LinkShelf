@@ -6,14 +6,9 @@ import (
 	"strings"
 )
 
-// ThemeProperties is the fixed set of CSS custom properties a theme may set.
-// This is an allowlist, not a denylist: any property not listed here is
-// rejected outright, and no raw CSS (selectors, at-rules, arbitrary
-// declarations) is ever accepted. That's what makes user-authored themes safe
-// to render on public pages without sandboxing or a CSS parser - the values
-// are constrained by the validators below, and callers re-serialize the
-// parsed result themselves rather than ever storing/replaying the caller's
-// raw text verbatim.
+// ThemeProperties is the allowlist of CSS custom properties a theme may set.
+// No raw CSS is ever accepted, which is what makes user-authored themes safe to
+// render on public pages.
 var ThemeProperties = []string{
 	"--shelf-bg",
 	"--shelf-text",
@@ -48,11 +43,9 @@ var (
 	imagePathPattern  = regexp.MustCompile(`^(https?://[^\s'"<>]+|/images/[a-zA-Z0-9._-]+)$`)
 )
 
-// hasNoInjectionCharacters rejects characters that would let a value break
-// out of a single "property: value;" declaration when it's later
-// re-serialized, or that have no legitimate use in any of the values below
-// (url(...) is only ever allowed via --shelf-bg-image's own validator, never
-// as a generic escape hatch in a color/length/font value).
+// hasNoInjectionCharacters rejects characters that would let a value break out
+// of its "property: value;" declaration. url(...) is only allowed through
+// --shelf-bg-image's own validator.
 func hasNoInjectionCharacters(value string) bool {
 	if len(value) == 0 || len(value) > maxThemeValueLength {
 		return false
@@ -108,11 +101,8 @@ func validateImageReference(value string) error {
 	return nil
 }
 
-// ParseThemeConfig parses a theme's raw "--name: value;" declaration text
-// into a validated map, rejecting any property not in ThemeProperties and any
-// value that fails its property-specific validator. Duplicate properties are
-// rejected rather than silently taking the last one, so authors get clear
-// feedback instead of surprising behavior.
+// ParseThemeConfig parses "--name: value;" text into a validated map,
+// rejecting unknown properties, invalid values and duplicates.
 func ParseThemeConfig(raw string) (map[string]string, error) {
 	values := make(map[string]string)
 

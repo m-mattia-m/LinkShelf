@@ -5,16 +5,16 @@ export const USERNAME_MAX_LENGTH = 30
 export const USERNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
 
 /**
- * The shape of a username, mirroring the backend (see
- * backend/internal/domain/username.go). Reserved words are only checked
- * there - the response explains which one was rejected.
+ * The shape of a username, mirroring backend/internal/domain/username.go.
+ * Reserved words are only checked by the backend.
  */
 export function usernameSchema() {
+  const { t } = useNuxtApp().$i18n
   return v.pipe(
-    v.string('Username is required'),
-    v.nonEmpty('Username is required'),
-    v.minLength(USERNAME_MIN_LENGTH, `Must be at least ${USERNAME_MIN_LENGTH} characters`),
-    v.maxLength(USERNAME_MAX_LENGTH, `Must be at most ${USERNAME_MAX_LENGTH} characters`),
-    v.regex(USERNAME_PATTERN, 'Lowercase letters, numbers and hyphens only, and no hyphen at the start or end')
+    v.string(t('validation.usernameRequired')),
+    v.nonEmpty(t('validation.usernameRequired')),
+    v.minLength(USERNAME_MIN_LENGTH, t('validation.minLength', { min: USERNAME_MIN_LENGTH })),
+    v.maxLength(USERNAME_MAX_LENGTH, t('validation.maxLength', { max: USERNAME_MAX_LENGTH })),
+    v.regex(USERNAME_PATTERN, t('validation.usernamePattern'))
   )
 }
