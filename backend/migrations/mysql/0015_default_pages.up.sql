@@ -1,11 +1,5 @@
--- Replaces the placeholder About, Contact, Imprint, Terms of Use and Privacy
--- Policy pages seeded by 0002 (and 0014) with fuller defaults. The texts are
--- written for any self-hosted instance: they point to the instance owner for
--- questions about the instance and to the LinkShelf repository (LICENSING.md)
--- for questions about the software, so no contact details are shipped here.
--- Only rows still holding the untouched seed are replaced, so an operator who
--- already rewrote a page keeps their own wording. English only; other
--- languages fall back to English until an operator adds a translation.
+-- Replaces the default pages from 0002/0014. Only rows still holding that
+-- default (ignoring surrounding whitespace) are updated, so edited pages stay.
 
 UPDATE `setting`
 SET `value` = '
@@ -27,16 +21,14 @@ LinkShelf is software that anyone can install on their own server. This website 
 
 ## Who builds LinkShelf
 
-LinkShelf is developed by [m-mattia-m](https://github.com/m-mattia-m) and the open-source community. It is licensed under the [GNU AGPLv3](https://github.com/m-mattia-m/LinkShelf/blob/main/LICENSE).
+LinkShelf is developed by its maintainers and the open-source community. It is licensed under the [GNU AGPLv3](https://github.com/m-mattia-m/LinkShelf/blob/main/LICENSE).
 
 To learn more, report a bug or contribute, visit the [LinkShelf repository on GitHub](https://github.com/m-mattia-m/LinkShelf).
 '
 WHERE `key` = 'about' AND `language` = 'en'
-  AND `value` = '
-# About
+  AND TRIM(BOTH CHAR(10) FROM TRIM(BOTH CHAR(13) FROM TRIM(BOTH CHAR(10) FROM TRIM(`value`)))) = '# About
 
-LinkShelf is an open-source bookmark manager designed to help you organize and access your favorite websites easily. It allows you to create shelves, sections, and links, providing a structured way to manage your bookmarks.
-';
+LinkShelf is an open-source bookmark manager designed to help you organize and access your favorite websites easily. It allows you to create shelves, sections, and links, providing a structured way to manage your bookmarks.';
 
 UPDATE `setting`
 SET `value` = '
@@ -53,12 +45,10 @@ This page is about the LinkShelf software. For questions about this website, a s
 Please do not report security issues publicly. See the [security policy](https://github.com/m-mattia-m/LinkShelf/blob/main/SECURITY.md) instead.
 '
 WHERE `key` = 'contact' AND `language` = 'en'
-  AND `value` = '
-# Contact
+  AND TRIM(BOTH CHAR(10) FROM TRIM(BOTH CHAR(13) FROM TRIM(BOTH CHAR(10) FROM TRIM(`value`)))) = '# Contact
 
 If you have any questions, suggestions, or need support, feel free to reach out to us:
-- [Discord](https://discord.com/linkshelf)
-';
+- [Discord](https://discord.com/linkshelf)';
 
 UPDATE `setting`
 SET `value` = '
@@ -84,12 +74,10 @@ The LinkShelf project has no access to this instance and cannot review, edit or 
 The source code is available in the [LinkShelf repository on GitHub](https://github.com/m-mattia-m/LinkShelf). If you have a question about how LinkShelf itself works, you can contact the maintainers using the address in [LICENSING.md](https://github.com/m-mattia-m/LinkShelf/blob/main/LICENSING.md#questions). For everything about this website, please contact the instance owner.
 '
 WHERE `key` = 'imprint' AND `language` = 'en'
-  AND `value` = '
-# Imprint
+  AND TRIM(BOTH CHAR(10) FROM TRIM(BOTH CHAR(13) FROM TRIM(BOTH CHAR(10) FROM TRIM(`value`)))) = '# Imprint
 
 LinkShelf is developed and maintained by the LinkShelf Team.
-For more information, visit our [GitHub repository](https://github.com/m-mattia-m/LinkShelf).
-';
+For more information, visit our [GitHub repository](https://github.com/m-mattia-m/LinkShelf).';
 
 UPDATE `setting`
 SET `value` = '
@@ -131,11 +119,9 @@ This service is provided "as is", without any warranty. The LinkShelf software i
 The instance owner may update these terms. Continuing to use the website after a change means you accept the new terms.
 '
 WHERE `key` = 'terms_of_use' AND `language` = 'en'
-  AND `value` = '
-# Terms of Use
+  AND TRIM(BOTH CHAR(10) FROM TRIM(BOTH CHAR(13) FROM TRIM(BOTH CHAR(10) FROM TRIM(`value`)))) = '# Terms of Use
 
-By using LinkShelf, you agree to comply with our terms of use. Please read them carefully before using the service. For more details, visit our [GitHub repository](https://github.com/m-mattia-m/LinkShelf)
-';
+By using LinkShelf, you agree to comply with our terms of use. Please read them carefully before using the service. For more details, visit our [GitHub repository](https://github.com/m-mattia-m/LinkShelf)';
 
 UPDATE `setting`
 SET `value` = '
@@ -175,13 +161,11 @@ Your data is kept as long as your account exists. To access, correct or delete y
 This website may use [Plausible Analytics](https://plausible.io), a privacy-friendly, cookie-free analytics tool, if enabled by the site operator. Plausible does not use cookies and does not collect personally identifiable information. See the [Plausible data policy](https://plausible.io/data-policy) for details.
 '
 WHERE `key` = 'privacy_policy' AND `language` = 'en'
-  AND `value` = '
-# Privacy Policy
+  AND TRIM(BOTH CHAR(10) FROM TRIM(BOTH CHAR(13) FROM TRIM(BOTH CHAR(10) FROM TRIM(`value`)))) = '# Privacy Policy
 
 LinkShelf is committed to protecting your privacy. We do not collect personal data beyond what is necessary for the functionality of the service. For more details, visit our [GitHub repository](https://github.com/m-mattia-m/LinkShelf)
 
 
 ## Analytics
 
-This website may use [Plausible Analytics](https://plausible.io), a privacy-friendly, cookie-free analytics tool, if enabled by the site operator. Plausible does not use cookies and does not collect personally identifiable information. See the [Plausible data policy](https://plausible.io/data-policy) for details.
-';
+This website may use [Plausible Analytics](https://plausible.io), a privacy-friendly, cookie-free analytics tool, if enabled by the site operator. Plausible does not use cookies and does not collect personally identifiable information. See the [Plausible data policy](https://plausible.io/data-policy) for details.';
