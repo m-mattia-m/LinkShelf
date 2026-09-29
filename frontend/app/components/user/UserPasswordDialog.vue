@@ -27,17 +27,17 @@ watch(open, (isOpen) => {
   form.confirmPassword = ''
 })
 
-const schema = v.pipe(
+const schema = computed(() => v.pipe(
   v.object({
-    oldPassword: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
-    newPassword: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
-    confirmPassword: v.pipe(v.string(), v.nonEmpty(() => t('validation.required')))
+    oldPassword: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+    newPassword: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+    confirmPassword: v.pipe(v.string(), v.nonEmpty(t('validation.required')))
   }),
   v.forward(
-    v.check(data => data.newPassword === data.confirmPassword, () => t('validation.passwordsMismatch')),
+    v.check(data => data.newPassword === data.confirmPassword, t('validation.passwordsMismatch')),
     ['confirmPassword']
   )
-)
+))
 
 const formRef = ref<{
   validate: () => Promise<unknown>

@@ -20,10 +20,10 @@ const form = reactive<ThemeBase>({
   config: props.modelValue?.config ?? props.initial?.config ?? ''
 })
 
-const schema = v.object({
-  name: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
-  config: v.pipe(v.string(), v.nonEmpty(() => t('validation.required')))
-})
+const schema = computed(() => v.object({
+  name: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+  config: v.pipe(v.string(), v.nonEmpty(t('validation.required')))
+}))
 
 const formRef = ref<{ validate: () => Promise<unknown>, setErrors: (errs: FormError[]) => void }>()
 

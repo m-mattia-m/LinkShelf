@@ -37,9 +37,9 @@ watch(open, (isOpen) => {
   form.color = props.link?.color ?? ''
 })
 
-const schema = v.object({
-  title: v.pipe(v.string(() => t('validation.titleRequired')), v.nonEmpty(() => t('validation.titleRequired'))),
-  link: v.pipe(v.string(() => t('validation.urlRequired')), v.nonEmpty(() => t('validation.urlRequired'))),
+const schema = computed(() => v.object({
+  title: v.pipe(v.string(t('validation.titleRequired')), v.nonEmpty(t('validation.titleRequired'))),
+  link: v.pipe(v.string(t('validation.urlRequired')), v.nonEmpty(t('validation.urlRequired'))),
   icon: v.string(),
   // Empty is valid too - it means "no color set", so the shelf's theme (or
   // the default look) decides how the link renders instead.
@@ -47,10 +47,10 @@ const schema = v.object({
     v.string(),
     v.check(
       value => value === '' || /^#[0-9a-fA-F]{6}$/.test(value),
-      () => t('validation.hexColor')
+      t('validation.hexColor')
     )
   )
-})
+}))
 
 const formRef = ref<{
   validate: () => Promise<unknown>

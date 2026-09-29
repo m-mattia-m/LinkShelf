@@ -64,22 +64,22 @@ watch(open, async (isOpen) => {
 const canInviteWithoutPassword = computed(() => websiteSettings.value?.emailVerificationEnabled ?? false)
 
 const createSchema = computed(() => v.object({
-  firstName: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
-  lastName: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
+  firstName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+  lastName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   username: usernameSchema(),
-  email: v.pipe(v.string(), v.nonEmpty(() => t('validation.required')), v.email(() => t('validation.email'))),
-  password: canInviteWithoutPassword.value ? v.string() : v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
+  email: emailSchema(),
+  password: canInviteWithoutPassword.value ? v.string() : v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   role: v.picklist(['user', 'admin'])
 }))
 
-const editSchema = v.object({
-  firstName: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
-  lastName: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
+const editSchema = computed(() => v.object({
+  firstName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
+  lastName: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   username: usernameSchema(),
-  email: v.pipe(v.string(), v.nonEmpty(() => t('validation.required')), v.email(() => t('validation.email'))),
+  email: emailSchema(),
   password: v.string(),
   role: v.picklist(['user', 'admin'])
-})
+}))
 
 // Renaming a user changes the URL of every shelf of theirs that has a path.
 // An admin sees all shelves, so they can be counted here.
@@ -96,7 +96,7 @@ const usernameChangeWarning = computed(() => {
     : t('app.settings.users.form.usernameChangeWarningMany', { count: affectedShelves.value })
 })
 
-const schema = computed(() => (props.mode === 'create' ? createSchema.value : editSchema))
+const schema = computed(() => (props.mode === 'create' ? createSchema.value : editSchema.value))
 
 const formRef = ref<{
   validate: () => Promise<unknown>

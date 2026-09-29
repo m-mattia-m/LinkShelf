@@ -86,14 +86,14 @@ const form = reactive({
 
 // Each of path and domain is only checked while its tab is the one in use - a
 // half-typed value on the other tab is thrown away on save anyway.
-const schema = v.object({
-  title: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
+const schema = computed(() => v.object({
+  title: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   description: v.string(),
   domain: v.pipe(
     v.string(),
     v.check(
       value => mode.value !== 'domain' || normalizeShelfDomain(value) !== '',
-      () => t('validation.domain.missing')
+      t('validation.domain.missing')
     ),
     v.check(
       value => mode.value !== 'domain' || validateShelfDomain(normalizeShelfDomain(value)) === null,
@@ -101,30 +101,30 @@ const schema = v.object({
     ),
     v.check(
       value => mode.value !== 'domain' || normalizeShelfDomain(value) !== ownHost,
-      () => t('validation.domain.ownHost')
+      t('validation.domain.ownHost')
     )
   ),
   path: v.pipe(
     v.string(),
     v.check(
       value => mode.value !== 'path' || value.trim() !== '',
-      () => t('validation.path.missing')
+      t('validation.path.missing')
     ),
     v.check(
       value => mode.value !== 'path' || /^[a-zA-Z0-9-]*$/.test(value),
-      () => t('validation.path.invalid')
+      t('validation.path.invalid')
     ),
     // Behind a username nothing is off limits. Top-level, the words the app
     // itself answers can't be used - except on a shelf that already has
     // one, so its other fields stay editable (the backend does the same).
     v.check(
       value => mode.value !== 'path' || userBasedPaths.value || value === props.modelValue?.path || !isRouteReservedPath(value),
-      () => t('validation.path.reserved')
+      t('validation.path.reserved')
     )
   ),
   icon: v.string(),
-  footerCustomText: v.pipe(v.string(), v.maxLength(500, () => t('validation.maxLength', { max: 500 })))
-})
+  footerCustomText: v.pipe(v.string(), v.maxLength(500, t('validation.maxLength', { max: 500 })))
+}))
 
 // The URL the shelf will get: /<username>/<path> with user-based paths, else
 // /<path>. A shelf being edited keeps its owner's username - an admin may be

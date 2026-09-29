@@ -102,7 +102,7 @@
   "home.features.oidc.description": "Melde dich mit einem lokalen Konto oder über einen beliebigen OpenID-Connect-Anbieter an.",
   "home.cta.title": "Bereit für deine eigene Instanz?",
   "home.cta.description": "LinkShelf gibt es nur zum Selbsthosten. Die Doku erklärt Docker, Kubernetes und alle Konfigurationsoptionen.",
-  "home.cta.docs": "Zur Doku",
+  "home.cta.docs": "Zur Dokumentation",
   "home.cta.github": "Auf GitHub ansehen",
 
   "app.profile.title": "Profil",

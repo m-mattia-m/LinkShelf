@@ -14,15 +14,11 @@ const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody |
 // briefly unreachable) the request itself will report what is wrong.
 const disabled = computed(() => websiteSettings.value?.passwordResetEnabled === false)
 
-const schema = v.object({
-  email: v.pipe(
-    v.string(() => t('validation.emailRequired')),
-    v.nonEmpty(() => t('validation.emailRequired')),
-    v.email(() => t('validation.email'))
-  )
-})
+const schema = computed(() => v.object({
+  email: emailSchema()
+}))
 
-type Schema = v.InferOutput<typeof schema>
+type Schema = v.InferOutput<typeof schema.value>
 
 const fields = [
   { name: 'email', type: 'text' as const, label: t('auth.forgotPassword.email'), required: true }
