@@ -102,7 +102,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
 onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 onBeforeRouteLeave(() => {
   if (!orderDirty.value) return true
-  return window.confirm('You have unsaved order changes. Leave without saving?')
+  return window.confirm(t('app.shelf.detail.unsavedOrder'))
 })
 
 async function loadAll() {
@@ -264,7 +264,7 @@ async function createSection() {
       <template v-else>
         <div class="flex justify-end pb-2">
           <UButton
-            label="Save order"
+            :label="t('app.shelf.detail.saveOrder')"
             icon="i-lucide-save"
             color="primary"
             :disabled="!orderDirty"

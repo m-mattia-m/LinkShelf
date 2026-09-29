@@ -15,6 +15,7 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { default: false })
 
+const { t } = useI18n()
 const shelfStore = useShelfStore()
 
 const formModel = ref<ShelfBase>()
@@ -48,13 +49,13 @@ async function save(close: () => void) {
 <template>
   <UModal
     v-model:open="open"
-    title="Shelf"
+    :title="t('app.shelf.title')"
     :ui="{ footer: 'justify-end' }"
   >
     <UButton
       v-if="mode === 'create'"
       icon="i-lucide-plus"
-      label="New"
+      :label="t('common.new')"
     />
 
     <template #body>
@@ -67,13 +68,13 @@ async function save(close: () => void) {
 
     <template #footer="{ close }">
       <UButton
-        label="Cancel"
+        :label="t('common.cancel')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Submit"
+        :label="t('common.submit')"
         color="neutral"
         :loading="saving"
         @click="save(close)"

@@ -8,7 +8,7 @@ Users with the `admin` role get **Settings** in the sidebar. The first admin com
 
 ## General
 
-Content of the pages around the app. Markdown, one text per language (English, Deutsch, Schwiizerdütsch):
+Content of the pages around the app. Markdown, one text per language (English, Deutsch, Schwiizerdütsch, Español):
 
 - About
 - Contact

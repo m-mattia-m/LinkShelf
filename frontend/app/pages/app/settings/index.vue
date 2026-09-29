@@ -23,7 +23,7 @@ onMounted(async () => {
   }
 })
 
-const languageCode = ref<'en' | 'de' | 'de-CH'>('en')
+const languageCode = ref<'en' | 'de' | 'de-CH' | 'es'>('en')
 const availableLocales = computed(() => locales.value.map(l => ({ label: l.name ?? l.code, value: l.code })))
 
 const form = reactive({

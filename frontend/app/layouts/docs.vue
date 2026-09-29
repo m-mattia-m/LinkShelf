@@ -8,12 +8,13 @@ if (!page.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
-const items = [
+const { t } = useI18n()
+const items = computed(() => [
   {
-    label: 'Navigate in the docs',
+    label: t('docs.navigate'),
     slot: 'menu'
   }
-] satisfies AccordionItem[]
+] satisfies AccordionItem[])
 </script>
 
 <template>

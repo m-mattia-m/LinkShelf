@@ -52,7 +52,7 @@ Open source Linktree alternative. Collect your links on a page (a *shelf*), styl
 - Helm chart, works on OpenShift
 - Strict origins to lock the API to your instance
 - OpenAPI spec and Swagger UI at `/swagger`
-- UI in English, Deutsch and Schwiizerdütsch
+- UI in English, Deutsch, Schwiizerdütsch and Español
 
 ## Quick start
 

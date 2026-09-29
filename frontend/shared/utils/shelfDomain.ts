@@ -31,14 +31,14 @@ export function normalizeShelfDomain(raw: string): string {
 
 /**
  * Checks an already normalized domain: a DNS name with a letters-only (or
- * punycode) TLD and an optional port. Returns an error message, or null when
- * valid. An empty domain is valid.
+ * punycode) TLD and an optional port. Returns the i18n key of the error, or
+ * null when valid. An empty domain is valid.
  */
 export function validateShelfDomain(domain: string): string | null {
   if (domain === '') return null
 
   if (domain.includes('://') || domain.includes('/')) {
-    return 'Enter just the domain, without https:// or a path'
+    return 'validation.domain.withScheme'
   }
 
   const colon = domain.lastIndexOf(':')
@@ -47,25 +47,25 @@ export function validateShelfDomain(domain: string): string | null {
   if (colon >= 0) {
     const port = domain.slice(colon + 1)
     if (!PORT.test(port) || Number(port) > MAX_PORT) {
-      return 'The port must be a number between 1 and 65535'
+      return 'validation.domain.port'
     }
   }
 
   if (host.length > MAX_LENGTH) {
-    return `A domain can have at most ${MAX_LENGTH} characters`
+    return 'validation.domain.tooLong'
   }
 
   const labels = host.split('.')
   if (labels.length < 2) {
-    return 'Please enter a full domain name (e.g. profile.example.com)'
+    return 'validation.domain.notFull'
   }
 
   for (const [index, label] of labels.entries()) {
     if (label.length > MAX_LABEL_LENGTH || !LABEL.test(label)) {
-      return 'Please enter a valid domain (e.g. profile.example.com). Use letters, numbers and hyphens only'
+      return 'validation.domain.invalidLabel'
     }
     if (index === labels.length - 1 && !TLD.test(label)) {
-      return 'The domain must end in a valid top-level domain like .com'
+      return 'validation.domain.tld'
     }
   }
 

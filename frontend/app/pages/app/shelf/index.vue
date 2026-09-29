@@ -150,7 +150,7 @@ const columns: TableColumn<Shelf>[] = [
             icon="i-lucide-ellipsis-vertical"
             color="neutral"
             variant="ghost"
-            aria-label="Actions"
+            :aria-label="t('common.actions')"
           />
         </UDropdownMenu>
       </template>

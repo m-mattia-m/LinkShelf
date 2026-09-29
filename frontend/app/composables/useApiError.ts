@@ -6,7 +6,14 @@ export interface ApiErrorResult {
   fieldErrors: FormError[]
 }
 
+// Resolved before the first await, while the Nuxt app context is still set.
+function translator(): (key: string) => string {
+  const i18n = tryUseNuxtApp()?.$i18n
+  return key => (i18n ? i18n.t(key) : key)
+}
+
 export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
+  const t = translator()
   if (err instanceof ResponseError) {
     try {
       const body = await err.response.clone().json() as ErrorModel
@@ -27,7 +34,7 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
 
       const message = specificMessages.length > 0
         ? specificMessages.join('; ')
-        : (body.detail || 'Something went wrong.')
+        : (body.detail || t('common.somethingWentWrong'))
 
       return { message, fieldErrors }
     } catch {
@@ -39,15 +46,16 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
     return { message: err.message, fieldErrors: [] }
   }
 
-  return { message: 'Something went wrong.', fieldErrors: [] }
+  return { message: t('common.somethingWentWrong'), fieldErrors: [] }
 }
 
 export async function handleApiError(err: unknown, formRef?: { setErrors: (errs: FormError[]) => void } | null): Promise<ApiErrorResult> {
   const toast = useToast()
+  const t = translator()
   const result = await parseApiError(err)
 
   toast.add({
-    title: 'Error',
+    title: t('common.error'),
     description: result.message,
     color: 'error'
   })

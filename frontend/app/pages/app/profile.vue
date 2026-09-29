@@ -55,13 +55,13 @@ onMounted(async () => {
 })
 
 const schema = v.object({
-  firstName: v.pipe(v.string('First name is required'), v.nonEmpty('First name is required')),
-  lastName: v.pipe(v.string('Last name is required'), v.nonEmpty('Last name is required')),
+  firstName: v.pipe(v.string(() => t('validation.firstNameRequired')), v.nonEmpty(() => t('validation.firstNameRequired'))),
+  lastName: v.pipe(v.string(() => t('validation.lastNameRequired')), v.nonEmpty(() => t('validation.lastNameRequired'))),
   username: usernameSchema(),
   email: v.pipe(
-    v.string('Email is required'),
-    v.nonEmpty('Email is required'),
-    v.email('Please enter a valid email')
+    v.string(() => t('validation.emailRequired')),
+    v.nonEmpty(() => t('validation.emailRequired')),
+    v.email(() => t('validation.email'))
   )
 })
 

@@ -6,6 +6,7 @@ definePageMeta({
   middleware: 'admin'
 })
 
+const { t } = useI18n()
 const loading = ref(true)
 const themes = ref<Theme[]>([])
 
@@ -51,10 +52,10 @@ async function confirmDelete() {
 <template>
   <div>
     <h1 class="text-2xl text-highlighted pb-2">
-      User themes
+      {{ t('app.settings.themes.title') }}
     </h1>
     <p class="text-sm text-muted pb-6">
-      Every user-created theme across the instance. You can remove one (a shelf using it falls back to the default look), but not edit its content - it belongs to its creator.
+      {{ t('app.settings.themes.intro') }}
     </p>
 
     <div
@@ -72,7 +73,7 @@ async function confirmDelete() {
       v-else-if="themes.length === 0"
       class="text-center text-muted py-16"
     >
-      No user-created themes yet.
+      {{ t('app.settings.themes.empty') }}
     </div>
 
     <div
@@ -89,7 +90,7 @@ async function confirmDelete() {
             {{ theme.name }}
           </p>
           <p class="text-xs text-dimmed truncate">
-            Owner: {{ theme.ownerUserId }}
+            {{ t('app.settings.themes.owner', { owner: theme.ownerUserId }) }}
           </p>
         </div>
         <UButton
@@ -97,7 +98,7 @@ async function confirmDelete() {
           size="xs"
           color="error"
           variant="ghost"
-          aria-label="Delete theme"
+          :aria-label="t('app.settings.themes.delete')"
           @click="openDelete(theme)"
         />
       </div>
@@ -105,8 +106,8 @@ async function confirmDelete() {
 
     <ConfirmDialog
       v-model:open="deleteOpen"
-      title="Delete theme?"
-      :description="`Delete “${deletingTheme?.name}”? Any shelf using it will fall back to the default look. This cannot be undone.`"
+      :title="t('app.theme.deleteConfirm.title')"
+      :description="t('app.theme.deleteConfirm.description', { name: deletingTheme?.name })"
       :loading="deleting"
       @confirm="confirmDelete"
     />

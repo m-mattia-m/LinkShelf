@@ -17,6 +17,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
 
+const { t } = useI18n()
 const open = ref(false)
 const search = ref('')
 const allIcons = useState<string[]>('icon-picker-names', () => [])
@@ -72,13 +73,13 @@ function select(name: string) {
       <span
         class="truncate max-w-40"
         :class="{ 'text-dimmed': !modelValue }"
-      >{{ modelValue || 'No icon' }}</span>
+      >{{ modelValue || t('iconPicker.none') }}</span>
       <template #trailing>
         <UIcon
           v-if="modelValue"
           name="i-lucide-x"
           class="size-4 shrink-0 hover:text-error"
-          aria-label="Clear icon"
+          :aria-label="t('iconPicker.clear')"
           @click.stop="emit('update:modelValue', '')"
         />
         <UIcon
@@ -93,7 +94,7 @@ function select(name: string) {
         <UInput
           v-model="search"
           icon="i-lucide-search"
-          placeholder="Search icons..."
+          :placeholder="t('iconPicker.search')"
           class="w-full mb-2"
           autofocus
         />
@@ -112,7 +113,7 @@ function select(name: string) {
           v-else-if="loadFailed"
           class="text-xs text-error py-2"
         >
-          Could not load the icon list. You can still type an icon name directly.
+          {{ t('iconPicker.loadFailed') }}
         </p>
 
         <template v-else>

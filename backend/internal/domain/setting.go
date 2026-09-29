@@ -43,6 +43,7 @@ var supportedLanguageCodes = map[string]bool{
 	"en":    true,
 	"de":    true,
 	"de-CH": true,
+	"es":    true,
 }
 
 type SettingService interface {

@@ -18,6 +18,7 @@ const emit = defineEmits<{
 // persisted until the parent's single "Save order" button is clicked.
 const links = defineModel<Link[]>('links', { required: true })
 
+const { t } = useI18n()
 const sectionStore = useSectionStore()
 const linkStore = useLinkStore()
 
@@ -108,7 +109,7 @@ async function confirmDeleteLink() {
           <UIcon
             name="i-lucide-grip-vertical"
             class="drag-handle size-4 text-dimmed cursor-grab shrink-0"
-            aria-label="Drag to reorder section"
+            :aria-label="t('app.section.dragToReorder')"
           />
           <h3 class="font-medium">
             {{ section.title }}
@@ -118,7 +119,7 @@ async function confirmDeleteLink() {
             size="xs"
             color="neutral"
             variant="ghost"
-            aria-label="Rename section"
+            :aria-label="t('app.section.rename')"
             @click="startRename"
           />
         </div>
@@ -138,7 +139,7 @@ async function confirmDeleteLink() {
             size="xs"
             color="primary"
             :loading="renameLoading"
-            aria-label="Save section title"
+            :aria-label="t('app.section.saveTitle')"
             @click="confirmRename"
           />
           <UButton
@@ -146,7 +147,7 @@ async function confirmDeleteLink() {
             size="xs"
             color="neutral"
             variant="ghost"
-            aria-label="Cancel rename"
+            :aria-label="t('app.section.cancelRename')"
             @click="renaming = false"
           />
         </div>
@@ -155,7 +156,7 @@ async function confirmDeleteLink() {
           <UButton
             icon="i-lucide-plus"
             size="xs"
-            label="New link"
+            :label="t('app.link.new')"
             color="neutral"
             variant="outline"
             @click="openCreateLink"
@@ -165,7 +166,7 @@ async function confirmDeleteLink() {
             size="xs"
             color="error"
             variant="ghost"
-            aria-label="Delete section"
+            :aria-label="t('app.section.delete')"
             @click="deleteSectionOpen = true"
           />
         </div>
@@ -176,9 +177,9 @@ async function confirmDeleteLink() {
       v-if="links.length === 0"
       class="text-center text-muted text-sm py-6"
     >
-      No links yet.
+      {{ t('app.link.empty') }}
       <UButton
-        label="Add the first link"
+        :label="t('app.link.addFirst')"
         variant="link"
         @click="openCreateLink"
       />
@@ -198,7 +199,7 @@ async function confirmDeleteLink() {
           <UIcon
             name="i-lucide-grip-vertical"
             class="drag-handle size-4 text-dimmed cursor-grab shrink-0"
-            aria-label="Drag to reorder link"
+            :aria-label="t('app.link.dragToReorder')"
           />
           <UIcon
             :name="link.icon || 'i-lucide-link'"
@@ -220,7 +221,7 @@ async function confirmDeleteLink() {
             size="xs"
             color="neutral"
             variant="ghost"
-            aria-label="Edit link"
+            :aria-label="t('app.link.edit')"
             @click="openEditLink(link)"
           />
           <UButton
@@ -228,7 +229,7 @@ async function confirmDeleteLink() {
             size="xs"
             color="error"
             variant="ghost"
-            aria-label="Delete link"
+            :aria-label="t('app.link.delete')"
             @click="openDeleteLink(link)"
           />
         </div>
@@ -244,16 +245,16 @@ async function confirmDeleteLink() {
 
     <ConfirmDialog
       v-model:open="deleteSectionOpen"
-      title="Delete section?"
-      :description="`This also deletes ${links.length} link(s) in “${section.title}”. This cannot be undone.`"
+      :title="t('app.section.deleteConfirm.title')"
+      :description="t('app.section.deleteConfirm.description', { count: links.length, title: section.title })"
       :loading="deletingSection"
       @confirm="confirmDeleteSection"
     />
 
     <ConfirmDialog
       v-model:open="deleteLinkOpen"
-      title="Delete link?"
-      :description="`Delete “${deletingLinkTarget?.title}”? This cannot be undone.`"
+      :title="t('app.link.deleteConfirm.title')"
+      :description="t('app.link.deleteConfirm.description', { title: deletingLinkTarget?.title })"
       :loading="deletingLink"
       @confirm="confirmDeleteLink"
     />

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { DotType, CornerDotType, CornerSquareType } from 'qr-code-styling'
 
+const { t } = useI18n()
+
 const open = defineModel<boolean>('open', { default: false })
 
 const props = defineProps<{
@@ -8,12 +10,12 @@ const props = defineProps<{
   title?: string
 }>()
 
-const shapeOptions: { label: string, value: DotType }[] = [
-  { label: 'Square', value: 'square' },
-  { label: 'Rounded', value: 'rounded' },
-  { label: 'Extra rounded', value: 'extra-rounded' },
-  { label: 'Dots', value: 'dots' }
-]
+const shapeOptions = computed<{ label: string, value: DotType }[]>(() => [
+  { label: t('app.shelf.qr.shapes.square'), value: 'square' },
+  { label: t('app.shelf.qr.shapes.rounded'), value: 'rounded' },
+  { label: t('app.shelf.qr.shapes.extraRounded'), value: 'extra-rounded' },
+  { label: t('app.shelf.qr.shapes.dots'), value: 'dots' }
+])
 
 const color = ref('#000000')
 const shape = ref<DotType>('square')
@@ -91,8 +93,8 @@ async function download(extension: 'svg' | 'png') {
 <template>
   <UModal
     v-model:open="open"
-    title="QR code"
-    :description="title ? `Scan to open &quot;${title}&quot;` : 'Scan to open this shelf'"
+    :title="t('app.shelf.detail.qrCode')"
+    :description="title ? t('app.shelf.qr.scanTitle', { title }) : t('app.shelf.qr.scan')"
   >
     <template #body>
       <div class="flex flex-col items-center gap-6">
@@ -102,7 +104,7 @@ async function download(extension: 'svg' | 'png') {
         />
 
         <div class="w-full flex flex-col gap-4">
-          <UFormField label="Color">
+          <UFormField :label="t('app.link.form.color')">
             <div class="flex items-center gap-2">
               <UColorPicker
                 v-model="color"
@@ -116,7 +118,7 @@ async function download(extension: 'svg' | 'png') {
             </div>
           </UFormField>
 
-          <UFormField label="Shape">
+          <UFormField :label="t('app.shelf.qr.shape')">
             <USelect
               v-model="shape"
               :items="shapeOptions"
@@ -130,13 +132,13 @@ async function download(extension: 'svg' | 'png') {
 
     <template #footer="{ close }">
       <UButton
-        label="Close"
+        :label="t('common.close')"
         color="neutral"
         variant="outline"
         @click="close"
       />
       <UButton
-        label="Download SVG"
+        :label="t('app.shelf.qr.downloadSvg')"
         icon="i-lucide-download"
         color="neutral"
         variant="outline"
@@ -144,7 +146,7 @@ async function download(extension: 'svg' | 'png') {
         @click="download('svg')"
       />
       <UButton
-        label="Download PNG"
+        :label="t('app.shelf.qr.downloadPng')"
         icon="i-lucide-download"
         :loading="downloading === 'png'"
         @click="download('png')"

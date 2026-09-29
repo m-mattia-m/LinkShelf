@@ -16,9 +16,9 @@ const disabled = computed(() => websiteSettings.value?.passwordResetEnabled === 
 
 const schema = v.object({
   email: v.pipe(
-    v.string('Email is required'),
-    v.nonEmpty('Email is required'),
-    v.email('Please enter a valid email')
+    v.string(() => t('validation.emailRequired')),
+    v.nonEmpty(() => t('validation.emailRequired')),
+    v.email(() => t('validation.email'))
   )
 })
 

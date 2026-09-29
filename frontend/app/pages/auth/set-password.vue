@@ -14,17 +14,17 @@ const token = computed(() => (typeof route.query.token === 'string' ? route.quer
 const schema = v.pipe(
   v.object({
     password: v.pipe(
-      v.string('Password is required'),
-      v.nonEmpty('Password is required'),
-      v.minLength(8, 'Must be at least 8 characters')
+      v.string(() => t('validation.passwordRequired')),
+      v.nonEmpty(() => t('validation.passwordRequired')),
+      v.minLength(8, () => t('validation.minLength', { min: 8 }))
     ),
-    confirmPassword: v.pipe(v.string('Please confirm your password'), v.nonEmpty('Please confirm your password'))
+    confirmPassword: v.pipe(v.string(() => t('validation.confirmPassword')), v.nonEmpty(() => t('validation.confirmPassword')))
   }),
   v.forward(
     v.partialCheck(
       [['password'], ['confirmPassword']],
       input => input.password === input.confirmPassword,
-      'Passwords do not match'
+      () => t('validation.passwordsMismatch')
     ),
     ['confirmPassword']
   )

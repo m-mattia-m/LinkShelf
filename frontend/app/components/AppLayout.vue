@@ -5,44 +5,45 @@ import type { SettingPageBody } from '~~/api'
 const route = useRoute()
 const router = useRouter()
 const websiteSettings = useState<SettingPageBody | null>('settings')
-const columns: FooterColumn[] = [
+const { t, locale, locales, setLocale } = useI18n()
+const columns = computed<FooterColumn[]>(() => [
   {
-    label: 'General',
+    label: t('footer.general'),
     children: [
       {
-        label: 'About',
+        label: t('app.settings.about.label'),
         to: '/about',
         class: websiteSettings.value?.aboutShow ? '' : 'hidden'
       },
       {
-        label: 'Contact',
+        label: t('app.settings.contact.label'),
         to: '/contact',
         class: websiteSettings.value?.contactShow ? '' : 'hidden'
       }
     ]
   },
   {
-    label: 'Legal',
+    label: t('footer.legal'),
     children: [
       {
-        label: 'Imprint',
+        label: t('app.settings.imprint.label'),
         to: '/imprint',
         class: websiteSettings.value?.imprintShow ? '' : 'hidden'
       },
       {
-        label: 'Terms of use',
+        label: t('app.settings.termsOfUse.label'),
         to: '/terms-of-use',
         class: websiteSettings.value?.termsOfUseShow ? '' : 'hidden'
       },
       {
-        label: 'Privacy policy',
+        label: t('app.settings.privacyPolicy.label'),
         to: '/privacy-policy',
         class: websiteSettings.value?.privacyPolicyShow ? '' : 'hidden'
       }
     ]
   },
   {
-    label: 'Community',
+    label: t('footer.community'),
     children: [
       {
         label: 'Github',
@@ -58,8 +59,7 @@ const columns: FooterColumn[] = [
       }
     ]
   }
-]
-const { locale, locales, setLocale } = useI18n()
+])
 // ULocaleSelect expects @nuxt/ui's Locale type, which has no de-CH pack, so
 // only code/name are supplied and the type is cast.
 const availableLocales = computed(() => {
@@ -72,22 +72,22 @@ const availableLocales = computed(() => {
 })
 const items = computed<NavigationMenuItem[]>(() => [
   {
-    label: 'Home',
+    label: t('nav.home'),
     to: '/',
     active: isActive('/')
   },
   {
-    label: 'Docs',
+    label: t('nav.docs'),
     to: '/docs',
     active: isActive('/docs')
   },
   {
-    label: 'Cloud',
+    label: t('nav.cloud'),
     to: '/cloud',
     active: isActive('/cloud')
   },
   {
-    label: 'Dashboard',
+    label: t('app.dashboard.title'),
     to: '/app',
     active: isActive('/app')
   }
@@ -149,20 +149,20 @@ const isActive = (base: string) =>
         class="mt-4 lg:mt-0"
         :model-value="locale"
         :locales="availableLocales"
-        @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH')"
+        @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH' | 'es')"
       />
       <p class="flex items-center justify-center mt-8">
-        Made with
+        {{ t('footer.madeWith') }}
         <UIcon
           name="i-lucide-heart"
           class="mx-1"
         />
-        by all
+        {{ t('footer.byAll') }}
         <ULink
           href="https://github.com/m-mattia-m/LinkShelf/graphs/contributors"
           class="ml-1 text-dimmed"
         >
-          contributers
+          {{ t('footer.contributors') }}
         </ULink>
       </p>
     </div>

@@ -21,19 +21,19 @@ const availableLocales = computed(() => {
 const items = computed<NavigationMenuItem[][]>(() => [
   [
     {
-      label: 'Dashboard',
+      label: t('app.dashboard.title'),
       to: '/app',
       exact: true,
       icon: 'uil-home-alt'
     },
     {
-      label: 'Shelf',
+      label: t('app.shelf.title'),
       to: '/app/shelf',
       icon: 'uil-books',
       active: route.path.startsWith('/app/shelf')
     },
     {
-      label: 'Themes',
+      label: t('app.theme.title'),
       to: '/app/themes',
       icon: 'uil-palette',
       active: route.path.startsWith('/app/themes')
@@ -43,22 +43,22 @@ const items = computed<NavigationMenuItem[][]>(() => [
     // so there's no point showing the link.
     ...(authStore.isAdmin
       ? [{
-          label: 'Settings',
+          label: t('app.settings.title'),
           defaultOpen: true,
           icon: 'uil-cog',
           children: [
             {
-              label: 'General',
+              label: t('app.nav.general'),
               to: '/app/settings',
               exact: true
             },
             {
-              label: 'Users',
+              label: t('app.settings.users.title'),
               to: '/app/settings/users',
               exact: true
             },
             {
-              label: 'Themes',
+              label: t('app.theme.title'),
               to: '/app/settings/themes',
               exact: true
             }
@@ -94,19 +94,19 @@ async function signOut() {
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
-      label: 'Account settings',
+      label: t('app.nav.accountSettings'),
       icon: 'i-lucide-user-cog',
       to: '/app/profile'
     }
   ],
   [
     {
-      label: 'Language',
+      label: t('app.nav.language'),
       slot: 'language',
       onSelect: (e: Event) => e.preventDefault()
     },
     {
-      label: 'Dark mode',
+      label: t('app.nav.darkMode'),
       slot: 'color-mode',
       onSelect: (e: Event) => e.preventDefault()
     }
@@ -180,7 +180,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
                 :model-value="locale"
                 :locales="availableLocales"
                 class="w-32"
-                @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH')"
+                @update:model-value="setLocale($event as 'en' | 'de' | 'de-CH' | 'es')"
               />
             </div>
           </template>

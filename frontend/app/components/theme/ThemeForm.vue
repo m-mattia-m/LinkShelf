@@ -13,14 +13,16 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ThemeBase): void
 }>()
 
+const { t } = useI18n()
+
 const form = reactive<ThemeBase>({
   name: props.modelValue?.name ?? props.initial?.name ?? '',
   config: props.modelValue?.config ?? props.initial?.config ?? ''
 })
 
 const schema = v.object({
-  name: v.pipe(v.string(), v.nonEmpty('Required')),
-  config: v.pipe(v.string(), v.nonEmpty('Required'))
+  name: v.pipe(v.string(), v.nonEmpty(() => t('validation.required'))),
+  config: v.pipe(v.string(), v.nonEmpty(() => t('validation.required')))
 })
 
 const formRef = ref<{ validate: () => Promise<unknown>, setErrors: (errs: FormError[]) => void }>()
@@ -62,15 +64,15 @@ watch(
   { deep: true, immediate: true }
 )
 
-const propertyReference = [
-  ['--shelf-bg', 'background color or gradient, e.g. #1c274c'],
-  ['--shelf-text', 'text color, e.g. #ffffff'],
-  ['--shelf-link-bg', 'link button background color'],
-  ['--shelf-link-text', 'link button text color'],
-  ['--shelf-link-radius', 'link button corner radius, e.g. 12px'],
-  ['--shelf-font-family', 'font stack, e.g. \'Inter\', sans-serif'],
-  ['--shelf-bg-image', 'background image URL (https:// or /images/...)']
-]
+const propertyReference = computed(() => [
+  ['--shelf-bg', t('app.theme.form.properties.bg')],
+  ['--shelf-text', t('app.theme.form.properties.text')],
+  ['--shelf-link-bg', t('app.theme.form.properties.linkBg')],
+  ['--shelf-link-text', t('app.theme.form.properties.linkText')],
+  ['--shelf-link-radius', t('app.theme.form.properties.linkRadius')],
+  ['--shelf-font-family', t('app.theme.form.properties.fontFamily')],
+  ['--shelf-bg-image', t('app.theme.form.properties.bgImage')]
+])
 </script>
 
 <template>
@@ -80,7 +82,7 @@ const propertyReference = [
     :state="form"
   >
     <UFormField
-      label="Name"
+      :label="t('app.theme.form.name')"
       name="name"
       required
     >
@@ -91,10 +93,10 @@ const propertyReference = [
     </UFormField>
 
     <UFormField
-      label="Config"
+      :label="t('app.theme.form.config')"
       name="config"
       class="pt-4"
-      help="One '--property: value;' declaration per line."
+      :help="t('app.theme.form.configHelp')"
     >
       <UTextarea
         v-model="form.config"
@@ -106,7 +108,7 @@ const propertyReference = [
 
     <div class="pt-3 text-xs text-muted space-y-1">
       <p class="font-medium text-dimmed">
-        Available properties
+        {{ t('app.theme.form.availableProperties') }}
       </p>
       <p
         v-for="[prop, desc] in propertyReference"

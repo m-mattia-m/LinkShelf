@@ -13,18 +13,18 @@ const authStore = useAuthStore()
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
 const schema = v.object({
-  firstName: v.pipe(v.string('First name is required'), v.nonEmpty('First name is required')),
-  lastName: v.pipe(v.string('Last name is required'), v.nonEmpty('Last name is required')),
+  firstName: v.pipe(v.string(() => t('validation.firstNameRequired')), v.nonEmpty(() => t('validation.firstNameRequired'))),
+  lastName: v.pipe(v.string(() => t('validation.lastNameRequired')), v.nonEmpty(() => t('validation.lastNameRequired'))),
   username: usernameSchema(),
   email: v.pipe(
-    v.string('Email is required'),
-    v.nonEmpty('Email is required'),
-    v.email('Please enter a valid email')
+    v.string(() => t('validation.emailRequired')),
+    v.nonEmpty(() => t('validation.emailRequired')),
+    v.email(() => t('validation.email'))
   ),
   password: v.pipe(
-    v.string('Password is required'),
-    v.nonEmpty('Password is required'),
-    v.minLength(8, 'Must be at least 8 characters')
+    v.string(() => t('validation.passwordRequired')),
+    v.nonEmpty(() => t('validation.passwordRequired')),
+    v.minLength(8, () => t('validation.minLength', { min: 8 }))
   )
 })
 
