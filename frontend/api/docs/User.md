@@ -14,6 +14,7 @@ Name | Type
 `hasPassword` | boolean
 `id` | string
 `lastName` | string
+`pendingEmail` | string
 `role` | string
 `username` | string
 
@@ -32,6 +33,7 @@ const example = {
   "hasPassword": null,
   "id": null,
   "lastName": null,
+  "pendingEmail": null,
   "role": null,
   "username": null,
 } satisfies User

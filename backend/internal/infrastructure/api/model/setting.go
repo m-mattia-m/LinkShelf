@@ -40,6 +40,9 @@ type SettingPageBody struct {
 	// the sign-in page only offers "Forgot password?" when a reset email can
 	// actually be sent.
 	PasswordResetEnabled bool `json:"password_reset_enabled" bson:"password_reset_enabled"`
+	// LocalAuthEnabled mirrors authentication.localAuthEnabled, so the
+	// sign-in page only shows the email/password form when it can be used.
+	LocalAuthEnabled bool `json:"local_auth_enabled" bson:"local_auth_enabled"`
 }
 
 // EmailDeliveryInfo is deliberately minimal (host + from address only, no

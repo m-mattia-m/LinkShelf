@@ -58,35 +58,47 @@ func Test_Unit_EnsureBootstrapAdmin_CreatesNewAdmin(t *testing.T) {
 		})
 
 	userRepository.EXPECT().
-		SetPasswordAndRole("new-admin-id", gomock.Any(), model.RoleAdmin).
-		Return(nil)
-
-	userRepository.EXPECT().
 		MarkVerified("new-admin-id").
 		Return(nil)
 
 	require.NoError(t, EnsureBootstrapAdmin(repo))
 }
 
-func Test_Unit_EnsureBootstrapAdmin_RefreshesExistingAdmin(t *testing.T) {
+// Regression for the restart reset: an existing account - whose password may
+// have been changed after the first login, or whose role an admin may have
+// changed - is never written to. The mock fails on any call besides FindByEmail.
+func Test_Unit_EnsureBootstrapAdmin_LeavesAnExistingAccountUntouched(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	userRepository := mocks.NewMockUserRepository(ctrl)
 	repo := &repository.Repository{UserRepository: userRepository}
 	setupBootstrapTestConfig(t, "admin@example.com", "super-secret")
+	config.Set("authentication.bootstrapAdmin.username", "admin")
 
 	userRepository.EXPECT().
 		FindByEmail("admin@example.com").
-		Return(&repository.AuthRecord{Id: "existing-admin-id"}, nil)
+		Return(&repository.AuthRecord{Id: "existing-admin-id", Role: model.RoleUser}, nil)
 
-	userRepository.EXPECT().
-		SetPasswordAndRole("existing-admin-id", gomock.Any(), model.RoleAdmin).
-		Return(nil)
+	require.NoError(t, EnsureBootstrapAdmin(repo))
+}
 
+func Test_Unit_EnsureBootstrapAdmin_StoresTheEmailLowercased(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userRepository := mocks.NewMockUserRepository(ctrl)
+	repo := &repository.Repository{UserRepository: userRepository}
+	setupBootstrapTestConfig(t, "  Admin@Example.COM ", "super-secret")
+
+	userRepository.EXPECT().FindByEmail("admin@example.com").Return(nil, nil)
 	userRepository.EXPECT().
-		MarkVerified("existing-admin-id").
-		Return(nil)
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
+		DoAndReturn(func(u model.UserBase, _, _ string) (string, error) {
+			require.Equal(t, "admin@example.com", u.Email)
+			return "new-admin-id", nil
+		})
+	userRepository.EXPECT().MarkVerified("new-admin-id").Return(nil)
 
 	require.NoError(t, EnsureBootstrapAdmin(repo))
 }
@@ -143,7 +155,6 @@ func Test_Unit_EnsureBootstrapAdmin_CreatesTheAdminWithTheConfiguredUsername(t *
 			require.Equal(t, "admin", u.Username)
 			return "new-admin-id", nil
 		})
-	userRepository.EXPECT().SetPasswordAndRole("new-admin-id", gomock.Any(), model.RoleAdmin).Return(nil)
 	userRepository.EXPECT().MarkVerified("new-admin-id").Return(nil)
 
 	require.NoError(t, EnsureBootstrapAdmin(repo))
@@ -166,58 +177,7 @@ func Test_Unit_EnsureBootstrapAdmin_UsesTheConfiguredUsernameWithoutValidatingIt
 			require.Equal(t, "Not A Valid Name!", u.Username)
 			return "new-admin-id", nil
 		})
-	userRepository.EXPECT().SetPasswordAndRole(gomock.Any(), gomock.Any(), model.RoleAdmin).Return(nil)
 	userRepository.EXPECT().MarkVerified(gomock.Any()).Return(nil)
 
 	require.NoError(t, EnsureBootstrapAdmin(repo))
-}
-
-func Test_Unit_EnsureBootstrapAdmin_FillsInAMissingUsernameOnAnExistingAccount(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userRepository := mocks.NewMockUserRepository(ctrl)
-	repo := &repository.Repository{UserRepository: userRepository}
-	setupBootstrapTestConfig(t, "admin@example.com", "super-secret")
-	config.Set("authentication.bootstrapAdmin.username", "admin")
-
-	userRepository.EXPECT().FindByEmail("admin@example.com").Return(&repository.AuthRecord{Id: "existing-admin-id"}, nil)
-	userRepository.EXPECT().SetUsername("existing-admin-id", "admin").Return(nil)
-	userRepository.EXPECT().SetPasswordAndRole("existing-admin-id", gomock.Any(), model.RoleAdmin).Return(nil)
-	userRepository.EXPECT().MarkVerified("existing-admin-id").Return(nil)
-
-	require.NoError(t, EnsureBootstrapAdmin(repo))
-}
-
-func Test_Unit_EnsureBootstrapAdmin_KeepsAnExistingUsername(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userRepository := mocks.NewMockUserRepository(ctrl)
-	repo := &repository.Repository{UserRepository: userRepository}
-	setupBootstrapTestConfig(t, "admin@example.com", "super-secret")
-	config.Set("authentication.bootstrapAdmin.username", "admin")
-
-	// No SetUsername expectation: the admin chose "boss" themselves.
-	userRepository.EXPECT().FindByEmail("admin@example.com").Return(&repository.AuthRecord{Id: "existing-admin-id", Username: "boss"}, nil)
-	userRepository.EXPECT().SetPasswordAndRole("existing-admin-id", gomock.Any(), model.RoleAdmin).Return(nil)
-	userRepository.EXPECT().MarkVerified("existing-admin-id").Return(nil)
-
-	require.NoError(t, EnsureBootstrapAdmin(repo))
-}
-
-func Test_Unit_EnsureBootstrapAdmin_PropagatesSetUsernameError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userRepository := mocks.NewMockUserRepository(ctrl)
-	repo := &repository.Repository{UserRepository: userRepository}
-	setupBootstrapTestConfig(t, "admin@example.com", "super-secret")
-	config.Set("authentication.bootstrapAdmin.username", "admin")
-
-	boom := errors.New("username already taken")
-	userRepository.EXPECT().FindByEmail("admin@example.com").Return(&repository.AuthRecord{Id: "existing-admin-id"}, nil)
-	userRepository.EXPECT().SetUsername("existing-admin-id", "admin").Return(boom)
-
-	require.ErrorIs(t, EnsureBootstrapAdmin(repo), boom)
 }

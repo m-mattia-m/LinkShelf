@@ -138,6 +138,31 @@ func Test_Unit_CheckShelfDomain_ReservesTheFrontendPortToo(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidInput)
 }
 
+// Regression: a shelf could claim the instance's second domain from
+// app.additionalOrigins and replace "/" on it with its own page.
+func Test_Unit_CheckShelfDomain_ReservesTheAdditionalOrigins(t *testing.T) {
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("app.frontendUrl", "https://linkshelf.example.com")
+	config.Set("app.additionalOrigins", []string{"https://links.example.org", "http://second.example.net:8080", " not a url "})
+
+	for _, reserved := range []string{
+		"links.example.org",
+		"Links.Example.org.",
+		"links.example.org:443",
+		"second.example.net",
+		"second.example.net:8080",
+	} {
+		_, err := checkShelfDomain(reserved)
+		require.ErrorIs(t, err, ErrInvalidInput, reserved)
+		require.ErrorContains(t, err, "belongs to this instance", reserved)
+	}
+
+	got, err := checkShelfDomain("profile.example.org")
+	require.NoError(t, err)
+	require.Equal(t, "profile.example.org", got)
+}
+
 func Test_Unit_CheckShelfDomain_NothingReservedWhenNothingIsConfigured(t *testing.T) {
 	config.Reset()
 	t.Cleanup(config.Reset)
@@ -387,6 +412,21 @@ func Test_Unit_Shelf_GetByDomain(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, "shelf-1", shelf.Id)
+	})
+
+	t.Run("the instance's own hosts never resolve to a shelf", func(t *testing.T) {
+		svc := NewMockService(t)
+		defer svc.Ctrl.Finish()
+		userBasedPaths(t, false)
+		config.Set("app.frontendUrl", "https://linkshelf.example.com")
+		config.Set("app.additionalOrigins", []string{"https://links.example.org"})
+
+		// No repository expectation: not even looked up.
+		for _, host := range []string{"linkshelf.example.com", "links.example.org", "Links.Example.org:443"} {
+			shelf, err := svc.Service.ShelfService.GetByDomain(host)
+			require.NoError(t, err, host)
+			require.Nil(t, shelf, host)
+		}
 	})
 
 	t.Run("a value that can't be a domain is not found without a query", func(t *testing.T) {

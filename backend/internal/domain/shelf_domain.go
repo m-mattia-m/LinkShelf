@@ -104,8 +104,11 @@ func reservedShelfDomains() map[string]struct{} {
 		}
 	}
 
-	if frontend, err := url.Parse(strings.TrimSpace(config.String("app.frontendUrl"))); err == nil {
-		add(frontend.Hostname(), frontend.Port())
+	origins := append([]string{config.String("app.frontendUrl")}, config.Strings("app.additionalOrigins")...)
+	for _, origin := range origins {
+		if parsed, err := url.Parse(strings.TrimSpace(origin)); err == nil {
+			add(parsed.Hostname(), parsed.Port())
+		}
 	}
 
 	serverPort := ""

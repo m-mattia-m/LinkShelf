@@ -417,7 +417,7 @@ func Test_Unit_User_Update_Success_SelfUpdate_RoleUnchanged(t *testing.T) {
 	svc.UserRepository.
 		EXPECT().
 		Get("user-uuid-test").
-		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Role: model.RoleUser}}, nil)
+		Return(&model.User{Id: "user-uuid-test", UserBase: model.UserBase{Email: "test@test.com", Role: model.RoleUser}}, nil)
 
 	svc.UserRepository.
 		EXPECT().

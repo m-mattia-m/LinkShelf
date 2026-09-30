@@ -52,6 +52,10 @@ import {
     VerifyEmailRequestToJSON,
 } from '../models/index';
 
+export interface PostConfirmEmailChangeRequest {
+    verifyEmailRequest: Omit<VerifyEmailRequest, '$schema'>;
+}
+
 export interface PostForgotPasswordRequest {
     forgotPasswordRequest: Omit<ForgotPasswordRequest, '$schema'>;
 }
@@ -123,6 +127,46 @@ export class AuthApi extends runtime.BaseAPI {
     async getOidcLogin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OidcLoginResponseBody> {
         const response = await this.getOidcLoginRaw(initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Applies a pending email change using the token emailed to the new address. Until then the account keeps its current email.
+     * Confirm email change
+     */
+    async postConfirmEmailChangeRaw(requestParameters: PostConfirmEmailChangeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['verifyEmailRequest'] == null) {
+            throw new runtime.RequiredError(
+                'verifyEmailRequest',
+                'Required parameter "verifyEmailRequest" was null or undefined when calling postConfirmEmailChange().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/v1/auth/confirm-email-change`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VerifyEmailRequestToJSON(requestParameters['verifyEmailRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Applies a pending email change using the token emailed to the new address. Until then the account keeps its current email.
+     * Confirm email change
+     */
+    async postConfirmEmailChange(requestParameters: PostConfirmEmailChangeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.postConfirmEmailChangeRaw(requestParameters, initOverrides);
     }
 
     /**

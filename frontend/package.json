@@ -29,6 +29,7 @@
     "@pinia/nuxt": "1.0.2",
     "better-sqlite3": "^13.0.3",
     "nuxt": "^4.5.2",
+    "nuxt-security": "2.6.0",
     "pinia": "^4.0.3",
     "qr-code-styling": "^1.9.2",
     "valibot": "^1.4.2",

@@ -41,6 +41,20 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
+// ChangeEmail mocks base method.
+func (m *MockUserRepository) ChangeEmail(userId, email string, verified bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeEmail", userId, email, verified)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ChangeEmail indicates an expected call of ChangeEmail.
+func (mr *MockUserRepositoryMockRecorder) ChangeEmail(userId, email, verified any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeEmail", reflect.TypeOf((*MockUserRepository)(nil).ChangeEmail), userId, email, verified)
+}
+
 // Create mocks base method.
 func (m *MockUserRepository) Create(u model.UserBase, hashedPassword, role string) (string, error) {
 	m.ctrl.T.Helper()
@@ -231,18 +245,18 @@ func (mr *MockUserRepositoryMockRecorder) SetPassword(userId, hashedPassword any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPassword", reflect.TypeOf((*MockUserRepository)(nil).SetPassword), userId, hashedPassword)
 }
 
-// SetPasswordAndRole mocks base method.
-func (m *MockUserRepository) SetPasswordAndRole(userId, hashedPassword, role string) error {
+// SetPendingEmail mocks base method.
+func (m *MockUserRepository) SetPendingEmail(userId, email string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetPasswordAndRole", userId, hashedPassword, role)
+	ret := m.ctrl.Call(m, "SetPendingEmail", userId, email)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetPasswordAndRole indicates an expected call of SetPasswordAndRole.
-func (mr *MockUserRepositoryMockRecorder) SetPasswordAndRole(userId, hashedPassword, role any) *gomock.Call {
+// SetPendingEmail indicates an expected call of SetPendingEmail.
+func (mr *MockUserRepositoryMockRecorder) SetPendingEmail(userId, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPasswordAndRole", reflect.TypeOf((*MockUserRepository)(nil).SetPasswordAndRole), userId, hashedPassword, role)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPendingEmail", reflect.TypeOf((*MockUserRepository)(nil).SetPendingEmail), userId, email)
 }
 
 // SetUsername mocks base method.

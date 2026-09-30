@@ -40,6 +40,18 @@ green and are collected into the next release. There is no need to create tags o
 
 ## Development Setup
 
+The backend refuses to start without a random JWT secret of at least 32 bytes, and there is no default admin. Create a
+`.env` in the repository root once (it is git-ignored); `compose.dev.yaml` reads it and creates the admin
+`admin@linkshelf.local` with that password on the first start:
+
+```bash
+printf 'LINKSHELF_JWT_SECRET=%s\nLINKSHELF_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 48)" "$(openssl rand -base64 18)" > .env
+```
+
+When you run the backend directly (`go run ./cmd/app` in `backend/`), set the same values through
+`AUTHENTICATION_JWTSECRET`, `AUTHENTICATION_BOOTSTRAPADMIN_EMAIL` and `AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD`, or in a
+`backend/config.local.yaml` loaded with `CONFIGURATION_FILE_PATH`.
+
 ```bash
 # start the whole stack (DB + app) in detached mode
 docker compose -f compose.yaml -f compose.dev.yaml up -d

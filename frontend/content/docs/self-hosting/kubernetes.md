@@ -103,10 +103,11 @@ env:
 
 ## Secrets
 
-`AUTHENTICATION_JWTSECRET` is required. The bootstrap admin from the image is switched off; to get an admin, add
-`AUTHENTICATION_BOOTSTRAPADMIN_EMAIL` and `AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD` to `env`. Its username is `admin`,
-change it with `AUTHENTICATION_BOOTSTRAPADMIN_USERNAME`. That account needs no email verification, so it works before
-SMTP is set up. Add `SMTP_PASSWORD` and `AUTHENTICATION_OIDC_CLIENTSECRET` the same way if you use them.
+`AUTHENTICATION_JWTSECRET` is required: a random value of at least 32 bytes, like the `openssl rand -hex 32` above. There
+is no bootstrap admin by default; to get an admin, add `AUTHENTICATION_BOOTSTRAPADMIN_EMAIL` and
+`AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD` to `env`. Its username is `admin`, change it with
+`AUTHENTICATION_BOOTSTRAPADMIN_USERNAME`. That account needs no email verification, so it works before SMTP is set up.
+It is only created when it doesn't exist yet, later restarts never change it. Add `SMTP_PASSWORD` and `AUTHENTICATION_OIDC_CLIENTSECRET` the same way if you use them.
 
 ## Database
 

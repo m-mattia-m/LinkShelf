@@ -91,10 +91,13 @@ func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *st
 // can't drift apart.
 func settingPageFlags(svc *domain.Service) mapper.SettingPageFlags {
 	return mapper.SettingPageFlags{
-		OidcEnabled:              svc.AuthService.IsOidcEnabled(),
-		RegistrationEnabled:      config.Bool("authentication.registrationEnabled"),
+		OidcEnabled: svc.AuthService.IsOidcEnabled(),
+		// Sign-up and password reset both depend on local auth, so the
+		// frontend can keep checking just these two flags for them.
+		RegistrationEnabled:      config.Bool("authentication.registrationEnabled") && config.LocalAuthEnabled(),
 		EmailVerificationEnabled: config.Bool("authentication.emailVerification.enabled"),
 		UserBasedPaths:           config.Bool("app.userBasedPaths"),
-		PasswordResetEnabled:     config.Bool("authentication.passwordReset.enabled"),
+		PasswordResetEnabled:     config.Bool("authentication.passwordReset.enabled") && config.LocalAuthEnabled(),
+		LocalAuthEnabled:         config.LocalAuthEnabled(),
 	}
 }

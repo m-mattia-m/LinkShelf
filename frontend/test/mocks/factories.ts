@@ -130,6 +130,7 @@ export function buildSettingPageBody(overrides: Partial<SettingPageBody> = {}): 
     redirectToDashboard: false,
     userBasedPaths: false,
     passwordResetEnabled: false,
+    localAuthEnabled: true,
     ...overrides
   } as SettingPageBody
 }

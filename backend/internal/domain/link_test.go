@@ -365,17 +365,19 @@ func Test_Unit_Link_Delete_Success_Owner(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func Test_Unit_ValidateLinkURL(t *testing.T) {
-	valid := []string{
-		"example.com",
-		"https://example.com",
-		"http://example.com",
-		"sub.example.co.uk/path?x=1",
-		"example.com:8080/path",
+func Test_Unit_NormalizeLinkURL(t *testing.T) {
+	valid := map[string]string{
+		"example.com":                "https://example.com",
+		"https://example.com":        "https://example.com",
+		"http://example.com":         "http://example.com",
+		"sub.example.co.uk/path?x=1": "https://sub.example.co.uk/path?x=1",
+		"example.com:8080/path":      "https://example.com:8080/path",
 	}
-	for _, value := range valid {
+	for value, want := range valid {
 		t.Run(value, func(t *testing.T) {
-			require.NoError(t, validateLinkURL(value))
+			got, err := normalizeLinkURL(value)
+			require.NoError(t, err)
+			require.Equal(t, want, got)
 		})
 	}
 
@@ -387,10 +389,96 @@ func Test_Unit_ValidateLinkURL(t *testing.T) {
 	}
 	for _, value := range invalid {
 		t.Run(value, func(t *testing.T) {
-			err := validateLinkURL(value)
+			_, err := normalizeLinkURL(value)
 			require.ErrorIs(t, err, ErrInvalidInput)
 		})
 	}
+}
+
+// Regression for the stored-XSS finding: these used to pass validation
+// because only the "https://"-prefixed copy was checked, while the raw
+// javascript: string was stored and rendered as an href.
+func Test_Unit_NormalizeLinkURL_Rejects_ScriptPayloads(t *testing.T) {
+	payloads := []string{
+		"javascript:alert(document.domain)%2F%2F@example.com",
+		"JavaScript:alert(1)%2F%2F@example.com",
+		"data:text/html,<script>alert(1)</script>%2F%2F@example.com",
+		"javascript://example.com/%0Aalert(1)",
+		"vbscript:msgbox(1)%2F%2F@example.com",
+		"https://user:pass@example.com",
+		"user@example.com",
+	}
+	for _, value := range payloads {
+		t.Run(value, func(t *testing.T) {
+			got, err := normalizeLinkURL(value)
+			require.ErrorIs(t, err, ErrInvalidInput)
+			require.Empty(t, got)
+		})
+	}
+}
+
+func Test_Unit_Link_Create_Stores_NormalizedURL(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkRequest := &model.Link{LinkBase: model.LinkBase{Link: "example.com/path", SectionId: "section-uuid-test"}}
+
+	svc.SectionRepository.EXPECT().Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+	svc.ShelfRepository.EXPECT().Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+	svc.LinkRepository.EXPECT().
+		Create(&model.Link{LinkBase: model.LinkBase{Link: "https://example.com/path", SectionId: "section-uuid-test"}}).
+		Return("link-uuid-test", nil)
+	svc.LinkRepository.EXPECT().Get("link-uuid-test").
+		Return(&model.Link{Id: "link-uuid-test", LinkBase: model.LinkBase{Link: "https://example.com/path"}}, nil)
+
+	link, err := svc.Service.LinkService.Create("user-uuid-test", false, linkRequest)
+
+	require.NoError(t, err)
+	require.Equal(t, "https://example.com/path", link.Link)
+}
+
+func Test_Unit_Link_Create_Rejects_JavascriptPayload(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkRequest := &model.Link{LinkBase: model.LinkBase{Link: "javascript:alert(document.domain)%2F%2F@example.com", SectionId: "section-uuid-test"}}
+
+	svc.SectionRepository.EXPECT().Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+	svc.ShelfRepository.EXPECT().Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+
+	link, err := svc.Service.LinkService.Create("user-uuid-test", false, linkRequest)
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+	require.Nil(t, link)
+}
+
+func Test_Unit_Link_Update_Stores_NormalizedURL(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	linkId := "link-uuid-test"
+
+	svc.LinkRepository.EXPECT().Get(linkId).
+		Return(&model.Link{Id: linkId, LinkBase: model.LinkBase{SectionId: "section-uuid-test"}}, nil)
+	svc.SectionRepository.EXPECT().Get("section-uuid-test").
+		Return(&model.Section{Id: "section-uuid-test", SectionBase: model.SectionBase{ShelfId: "shelf-uuid-test"}}, nil)
+	svc.ShelfRepository.EXPECT().Get("shelf-uuid-test").
+		Return(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-uuid-test"}, UserId: "user-uuid-test"}, nil)
+	svc.LinkRepository.EXPECT().
+		Update(&model.Link{Id: linkId, LinkBase: model.LinkBase{Link: "https://example.com", SectionId: "section-uuid-test"}}).
+		Return(nil)
+	svc.LinkRepository.EXPECT().Get(linkId).
+		Return(&model.Link{Id: linkId, LinkBase: model.LinkBase{Link: "https://example.com"}}, nil)
+
+	link, err := svc.Service.LinkService.Update(linkId, "user-uuid-test", false,
+		&model.Link{LinkBase: model.LinkBase{Link: "example.com", SectionId: "section-uuid-test"}})
+
+	require.NoError(t, err)
+	require.Equal(t, "https://example.com", link.Link)
 }
 
 func Test_Unit_Link_Delete_Forbidden_NotOwner(t *testing.T) {

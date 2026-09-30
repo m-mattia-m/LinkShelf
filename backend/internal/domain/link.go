@@ -15,10 +15,13 @@ import (
 // letters. There is deliberately no TLD allowlist.
 var linkHostPattern = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`)
 
-// validateLinkURL accepts a URL with or without a scheme (defaulting to
+// normalizeLinkURL accepts a URL with or without a scheme (defaulting to
 // https), but if a scheme is present it must be http/https, and the host
-// must look like a real domain.
-func validateLinkURL(value string) error {
+// must look like a real domain. It returns the URL that was actually
+// validated - callers must store that, never the raw input: the raw input of
+// "javascript:alert(1)%2F%2F@example.com" passes the check once "https://"
+// is prepended, yet a browser runs it as a javascript: URL.
+func normalizeLinkURL(value string) (string, error) {
 	candidate := value
 	if !strings.Contains(candidate, "://") {
 		candidate = "https://" + candidate
@@ -26,18 +29,24 @@ func validateLinkURL(value string) error {
 
 	parsed, err := url.Parse(candidate)
 	if err != nil {
-		return fmt.Errorf("%w: %q is not a valid URL", ErrInvalidInput, value)
+		return "", fmt.Errorf("%w: %q is not a valid URL", ErrInvalidInput, value)
 	}
 
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return fmt.Errorf("%w: scheme must be \"http\" or \"https\", got %q", ErrInvalidInput, parsed.Scheme)
+		return "", fmt.Errorf("%w: scheme must be \"http\" or \"https\", got %q", ErrInvalidInput, parsed.Scheme)
+	}
+
+	// A bookmark never needs credentials in the URL, and userinfo is exactly
+	// what lets a non-http payload hide in front of a valid-looking host.
+	if parsed.User != nil {
+		return "", fmt.Errorf("%w: %q must not contain a username or password", ErrInvalidInput, value)
 	}
 
 	if !linkHostPattern.MatchString(parsed.Hostname()) {
-		return fmt.Errorf("%w: %q is not a valid domain", ErrInvalidInput, value)
+		return "", fmt.Errorf("%w: %q is not a valid domain", ErrInvalidInput, value)
 	}
 
-	return nil
+	return parsed.String(), nil
 }
 
 type LinkService interface {
@@ -103,9 +112,11 @@ func (s *linkServiceImpl) Create(callerUserId string, isAdmin bool, u *model.Lin
 		return nil, ErrForbidden
 	}
 
-	if err := validateLinkURL(u.Link); err != nil {
+	normalized, err := normalizeLinkURL(u.Link)
+	if err != nil {
 		return nil, err
 	}
+	u.Link = normalized
 
 	linkId, err := s.Repository.LinkRepository.Create(u)
 	if err != nil {
@@ -135,9 +146,11 @@ func (s *linkServiceImpl) Update(linkId, callerUserId string, isAdmin bool, link
 		return nil, ErrForbidden
 	}
 
-	if err := validateLinkURL(linkRequest.Link); err != nil {
+	normalized, err := normalizeLinkURL(linkRequest.Link)
+	if err != nil {
 		return nil, err
 	}
+	linkRequest.Link = normalized
 
 	linkRequest.Id = linkId
 	err = s.Repository.LinkRepository.Update(linkRequest)

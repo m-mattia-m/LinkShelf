@@ -4,6 +4,7 @@ package repository
 
 import (
 	"backend/internal/infrastructure/api/model"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -67,6 +68,57 @@ func Test_RealDB_UserRepository_DuplicateEmail_IsRejected(t *testing.T) {
 	require.Error(t, err, "a second user with the same email must be rejected by the DB's unique constraint")
 }
 
+// An email change waits in pending_email and only replaces the email, with
+// the verified flag the caller decides, through ChangeEmail.
+func Test_RealDB_UserRepository_PendingEmailAndChangeEmail(t *testing.T) {
+	repo := TestRepository.UserRepository
+	email := "realdb-pending-" + uuid.NewString() + "@example.com"
+	newEmail := "realdb-pending-new-" + uuid.NewString() + "@example.com"
+
+	id, err := repo.Create(model.UserBase{Email: email, FirstName: "Pending", LastName: "Email"}, "hashed", "user")
+	require.NoError(t, err)
+	require.NoError(t, repo.MarkVerified(id))
+
+	require.NoError(t, repo.SetPendingEmail(id, newEmail))
+	pending, err := repo.Get(id)
+	require.NoError(t, err)
+	require.Equal(t, email, pending.Email)
+	require.Equal(t, newEmail, pending.PendingEmail)
+	require.True(t, pending.EmailVerified)
+
+	require.NoError(t, repo.ChangeEmail(id, newEmail, false))
+	changed, err := repo.Get(id)
+	require.NoError(t, err)
+	require.Equal(t, newEmail, changed.Email)
+	require.Empty(t, changed.PendingEmail)
+	require.False(t, changed.EmailVerified)
+
+	require.NoError(t, repo.ChangeEmail(id, email, true))
+	confirmed, err := repo.Get(id)
+	require.NoError(t, err)
+	require.Equal(t, email, confirmed.Email)
+	require.True(t, confirmed.EmailVerified)
+
+	require.NoError(t, repo.SetPendingEmail(id, newEmail))
+	require.NoError(t, repo.SetPendingEmail(id, ""))
+	cleared, err := repo.Get(id)
+	require.NoError(t, err)
+	require.Empty(t, cleared.PendingEmail)
+}
+
+// Regression for the case-sensitive UNIQUE(email) on Postgres: two accounts
+// whose emails only differ in case must not both exist.
+func Test_RealDB_UserRepository_DuplicateEmail_DifferentCase_IsRejected(t *testing.T) {
+	repo := TestRepository.UserRepository
+	local := "realdb-case-" + uuid.NewString()
+
+	_, err := repo.Create(model.UserBase{Email: local + "@example.com", FirstName: "A", LastName: "A"}, "hashed", "user")
+	require.NoError(t, err)
+
+	_, err = repo.Create(model.UserBase{Email: strings.ToUpper(local) + "@EXAMPLE.COM", FirstName: "B", LastName: "B"}, "hashed", "user")
+	require.Error(t, err)
+}
+
 func Test_RealDB_UserRepository_AuthMethods(t *testing.T) {
 	repo := TestRepository.UserRepository
 	email := "realdb-auth-" + uuid.NewString() + "@example.com"
@@ -92,14 +144,6 @@ func Test_RealDB_UserRepository_AuthMethods(t *testing.T) {
 	require.NotNil(t, byProvider)
 	require.Equal(t, id, byProvider.Id)
 	require.Equal(t, "OIDC", byProvider.Provider)
-
-	require.NoError(t, repo.SetPasswordAndRole(id, "bootstrap-hash", "admin"))
-	afterBootstrap, err := repo.Get(id)
-	require.NoError(t, err)
-	require.Equal(t, "admin", afterBootstrap.Role)
-	password, err := repo.GetPassword(id)
-	require.NoError(t, err)
-	require.Equal(t, "bootstrap-hash", password)
 
 	externalEmail := "realdb-external-" + uuid.NewString() + "@example.com"
 	externalProviderId := "oidc-sub-" + uuid.NewString()

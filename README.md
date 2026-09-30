@@ -56,10 +56,11 @@ Open source Linktree alternative. Collect your links on a page (a *shelf*), styl
 
 ## Quick start
 
-1. Copy the compose file from the [Docker docs](frontend/content/docs/self-hosting/docker.md)
+1. Copy the compose file from the [Docker docs](frontend/content/docs/self-hosting/docker.md) and create its `.env` with
+   a random JWT secret and admin password (e.g. `openssl rand -base64 48`), as described there
 2. `docker compose up -d`
 3. Open `http://localhost:3000`
-4. Sign in with the bootstrap admin (`admin@example.com` / `change-me`), then change it
+4. Sign in with the bootstrap admin you configured
 
 ## Docs
 

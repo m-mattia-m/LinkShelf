@@ -166,4 +166,25 @@ describe('sign-in page', () => {
 
     expect(screen.queryByRole('link', { name: 'Forgot password?' })).not.toBeInTheDocument()
   })
+
+  it('shows only the SSO button when local (password) auth is disabled', async () => {
+    const websiteSettings = useState<SettingPageBody | null>('settings')
+    websiteSettings.value = buildSettingPageBody({ oidcEnabled: true, localAuthEnabled: false })
+
+    await renderSuspended(SignInPage)
+
+    expect(screen.getByRole('button', { name: 'Continue with SSO' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the password form when the setting is missing (older backend)', async () => {
+    const websiteSettings = useState<SettingPageBody | null>('settings')
+    websiteSettings.value = buildSettingPageBody({ localAuthEnabled: undefined as unknown as boolean })
+
+    await renderSuspended(SignInPage)
+
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+  })
 })

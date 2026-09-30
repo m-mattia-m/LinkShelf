@@ -49,7 +49,6 @@ type UserRepository interface {
 	FindByProviderId(providerId string) (*AuthRecord, error)
 	CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error)
 	LinkProvider(userId, provider, providerId string) error
-	SetPasswordAndRole(userId, hashedPassword, role string) error
 
 	// MarkVerified sets email_verified/verified_at, used both when a
 	// verification/invite link is completed and for an admin's manual
@@ -58,6 +57,14 @@ type UserRepository interface {
 	// SetPassword sets a user's password hash and marks it verified in one
 	// step - completing the admin-invite ("set your password") flow.
 	SetPassword(userId, hashedPassword string) error
+
+	// SetPendingEmail stores a requested email change that still has to be
+	// confirmed ("" clears it). The account's current email is untouched.
+	SetPendingEmail(userId, email string) error
+	// ChangeEmail replaces the account's email, clears any pending change and
+	// sets email_verified to verified. Update never writes a new email, so a
+	// changed address can't silently keep the old address's verified status.
+	ChangeEmail(userId, email string, verified bool) error
 }
 
 type userRepository struct {
@@ -75,7 +82,7 @@ func NewUserRepository(engine *sql.DB, table string) (UserRepository, error) {
 
 func (r *userRepository) List() ([]model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, username, first_name, last_name, role, password, email_verified
+		SELECT id, email, username, first_name, last_name, role, password, email_verified, pending_email
 		FROM "user"
 	`)
 	if err != nil {
@@ -92,7 +99,7 @@ func (r *userRepository) List() ([]model.User, error) {
 	for rows.Next() {
 		var user model.User
 		var password string
-		var username sql.NullString
+		var username, pendingEmail sql.NullString
 		err := rows.Scan(
 			&user.Id,
 			&user.Email,
@@ -102,11 +109,13 @@ func (r *userRepository) List() ([]model.User, error) {
 			&user.Role,
 			&password,
 			&user.EmailVerified,
+			&pendingEmail,
 		)
 		if err != nil {
 			return nil, err
 		}
 		user.Username = username.String
+		user.PendingEmail = pendingEmail.String
 		user.HasPassword = password != ""
 		users = append(users, user)
 	}
@@ -116,7 +125,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, username, first_name, last_name, role, password, email_verified
+		SELECT id, email, username, first_name, last_name, role, password, email_verified, pending_email
 		FROM "user"
 		WHERE id = ?
 	`)
@@ -126,7 +135,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 
 	var user model.User
 	var password string
-	var username sql.NullString
+	var username, pendingEmail sql.NullString
 	err = r.Engine.QueryRowContext(context.TODO(), query, id).Scan(
 		&user.Id,
 		&user.Email,
@@ -136,6 +145,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 		&user.Role,
 		&password,
 		&user.EmailVerified,
+		&pendingEmail,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -145,6 +155,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 		return nil, err
 	}
 	user.Username = username.String
+	user.PendingEmail = pendingEmail.String
 	user.HasPassword = password != ""
 
 	return &user, nil
@@ -410,29 +421,6 @@ func (r *userRepository) LinkProvider(userId, provider, providerId string) error
 	return err
 }
 
-// SetPasswordAndRole is used exclusively to create/refresh the config-driven
-// bootstrap admin account idempotently.
-func (r *userRepository) SetPasswordAndRole(userId, hashedPassword, role string) error {
-	query, err := buildSqlStatements(`
-		UPDATE "user"
-		SET password = ?,
-			role = ?
-		WHERE id = ?
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = r.Engine.ExecContext(
-		context.TODO(),
-		query,
-		hashedPassword,
-		role,
-		userId,
-	)
-	return err
-}
-
 func (r *userRepository) MarkVerified(userId string) error {
 	query, err := buildSqlStatements(`
 		UPDATE "user"
@@ -461,6 +449,43 @@ func (r *userRepository) SetPassword(userId, hashedPassword string) error {
 	}
 
 	_, err = r.Engine.ExecContext(context.TODO(), query, hashedPassword, time.Now().UTC(), userId)
+	return err
+}
+
+func (r *userRepository) SetPendingEmail(userId, email string) error {
+	query, err := buildSqlStatements(`
+		UPDATE "user"
+		SET pending_email = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Engine.ExecContext(context.TODO(), query, nullIfEmpty(email), userId)
+	return err
+}
+
+func (r *userRepository) ChangeEmail(userId, email string, verified bool) error {
+	query, err := buildSqlStatements(`
+		UPDATE "user"
+		SET email = ?,
+			pending_email = NULL,
+			email_verified = ?,
+			verified_at = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return err
+	}
+
+	var verifiedAt *time.Time
+	if verified {
+		now := time.Now().UTC()
+		verifiedAt = &now
+	}
+
+	_, err = r.Engine.ExecContext(context.TODO(), query, email, verified, verifiedAt, userId)
 	return err
 }
 

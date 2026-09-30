@@ -4,7 +4,8 @@ order: 4
 ---
 
 Users with the `admin` role get **Settings** in the sidebar. The first admin comes from
-`authentication.bootstrapAdmin` in the [config](/docs/self-hosting/configuration).
+`authentication.bootstrapAdmin` in the [config](/docs/self-hosting/configuration). It is created on the first start and
+never changed afterwards.
 
 ## General
 

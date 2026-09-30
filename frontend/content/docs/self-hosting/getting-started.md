@@ -13,7 +13,8 @@ One image with frontend and backend: `ghcr.io/m-mattia-m/linkshelf:latest`
 You need:
 
 - PostgreSQL or MySQL
-- A long random `authentication.jwtSecret`
+- A random `authentication.jwtSecret` of at least 32 bytes, e.g. from `openssl rand -base64 48`. LinkShelf refuses to
+  start without one
 - SMTP, unless you turn off email verification and password reset
 
 Deploy with:

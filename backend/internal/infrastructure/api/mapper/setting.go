@@ -13,6 +13,7 @@ type SettingPageFlags struct {
 	EmailVerificationEnabled bool
 	UserBasedPaths           bool
 	PasswordResetEnabled     bool
+	LocalAuthEnabled         bool
 }
 
 func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, flags SettingPageFlags) *model.SettingPageResponse {
@@ -40,6 +41,7 @@ func MapSettingToSettingPageResponse(languageCode string, settings []model.Setti
 			EmailVerificationEnabled: flags.EmailVerificationEnabled,
 			UserBasedPaths:           flags.UserBasedPaths,
 			PasswordResetEnabled:     flags.PasswordResetEnabled,
+			LocalAuthEnabled:         flags.LocalAuthEnabled,
 		},
 	}
 }

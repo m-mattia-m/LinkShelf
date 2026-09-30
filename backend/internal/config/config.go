@@ -35,8 +35,8 @@ type Configuration struct {
 		// FrontendUrl is the canonical address that email links point to.
 		FrontendUrl string `yaml:"frontendUrl"`
 		// AdditionalOrigins are other origins the frontend is reachable on.
-		// Only used while StrictOrigins is true. Shelf domains are handled
-		// automatically.
+		// Allowed while StrictOrigins is true, and reserved from shelf
+		// domains. Shelf domains are handled automatically.
 		AdditionalOrigins []string `yaml:"additionalOrigins"`
 		// UserBasedPaths switches public shelf URLs from /<path> to
 		// /<username>/<path>.
@@ -97,6 +97,9 @@ type Configuration struct {
 			ClientSecret string `yaml:"clientSecret" json:"-"`
 			RedirectUrl  string `yaml:"redirectUrl"`
 		} `yaml:"oidc"`
+		// LocalAuthEnabled gates password login, self-registration and
+		// password reset. Only false together with Type OIDC.
+		LocalAuthEnabled bool `yaml:"localAuthEnabled"`
 		// RegistrationEnabled gates public self-registration. Admin-created
 		// accounts and OIDC auto-provisioning are not affected.
 		RegistrationEnabled bool `yaml:"registrationEnabled"`
@@ -209,12 +212,15 @@ func validate() error {
 		return fmt.Errorf("config does not match the expected structure: %w", err)
 	}
 
-	if strings.TrimSpace(String("authentication.jwtSecret")) == "" {
-		return fmt.Errorf("authentication.jwtSecret must be set")
+	if err := validateJwtSecret(String("authentication.jwtSecret")); err != nil {
+		return err
 	}
 
 	switch strings.ToUpper(String("authentication.type")) {
 	case "LOCAL":
+		if !LocalAuthEnabled() {
+			return fmt.Errorf("authentication.localAuthEnabled can only be false when authentication.type is OIDC, otherwise nobody could sign in")
+		}
 	case "OIDC":
 		// clientSecret is not required: the login flow always uses PKCE.
 		if strings.TrimSpace(String("authentication.oidc.issuer")) == "" ||
@@ -255,6 +261,43 @@ func validate() error {
 	}
 
 	return nil
+}
+
+// minJwtSecretBytes is the shortest accepted jwtSecret: HS256 signs with a
+// 256-bit key, and anything shorter is within reach of an offline brute force
+// against a single captured token.
+const minJwtSecretBytes = 32
+
+// knownPlaceholderJwtSecrets are values that were ever shipped in this
+// repository's configs or docs. Anyone can sign tokens with them - including
+// {"role":"admin"} ones - so they are refused even though they are long enough.
+var knownPlaceholderJwtSecrets = []string{
+	"change-me-to-a-long-random-value-in-production",
+	"change-me-to-a-long-random-value",
+}
+
+func validateJwtSecret(secret string) error {
+	secret = strings.TrimSpace(secret)
+	if secret == "" {
+		return fmt.Errorf("authentication.jwtSecret must be set, e.g. to the output of `openssl rand -base64 48`")
+	}
+	for _, placeholder := range knownPlaceholderJwtSecrets {
+		if strings.EqualFold(secret, placeholder) {
+			return fmt.Errorf("authentication.jwtSecret is a publicly known placeholder, set it to a random value, e.g. the output of `openssl rand -base64 48`")
+		}
+	}
+	if len(secret) < minJwtSecretBytes {
+		return fmt.Errorf("authentication.jwtSecret must be at least %d bytes long, e.g. the output of `openssl rand -base64 48`", minJwtSecretBytes)
+	}
+	return nil
+}
+
+// LocalAuthEnabled reports whether password login, self-registration and
+// password reset are available. A config that doesn't mention the key at all
+// keeps them on, which is how every instance behaved before the setting existed.
+func LocalAuthEnabled() bool {
+	const key = "authentication.localAuthEnabled"
+	return !k.Exists(key) || k.Bool(key)
 }
 
 func findConfigFile(name string) (string, error) {

@@ -162,6 +162,14 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 	}, VerifyEmail(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodPost,
+		OperationID: "post-confirm-email-change",
+		Summary:     "Confirm email change",
+		Description: "Applies a pending email change using the token emailed to the new address. Until then the account keeps its current email.",
+		Path:        "/v1/auth/confirm-email-change",
+		Tags:        []string{"Auth"},
+	}, ConfirmEmailChange(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
 		OperationID: "post-set-password",
 		Summary:     "Set password",
 		Description: "Completes the admin-invite flow: sets an account's first password and marks it verified, using the token from the emailed link.",

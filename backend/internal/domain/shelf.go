@@ -107,6 +107,13 @@ func (s *shelfServiceImpl) GetByDomain(domain string) (*model.Shelf, error) {
 	if ValidateDomain(domain) != nil {
 		return nil, nil
 	}
+	// The instance's own hosts never show a shelf, even if a row claims one
+	// (e.g. saved before app.additionalOrigins listed that host). The
+	// frontend asks this for every host it is reached on, so this is also
+	// what keeps "/" on the instance's own domains the app's landing page.
+	if _, reserved := reservedShelfDomains()[domain]; reserved {
+		return nil, nil
+	}
 
 	shelf, err := s.Repository.ShelfRepository.GetByDomain(domain)
 	if err != nil || shelf == nil {

@@ -5,6 +5,13 @@ order: 4
 
 Every config option can be set as an environment variable, see [Configuration](/docs/self-hosting/configuration).
 
+First create a `.env` file next to the compose file with a random secret and the password of the first admin. Anyone
+who knows the secret can sign in as any user, so never reuse a value from an example:
+
+```bash
+printf 'LINKSHELF_JWT_SECRET=%s\nLINKSHELF_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 48)" "$(openssl rand -base64 18)" > .env
+```
+
 ```yaml
 services:
   linkshelf:
@@ -18,9 +25,11 @@ services:
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_PASSWORD: linkshelf # change
-      AUTHENTICATION_JWTSECRET: change-me-to-a-long-random-value
-      AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: admin@example.com
-      AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD: change-me
+      # Required, at least 32 bytes. Comes from .env, see above.
+      AUTHENTICATION_JWTSECRET: ${LINKSHELF_JWT_SECRET:?set LINKSHELF_JWT_SECRET in .env}
+      # The first admin, created on the first start only. Use your own address.
+      AUTHENTICATION_BOOTSTRAPADMIN_EMAIL: you@example.com # change
+      AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD: ${LINKSHELF_ADMIN_PASSWORD:?set LINKSHELF_ADMIN_PASSWORD in .env}
       # No SMTP? Then turn these off, or new users can't sign in.
       # AUTHENTICATION_EMAILVERIFICATION_ENABLED: false
       # AUTHENTICATION_PASSWORDRESET_ENABLED: false
@@ -53,7 +62,11 @@ volumes:
 docker compose up -d
 ```
 
-Open `http://localhost:3000` and sign in with the bootstrap admin.
+Open `http://localhost:3000` and sign in with the bootstrap admin: the email above and the password from `.env`
+(`grep LINKSHELF_ADMIN_PASSWORD .env`).
+
+The admin account is only created when it doesn't exist yet. Later starts never touch it, so a password you change after
+signing in stays changed. Once you are in, you can remove the two `AUTHENTICATION_BOOTSTRAPADMIN_*` lines.
 
 ## Behind a domain
 

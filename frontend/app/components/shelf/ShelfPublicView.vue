@@ -141,12 +141,14 @@ useSeoMeta({
             {{ section.title }}
           </h2>
 
-          <a
+          <!-- A link that isn't a plain http(s) URL is shown, but not clickable. -->
+          <component
+            :is="safeHref(link.link) ? 'a' : 'div'"
             v-for="link in linksBySectionId.get(section.id)"
             :key="link.id"
-            :href="link.link"
-            target="_blank"
-            rel="noopener noreferrer"
+            :href="safeHref(link.link)"
+            :target="safeHref(link.link) ? '_blank' : undefined"
+            :rel="safeHref(link.link) ? 'noopener noreferrer' : undefined"
             class="flex items-center gap-3 rounded-[var(--shelf-link-radius,0.75rem)] px-4 py-3 font-medium text-[var(--shelf-link-text,white)] shadow-sm transition-transform hover:scale-[1.02] bg-[var(--shelf-link-bg,#000)]"
             :style="linkBackgroundStyle(link)"
           >
@@ -156,7 +158,7 @@ useSeoMeta({
               class="size-5 shrink-0"
             />
             <span class="truncate">{{ link.title }}</span>
-          </a>
+          </component>
         </div>
       </template>
 

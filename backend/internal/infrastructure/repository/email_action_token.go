@@ -17,6 +17,10 @@ const (
 	// EmailActionResetPassword is a "forgot password" link: it sets a new
 	// password on an account that may already have one.
 	EmailActionResetPassword = "reset_password"
+	// EmailActionChangeEmail confirms a requested email change: it moves the
+	// account's pending_email into email. Only one is ever outstanding per
+	// user - a new request deletes the previous link.
+	EmailActionChangeEmail = "change_email"
 )
 
 type EmailActionToken struct {

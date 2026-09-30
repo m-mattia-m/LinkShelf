@@ -14,6 +14,9 @@ func Login(svc *domain.Service) func(c context.Context, input *model.LoginReques
 	return func(c context.Context, input *model.LoginRequestBody) (*model.TokenResponse, error) {
 		tokens, err := svc.AuthService.Login(input.Body.Email, input.Body.Password)
 		if err != nil {
+			if errors.Is(err, domain.ErrLocalAuthDisabled) {
+				return nil, huma.Error403Forbidden(err.Error())
+			}
 			if errors.Is(err, domain.ErrEmailVerificationPending) {
 				return nil, huma.Error403Forbidden("please verify your email address - we've sent a new link", err)
 			}
@@ -40,6 +43,23 @@ func VerifyEmail(svc *domain.Service) func(c context.Context, input *model.Verif
 				return nil, huma.Error400BadRequest("invalid or expired verification link", err)
 			}
 			return nil, huma.Error400BadRequest("failed to verify email", err)
+		}
+		return nil, nil
+	}
+}
+
+// ConfirmEmailChange applies a pending email change with the token emailed to
+// the new address.
+func ConfirmEmailChange(svc *domain.Service) func(c context.Context, input *model.VerifyEmailRequestBody) (*struct{}, error) {
+	return func(c context.Context, input *model.VerifyEmailRequestBody) (*struct{}, error) {
+		if err := svc.EmailVerificationService.ConfirmEmailChange(input.Body.Token); err != nil {
+			if errors.Is(err, domain.ErrInvalidToken) {
+				return nil, huma.Error400BadRequest("invalid or expired confirmation link", err)
+			}
+			if errors.Is(err, domain.ErrConflict) {
+				return nil, huma.Error409Conflict("this email address is already used by another account", err)
+			}
+			return nil, huma.Error400BadRequest("failed to confirm the new email", err)
 		}
 		return nil, nil
 	}
@@ -133,6 +153,9 @@ func OidcCallback(svc *domain.Service) func(c context.Context, input *model.Oidc
 
 		tokens, err := svc.AuthService.OidcCallback(c, input.Body.Code, input.Body.State, currentUserId)
 		if err != nil {
+			if errors.Is(err, domain.ErrAccountNotLinkable) {
+				return nil, huma.Error409Conflict("an account with this email already exists, but it can't be linked to this single sign-on login automatically - sign in to it with its password first, or ask an administrator", err)
+			}
 			if errors.Is(err, domain.ErrEmailNotVerifiedForLinking) {
 				return nil, huma.Error409Conflict("an account with this email already exists and could not be auto-linked because the identity provider did not confirm this email address is verified", err)
 			}

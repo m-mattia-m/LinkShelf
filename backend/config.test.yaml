@@ -26,7 +26,8 @@ domain:
     usePort: true
 authentication:
   type: LOCAL
-  jwtSecret: "test-secret"
+  # Only for automated tests - startup refuses secrets under 32 bytes.
+  jwtSecret: "test-secret-for-automated-tests-only-0123456789"
   accessTokenExpiryMinutes: 5
   refreshTokenExpiryMinutes: 1440
   bootstrapAdmin:
@@ -38,6 +39,7 @@ authentication:
     clientId: ""
     clientSecret: ""
     redirectUrl: ""
+  localAuthEnabled: true
   registrationEnabled: true
   emailVerification:
     enabled: false
