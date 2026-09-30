@@ -4,9 +4,10 @@
    ```bash
    git clone https://github.com/<your-username>/LinkShelf
    ```
-2. Create a branch:
+2. Create a branch prefixed with `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`, `style/` or `test/`. CI only runs on
+   these prefixes, so other branch names never get the required checks:
    ```bash
-   git checkout -b my-feature-branch
+   git checkout -b feat/my-feature
    ```
 3. Make your changes, and add or update tests.
 4. Commit with a [Conventional Commit](https://www.conventionalcommits.org) message (see [Releases](#releases)):
