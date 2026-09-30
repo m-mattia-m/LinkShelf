@@ -26,6 +26,7 @@ dependencies:
     repository: https://groundhog2k.github.io/helm-charts/
     condition: postgresql.enabled
 annotations:
+  artifacthub.io/license: AGPL-3.0-only
   artifacthub.io/images: |
     - name: linkshelf
       image: ghcr.io/m-mattia-m/linkshelf:latest

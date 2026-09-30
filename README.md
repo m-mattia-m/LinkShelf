@@ -74,3 +74,8 @@ Open source Linktree alternative. Collect your links on a page (a *shelf*), styl
 ## Contributing and Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+LinkShelf is licensed under the [GNU AGPLv3](LICENSE). See [LICENSING.md](LICENSING.md) for details, exceptions and
+trademark notes.

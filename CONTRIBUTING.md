@@ -4,9 +4,10 @@
    ```bash
    git clone https://github.com/<your-username>/LinkShelf
    ```
-2. Create a branch:
+2. Create a branch prefixed with `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`, `style/` or `test/`. CI only runs on
+   these prefixes, so other branch names never get the required checks:
    ```bash
-   git checkout -b my-feature-branch
+   git checkout -b feat/my-feature
    ```
 3. Make your changes, and add or update tests.
 4. Commit with a [Conventional Commit](https://www.conventionalcommits.org) message (see [Releases](#releases)):
@@ -14,6 +15,11 @@
    git commit -m "feat: add feature X"
    ```
 5. Push the branch to your fork and open a pull request against `main`.
+
+## License
+
+By contributing, you agree that your contributions are licensed under the Apache License 2.0, which allows them to be
+included in LinkShelf under the AGPL-3.0. See [LICENSING.md](LICENSING.md#contributions).
 
 ## Releases
 
