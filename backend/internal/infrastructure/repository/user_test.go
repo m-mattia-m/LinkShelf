@@ -26,6 +26,7 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"role",
 		"password",
 		"email_verified",
+		"pending_email",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
@@ -35,6 +36,7 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"user",
 		"hashed-password",
 		true,
+		nil,
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"`).
@@ -83,6 +85,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"role",
 		"password",
 		"email_verified",
+		"pending_email",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
@@ -92,6 +95,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"user",
 		"",
 		false,
+		"new@test.com",
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
@@ -105,6 +109,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 	require.Equal(t, "test@test.com", user.Email)
 	require.False(t, user.EmailVerified)
 	require.False(t, user.HasPassword)
+	require.Equal(t, "new@test.com", user.PendingEmail)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -515,36 +520,79 @@ func Test_UserRepository_LinkProvider_ExecError(t *testing.T) {
 	require.Error(t, err)
 }
 
-func Test_UserRepository_SetPasswordAndRole_Success(t *testing.T) {
+func Test_UserRepository_SetPendingEmail_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer db.Close()
 
 	repo := &userRepository{Engine: db}
 
-	mock.ExpectExec(`UPDATE "user"\s+SET password`).
-		WithArgs("new-hashed-password", "admin", "user-uuid-test").
+	mock.ExpectExec(`UPDATE "user"\s+SET pending_email`).
+		WithArgs("new@test.com", "user-uuid-test").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.SetPasswordAndRole("user-uuid-test", "new-hashed-password", "admin")
-
-	require.NoError(t, err)
+	require.NoError(t, repo.SetPendingEmail("user-uuid-test", "new@test.com"))
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func Test_UserRepository_SetPasswordAndRole_ExecError(t *testing.T) {
+func Test_UserRepository_SetPendingEmail_EmptyClearsIt(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer db.Close()
 
 	repo := &userRepository{Engine: db}
 
-	mock.ExpectExec(`UPDATE "user"\s+SET password`).
+	mock.ExpectExec(`UPDATE "user"\s+SET pending_email`).
+		WithArgs(nil, "user-uuid-test").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	require.NoError(t, repo.SetPendingEmail("user-uuid-test", ""))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_ChangeEmail_Verified(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"\s+SET email = \S+,\s+pending_email = NULL,\s+email_verified = `).
+		WithArgs("new@test.com", true, sqlmock.AnyArg(), "user-uuid-test").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	require.NoError(t, repo.ChangeEmail("user-uuid-test", "new@test.com", true))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// A change applied without confirmation must never keep the old address's
+// verified status.
+func Test_UserRepository_ChangeEmail_Unverified(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"\s+SET email = \S+,\s+pending_email = NULL,\s+email_verified = `).
+		WithArgs("new@test.com", false, nil, "user-uuid-test").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	require.NoError(t, repo.ChangeEmail("user-uuid-test", "new@test.com", false))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_ChangeEmail_ExecError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"`).
 		WillReturnError(errors.New("update failed"))
 
-	err = repo.SetPasswordAndRole("user-uuid-test", "new-hashed-password", "admin")
-
-	require.Error(t, err)
+	require.Error(t, repo.ChangeEmail("user-uuid-test", "new@test.com", true))
 }
 
 func Test_UserRepository_MarkVerified_Success(t *testing.T) {

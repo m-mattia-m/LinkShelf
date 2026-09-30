@@ -43,6 +43,30 @@ describe('public link page', () => {
     expect(screen.getByRole('link', { name: /A Link/ })).toHaveAttribute('href', 'https://example.com')
   })
 
+  // Regression for the stored-XSS finding: the public page is where a
+  // visitor (or a logged-in admin) would click it.
+  it('never renders a javascript: link as a clickable href', async () => {
+    server.use(
+      http.get(`${BASE}/v1/shelves/by-path/my-shelf`, () => HttpResponse.json(PublicShelfToJSON(buildPublicShelf() as never))),
+      http.get(`${BASE}/v1/sections`, () => HttpResponse.json([
+        SectionToJSON(buildSection({ id: 'section-1', shelfId: 'shelf-1', title: 'Section A', order: 0 }))
+      ])),
+      http.get(`${BASE}/v1/links`, () => HttpResponse.json([
+        LinkToJSON(buildLink({ id: 'link-1', sectionId: 'section-1', title: 'Evil', link: 'javascript:alert(document.domain)%2F%2F@example.com', order: 0 })),
+        LinkToJSON(buildLink({ id: 'link-2', sectionId: 'section-1', title: 'Good', link: 'https://example.com', order: 1 }))
+      ]))
+    )
+
+    const { container } = await renderSuspended(LinkpathIndexPage, { route: '/my-shelf' })
+
+    await waitFor(() => {
+      expect(screen.getByText('Evil')).toBeInTheDocument()
+    })
+    expect(screen.queryByRole('link', { name: /Evil/ })).not.toBeInTheDocument()
+    expect(container.querySelector('a[href^="javascript:" i]')).toBeNull()
+    expect(screen.getByRole('link', { name: /Good/ })).toHaveAttribute('href', 'https://example.com')
+  })
+
   it('requests the shelf using the "linkpath" route param', async () => {
     let requestedPath: string | undefined
     server.use(

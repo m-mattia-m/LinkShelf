@@ -7,8 +7,13 @@ type User struct {
 	// HasPassword is false for an admin-invited account that hasn't set a
 	// password yet.
 	HasPassword bool `json:"has_password" bson:"has_password"`
-	// EmailDeliveryFailed is set only by CreateUser, when the account was
-	// created but its verification/invite email could not be sent.
+	// PendingEmail is an email change that is waiting for the new address to
+	// be confirmed through the emailed link. Email keeps the current address
+	// (still used to log in) until then.
+	PendingEmail string `json:"pending_email,omitempty" bson:"pending_email"`
+	// EmailDeliveryFailed is set by CreateUser and UpdateUser when the
+	// account was saved but its verification/invite/confirm email could not
+	// be sent.
 	EmailDeliveryFailed bool `json:"email_delivery_failed,omitempty" bson:"-"`
 }
 

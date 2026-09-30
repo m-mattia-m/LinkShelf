@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     '@nuxtjs/mdc',
     '@nuxt/content',
     '@pinia/nuxt',
-    '@nuxtjs/plausible'
+    '@nuxtjs/plausible',
+    'nuxt-security'
   ],
 
   devtools: {
@@ -78,5 +79,49 @@ export default defineNuxtConfig({
   plausible: {
     enabled: false,
     proxyBaseEndpoint: '/_plausible'
+  },
+
+  // Security headers. The part that matters most is the CSP's script-src: a
+  // per-request nonce plus 'strict-dynamic' means only scripts Nuxt itself
+  // rendered (and what they load) run. Browsers then ignore 'unsafe-inline'
+  // and https:, so injected inline scripts and javascript: URLs are blocked -
+  // this is what limits the damage of any XSS that slips past the backend
+  // and safeHref. Everything else is loosened where the default would break
+  // a feature of this app.
+  security: {
+    headers: {
+      contentSecurityPolicy: {
+        'base-uri': ['\'none\''],
+        'object-src': ['\'none\''],
+        'script-src-attr': ['\'none\''],
+        // 'wasm-unsafe-eval': @nuxt/content queries its SQLite database in
+        // the browser through WebAssembly.
+        'script-src': ['\'self\'', 'https:', '\'unsafe-inline\'', '\'strict-dynamic\'', '\'nonce-{{nonce}}\'', '\'wasm-unsafe-eval\''],
+        // Nuxt UI and themes set inline styles.
+        'style-src': ['\'self\'', 'https:', '\'unsafe-inline\''],
+        // Theme backgrounds, the backend's /images and QR codes (blob:) can
+        // come from anywhere the instance admin configured, over http or https.
+        'img-src': ['\'self\'', 'data:', 'blob:', 'https:', 'http:'],
+        'font-src': ['\'self\'', 'https:', 'data:'],
+        'form-action': ['\'self\''],
+        'frame-ancestors': ['\'self\''],
+        // Left out on purpose: connect-src (the API base URL and Plausible
+        // host are only known at runtime) and upgrade-insecure-requests
+        // (it would break instances whose API is served over plain http).
+        'upgrade-insecure-requests': false
+      },
+      // require-corp/credentialless would block cross-origin theme images.
+      crossOriginEmbedderPolicy: false,
+      // The browser default: the API and outgoing links keep seeing the
+      // origin, as before.
+      referrerPolicy: 'strict-origin-when-cross-origin'
+    },
+    // The API is the Go backend; these would only police Nuxt's own few
+    // server routes (e.g. the Plausible proxy) and could reject valid traffic.
+    rateLimiter: false,
+    requestSizeLimiter: false,
+    xssValidator: false,
+    // Keep console output in production builds, as before.
+    removeLoggers: false
   }
 })

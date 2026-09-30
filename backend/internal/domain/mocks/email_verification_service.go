@@ -40,6 +40,20 @@ func (m *MockEmailVerificationService) EXPECT() *MockEmailVerificationServiceMoc
 	return m.recorder
 }
 
+// ConfirmEmailChange mocks base method.
+func (m *MockEmailVerificationService) ConfirmEmailChange(rawToken string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfirmEmailChange", rawToken)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ConfirmEmailChange indicates an expected call of ConfirmEmailChange.
+func (mr *MockEmailVerificationServiceMockRecorder) ConfirmEmailChange(rawToken any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfirmEmailChange", reflect.TypeOf((*MockEmailVerificationService)(nil).ConfirmEmailChange), rawToken)
+}
+
 // MarkVerified mocks base method.
 func (m *MockEmailVerificationService) MarkVerified(userId string) error {
 	m.ctrl.T.Helper()
@@ -52,6 +66,33 @@ func (m *MockEmailVerificationService) MarkVerified(userId string) error {
 func (mr *MockEmailVerificationServiceMockRecorder) MarkVerified(userId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkVerified", reflect.TypeOf((*MockEmailVerificationService)(nil).MarkVerified), userId)
+}
+
+// NotifyProviderLinked mocks base method.
+func (m *MockEmailVerificationService) NotifyProviderLinked(email string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "NotifyProviderLinked", email)
+}
+
+// NotifyProviderLinked indicates an expected call of NotifyProviderLinked.
+func (mr *MockEmailVerificationServiceMockRecorder) NotifyProviderLinked(email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyProviderLinked", reflect.TypeOf((*MockEmailVerificationService)(nil).NotifyProviderLinked), email)
+}
+
+// RequestEmailChange mocks base method.
+func (m *MockEmailVerificationService) RequestEmailChange(userId, currentEmail, newEmail string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestEmailChange", userId, currentEmail, newEmail)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestEmailChange indicates an expected call of RequestEmailChange.
+func (mr *MockEmailVerificationServiceMockRecorder) RequestEmailChange(userId, currentEmail, newEmail any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestEmailChange", reflect.TypeOf((*MockEmailVerificationService)(nil).RequestEmailChange), userId, currentEmail, newEmail)
 }
 
 // RequestPasswordReset mocks base method.

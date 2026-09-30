@@ -114,3 +114,8 @@ func Test_MapSettingToSettingPageResponse_PasswordResetEnabled(t *testing.T) {
 	require.True(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{PasswordResetEnabled: true}).Body.PasswordResetEnabled)
 	require.False(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{}).Body.PasswordResetEnabled)
 }
+
+func Test_MapSettingToSettingPageResponse_LocalAuthEnabled(t *testing.T) {
+	require.True(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{LocalAuthEnabled: true}).Body.LocalAuthEnabled)
+	require.False(t, MapSettingToSettingPageResponse("en", nil, SettingPageFlags{}).Body.LocalAuthEnabled)
+}

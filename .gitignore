@@ -32,3 +32,5 @@ backend/coverage*.out
 .claude
 .DS_Store
 /tmp
+# Secrets for compose.dev.yaml, see CONTRIBUTING.md.
+/.env

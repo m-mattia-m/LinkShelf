@@ -21,10 +21,17 @@ const schema = computed(() => v.object({
 
 type Schema = v.InferOutput<typeof schema.value>
 
-const fields = [
-  { name: 'email', type: 'text' as const, label: t('auth.signIn.email'), required: true },
-  { name: 'password', type: 'password' as const, label: t('auth.signIn.password'), required: true }
-]
+// Off only when authentication.localAuthEnabled is false (SSO only). Missing
+// settings count as on, as before the setting existed.
+const localAuthEnabled = computed(() => websiteSettings.value?.localAuthEnabled !== false)
+
+// No fields means UAuthForm renders no email/password form at all.
+const fields = computed(() => localAuthEnabled.value
+  ? [
+      { name: 'email', type: 'text' as const, label: t('auth.signIn.email'), required: true },
+      { name: 'password', type: 'password' as const, label: t('auth.signIn.password'), required: true }
+    ]
+  : [])
 
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)

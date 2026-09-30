@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"time"
 
 	"go.uber.org/zap"
@@ -50,6 +51,20 @@ type EmailVerificationService interface {
 	// MarkVerified is the admin override - forces a user's email to
 	// verified without any token at all.
 	MarkVerified(userId string) error
+	// RequestEmailChange stores newEmail as the account's pending email,
+	// emails a confirm link to it and a heads-up to currentEmail. The account
+	// keeps currentEmail until the link is used. A repeat request within
+	// resendCooldown is refused with ErrTooManyRequests. delivered is false
+	// when the confirm link could not be sent (the request is still stored,
+	// so asking again later recovers).
+	RequestEmailChange(userId, currentEmail, newEmail string) (delivered bool, err error)
+	// ConfirmEmailChange completes an email change with the emailed token. It
+	// fails with ErrConflict if another account took the address meanwhile.
+	ConfirmEmailChange(rawToken string) error
+	// NotifyProviderLinked tells the owner of an account that a single
+	// sign-on identity was linked to it. Best-effort: a failure is only
+	// logged, and it is a no-op without a mailer.
+	NotifyProviderLinked(email string)
 }
 
 type emailVerificationServiceImpl struct {
@@ -149,8 +164,14 @@ func tokenLifetime(action string) time.Duration {
 	return time.Duration(config.Int("authentication.emailVerification.tokenExpiryHours")) * time.Hour
 }
 
+// passwordResetEnabled is false as well when local (password) auth is off:
+// a reset would set a password nobody can sign in with.
+func passwordResetEnabled() bool {
+	return config.Bool("authentication.passwordReset.enabled") && config.LocalAuthEnabled()
+}
+
 func (s *emailVerificationServiceImpl) RequestPasswordReset(email string) error {
-	if !config.Bool("authentication.passwordReset.enabled") {
+	if !passwordResetEnabled() {
 		return ErrPasswordResetDisabled
 	}
 
@@ -166,7 +187,7 @@ func (s *emailVerificationServiceImpl) RequestPasswordReset(email string) error 
 }
 
 func (s *emailVerificationServiceImpl) ResetPassword(rawToken, newPassword string) error {
-	if !config.Bool("authentication.passwordReset.enabled") {
+	if !passwordResetEnabled() {
 		return ErrPasswordResetDisabled
 	}
 
@@ -235,6 +256,89 @@ func (s *emailVerificationServiceImpl) MarkVerified(userId string) error {
 	return s.Repository.UserRepository.MarkVerified(userId)
 }
 
+func (s *emailVerificationServiceImpl) RequestEmailChange(userId, currentEmail, newEmail string) (bool, error) {
+	if s.mailer == nil {
+		return false, nil
+	}
+
+	latest, err := s.Repository.EmailActionTokenRepository.GetLatestByUserIdAndAction(userId, repository.EmailActionChangeEmail)
+	if err != nil {
+		return false, err
+	}
+	if latest != nil && time.Since(latest.CreatedAt) < resendCooldown {
+		return false, ErrTooManyRequests
+	}
+
+	rawToken, hash, err := generateOpaqueToken()
+	if err != nil {
+		return false, err
+	}
+
+	// The order matters: a confirm token applies whatever pending_email holds
+	// when it is used, so every older link has to be gone before
+	// pending_email changes. Otherwise a link sent to one address could
+	// confirm a different, never-verified one.
+	if err := s.Repository.EmailActionTokenRepository.DeleteByUserIdAndAction(userId, repository.EmailActionChangeEmail); err != nil {
+		return false, err
+	}
+	if err := s.Repository.UserRepository.SetPendingEmail(userId, newEmail); err != nil {
+		return false, err
+	}
+	expiresAt := time.Now().Add(tokenLifetime(repository.EmailActionChangeEmail))
+	if err := s.Repository.EmailActionTokenRepository.Create(userId, hash, repository.EmailActionChangeEmail, expiresAt); err != nil {
+		return false, err
+	}
+
+	sendErr := s.mailer.Send(confirmEmailChangeMessage(newEmail, rawToken))
+	if sendErr != nil {
+		zap.L().Error("failed to send account email", zap.String("action", repository.EmailActionChangeEmail), zap.Error(sendErr))
+	}
+	if err := s.mailer.Send(emailChangeRequestedMessage(currentEmail, newEmail)); err != nil {
+		zap.L().Error("failed to send email change notice to the current address", zap.Error(err))
+	}
+
+	return sendErr == nil, nil
+}
+
+func (s *emailVerificationServiceImpl) ConfirmEmailChange(rawToken string) error {
+	token, err := s.consumeToken(rawToken, repository.EmailActionChangeEmail)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.Repository.UserRepository.Get(token.UserId)
+	if err != nil {
+		return err
+	}
+	if user == nil || user.PendingEmail == "" {
+		return ErrInvalidToken
+	}
+
+	// The address was free when the change was requested, but someone may
+	// have registered it since.
+	other, err := s.Repository.UserRepository.FindByEmail(user.PendingEmail)
+	if err != nil {
+		return err
+	}
+	if other != nil && other.Id != user.Id {
+		if err := s.Repository.UserRepository.SetPendingEmail(user.Id, ""); err != nil {
+			return err
+		}
+		return fmt.Errorf("%w: this email address is already used by another account", ErrConflict)
+	}
+
+	return s.Repository.UserRepository.ChangeEmail(user.Id, user.PendingEmail, true)
+}
+
+func (s *emailVerificationServiceImpl) NotifyProviderLinked(email string) {
+	if s.mailer == nil {
+		return
+	}
+	if err := s.mailer.Send(providerLinkedMessage(email)); err != nil {
+		zap.L().Error("failed to send single sign-on linked notice", zap.Error(err))
+	}
+}
+
 // generateOpaqueToken mirrors generateRefreshToken (jwt.go): a random opaque
 // token handed out to the client, and the SHA-256 hash that's actually
 // persisted, so a DB leak doesn't hand out usable links directly.
@@ -275,6 +379,44 @@ func setPasswordMessage(to, rawToken string) mailer.Message {
 			"This link expires in %d hours.", link, config.Int("authentication.emailVerification.tokenExpiryHours")),
 		HTMLBody: fmt.Sprintf(`<p>An account was created for you. Set your password to finish registration.</p><p><a href="%s">Set my password</a></p><p>This link expires in %d hours.</p>`,
 			link, config.Int("authentication.emailVerification.tokenExpiryHours")),
+	}
+}
+
+func confirmEmailChangeMessage(to, rawToken string) mailer.Message {
+	link := fmt.Sprintf("%s/auth/confirm-email?token=%s", config.String("app.frontendUrl"), rawToken)
+	hours := config.Int("authentication.emailVerification.tokenExpiryHours")
+	return mailer.Message{
+		To:      to,
+		Subject: fmt.Sprintf("Confirm your new email for %s", config.String("app.name")),
+		TextBody: fmt.Sprintf("Someone asked to use this address for their %s account. To confirm the change, open this link:\n\n%s\n\n"+
+			"It expires in %d hours. Until then the account keeps its current email. If this wasn't you, you can ignore this email.",
+			config.String("app.name"), link, hours),
+		HTMLBody: fmt.Sprintf(`<p>Someone asked to use this address for their %s account. To confirm the change, click the link below.</p><p><a href="%s">Confirm my new email</a></p><p>It expires in %d hours. Until then the account keeps its current email. If this wasn't you, you can ignore this email.</p>`,
+			html.EscapeString(config.String("app.name")), link, hours),
+	}
+}
+
+// emailChangeRequestedMessage goes to the address being replaced, so a
+// hijacked session can't quietly move the account to another inbox.
+func emailChangeRequestedMessage(to, newEmail string) mailer.Message {
+	return mailer.Message{
+		To:      to,
+		Subject: fmt.Sprintf("An email change was requested for your %s account", config.String("app.name")),
+		TextBody: fmt.Sprintf("Someone asked to change the email of your %s account to %s. The change only happens once the new address is confirmed.\n\n"+
+			"If this wasn't you, change your password and contact your administrator.", config.String("app.name"), newEmail),
+		HTMLBody: fmt.Sprintf(`<p>Someone asked to change the email of your %s account to <strong>%s</strong>. The change only happens once the new address is confirmed.</p><p>If this wasn't you, change your password and contact your administrator.</p>`,
+			html.EscapeString(config.String("app.name")), html.EscapeString(newEmail)),
+	}
+}
+
+func providerLinkedMessage(to string) mailer.Message {
+	return mailer.Message{
+		To:      to,
+		Subject: fmt.Sprintf("Single sign-on was linked to your %s account", config.String("app.name")),
+		TextBody: fmt.Sprintf("A single sign-on login was just linked to your %s account, so it can now be used to sign in.\n\n"+
+			"If this wasn't you, contact your administrator.", config.String("app.name")),
+		HTMLBody: fmt.Sprintf(`<p>A single sign-on login was just linked to your %s account, so it can now be used to sign in.</p><p>If this wasn't you, contact your administrator.</p>`,
+			html.EscapeString(config.String("app.name"))),
 	}
 }
 

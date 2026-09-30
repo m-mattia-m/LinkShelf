@@ -97,10 +97,20 @@ async function save(data: Schema) {
       }
     })
     authStore.user = updated
+    // A changed email only takes effect once the new address is confirmed,
+    // so the field goes back to the email that is still in use.
+    form.email = updated.email
     // The shelves' URLs follow the username, so their cached copies are stale.
     if (userBasedPaths.value) await shelfStore.fetch()
     const toast = useToast()
-    toast.add({ title: t('app.profile.saveSuccess'), color: 'success' })
+    const emailChangeRequested = !!updated.pendingEmail && updated.pendingEmail === data.email.trim().toLowerCase()
+    if (emailChangeRequested && updated.emailDeliveryFailed) {
+      toast.add({ title: t('app.profile.emailChange.deliveryFailed'), color: 'warning' })
+    } else if (emailChangeRequested) {
+      toast.add({ title: t('app.profile.emailChange.requested', { email: updated.pendingEmail }), color: 'success' })
+    } else {
+      toast.add({ title: t('app.profile.saveSuccess'), color: 'success' })
+    }
   } catch (err) {
     await handleApiError(err)
   } finally {
@@ -178,6 +188,15 @@ async function save(data: Schema) {
           class="w-full"
         />
       </UFormField>
+
+      <UAlert
+        v-if="user?.pendingEmail"
+        color="info"
+        variant="subtle"
+        icon="i-lucide-mail-check"
+        :title="t('app.profile.emailChange.pendingTitle')"
+        :description="t('app.profile.emailChange.pendingDescription', { pending: user.pendingEmail, current: user.email })"
+      />
 
       <UFormField :label="t('app.profile.role')">
         <UBadge

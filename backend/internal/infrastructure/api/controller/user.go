@@ -94,6 +94,9 @@ func UpdateUser(svc *domain.Service) func(c context.Context, input *model.UserFi
 			if errors.Is(err, domain.ErrConflict) {
 				return nil, huma.Error409Conflict(err.Error())
 			}
+			if errors.Is(err, domain.ErrTooManyRequests) {
+				return nil, huma.Error429TooManyRequests(err.Error())
+			}
 			return nil, mapper.MapWriteError("failed to update user", err)
 		}
 		if user == nil {

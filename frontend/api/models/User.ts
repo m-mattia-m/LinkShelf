@@ -68,6 +68,12 @@ export interface User {
      */
     lastName: string;
     /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    pendingEmail?: string;
+    /**
      * The user's role, e.g. 'user' or 'admin'. Only an admin caller may set this - ignored otherwise.
      * @type {string}
      * @memberof User
@@ -113,6 +119,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'hasPassword': json['has_password'],
         'id': json['id'],
         'lastName': json['last_name'],
+        'pendingEmail': json['pending_email'] == null ? undefined : json['pending_email'],
         'role': json['role'] == null ? undefined : json['role'],
         'username': json['username'],
     };
@@ -136,6 +143,7 @@ export function UserToJSONTyped(value?: Omit<User, '$schema'> | null, ignoreDisc
         'has_password': value['hasPassword'],
         'id': value['id'],
         'last_name': value['lastName'],
+        'pending_email': value['pendingEmail'],
         'role': value['role'],
         'username': value['username'],
     };

@@ -211,10 +211,16 @@ async function confirmDeleteLink() {
               {{ link.title }}
             </p>
             <ULink
-              :href="link.link"
+              v-if="safeHref(link.link)"
+              :href="safeHref(link.link)"
               target="_blank"
+              rel="noopener noreferrer"
               class="text-xs text-dimmed truncate block"
             >{{ link.link }}</ULink>
+            <span
+              v-else
+              class="text-xs text-dimmed truncate block"
+            >{{ link.link }}</span>
           </div>
           <UButton
             icon="i-lucide-pencil"

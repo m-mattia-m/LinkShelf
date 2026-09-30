@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**getOidcLogin**](AuthApi.md#getoidclogin) | **GET** /v1/auth/oidc/login | Start OIDC login |
+| [**postConfirmEmailChange**](AuthApi.md#postconfirmemailchange) | **POST** /v1/auth/confirm-email-change | Confirm email change |
 | [**postForgotPassword**](AuthApi.md#postforgotpassword) | **POST** /v1/auth/forgot-password | Request a password reset |
 | [**postLogin**](AuthApi.md#postlogin) | **POST** /v1/auth/login | Login |
 | [**postLogout**](AuthApi.md#postlogout) | **POST** /v1/auth/logout | Logout |
@@ -72,6 +73,74 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## postConfirmEmailChange
+
+> postConfirmEmailChange(verifyEmailRequest)
+
+Confirm email change
+
+Applies a pending email change using the token emailed to the new address. Until then the account keeps its current email.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '';
+import type { PostConfirmEmailChangeRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // VerifyEmailRequest
+    verifyEmailRequest: ...,
+  } satisfies PostConfirmEmailChangeRequest;
+
+  try {
+    const data = await api.postConfirmEmailChange(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **verifyEmailRequest** | [VerifyEmailRequest](VerifyEmailRequest.md) |  | |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | No Content |  -  |
 | **0** | Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

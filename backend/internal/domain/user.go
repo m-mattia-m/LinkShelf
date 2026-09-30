@@ -46,9 +46,10 @@ func (s *userServiceImpl) Get(id string) (*model.User, error) {
 // authentication.registrationEnabled. An admin may create a passwordless
 // "invited" account when email verification is enabled.
 func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*model.User, error) {
-	if !callerIsAdmin && !config.Bool("authentication.registrationEnabled") {
+	if !callerIsAdmin && (!config.Bool("authentication.registrationEnabled") || !config.LocalAuthEnabled()) {
 		return nil, ErrRegistrationDisabled
 	}
+	u.Email = normalizeEmail(u.Email)
 
 	role := model.RoleUser
 	if callerIsAdmin && u.Role != "" {
@@ -105,6 +106,13 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 // Update keeps the target's existing role unless the caller is an
 // authenticated admin explicitly changing it - a self profile-update can
 // never change its own role.
+//
+// A changed email is never written directly, whoever the caller is: with
+// email verification on it becomes a pending change that the new address has
+// to confirm (the account keeps its current email until then), and without
+// it the new email is applied but marked unverified. Otherwise an account
+// could claim an address it doesn't own while keeping the old address's
+// verified status - which OIDC then trusts to link a first SSO login to it.
 func (s *userServiceImpl) Update(userId string, userRequest *model.User, callerIsAdmin bool) (*model.User, error) {
 	existing, err := s.Repository.UserRepository.Get(userId)
 	if err != nil {
@@ -134,18 +142,61 @@ func (s *userServiceImpl) Update(userId string, userRequest *model.User, callerI
 		}
 	}
 
+	newEmail := normalizeEmail(userRequest.Email)
+	emailChanged := newEmail != "" && newEmail != normalizeEmail(existing.Email)
+	if emailChanged {
+		if err := checkEmailAvailable(s.Repository, newEmail, userId); err != nil {
+			return nil, err
+		}
+	}
+
+	verificationEnabled := config.Bool("authentication.emailVerification.enabled")
+	deliveryFailed := false
+	// Requested before the profile is saved, so a refused (rate-limited)
+	// change doesn't leave the other fields half-applied.
+	if emailChanged && verificationEnabled {
+		delivered, err := s.Domain.EmailVerificationService.RequestEmailChange(userId, existing.Email, newEmail)
+		if err != nil {
+			return nil, err
+		}
+		deliveryFailed = !delivered
+	}
+
 	userRequest.Id = userId
 	userRequest.Role = role
+	userRequest.Email = existing.Email
 	err = s.Repository.UserRepository.Update(userRequest)
 	if err != nil {
 		return nil, err
+	}
+
+	if emailChanged && !verificationEnabled {
+		if err := s.Repository.UserRepository.ChangeEmail(userId, newEmail, false); err != nil {
+			return nil, err
+		}
 	}
 
 	user, err := s.Get(userId)
 	if err != nil {
 		return nil, err
 	}
+	if user != nil {
+		user.EmailDeliveryFailed = deliveryFailed
+	}
 	return user, nil
+}
+
+// checkEmailAvailable fails with ErrConflict when another account (not
+// exceptUserId) already uses this email. Lookups ignore case.
+func checkEmailAvailable(repo *repository.Repository, email, exceptUserId string) error {
+	other, err := repo.UserRepository.FindByEmail(email)
+	if err != nil {
+		return err
+	}
+	if other != nil && other.Id != exceptUserId {
+		return fmt.Errorf("%w: this email address is already used by another account", ErrConflict)
+	}
+	return nil
 }
 
 func (s *userServiceImpl) PatchPassword(userId string, u *model.UserRequestBodyOnlyPassword) error {

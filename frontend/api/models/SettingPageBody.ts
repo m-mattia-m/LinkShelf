@@ -72,6 +72,12 @@ export interface SettingPageBody {
      * @type {boolean}
      * @memberof SettingPageBody
      */
+    localAuthEnabled: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SettingPageBody
+     */
     oidcEnabled: boolean;
     /**
      * 
@@ -134,6 +140,7 @@ export function instanceOfSettingPageBody(value: object): value is SettingPageBo
     if (!('emailVerificationEnabled' in value) || value['emailVerificationEnabled'] === undefined) return false;
     if (!('imprint' in value) || value['imprint'] === undefined) return false;
     if (!('imprintShow' in value) || value['imprintShow'] === undefined) return false;
+    if (!('localAuthEnabled' in value) || value['localAuthEnabled'] === undefined) return false;
     if (!('oidcEnabled' in value) || value['oidcEnabled'] === undefined) return false;
     if (!('passwordResetEnabled' in value) || value['passwordResetEnabled'] === undefined) return false;
     if (!('privacyPolicy' in value) || value['privacyPolicy'] === undefined) return false;
@@ -164,6 +171,7 @@ export function SettingPageBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
         'emailVerificationEnabled': json['email_verification_enabled'],
         'imprint': json['imprint'],
         'imprintShow': json['imprint_show'],
+        'localAuthEnabled': json['local_auth_enabled'],
         'oidcEnabled': json['oidc_enabled'],
         'passwordResetEnabled': json['password_reset_enabled'],
         'privacyPolicy': json['privacy_policy'],
@@ -194,6 +202,7 @@ export function SettingPageBodyToJSONTyped(value?: Omit<SettingPageBody, '$schem
         'email_verification_enabled': value['emailVerificationEnabled'],
         'imprint': value['imprint'],
         'imprint_show': value['imprintShow'],
+        'local_auth_enabled': value['localAuthEnabled'],
         'oidc_enabled': value['oidcEnabled'],
         'password_reset_enabled': value['passwordResetEnabled'],
         'privacy_policy': value['privacyPolicy'],

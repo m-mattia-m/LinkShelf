@@ -25,6 +25,11 @@ var (
 	// a refused auto-link to an existing account.
 	ErrEmailNotVerifiedForLinking = errors.New("an account with this email already exists, but the identity provider did not confirm this email address is verified, so it can't be linked automatically")
 	ErrOidcNotConfigured          = errors.New("OIDC login is not enabled")
+	// ErrAccountNotLinkable is returned when a local account with the SSO
+	// login's email exists but was never proven to own that address, or is
+	// already linked to another SSO identity. Linking it anyway would let
+	// whoever set that email on the account take over the SSO user.
+	ErrAccountNotLinkable = errors.New("an account with this email already exists, but it can't be linked to this single sign-on login automatically")
 )
 
 type AuthService interface {
@@ -56,6 +61,10 @@ func NewAuthService(repository *repository.Repository, domain *Service, oidc *oi
 }
 
 func (s *authServiceImpl) Login(email, password string) (*model.TokenPair, error) {
+	if !config.LocalAuthEnabled() {
+		return nil, ErrLocalAuthDisabled
+	}
+
 	record, err := s.Repository.UserRepository.FindByEmail(email)
 	if err != nil {
 		return nil, err
@@ -187,9 +196,17 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		if !identity.EmailVerified {
 			return nil, ErrEmailNotVerifiedForLinking
 		}
+		// Both sides must have proven the address: the provider (above) and
+		// the local account. An account that never confirmed its email, or
+		// that already belongs to another SSO identity, is refused.
+		if !existing.EmailVerified || (existing.ProviderId != nil && *existing.ProviderId != "") {
+			return nil, ErrAccountNotLinkable
+		}
 		if err := s.Repository.UserRepository.LinkProvider(existing.Id, model.ProviderOIDC, identity.Subject); err != nil {
 			return nil, err
 		}
+		// Anything this check didn't foresee still reaches the owner's inbox.
+		s.Domain.EmailVerificationService.NotifyProviderLinked(existing.Email)
 		return s.issueTokenPair(existing.Id, existing.Role)
 	}
 
@@ -206,7 +223,7 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		return nil, err
 	}
 
-	userId, err := s.Repository.UserRepository.CreateExternal(identity.Email, username, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject)
+	userId, err := s.Repository.UserRepository.CreateExternal(normalizeEmail(identity.Email), username, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject)
 	if err != nil {
 		return nil, err
 	}

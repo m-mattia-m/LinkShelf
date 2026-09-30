@@ -267,4 +267,56 @@ describe('app profile page', () => {
       expect(saved).toEqual([])
     })
   })
+
+  describe('email change', () => {
+    const TOKEN = 'header.eyJzdWIiOiJ1c2VyLTEiLCJyb2xlIjoidXNlciIsImV4cCI6OTk5OTk5OTk5OX0.signature'
+
+    it('keeps the current email in the form and explains that the new one waits for confirmation', async () => {
+      server.use(http.get(`${BASE}/v1/users/me`, () => HttpResponse.json(UserToJSON(buildUser({ id: 'user-1', email: 'jane@example.com' })))))
+      useAuthStore().setTokens({ accessToken: TOKEN, refreshToken: 'refresh-1' })
+      server.use(http.put(`${BASE}/v1/users/user-1`, () => HttpResponse.json(UserToJSON(buildUser({
+        id: 'user-1', email: 'jane@example.com', pendingEmail: 'new@example.com'
+      })))))
+
+      await renderSuspended(ProfilePage)
+      await waitFor(() => {
+        expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com')
+      })
+
+      await fireEvent.update(screen.getByLabelText('Email'), 'New@Example.com')
+      await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => {
+        expect(screen.getByText('New email waiting for confirmation')).toBeInTheDocument()
+      })
+      expect(screen.getByText(/We sent a confirmation link to new@example.com/)).toBeInTheDocument()
+      expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com')
+      expect(useAuthStore().user?.email).toBe('jane@example.com')
+    })
+
+    it('shows a pending change that was requested earlier', async () => {
+      server.use(http.get(`${BASE}/v1/users/me`, () => HttpResponse.json(UserToJSON(buildUser({
+        id: 'user-1', email: 'jane@example.com', pendingEmail: 'new@example.com'
+      })))))
+      useAuthStore().setTokens({ accessToken: TOKEN, refreshToken: 'refresh-1' })
+
+      await renderSuspended(ProfilePage)
+
+      await waitFor(() => {
+        expect(screen.getByText('New email waiting for confirmation')).toBeInTheDocument()
+      })
+    })
+
+    it('shows no pending notice without a pending change', async () => {
+      server.use(http.get(`${BASE}/v1/users/me`, () => HttpResponse.json(UserToJSON(buildUser({ id: 'user-1', email: 'jane@example.com' })))))
+      useAuthStore().setTokens({ accessToken: TOKEN, refreshToken: 'refresh-1' })
+
+      await renderSuspended(ProfilePage)
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com')
+      })
+      expect(screen.queryByText('New email waiting for confirmation')).not.toBeInTheDocument()
+    })
+  })
 })

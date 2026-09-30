@@ -14,6 +14,7 @@ Name | Type
 `emailVerificationEnabled` | boolean
 `imprint` | string
 `imprintShow` | boolean
+`localAuthEnabled` | boolean
 `oidcEnabled` | boolean
 `passwordResetEnabled` | boolean
 `privacyPolicy` | string
@@ -39,6 +40,7 @@ const example = {
   "emailVerificationEnabled": null,
   "imprint": null,
   "imprintShow": null,
+  "localAuthEnabled": null,
   "oidcEnabled": null,
   "passwordResetEnabled": null,
   "privacyPolicy": null,

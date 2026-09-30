@@ -5,8 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
 	"github.com/stretchr/testify/require"
 )
+
+// testJwtSecret passes validateJwtSecret: long enough and not a placeholder.
+const testJwtSecret = "some-secret-that-is-at-least-32-bytes-long"
 
 func Test_LoadConfig_Success_ReadsDefaultsFromTestYaml(t *testing.T) {
 	Reset()
@@ -32,18 +37,18 @@ func Test_LoadConfig_EnvVarOverridesFile(t *testing.T) {
 
 func Test_LoadConfig_EnvVarOverridesCamelCaseKeys(t *testing.T) {
 	Reset()
-	t.Setenv("AUTHENTICATION_JWTSECRET", "from-env")
+	t.Setenv("AUTHENTICATION_JWTSECRET", "from-env-a-random-value-of-at-least-32-bytes")
 	t.Setenv("AUTHENTICATION_BOOTSTRAPADMIN_EMAIL", "env@example.com")
 	t.Setenv("AUTHENTICATION_EMAILVERIFICATION_ENABLED", "false")
 	t.Setenv("SMTP_TLSMODE", "starttls")
 
 	require.NoError(t, LoadConfig())
 
-	require.Equal(t, "from-env", String("authentication.jwtSecret"))
+	require.Equal(t, "from-env-a-random-value-of-at-least-32-bytes", String("authentication.jwtSecret"))
 	require.Equal(t, "env@example.com", String("authentication.bootstrapAdmin.email"))
 	require.False(t, Bool("authentication.emailVerification.enabled"))
 	require.Equal(t, "starttls", String("smtp.tlsMode"))
-	require.Equal(t, "from-env", Get().Authentication.JwtSecret)
+	require.Equal(t, "from-env-a-random-value-of-at-least-32-bytes", Get().Authentication.JwtSecret)
 }
 
 func Test_LoadConfig_UserBasedPathsIsOffByDefaultAndSettableFromTheEnvironment(t *testing.T) {
@@ -124,9 +129,74 @@ func Test_Validate_FailsWithoutJwtSecret(t *testing.T) {
 	require.ErrorContains(t, validate(), "jwtSecret")
 }
 
+// Regression for the shipped default secret: anyone who knows it can sign
+// {"role":"admin"} tokens, so startup refuses it and anything too short.
+func Test_Validate_RejectsWeakOrPlaceholderJwtSecrets(t *testing.T) {
+	for _, secret := range []string{
+		"change-me-to-a-long-random-value-in-production",
+		"CHANGE-ME-TO-A-LONG-RANDOM-VALUE",
+		"  change-me-to-a-long-random-value  ",
+		"test-secret",
+		"0123456789012345678901234567890", // 31 bytes
+	} {
+		Reset()
+		Set("authentication.jwtSecret", secret)
+		Set("authentication.type", "LOCAL")
+
+		require.ErrorContains(t, validate(), "jwtSecret", secret)
+	}
+}
+
+func Test_Validate_AcceptsA32ByteJwtSecret(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", "01234567890123456789012345678901")
+	Set("authentication.type", "LOCAL")
+
+	require.NoError(t, validate())
+}
+
+func Test_LoadConfig_DefaultConfigShipsNoSecretAndNoBootstrapAdmin(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	path, err := findConfigFile("config.default.yaml")
+	require.NoError(t, err)
+	require.NoError(t, k.Load(file.Provider(path), yaml.Parser()))
+
+	require.Empty(t, String("authentication.jwtSecret"))
+	require.Empty(t, String("authentication.bootstrapAdmin.email"))
+	require.Empty(t, String("authentication.bootstrapAdmin.password"))
+	require.True(t, LocalAuthEnabled())
+	require.ErrorContains(t, validate(), "jwtSecret")
+}
+
+func Test_Validate_LocalAuthCanOnlyBeDisabledWithOidc(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "LOCAL")
+	Set("authentication.localAuthEnabled", false)
+	require.ErrorContains(t, validate(), "localAuthEnabled")
+
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "OIDC")
+	Set("authentication.oidc.issuer", "https://issuer.example.com")
+	Set("authentication.oidc.clientId", "client")
+	Set("authentication.localAuthEnabled", false)
+	require.NoError(t, validate())
+}
+
+func Test_LocalAuthEnabled_DefaultsToTrueWhenUnset(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	require.True(t, LocalAuthEnabled())
+
+	Set("authentication.localAuthEnabled", false)
+	require.False(t, LocalAuthEnabled())
+}
+
 func Test_Validate_FailsForOidcWithoutIssuer(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "OIDC")
 	Set("authentication.oidc.issuer", "")
 	Set("authentication.oidc.clientId", "")
@@ -137,7 +207,7 @@ func Test_Validate_FailsForOidcWithoutIssuer(t *testing.T) {
 
 func Test_Validate_SucceedsForOidcWithAllFields(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "OIDC")
 	Set("authentication.oidc.issuer", "https://issuer.example.com")
 	Set("authentication.oidc.clientId", "client-id")
@@ -151,7 +221,7 @@ func Test_Validate_SucceedsForOidcWithAllFields(t *testing.T) {
 // configuration; see oidcclient.Client.AuthorizationURL.
 func Test_Validate_SucceedsForOidcWithoutClientSecret(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "OIDC")
 	Set("authentication.oidc.issuer", "https://issuer.example.com")
 	Set("authentication.oidc.clientId", "client-id")
@@ -162,7 +232,7 @@ func Test_Validate_SucceedsForOidcWithoutClientSecret(t *testing.T) {
 
 func Test_Validate_FailsForOidcWithoutClientId(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "OIDC")
 	Set("authentication.oidc.issuer", "https://issuer.example.com")
 	Set("authentication.oidc.clientId", "")
@@ -173,7 +243,7 @@ func Test_Validate_FailsForOidcWithoutClientId(t *testing.T) {
 
 func Test_Validate_FailsForUnknownAuthType(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "GOOGLE")
 
 	require.ErrorContains(t, validate(), "unsupported authentication.type")
@@ -181,7 +251,7 @@ func Test_Validate_FailsForUnknownAuthType(t *testing.T) {
 
 func Test_Validate_FailsForEmailVerificationEnabledWithoutSmtpHost(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.emailVerification.enabled", true)
 	Set("smtp.host", "")
@@ -192,7 +262,7 @@ func Test_Validate_FailsForEmailVerificationEnabledWithoutSmtpHost(t *testing.T)
 
 func Test_Validate_FailsForEmailVerificationEnabledWithoutSmtpFrom(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.emailVerification.enabled", true)
 	Set("smtp.host", "smtp.example.com")
@@ -203,7 +273,7 @@ func Test_Validate_FailsForEmailVerificationEnabledWithoutSmtpFrom(t *testing.T)
 
 func Test_Validate_SucceedsForEmailVerificationEnabledWithSmtpConfigured(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.emailVerification.enabled", true)
 	Set("smtp.host", "smtp.example.com")
@@ -214,7 +284,7 @@ func Test_Validate_SucceedsForEmailVerificationEnabledWithSmtpConfigured(t *test
 
 func Test_Validate_SucceedsForEmailVerificationDisabledWithoutSmtp(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.emailVerification.enabled", false)
 
@@ -223,7 +293,7 @@ func Test_Validate_SucceedsForEmailVerificationDisabledWithoutSmtp(t *testing.T)
 
 func Test_Validate_PasswordResetNeedsSmtp(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.passwordReset.enabled", true)
 	Set("smtp.host", "")
@@ -240,7 +310,7 @@ func Test_Validate_PasswordResetNeedsSmtp(t *testing.T) {
 
 func Test_Validate_PasswordResetDisabledNeedsNoSmtp(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.passwordReset.enabled", false)
 	Set("smtp.host", "")
@@ -252,7 +322,7 @@ func Test_Validate_PasswordResetDisabledNeedsNoSmtp(t *testing.T) {
 func Test_Validate_StrictOriginsNeedsTheInstanceUrls(t *testing.T) {
 	strict := func() {
 		Reset()
-		Set("authentication.jwtSecret", "some-secret")
+		Set("authentication.jwtSecret", testJwtSecret)
 		Set("authentication.type", "LOCAL")
 		Set("authentication.emailVerification.enabled", false)
 		Set("authentication.passwordReset.enabled", false)
@@ -278,7 +348,7 @@ func Test_Validate_StrictOriginsNeedsTheInstanceUrls(t *testing.T) {
 func Test_Validate_StrictOriginsAdditionalOriginsMustBeFullUrls(t *testing.T) {
 	strict := func() {
 		Reset()
-		Set("authentication.jwtSecret", "some-secret")
+		Set("authentication.jwtSecret", testJwtSecret)
 		Set("authentication.type", "LOCAL")
 		Set("authentication.emailVerification.enabled", false)
 		Set("authentication.passwordReset.enabled", false)
@@ -300,7 +370,7 @@ func Test_Validate_StrictOriginsAdditionalOriginsMustBeFullUrls(t *testing.T) {
 
 func Test_Validate_WithoutStrictOriginsTheUrlsMayBeEmpty(t *testing.T) {
 	Reset()
-	Set("authentication.jwtSecret", "some-secret")
+	Set("authentication.jwtSecret", testJwtSecret)
 	Set("authentication.type", "LOCAL")
 	Set("authentication.emailVerification.enabled", false)
 	Set("authentication.passwordReset.enabled", false)

@@ -8,6 +8,7 @@ import (
 
 	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
+	"backend/internal/infrastructure/mailer"
 	"backend/internal/infrastructure/oidcclient"
 	"backend/internal/infrastructure/repository"
 
@@ -387,12 +388,22 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_VerifiedEmail_Success(t *testin
 	svc.UserRepository.
 		EXPECT().
 		FindByEmail(identity.Email).
-		Return(&repository.AuthRecord{Id: "existing-user-id", Role: model.RoleUser}, nil)
+		Return(&repository.AuthRecord{Id: "existing-user-id", Email: identity.Email, Role: model.RoleUser, EmailVerified: true}, nil)
 
 	svc.UserRepository.
 		EXPECT().
 		LinkProvider("existing-user-id", model.ProviderOIDC, identity.Subject).
 		Return(nil)
+
+	// The owner is told a single sign-on login was linked.
+	svc.Mailer.
+		EXPECT().
+		Send(gomock.Any()).
+		DoAndReturn(func(msg mailer.Message) error {
+			require.Equal(t, identity.Email, msg.To)
+			require.Contains(t, msg.Subject, "Single sign-on was linked")
+			return nil
+		})
 
 	svc.RefreshTokenRepository.
 		EXPECT().
@@ -430,6 +441,106 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_UnverifiedEmail_Fails(t *testin
 	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
 
 	require.ErrorIs(t, err, ErrEmailNotVerifiedForLinking)
+	require.Nil(t, tokens)
+}
+
+// Regression for the OIDC account pre-hijack: an attacker sets a victim's
+// address on their own account without ever confirming it. The victim's
+// first SSO login must not be linked into that account.
+func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_RefusesAnAccountThatNeverVerifiedTheEmail(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	identity := &oidcclient.Identity{Subject: "victim-subject", Email: "victim@corp.com", EmailVerified: true}
+
+	svc.UserRepository.EXPECT().FindByProviderId(identity.Subject).Return(nil, nil)
+	svc.UserRepository.EXPECT().
+		FindByEmail(identity.Email).
+		Return(&repository.AuthRecord{Id: "attacker-id", Email: identity.Email, Role: model.RoleUser, EmailVerified: false}, nil)
+	// No LinkProvider, no tokens: the mock fails on any other call.
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.ErrorIs(t, err, ErrAccountNotLinkable)
+	require.Nil(t, tokens)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_RefusesAnAccountLinkedToAnotherIdentity(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	identity := &oidcclient.Identity{Subject: "new-subject", Email: "user@test.com", EmailVerified: true}
+	otherSubject := "other-subject"
+
+	svc.UserRepository.EXPECT().FindByProviderId(identity.Subject).Return(nil, nil)
+	svc.UserRepository.EXPECT().
+		FindByEmail(identity.Email).
+		Return(&repository.AuthRecord{Id: "existing-user-id", Email: identity.Email, EmailVerified: true, ProviderId: &otherSubject}, nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.ErrorIs(t, err, ErrAccountNotLinkable)
+	require.Nil(t, tokens)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_StillLinksWhenTheNoticeCannotBeSent(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	identity := &oidcclient.Identity{Subject: "provider-subject", Email: "user@test.com", EmailVerified: true}
+
+	svc.UserRepository.EXPECT().FindByProviderId(identity.Subject).Return(nil, nil)
+	svc.UserRepository.EXPECT().
+		FindByEmail(identity.Email).
+		Return(&repository.AuthRecord{Id: "existing-user-id", Email: identity.Email, EmailVerified: true}, nil)
+	svc.UserRepository.EXPECT().LinkProvider("existing-user-id", model.ProviderOIDC, identity.Subject).Return(nil)
+	svc.Mailer.EXPECT().Send(gomock.Any()).Return(errors.New("smtp down"))
+	svc.RefreshTokenRepository.EXPECT().Create("existing-user-id", gomock.Any(), gomock.Any()).Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	tokens, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tokens.AccessToken)
+}
+
+func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_StoresTheEmailLowercased(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	setupJwtTestConfig(t)
+	config.Set("authentication.refreshTokenExpiryMinutes", 60)
+
+	identity := &oidcclient.Identity{Subject: "provider-subject", Email: "New.User@Test.COM", EmailVerified: true, PreferredUsername: "newuser"}
+
+	svc.UserRepository.EXPECT().FindByProviderId(identity.Subject).Return(nil, nil)
+	svc.UserRepository.EXPECT().FindByEmail(identity.Email).Return(nil, nil)
+	svc.UserRepository.EXPECT().UsernameTaken(gomock.Any(), "").Return(false, nil).AnyTimes()
+	svc.UserRepository.EXPECT().
+		CreateExternal("new.user@test.com", gomock.Any(), gomock.Any(), gomock.Any(), model.ProviderOIDC, identity.Subject).
+		Return("new-user-id", nil)
+	svc.RefreshTokenRepository.EXPECT().Create("new-user-id", gomock.Any(), gomock.Any()).Return(nil)
+
+	authSvc := svc.Service.AuthService.(*authServiceImpl)
+	_, err := authSvc.resolveOidcIdentity(identity, nil)
+
+	require.NoError(t, err)
+}
+
+func Test_Unit_Auth_Login_RefusedWhenLocalAuthIsDisabled(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	config.Reset()
+	t.Cleanup(config.Reset)
+	config.Set("authentication.localAuthEnabled", false)
+
+	// No repository lookup at all: the mock fails on any call.
+	tokens, err := svc.Service.AuthService.Login("user@test.com", "password")
+
+	require.ErrorIs(t, err, ErrLocalAuthDisabled)
 	require.Nil(t, tokens)
 }
 

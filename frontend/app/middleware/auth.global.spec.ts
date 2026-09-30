@@ -51,6 +51,8 @@ describe('auth.global middleware', () => {
   it.each([
     '/auth/callback',
     '/auth/verify-email',
+    // An email change is confirmed from the inbox, usually while signed in.
+    '/auth/confirm-email',
     '/auth/set-password',
     '/auth/reset-password'
   ])('always lets a token-action route (%s) through even when already authenticated', (path) => {

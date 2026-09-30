@@ -42,6 +42,19 @@ describe('ShelfSectionCard', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
+  // Regression for the stored-XSS finding: a javascript: URL is shown as
+  // text but never becomes a clickable href.
+  it('shows a non-http(s) link as plain text without an href', async () => {
+    const payload = 'javascript:alert(document.domain)%2F%2F@example.com'
+    const { container } = await renderSuspended(ShelfSectionCard, {
+      props: { section: buildSectionProp(), links: [buildLink({ id: 'link-1', title: 'Evil', link: payload, order: 0 })] }
+    })
+
+    expect(screen.getByText(payload)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: payload })).not.toBeInTheDocument()
+    expect(container.querySelector('a[href^="javascript:" i]')).toBeNull()
+  })
+
   it('opens the edit dialog pre-filled when editing a link', async () => {
     const link = buildLink({ id: 'link-1', title: 'Example', link: 'https://example.com', order: 0 })
 

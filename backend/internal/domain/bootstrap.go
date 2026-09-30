@@ -5,16 +5,33 @@ import (
 	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/repository"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
-// EnsureBootstrapAdmin idempotently creates (or refreshes the password/role
-// of, and fills in a missing username for) the config-driven admin account on
-// every startup. It's a no-op if no
-// bootstrap admin email/password is configured.
+// EnsureBootstrapAdmin creates the config-driven admin account on startup if
+// no account with that email exists yet. It's a no-op if no bootstrap admin
+// email/password is configured.
+//
+// An existing account is never touched: resetting its password and role on
+// every restart would silently undo a password changed after the first
+// login, and would hand admin back to whoever knows the configured value.
 func EnsureBootstrapAdmin(repo *repository.Repository) error {
-	email := strings.TrimSpace(config.String("authentication.bootstrapAdmin.email"))
+	email := normalizeEmail(config.String("authentication.bootstrapAdmin.email"))
 	password := config.String("authentication.bootstrapAdmin.password")
 	if email == "" || password == "" {
+		return nil
+	}
+
+	if !config.LocalAuthEnabled() {
+		zap.L().Warn("authentication.bootstrapAdmin is set, but authentication.localAuthEnabled is false, so it can't sign in with its password")
+	}
+
+	existing, err := repo.UserRepository.FindByEmail(email)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
 		return nil
 	}
 
@@ -28,26 +45,6 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return err
 	}
 
-	existing, err := repo.UserRepository.FindByEmail(email)
-	if err != nil {
-		return err
-	}
-
-	// The bootstrap admin is always exempt from email verification - it's
-	// the one account an operator needs to be able to log in with
-	// immediately, including before SMTP is configured or reachable.
-	if existing != nil {
-		if existing.Username == "" && username != "" {
-			if err := repo.UserRepository.SetUsername(existing.Id, username); err != nil {
-				return err
-			}
-		}
-		if err := repo.UserRepository.SetPasswordAndRole(existing.Id, hashedPassword, model.RoleAdmin); err != nil {
-			return err
-		}
-		return repo.UserRepository.MarkVerified(existing.Id)
-	}
-
 	userId, err := repo.UserRepository.Create(model.UserBase{
 		Email:     email,
 		Username:  username,
@@ -58,8 +55,8 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return err
 	}
 
-	if err := repo.UserRepository.SetPasswordAndRole(userId, hashedPassword, model.RoleAdmin); err != nil {
-		return err
-	}
+	// The bootstrap admin is always exempt from email verification - it's
+	// the one account an operator needs to be able to log in with
+	// immediately, including before SMTP is configured or reachable.
 	return repo.UserRepository.MarkVerified(userId)
 }

@@ -18,9 +18,10 @@ app:
   logo: <base64-encoded-logo-or-path>
   frontendUrl: "http://localhost:3000"
   # Other full http(s) origins the instance is also reachable on, besides
-  # frontendUrl (e.g. a second domain pointed at the same frontend). Only
-  # used while strictOrigins is true. A shelf's own domain doesn't belong
-  # here, that is handled automatically.
+  # frontendUrl (e.g. a second domain pointed at the same frontend). Allowed
+  # by the strictOrigins check, and reserved so no shelf can use them as its
+  # custom domain. A shelf's own domain doesn't belong here, that is handled
+  # automatically.
   additionalOrigins: []
   # When true, a shelf's public URL is /<username>/<path>, so two users can
   # both own /profile. When false (the default) it is /<path>, unique across
@@ -79,18 +80,24 @@ assets:
 authentication:
   type: LOCAL # LOCAL # OIDC
   # jwtSecret signs the access tokens this backend issues itself, no matter
-  # which auth type is active below. Override this in production via the
-  # AUTHENTICATION_JWTSECRET environment variable - never ship the
-  # default value.
-  jwtSecret: "change-me-to-a-long-random-value-in-production"
+  # which auth type is active below. Anyone who knows it can sign in as any
+  # user, including an admin. Required: set it via the
+  # AUTHENTICATION_JWTSECRET environment variable to a random value of at
+  # least 32 bytes, e.g. the output of `openssl rand -base64 48`. Startup
+  # fails while it is empty, too short or a known placeholder.
+  jwtSecret: ""
   accessTokenExpiryMinutes: 5
   refreshTokenExpiryMinutes: 1440 # 24h
   bootstrapAdmin:
-    # Idempotently created/refreshed on every startup with role=admin.
-    # Leave email and password empty to skip bootstrapping an admin account.
-    email: admin@example.com
+    # Created with role=admin on startup if no account with this email exists
+    # yet. An existing account is never changed, so a password changed after
+    # the first login stays changed across restarts.
+    # Leave email and password empty (the default) to skip bootstrapping an
+    # admin account, e.g. set AUTHENTICATION_BOOTSTRAPADMIN_EMAIL and
+    # AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD for the first start only.
+    email: ""
     # Must not exceed 72 bytes - bcrypt, used to hash it, ignores anything past that.
-    password: "change-me"
+    password: ""
     # Applied as configured, without the checks a user-chosen username goes
     # through (so it may be a reserved word such as "admin").
     username: admin
@@ -107,6 +114,11 @@ authentication:
     # Must match the frontend's OIDC callback page, which completes the
     # login by POSTing the code+state here to /v1/auth/oidc/callback.
     redirectUrl: "http://localhost:3000/auth/callback"
+  # Set to false to turn off everything that uses a local password: password
+  # login, self-registration and "forgot password". Only allowed when type is
+  # OIDC, so that everyone signs in through the identity provider. Leave it on
+  # while existing password accounts still need to sign in.
+  localAuthEnabled: true
   # Set to false to disable public self-registration (POST /v1/users without
   # an admin token). Admins can still create accounts, and OIDC
   # auto-provisioning is unaffected either way.
@@ -193,7 +205,9 @@ app:
     - "https://links.example.org"
 ```
 
-This only affects the `app.strictOrigins` CORS check. Getting the traffic there takes the same steps as a [shelf's
+These domains are allowed by the `app.strictOrigins` CORS check, and like `app.frontendUrl` and `server.host` they are
+reserved: no shelf can use them as its custom domain, so `/` on them always stays the app's own start page. Getting the
+traffic there takes the same steps as a [shelf's
 custom domain](/docs/self-hosting/custom-domains#set-it-up). In the Helm chart, add the domain to `ingress.extraHosts`
 and `ingress.tls`, and set `APP_ADDITIONALORIGINS` in `env`.
 
@@ -208,8 +222,41 @@ the setting on and no `smtp.host` or `smtp.from`. On an instance without email, 
 - Changing the password signs the user out on every device.
 - The page answers the same way whether or not the address has an account, and an account gets at most one email a
   minute.
-- The bootstrap admin's password is set from `authentication.bootstrapAdmin.password` on every start, so it overwrites a
-  reset one. Change it in the config instead.
+- This includes the bootstrap admin: its account is only created once, and later starts never reset its password.
+- Off while `authentication.localAuthEnabled` is `false`, see [Single sign-on only](#single-sign-on-only).
+
+## Email changes
+
+Changing an email, in the profile or as an admin for someone else, doesn't replace the address right away. With email
+verification on:
+
+- The new address gets a confirmation link, and the current address gets a notice that a change was requested.
+- The account keeps its current email, and signs in with it, until the link is opened. The profile shows the pending
+  address meanwhile.
+- The link works once and expires after `authentication.emailVerification.tokenExpiryHours`. Requesting another change
+  replaces the pending one and its link. A new request is possible once a minute.
+- An address that another account uses is refused, both when the change is requested and when it is confirmed.
+
+Without email verification the new address is applied right away, but marked as not verified. Emails are stored in
+lowercase, so `Jane@Example.com` and `jane@example.com` are the same account.
+
+## Single sign-on only
+
+With `authentication.type: OIDC`, local accounts with a password keep working next to single sign-on. A first SSO login
+whose email matches an existing account is linked to that account, but only when:
+
+- the identity provider says the email is verified,
+- the account has verified that email itself, and
+- the account isn't linked to another SSO login yet.
+
+The owner then gets an email that single sign-on was linked. Otherwise the login is refused, and the person signs in with
+their password first or asks an admin.
+
+To allow only single sign-on, set `authentication.localAuthEnabled` to `false`
+(`AUTHENTICATION_LOCALAUTHENABLED=false`). That turns off password login, self-registration and "forgot password", and
+the sign-in page only shows the SSO button. LinkShelf refuses to start with it off while `authentication.type` is
+`LOCAL`, since then nobody could sign in. A configured bootstrap admin is still created, but can't sign in with its
+password.
 
 ## Themes and assets
 
