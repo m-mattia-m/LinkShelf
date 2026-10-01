@@ -9,13 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// EnsureBootstrapAdmin creates the config-driven admin account on startup if
-// no account with that email exists yet. It's a no-op if no bootstrap admin
-// email/password is configured.
-//
-// An existing account is never touched: resetting its password and role on
-// every restart would silently undo a password changed after the first
-// login, and would hand admin back to whoever knows the configured value.
+// EnsureBootstrapAdmin creates the configured admin account if it doesn't exist yet.
+// An existing account is never modified.
 func EnsureBootstrapAdmin(repo *repository.Repository) error {
 	email := normalizeEmail(config.String("authentication.bootstrapAdmin.email"))
 	password := config.String("authentication.bootstrapAdmin.password")
@@ -35,9 +30,7 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return nil
 	}
 
-	// Used exactly as configured: the operator chooses this name, so it skips
-	// the format and reserved-word checks a user-chosen username goes through.
-	// That is what lets it be "admin".
+	// The configured username skips validation, so it may be "admin".
 	username := strings.TrimSpace(config.String("authentication.bootstrapAdmin.username"))
 
 	hashedPassword, err := hashPassword(password)
@@ -55,8 +48,6 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return err
 	}
 
-	// The bootstrap admin is always exempt from email verification - it's
-	// the one account an operator needs to be able to log in with
-	// immediately, including before SMTP is configured or reachable.
+	// The bootstrap admin is exempt from email verification.
 	return repo.UserRepository.MarkVerified(userId)
 }

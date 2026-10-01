@@ -7,9 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// Init builds a JSON-structured Zap logger at the given level ("debug", "info",
-// "warn", "error" or "fatal") and installs it as the global logger, accessible
-// anywhere via zap.L() / zap.S().
+// Init installs a JSON zap logger at the given level as the global logger.
 func Init(levelStr string) {
 	level := ParseLevel(levelStr)
 
@@ -30,8 +28,7 @@ func Init(levelStr string) {
 	zap.L().Info("Logger initialized", zap.String("level", level.String()))
 }
 
-// ParseLevel maps a config string ("debug", "info", "warn", "error", "fatal")
-// to a zap level, defaulting to info for anything unrecognized.
+// ParseLevel maps a level name to a zap level, defaulting to info.
 func ParseLevel(levelStr string) zapcore.Level {
 	var level zapcore.Level
 	if err := level.UnmarshalText([]byte(levelStr)); err != nil {

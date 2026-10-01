@@ -1,8 +1,6 @@
 package model
 
-// PublicShelf is the subset of a shelf's fields that are safe to expose to
-// anonymous visitors. Theme holds the resolved CSS custom properties of the
-// selected theme, or nil if none is selected or it no longer exists.
+// PublicShelf is the subset of a shelf visible to anonymous visitors.
 type PublicShelf struct {
 	Id          string            `json:"id" bson:"id"`
 	Title       string            `json:"title" bson:"title"`
@@ -20,11 +18,9 @@ type Shelf struct {
 	PublicShelf
 	Domain string `json:"domain" bson:"domain"`
 	UserId string `json:"userId" bson:"userId"`
-	// Username lets a client build the /<username>/<path> URL without a
-	// second request.
+	// Username is used to build /<username>/<path> URLs.
 	Username string `json:"username" bson:"username"`
-	// CreatedWithUserBasedPaths records whether app.userBasedPaths was on when
-	// the shelf was created, so a client can tell when its URL has changed.
+	// CreatedWithUserBasedPaths records app.userBasedPaths at creation, to detect URL changes.
 	CreatedWithUserBasedPaths bool `json:"createdWithUserBasedPaths" bson:"createdWithUserBasedPaths"`
 	// ThemeId is the selected theme's id ("" if none selected).
 	ThemeId string `json:"themeId" bson:"themeId"`

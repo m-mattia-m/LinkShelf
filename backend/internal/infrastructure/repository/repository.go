@@ -135,10 +135,7 @@ func connectToDatabase(dsn, driver string) (*sql.DB, error) {
 	return db, nil
 }
 
-// migrationSource returns the embedded migration set matching the driver
-// returned by getConnectionInformation ("pgx" or "mysql"). The two engines'
-// migrations live in separate directories since their DDL isn't portable
-// line-for-line (see migrations/embed.go).
+// migrationSource returns the migrations for the driver ("pgx" or "mysql").
 func migrationSource(driver string) (source.Driver, error) {
 	switch driver {
 	case "pgx":
@@ -194,9 +191,7 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	case "postgres":
 		driver = "pgx"
 
-		// database/sql DSN (NO scheme). params (e.g. "sslmode=disable") is a
-		// space-separated list of key=value pairs in this keyword/value DSN
-		// style, appended the same way as the other fields.
+		// database/sql DSN (no scheme); params are space-separated key=value pairs.
 		sqlDSN = fmt.Sprintf(
 			"host=%s port=%s user=%s password=%s dbname=%s %s",
 			host, port, username, password, dbname, params,
@@ -210,10 +205,7 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	case "mysql":
 		driver = "mysql"
 
-		// database/sql DSN (NO scheme). params (e.g. "charset=utf8mb4&parseTime=true")
-		// must reach this DSN, not just migrateDSN below - without
-		// parseTime=true here, the mysql driver can't scan DATETIME/TIMESTAMP
-		// columns into time.Time at all.
+		// database/sql DSN (no scheme); needs parseTime=true to scan DATETIME into time.Time.
 		sqlDSN = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?%s",
 			username, password, host, port, dbname, params)
 
@@ -230,8 +222,7 @@ func getConnectionInformation() (sqlDSN, driver, migrateDSN string, err error) {
 	return sqlDSN, driver, migrateDSN, nil
 }
 
-// pgQuotedIdentifiers are reserved words quoted Postgres-style in the query
-// text; buildSqlStatements rewrites them to backticks for MySQL.
+// pgQuotedIdentifiers are rewritten to backticks for MySQL.
 var pgQuotedIdentifiers = strings.NewReplacer(`"user"`, "`user`", `"order"`, "`order`")
 
 func buildSqlStatements(query string) (string, error) {

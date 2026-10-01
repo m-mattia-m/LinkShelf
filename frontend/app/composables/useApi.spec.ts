@@ -41,8 +41,7 @@ describe('useApi', () => {
   })
 
   it('sends exactly one Authorization header on the retry', async () => {
-    // The test fetch keeps only the last of two differently-cased
-    // Authorization entries, so inspect the request as handed to fetch.
+    // Inspect the request as passed to fetch.
     const authStore = useAuthStore()
     authStore.setTokens(buildTokenPair({ accessToken: 'stale-token', refreshToken: 'refresh-1' }))
     server.use(

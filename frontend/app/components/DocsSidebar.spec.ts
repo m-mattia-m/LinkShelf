@@ -11,8 +11,7 @@ mockNuxtImport('queryCollection', () => {
   })
 })
 
-// useAsyncData caches per Nuxt app (one per test file), so clear it to make
-// each test re-invoke the mocked queryCollection().
+// Clear the useAsyncData cache so each test re-runs queryCollection().
 beforeEach(() => {
   clearNuxtData()
 })
@@ -67,9 +66,7 @@ describe('DocsSidebar', () => {
 
     await renderSuspended(DocsSidebar)
 
-    // With no dedicated "/docs/api" page, the "api" section falls back to
-    // its only child's title - so "Users API" appears both as the section's
-    // accordion trigger and as the nested link inside it.
+    // The section falls back to its only child's title, so it appears twice.
     expect(screen.getByRole('button', { name: 'Users API' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Users API' })).toBeInTheDocument()
   })

@@ -1,6 +1,4 @@
-// Decides whether a request's host is the domain of a shelf, so `/` can show
-// that shelf instead of the landing page. It runs on the Nuxt server for every
-// page request, so only the yes/no is cached, for up to a minute.
+// Resolves whether a request's host is a shelf domain; results are cached for a minute.
 
 const CACHE_TTL_MS = 60_000
 // The Host header is client-controlled, so the cache size is capped.
@@ -24,11 +22,7 @@ export function clearShelfHostCache() {
   cache.clear()
 }
 
-/**
- * The host a request was addressed to, preferring X-Forwarded-Host (first
- * entry). Spoofing it can only show a public shelf under another host, so no
- * trusted-proxy list is needed.
- */
+/** The request host, preferring X-Forwarded-Host. */
 export function requestHost(headers: Record<string, string | string[] | undefined>): string {
   const pick = (name: string) => {
     const value = headers[name]
@@ -48,11 +42,7 @@ function remember(host: string, domain: string | null, now: number) {
   cache.set(host, { domain, expires: now + CACHE_TTL_MS })
 }
 
-/**
- * The normalized domain of the shelf served on `host`, or null. Hosts that
- * can't be a domain never reach the backend. An unreachable backend also
- * gives null and isn't cached, so the main site keeps working.
- */
+/** The normalized shelf domain served on host, or null. Backend errors aren't cached. */
 export async function resolveShelfHost(host: string, apiBase: string, options: ResolveOptions = {}): Promise<string | null> {
   const fetchFn = options.fetchFn ?? fetch
   const now = options.now ?? Date.now

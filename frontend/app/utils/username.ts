@@ -4,10 +4,7 @@ export const USERNAME_MIN_LENGTH = 3
 export const USERNAME_MAX_LENGTH = 30
 export const USERNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
 
-/**
- * The shape of a username, mirroring backend/internal/domain/username.go.
- * Reserved words are only checked by the backend.
- */
+/** Mirrors usernamePattern in backend/internal/domain/username.go. */
 export function usernameSchema() {
   const { t } = useNuxtApp().$i18n
   return v.pipe(

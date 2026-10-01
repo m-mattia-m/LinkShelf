@@ -26,8 +26,7 @@ func Test_API_Setting_GetPageSettings_Public(t *testing.T) {
 
 	var settings model.SettingPageBody
 	require.NoError(t, json.Unmarshal(body, &settings))
-	// Seeded by migrations/*/0002_data.up.sql - proves settings actually load
-	// from the real database, not just that the route responds.
+	// Seeded by the 0002_data migration.
 	require.Contains(t, settings.About, "LinkShelf")
 }
 

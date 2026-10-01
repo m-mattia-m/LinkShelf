@@ -14,18 +14,14 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-// configFileEnvVar points to a second config file that overwrites the
-// default, e.g. CONFIGURATION_FILE_PATH=config.prod.yaml. It is read via
-// os.Getenv because it selects the config rather than being part of it.
+// configFileEnvVar names an optional config file that overrides the default.
 const configFileEnvVar = "CONFIGURATION_FILE_PATH"
 
 var searchPaths = []string{".", "..", "../..", "../../..", "../../../..", "backend", "./backend"}
 
 var k = koanf.New(".")
 
-// Configuration mirrors config.default.yaml so the whole tree can be read as
-// a typed value via Get(). mapstructure matches field names case-insensitively,
-// so the struct tags are only documentation.
+// Configuration mirrors config.default.yaml.
 type Configuration struct {
 	App struct {
 		Name        string `yaml:"name"`
@@ -34,16 +30,11 @@ type Configuration struct {
 		Logo        string `yaml:"logo"`
 		// FrontendUrl is the canonical address that email links point to.
 		FrontendUrl string `yaml:"frontendUrl"`
-		// AdditionalOrigins are other origins the frontend is reachable on.
-		// Allowed while StrictOrigins is true, and reserved from shelf
-		// domains. Shelf domains are handled automatically.
+		// AdditionalOrigins are other origins the frontend is served on.
 		AdditionalOrigins []string `yaml:"additionalOrigins"`
-		// UserBasedPaths switches public shelf URLs from /<path> to
-		// /<username>/<path>.
+		// UserBasedPaths switches shelf URLs from /<path> to /<username>/<path>.
 		UserBasedPaths bool `yaml:"userBasedPaths"`
-		// StrictOrigins only lets browsers call the API from FrontendUrl,
-		// AdditionalOrigins or a shelf's own domain, and only answers requests
-		// addressed to Server.Host.
+		// StrictOrigins restricts CORS to known origins and requests to Server.Host.
 		StrictOrigins bool `yaml:"strictOrigins"`
 	} `yaml:"app"`
 	Server struct {
@@ -71,13 +62,11 @@ type Configuration struct {
 		} `yaml:"openapi"`
 	} `yaml:"domain"`
 	Themes struct {
-		// Directory of instance-theme YAML files, scanned once at startup.
-		// Leave empty to skip.
+		// Directory of instance-theme YAML files, read at startup. Empty to skip.
 		Directory string `yaml:"directory"`
 	} `yaml:"themes"`
 	Assets struct {
-		// Directory of static files (e.g. theme background images), scanned
-		// once at startup and served at BasePath. Leave empty to skip.
+		// Directory of static files served at BasePath. Empty to skip.
 		Directory string `yaml:"directory"`
 		BasePath  string `yaml:"basePath"`
 	} `yaml:"assets"`
@@ -97,11 +86,9 @@ type Configuration struct {
 			ClientSecret string `yaml:"clientSecret" json:"-"`
 			RedirectUrl  string `yaml:"redirectUrl"`
 		} `yaml:"oidc"`
-		// LocalAuthEnabled gates password login, self-registration and
-		// password reset. Only false together with Type OIDC.
+		// LocalAuthEnabled gates password login, registration and reset. Only false with OIDC.
 		LocalAuthEnabled bool `yaml:"localAuthEnabled"`
-		// RegistrationEnabled gates public self-registration. Admin-created
-		// accounts and OIDC auto-provisioning are not affected.
+		// RegistrationEnabled gates self-registration only.
 		RegistrationEnabled bool `yaml:"registrationEnabled"`
 		EmailVerification   struct {
 			Enabled bool `yaml:"enabled"`
@@ -120,21 +107,15 @@ type Configuration struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password" json:"-"`
 		From     string `yaml:"from"`
-		// FromName is the optional display name in the From header, e.g.
-		// `"LinkShelf" <no-reply@example.com>`. It is never part of the SMTP
-		// envelope address, since some servers reject it there.
+		// FromName is the optional display name in the From header.
 		FromName string `yaml:"fromName"`
-		// TlsMode is "none", "starttls", or "tls" (implicit TLS). Anything
-		// else, including blank, is treated as "tls".
+		// TlsMode is "none", "starttls" or "tls" (default).
 		TlsMode string `yaml:"tlsMode"`
 	} `yaml:"smtp"`
 }
 
-// LoadConfig loads configuration in three layers, each overriding the previous one:
-//  1. config.default.yaml (or config.test.yaml when running under `go test`)
-//  2. the file CONFIGURATION_FILE_PATH points to, if that env var is set
-//  3. environment variables named after the key path, dots replaced by
-//     underscores and upper-cased, e.g. database.host -> DATABASE_HOST
+// LoadConfig loads config.default.yaml (config.test.yaml under go test), then
+// CONFIGURATION_FILE_PATH, then env vars (database.host -> DATABASE_HOST).
 func LoadConfig() error {
 	baseName := "config.default.yaml"
 	if isRunningTests() {
@@ -149,8 +130,7 @@ func LoadConfig() error {
 		return err
 	}
 
-	// A path that was set explicitly has to exist, otherwise a typo would
-	// silently start the application with the default configuration.
+	// An explicitly set path must exist.
 	if path := strings.TrimSpace(os.Getenv(configFileEnvVar)); path != "" {
 		if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 			return fmt.Errorf("load %s=%q: %w", configFileEnvVar, path, err)
@@ -164,10 +144,7 @@ func LoadConfig() error {
 	return validate()
 }
 
-// envKeyMapper turns an environment variable name into a config key. Env var
-// names are upper-case, so the lowercased path is matched against the keys
-// the files already defined to restore casing like "authentication.jwtSecret".
-// Unknown keys fall back to the plain lowercased path.
+// envKeyMapper maps an env var name to a config key, restoring the casing of known keys.
 func envKeyMapper(existing []string) func(string) string {
 	byLower := make(map[string]string, len(existing))
 	for _, key := range existing {
@@ -182,10 +159,7 @@ func envKeyMapper(existing []string) func(string) string {
 	}
 }
 
-// envValueMapper wraps envKeyMapper and splits values of list keys (e.g.
-// server.trustedProxies) on commas, dropping blank entries. A plain
-// env.Provider would pass a single string, which doesn't unmarshal into a
-// []string.
+// envValueMapper splits list values on commas.
 func envValueMapper(k *koanf.Koanf) func(key, value string) (string, interface{}) {
 	toKey := envKeyMapper(k.Keys())
 	return func(rawKey, rawValue string) (string, interface{}) {
@@ -263,14 +237,10 @@ func validate() error {
 	return nil
 }
 
-// minJwtSecretBytes is the shortest accepted jwtSecret: HS256 signs with a
-// 256-bit key, and anything shorter is within reach of an offline brute force
-// against a single captured token.
+// minJwtSecretBytes matches the 256-bit HS256 key size.
 const minJwtSecretBytes = 32
 
-// knownPlaceholderJwtSecrets are values that were ever shipped in this
-// repository's configs or docs. Anyone can sign tokens with them - including
-// {"role":"admin"} ones - so they are refused even though they are long enough.
+// knownPlaceholderJwtSecrets were shipped in configs or docs and are refused.
 var knownPlaceholderJwtSecrets = []string{
 	"change-me-to-a-long-random-value-in-production",
 	"change-me-to-a-long-random-value",
@@ -292,9 +262,7 @@ func validateJwtSecret(secret string) error {
 	return nil
 }
 
-// LocalAuthEnabled reports whether password login, self-registration and
-// password reset are available. A config that doesn't mention the key at all
-// keeps them on, which is how every instance behaved before the setting existed.
+// LocalAuthEnabled reports whether local auth is available (default: true).
 func LocalAuthEnabled() bool {
 	const key = "authentication.localAuthEnabled"
 	return !k.Exists(key) || k.Bool(key)
@@ -314,14 +282,13 @@ func isRunningTests() bool {
 	return flag.Lookup("test.v") != nil
 }
 
-// String, Bool, Int and Strings read a config value at the given dotted path (e.g. "database.host").
+// String, Bool, Int and Strings read a value at a dotted path.
 func String(path string) string    { return k.String(path) }
 func Bool(path string) bool        { return k.Bool(path) }
 func Int(path string) int          { return k.Int(path) }
 func Strings(path string) []string { return k.Strings(path) }
 
-// Get returns the whole configuration as a typed value. The error is ignored
-// because LoadConfig already validated that the config unmarshals.
+// Get returns the whole configuration; LoadConfig already validated it.
 func Get() Configuration {
 	var cfg Configuration
 	_ = k.Unmarshal("", &cfg)

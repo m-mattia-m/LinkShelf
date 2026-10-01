@@ -19,8 +19,7 @@ export function useApi() {
   const runtimeConfig = useRuntimeConfig()
   const authStore = useAuthStore()
 
-  // Only requests that carried a Bearer token are retried after a refresh.
-  // Auth endpoints never send one, so a failing refresh can't recurse.
+  // Only retry requests that sent a Bearer token, so a failing refresh can't recurse.
   const customFetch: typeof fetch = async (input, init) => {
     const response = await fetch(input, init)
 
@@ -29,8 +28,7 @@ export function useApi() {
       return response
     }
 
-    // A request that was in flight at the same time may already have renewed
-    // the tokens - only refresh if the token this one used is still current.
+    // Only refresh if another request hasn't already.
     if (sentAuthorization === `Bearer ${authStore.accessToken}`) {
       const refreshed = await authStore.refresh()
       if (!refreshed) return response
@@ -38,8 +36,7 @@ export function useApi() {
       return response
     }
 
-    // Set the header on a Headers object so there's exactly one Authorization
-    // key; a differently-cased duplicate would send both tokens.
+    // Use Headers so there's exactly one Authorization key.
     const headers = new Headers(init?.headers)
     headers.set('Authorization', `Bearer ${authStore.accessToken}`)
     return fetch(input, { ...init, headers: Object.fromEntries(headers.entries()) })

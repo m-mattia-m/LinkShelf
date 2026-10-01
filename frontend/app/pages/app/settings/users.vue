@@ -115,8 +115,7 @@ function actionItems(user: User) {
     ])
   }
 
-  // Only the account owner may change their own password - the backend
-  // rejects this for anyone else, admins included.
+  // Users can only change their own password.
   if (user.id === currentUserId.value) {
     items.push([{ label: t('app.settings.users.actions.changePassword'), icon: 'i-lucide-key-round', onSelect: () => openPassword(user) }])
   } else {

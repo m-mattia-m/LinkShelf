@@ -1,9 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 
-// "--shelf-*" CSS custom properties of the shelf's theme, set by the page.
-// useState because a layout can't receive props from its page, and the
-// properties have to be set on this root element to cascade.
+// The theme's CSS properties, set by the page (layouts can't receive props).
 const themeVars = useState<Record<string, string>>('public-shelf-theme-vars', () => ({}))
 
 // Set by ShelfPublicView.vue; defaults to the default footer until it loads.
@@ -20,8 +18,7 @@ const rootStyle = computed(() => {
   }
   if (vars['--shelf-font-family']) style.fontFamily = vars['--shelf-font-family']
 
-  // --shelf-bg may be a color or a gradient; set both longhands and the
-  // browser drops whichever one doesn't apply.
+  // --shelf-bg may be a color or a gradient; the browser drops whichever doesn't apply.
   if (vars['--shelf-bg']) {
     style.backgroundColor = vars['--shelf-bg']
     style.backgroundImage = vars['--shelf-bg']

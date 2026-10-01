@@ -21,8 +21,7 @@ func CreateSection(svc *domain.Service) func(c context.Context, input *model.Sec
 	}
 }
 
-// GetSections renders a shelf's sections for its public link page and
-// requires no authentication - it's deliberately unscoped by ownership.
+// GetSections is public; no ownership check.
 func GetSections(svc *domain.Service) func(c context.Context, input *model.SectionRequestShelfFilter) (*model.SectionResponseList, error) {
 	return func(c context.Context, input *model.SectionRequestShelfFilter) (*model.SectionResponseList, error) {
 		if strings.TrimSpace(input.ShelfId) == "" {
@@ -64,9 +63,7 @@ func DeleteSection(svc *domain.Service) func(c context.Context, input *model.Sec
 	}
 }
 
-// UpdateSectionsOrder saves the order of many sections in a single request.
-// Invalid items (unknown id, or one the caller doesn't own) never abort the
-// rest of the batch - they're reported back in the response's failures list.
+// UpdateSectionsOrder reorders sections; invalid items are reported as failures.
 func UpdateSectionsOrder(svc *domain.Service) func(c context.Context, input *model.SectionOrderRequest) (*model.SectionOrderResponse, error) {
 	return func(c context.Context, input *model.SectionOrderRequest) (*model.SectionOrderResponse, error) {
 		if len(input.Body.Sections) == 0 {

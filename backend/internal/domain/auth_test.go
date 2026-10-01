@@ -417,10 +417,7 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_VerifiedEmail_Success(t *testin
 	require.NotEmpty(t, tokens.AccessToken)
 }
 
-// Test_Unit_Auth_ResolveOidcIdentity_AutoLink_UnverifiedEmail_Fails covers the
-// exact scenario reported as confusing: an account with this email DOES
-// exist, so the "already exists" wording is accurate here - see the sibling
-// AutoProvision_UnverifiedEmail_Fails test for the case where it isn't.
+// An account with this email exists, so the linking error is returned.
 func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_UnverifiedEmail_Fails(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -444,9 +441,7 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_UnverifiedEmail_Fails(t *testin
 	require.Nil(t, tokens)
 }
 
-// Regression for the OIDC account pre-hijack: an attacker sets a victim's
-// address on their own account without ever confirming it. The victim's
-// first SSO login must not be linked into that account.
+// Regression: an unverified email on an existing account must not be auto-linked.
 func Test_Unit_Auth_ResolveOidcIdentity_AutoLink_RefusesAnAccountThatNeverVerifiedTheEmail(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -587,13 +582,7 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_VerifiedEmail_Success(t *t
 	require.NotEmpty(t, tokens.AccessToken)
 }
 
-// Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UnverifiedEmail_Fails
-// covers the case that was reported as confusing: no account with this email
-// exists at all (e.g. it was just deleted), yet the provider's unverified
-// email still refuses the login. ErrEmailNotVerified (not
-// ErrEmailNotVerifiedForLinking) must be returned here so the caller isn't
-// told an account exists when it doesn't, and CreateExternal must never be
-// called for an unverified identity.
+// No account exists, so ErrEmailNotVerified is returned and nothing is created.
 func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UnverifiedEmail_Fails(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -618,8 +607,7 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_UnverifiedEmail_Fails(t *t
 	require.Nil(t, tokens)
 }
 
-// provisionOidcUser runs the auto-provisioning branch for a new, verified
-// identity and returns the username that CreateExternal received.
+// provisionOidcUser returns the username passed to CreateExternal for a new identity.
 func provisionOidcUser(t *testing.T, identity *oidcclient.Identity, taken ...string) string {
 	t.Helper()
 	svc := NewMockService(t)

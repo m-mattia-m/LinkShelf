@@ -68,8 +68,7 @@ func Test_RealDB_UserRepository_DuplicateEmail_IsRejected(t *testing.T) {
 	require.Error(t, err, "a second user with the same email must be rejected by the DB's unique constraint")
 }
 
-// An email change waits in pending_email and only replaces the email, with
-// the verified flag the caller decides, through ChangeEmail.
+// A pending email only replaces the email through ChangeEmail.
 func Test_RealDB_UserRepository_PendingEmailAndChangeEmail(t *testing.T) {
 	repo := TestRepository.UserRepository
 	email := "realdb-pending-" + uuid.NewString() + "@example.com"
@@ -106,8 +105,7 @@ func Test_RealDB_UserRepository_PendingEmailAndChangeEmail(t *testing.T) {
 	require.Empty(t, cleared.PendingEmail)
 }
 
-// Regression for the case-sensitive UNIQUE(email) on Postgres: two accounts
-// whose emails only differ in case must not both exist.
+// Regression: emails differing only in case can't both exist.
 func Test_RealDB_UserRepository_DuplicateEmail_DifferentCase_IsRejected(t *testing.T) {
 	repo := TestRepository.UserRepository
 	local := "realdb-case-" + uuid.NewString()

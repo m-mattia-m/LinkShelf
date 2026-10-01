@@ -23,8 +23,7 @@ function decodeAccessToken(token: string): AccessTokenClaims | null {
   }
 }
 
-// The route middleware only runs on navigation, so a lost session on an /app
-// page has to redirect here.
+// Middleware only runs on navigation, so redirect on a lost session here.
 function redirectToSignIn() {
   if (!import.meta.client) return
   const route = useRouter().currentRoute.value
@@ -32,8 +31,7 @@ function redirectToSignIn() {
   navigateTo({ path: '/auth/sign-in', query: { redirect: route.fullPath } })
 }
 
-// In-flight refreshes, keyed by Pinia instance so nothing leaks between users
-// on the server. The store itself isn't a stable key.
+// In-flight refreshes per Pinia instance, so nothing leaks between users on the server.
 const refreshes = new WeakMap<object, Promise<boolean>>()
 
 export const useAuthStore = defineStore('authStore', {
@@ -59,10 +57,7 @@ export const useAuthStore = defineStore('authStore', {
   },
 
   actions: {
-    /**
-     * Restores tokens saved by a previous session. Client-only, since tokens
-     * live in localStorage.
-     */
+    /** Restores tokens from localStorage (client-only). */
     init() {
       if (this.initialized || !import.meta.client) return
       this.initialized = true
@@ -96,9 +91,7 @@ export const useAuthStore = defineStore('authStore', {
       await this.fetchUser()
     },
 
-    // Logging in right after registering fails with 403 while email
-    // verification is pending, which is reported as pendingVerification.
-    // emailDeliveryFailed means the verification email could not be sent.
+    // 403 after registering means verification is pending.
     async register(userCreate: UserCreate): Promise<{ pendingVerification: boolean, emailDeliveryFailed: boolean }> {
       const api = useApi()
       const created = await api.user.postCreateUser({ userCreate })
@@ -126,11 +119,7 @@ export const useAuthStore = defineStore('authStore', {
       this.user = await api.user.getCurrentUser()
     },
 
-    /**
-     * Exchanges the single-use refresh token for a new pair and clears the
-     * session on failure. Concurrent callers share one exchange, otherwise
-     * every call after the first would present a spent token.
-     */
+    /** Exchanges the refresh token for a new pair. Concurrent callers share one exchange. */
     refresh(): Promise<boolean> {
       const pinia = getActivePinia()!
       let attempt = refreshes.get(pinia)
@@ -167,10 +156,7 @@ export const useAuthStore = defineStore('authStore', {
       this.clear()
     },
 
-    /**
-     * Starts an OIDC login by redirecting the browser to the provider. The
-     * state is stashed so the callback page can pass it back untouched.
-     */
+    /** Starts an OIDC login by redirecting to the provider. */
     async startOidcLogin(): Promise<void> {
       const api = useApi()
       const { authorizationUrl, state } = await api.auth.getOidcLogin()
@@ -180,10 +166,7 @@ export const useAuthStore = defineStore('authStore', {
       window.location.href = authorizationUrl
     },
 
-    /**
-     * Completes an OIDC login. When already authenticated, this links the
-     * external identity to the current account instead.
-     */
+    /** Completes an OIDC login, or links the identity when already signed in. */
     async completeOidcLogin(code: string, state: string): Promise<void> {
       const api = useApi()
       const tokens = await api.auth.postOidcCallback({

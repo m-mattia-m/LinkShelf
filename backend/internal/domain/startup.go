@@ -7,8 +7,7 @@ import (
 	"strings"
 )
 
-// BackfillUsernames derives a username from the email address for every user
-// that has none, i.e. accounts created before usernames existed.
+// BackfillUsernames derives a username for users that have none.
 func BackfillUsernames(repo *repository.Repository) error {
 	users, err := repo.UserRepository.ListWithoutUsername()
 	if err != nil {
@@ -28,9 +27,7 @@ func BackfillUsernames(repo *repository.Repository) error {
 	return nil
 }
 
-// EnsureUniquePaths refuses to start when app.userBasedPaths is off but two
-// shelves share a path, which happens after switching the setting off. The
-// database constraint is per owner (migration 0008), so it can't catch this.
+// EnsureUniquePaths refuses to start if shelves share a path while app.userBasedPaths is off.
 func EnsureUniquePaths(repo *repository.Repository) error {
 	if config.Bool("app.userBasedPaths") {
 		return nil

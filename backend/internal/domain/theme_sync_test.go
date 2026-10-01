@@ -151,8 +151,7 @@ func Test_Unit_SyncInstanceThemes_SkipsDuplicateSlug(t *testing.T) {
 	config.Reset()
 	config.Set("themes.directory", dir)
 
-	// Only one of the two same-slug files is synced - which one depends on
-	// directory read order, but exactly one Upsert call must happen.
+	// Only one of the same-slug files is synced.
 	themeRepository.EXPECT().
 		UpsertInstanceBySourceFile(gomock.Any()).
 		Return(nil).
@@ -271,9 +270,7 @@ func Test_Unit_LoadInstanceThemeFile_MalformedYAML(t *testing.T) {
 	require.ErrorContains(t, err, "parse yaml")
 }
 
-// bundledThemesDir is backend/themes - the "modern chic" theme pack
-// config.default.yaml's themes.directory points at by default (see
-// SyncInstanceThemes's doc comment).
+// bundledThemesDir is the default themes.directory.
 func bundledThemesDir(t *testing.T) string {
 	t.Helper()
 	dir, err := filepath.Abs("../../themes")
@@ -281,9 +278,7 @@ func bundledThemesDir(t *testing.T) string {
 	return dir
 }
 
-// Guards against a typo or an out-of-range value creeping into one of the
-// bundled theme files: every file must load and validate the same way an
-// admin-authored one would, and no two may claim the same display name.
+// Every bundled theme must validate and have a unique name.
 func Test_Unit_BundledThemes_AllValidAndUniquelyNamed(t *testing.T) {
 	dir := bundledThemesDir(t)
 	entries, err := os.ReadDir(dir)
@@ -306,14 +301,11 @@ func Test_Unit_BundledThemes_AllValidAndUniquelyNamed(t *testing.T) {
 	}
 
 	require.GreaterOrEqual(t, count, 5, "expected at least 5 bundled themes")
-	// Not a real design constraint, just a sanity guard against a copy-paste
-	// leaving duplicate-in-all-but-name files behind.
+	// Guards against copy-pasted duplicate themes.
 	require.LessOrEqual(t, count, 25, "expected at most 25 bundled themes")
 }
 
-// End-to-end through SyncInstanceThemes itself (not just the per-file
-// loader), pointed at the real bundled directory rather than a temp one -
-// proves config.default.yaml's own default actually works.
+// The default themes.directory must sync cleanly.
 func Test_Unit_SyncInstanceThemes_BundledThemesDirectory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

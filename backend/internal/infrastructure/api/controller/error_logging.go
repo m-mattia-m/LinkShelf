@@ -9,10 +9,7 @@ import (
 
 var installErrorLoggingOnce sync.Once
 
-// installErrorLogging logs every API error that wraps an underlying Go error.
-// huma.NewError is the choke point for all huma.ErrorXXX helpers, so wrapping
-// it covers every controller. Errors without a cause and huma's own request
-// validation errors are expected outcomes and are not logged.
+// installErrorLogging logs API errors that wrap a Go error by wrapping huma.NewError.
 func installErrorLogging() {
 	installErrorLoggingOnce.Do(func() {
 		next := huma.NewError

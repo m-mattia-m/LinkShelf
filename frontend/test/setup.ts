@@ -4,8 +4,7 @@ import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from './mocks/server'
 import { resetFactoryCounter } from './mocks/factories'
 
-// Node's built-in localStorage/sessionStorage throw without
-// --localstorage-file, so replace them with in-memory implementations.
+// Replace Node's storage, which throws without --localstorage-file.
 class MemoryStorage implements Storage {
   private store = new Map<string, string>()
 

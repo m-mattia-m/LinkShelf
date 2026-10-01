@@ -54,8 +54,7 @@ definePageMeta({
   layout: 'landingpage'
 })
 
-// The domain of the shelf this host serves, or null on the instance's own
-// host. Set by middleware/shelf-host.global.ts.
+// Domain of the shelf served on this host, or null.
 const shelfHost = useState<string | null | undefined>('shelf-host')
 </script>
 

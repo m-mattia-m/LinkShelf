@@ -1,6 +1,5 @@
 <script setup lang="ts">
-// /<username>/<path>, used while app.userBasedPaths is on. With the setting
-// off the backend answers 404 here, which shows the usual "not found" page.
+// /<username>/<path>, used while app.userBasedPaths is on.
 definePageMeta({
   layout: 'links'
 })

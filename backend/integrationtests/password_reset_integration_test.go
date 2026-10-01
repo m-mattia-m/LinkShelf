@@ -19,8 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// capturingMailer stands in for SMTP so a test can read the reset link that
-// would have been emailed.
+// capturingMailer records sent mail instead of using SMTP.
 type capturingMailer struct {
 	mu       sync.Mutex
 	messages []mailer.Message
@@ -45,9 +44,7 @@ func (m *capturingMailer) sentTo(email string) []mailer.Message {
 	return out
 }
 
-// passwordResetEnabled turns the feature on for one test and swaps in a
-// service whose mailer is captured. The HTTP handlers look the service up on
-// every request, so replacing the field is enough.
+// passwordResetEnabled enables password reset with a capturing mailer for one test.
 func passwordResetEnabled(t *testing.T) *capturingMailer {
 	t.Helper()
 	captured := &capturingMailer{}

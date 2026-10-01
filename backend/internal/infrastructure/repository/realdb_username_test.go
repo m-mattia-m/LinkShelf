@@ -81,8 +81,7 @@ func Test_RealDB_UserRepository_UsernameIsUnique(t *testing.T) {
 func Test_RealDB_UserRepository_UsersWithoutUsernameDoNotCollide(t *testing.T) {
 	repo := TestRepository.UserRepository
 
-	// Accounts from before usernames existed all have NULL, which a UNIQUE
-	// constraint must let through on both engines.
+	// Multiple NULL usernames must be allowed.
 	first := realDBUserWithUsername(t, "")
 	second := realDBUserWithUsername(t, "")
 

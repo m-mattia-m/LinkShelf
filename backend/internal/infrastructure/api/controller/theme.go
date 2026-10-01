@@ -9,9 +9,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-// ListThemes returns instance-provided themes alongside the caller's own,
-// grouped the way the shelf editor's theme picker and the "Themes" nav page
-// render them.
+// ListThemes returns instance themes and the caller's own.
 func ListThemes(svc *domain.Service) func(c context.Context, input *struct{}) (*model.ThemeGroupedResponse, error) {
 	return func(c context.Context, input *struct{}) (*model.ThemeGroupedResponse, error) {
 		grouped, err := svc.ThemeService.ListGrouped(UserIdFromContext(c))

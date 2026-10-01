@@ -11,14 +11,11 @@ const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody |
 
 const userBasedPaths = computed(() => websiteSettings.value?.userBasedPaths ?? false)
 
-// Only shown for a shelf with a path whose URL changed shape since it was
-// created. A reserved path is reported first because the shelf is unreachable.
+// Shown when a path shelf's URL changed shape; a reserved path is reported first.
 const state = computed<'nowUserBased' | 'noLongerUserBased' | 'reserved' | null>(() => {
   if (!props.shelf.path) return null
   if (!userBasedPaths.value && isRouteReservedPath(props.shelf.path)) return 'reserved'
-  // Without a recorded creation mode (a backend that predates the field
-  // leaves it out) there is nothing to compare, and guessing would tell the
-  // owner their links broke when they may not have.
+  // Older backends don't send the creation mode.
   if (typeof props.shelf.createdWithUserBasedPaths !== 'boolean') return null
   if (props.shelf.createdWithUserBasedPaths === userBasedPaths.value) return null
   return userBasedPaths.value ? 'nowUserBased' : 'noLongerUserBased'

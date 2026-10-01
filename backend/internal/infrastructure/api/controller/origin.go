@@ -15,22 +15,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// This file implements app.strictOrigins with two checks:
-//   - originPolicy decides which browser origins may call the API (CORS):
-//     app.frontendUrl's origin and every shelf domain.
-//   - hostGuard only answers requests addressed to server.host.
-//
-// Neither is authentication: requests without an Origin header are left alone,
-// and every endpoint still checks its own token.
+// app.strictOrigins: originPolicy handles CORS, hostGuard checks the request host.
 
 const (
-	// domainCacheTtl is how long a "is this a shelf domain?" answer is
-	// remembered, so a page load doesn't turn into a database query per API
-	// call. A domain that was just added or removed takes up to this long to
-	// take effect for CORS.
+	// domainCacheTtl is how long a shelf-domain lookup is cached.
 	domainCacheTtl = 60 * time.Second
-	// domainCacheMaxEntries bounds the cache: the Origin header is chosen by
-	// whoever sends the request, so without a limit anyone could grow it.
+	// domainCacheMaxEntries bounds the cache, since the Origin header is client-controlled.
 	domainCacheMaxEntries = 1024
 )
 
@@ -83,14 +73,9 @@ func (c *domainCache) set(domain string, registered bool) {
 // originPolicy answers whether a browser origin may call the API.
 type originPolicy struct {
 	frontendOrigin string
-	// additionalOrigins are other origins the instance itself is reachable
-	// on (app.additionalOrigins), canonicalized the same way frontendOrigin
-	// is, so they're let through without a database lookup too.
+	// additionalOrigins are other origins of the instance itself.
 	additionalOrigins map[string]bool
-	// allowHttpDomains lets a shelf domain be called over plain http too. That
-	// is only for development and LAN setups, so it follows the frontend: an
-	// instance that runs on http:// itself has nothing to protect by being
-	// stricter about its shelves.
+	// allowHttpDomains allows http shelf domains when the frontend itself runs on http.
 	allowHttpDomains bool
 	registered       func(domain string) (bool, error)
 	cache            *domainCache
@@ -116,9 +101,7 @@ func newOriginPolicy(svc *domain.Service) *originPolicy {
 	}
 }
 
-// canonicalOrigin is scheme://host[:port] in lowercase and without the port
-// when it is the scheme's default, which is how a browser writes the Origin
-// header. Anything that isn't a plain http(s) origin gives "".
+// canonicalOrigin returns scheme://host[:port] as browsers send it, or "".
 func canonicalOrigin(u *url.URL) string {
 	if u == nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
 		return ""
@@ -170,8 +153,7 @@ func (p *originPolicy) allowed(origin string) bool {
 	return registered
 }
 
-// proxyMatcher decides whether the peer that opened the connection is one of
-// server.trustedProxies, the only ones whose X-Forwarded-Host is believed.
+// proxyMatcher reports whether the peer is a trusted proxy (for X-Forwarded-Host).
 type proxyMatcher []netip.Prefix
 
 func newProxyMatcher(entries []string) proxyMatcher {
@@ -200,9 +182,7 @@ func (m proxyMatcher) trusts(remoteIp string) bool {
 	return false
 }
 
-// hostMatches reports whether requestHost, as sent by the client, is the host
-// the API is configured to be served on: server.host, and server.port too
-// when domain.openapi.usePort says the public address includes it.
+// hostMatches reports whether requestHost is the configured server.host (and port).
 func hostMatches(requestHost string) bool {
 	wantHost := strings.TrimRight(strings.ToLower(strings.TrimSpace(config.String("server.host"))), ".")
 	got := domain.NormalizeDomain(requestHost)
@@ -215,9 +195,7 @@ func hostMatches(requestHost string) bool {
 	return err == nil && parsed.Hostname() == wantHost
 }
 
-// hostGuard answers 421 Misdirected Request to anything not addressed to
-// server.host. The health endpoints are exempt: Kubernetes probes address the
-// pod by its IP.
+// hostGuard answers 421 to requests not addressed to server.host, except health checks.
 func hostGuard() gin.HandlerFunc {
 	trusted := newProxyMatcher(config.Strings("server.trustedProxies"))
 

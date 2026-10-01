@@ -395,9 +395,7 @@ func Test_Unit_NormalizeLinkURL(t *testing.T) {
 	}
 }
 
-// Regression for the stored-XSS finding: these used to pass validation
-// because only the "https://"-prefixed copy was checked, while the raw
-// javascript: string was stored and rendered as an href.
+// Regression: javascript: URLs disguised as userinfo must be rejected.
 func Test_Unit_NormalizeLinkURL_Rejects_ScriptPayloads(t *testing.T) {
 	payloads := []string{
 		"javascript:alert(document.domain)%2F%2F@example.com",

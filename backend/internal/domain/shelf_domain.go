@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	// domainMaxLength is the longest a DNS name may be (RFC 1035), without the
-	// optional port.
+	// domainMaxLength is the RFC 1035 limit, without port.
 	domainMaxLength = 253
 	// domainLabelMaxLength is the longest a single DNS label may be.
 	domainLabelMaxLength = 63
@@ -19,21 +18,16 @@ const (
 )
 
 var (
-	// domainLabelPattern is one DNS label: letters, digits and hyphens, not
-	// starting or ending with a hyphen (RFC 1123).
+	// domainLabelPattern is one DNS label (RFC 1123).
 	domainLabelPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
-	// domainTldPattern is the last label: letters only (so IP addresses never
-	// pass), or a punycode-encoded international TLD.
+	// domainTldPattern: letters only (no IPs) or punycode.
 	domainTldPattern = regexp.MustCompile(`^([a-z]{2,}|xn--[a-z0-9]([a-z0-9-]*[a-z0-9])?)$`)
-	// domainPortPattern is a port without leading zeros, so "0443" can't be
-	// used to dodge the default-port stripping in NormalizeDomain.
+	// domainPortPattern disallows leading zeros so "0443" can't dodge port stripping.
 	domainPortPattern = regexp.MustCompile(`^[1-9][0-9]{0,4}$`)
 )
 
-// NormalizeDomain trims and lowercases a domain and strips a trailing slash or
-// dot and the default ports :80 and :443. It never rejects anything; see
-// ValidateDomain. frontend/shared/utils/shelfDomain.ts implements the same
-// rules, keep them in step.
+// NormalizeDomain lowercases a domain and strips trailing slash/dot and default ports.
+// Keep in sync with frontend/shared/utils/shelfDomain.ts.
 func NormalizeDomain(raw string) string {
 	s := strings.ToLower(strings.TrimSpace(raw))
 	s = strings.TrimRight(s, "/")
@@ -50,8 +44,7 @@ func NormalizeDomain(raw string) string {
 	return host
 }
 
-// ValidateDomain checks an already normalized domain: a DNS name with a
-// letters-only (or punycode) TLD and an optional port.
+// ValidateDomain checks an already normalized domain with an optional port.
 func ValidateDomain(domain string) error {
 	if strings.Contains(domain, "://") || strings.Contains(domain, "/") {
 		return fmt.Errorf("%w: a domain must not contain a scheme or a path", ErrInvalidInput)
@@ -88,9 +81,7 @@ func ValidateDomain(domain string) error {
 	return nil
 }
 
-// reservedShelfDomains are the hosts this instance itself is served on, with
-// and without port, so a shelf can't take over the app. Unset URLs contribute
-// nothing.
+// reservedShelfDomains are the instance's own hosts, which shelves can't claim.
 func reservedShelfDomains() map[string]struct{} {
 	reserved := make(map[string]struct{})
 	add := func(host, port string) {
@@ -120,8 +111,7 @@ func reservedShelfDomains() map[string]struct{} {
 	return reserved
 }
 
-// checkShelfDomain normalizes and validates domain and rejects this
-// instance's own hosts. It does not check whether the domain is taken.
+// checkShelfDomain normalizes and validates domain and rejects the instance's own hosts.
 func checkShelfDomain(domain string) (string, error) {
 	domain = NormalizeDomain(domain)
 	if domain == "" {

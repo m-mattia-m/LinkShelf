@@ -28,8 +28,7 @@ function getShelfUrl(id: string): string {
   return `/app/shelf/${id}`
 }
 
-// Where the shelf is actually served: its own domain, or the path on this
-// instance. "Open" goes there, the title links to the editor.
+// Where the shelf is served: its domain or its path.
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 const origin = useRequestURL().origin
 

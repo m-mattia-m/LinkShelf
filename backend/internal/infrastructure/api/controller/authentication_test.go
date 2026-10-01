@@ -29,10 +29,7 @@ func whoAmI(ctx context.Context, _ *struct{}) (*whoAmIOutput, error) {
 	return out, nil
 }
 
-// newAuthTestAPI registers the same middleware Router() wires up, plus three
-// operations mirroring the three security shapes actually used in
-// router.go: public (no Security), any authenticated caller (bearerSecurity),
-// and admin-only (bearerSecurity + requireAdmin).
+// newAuthTestAPI registers a public, an authenticated and an admin route.
 func newAuthTestAPI(t *testing.T) humatest.TestAPI {
 	t.Helper()
 	config.Reset()

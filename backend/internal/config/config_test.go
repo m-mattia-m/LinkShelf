@@ -129,8 +129,7 @@ func Test_Validate_FailsWithoutJwtSecret(t *testing.T) {
 	require.ErrorContains(t, validate(), "jwtSecret")
 }
 
-// Regression for the shipped default secret: anyone who knows it can sign
-// {"role":"admin"} tokens, so startup refuses it and anything too short.
+// Placeholder and too-short secrets are refused.
 func Test_Validate_RejectsWeakOrPlaceholderJwtSecrets(t *testing.T) {
 	for _, secret := range []string{
 		"change-me-to-a-long-random-value-in-production",
@@ -216,9 +215,7 @@ func Test_Validate_SucceedsForOidcWithAllFields(t *testing.T) {
 	require.NoError(t, validate())
 }
 
-// Test_Validate_SucceedsForOidcWithoutClientSecret asserts that a public
-// client using the PKCE flow - which needs no client secret - is a valid
-// configuration; see oidcclient.Client.AuthorizationURL.
+// A public PKCE client needs no client secret.
 func Test_Validate_SucceedsForOidcWithoutClientSecret(t *testing.T) {
 	Reset()
 	Set("authentication.jwtSecret", testJwtSecret)

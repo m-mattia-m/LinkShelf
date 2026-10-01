@@ -14,12 +14,9 @@ import (
 const (
 	EmailActionVerify      = "verify"
 	EmailActionSetPassword = "set_password"
-	// EmailActionResetPassword is a "forgot password" link: it sets a new
-	// password on an account that may already have one.
+	// EmailActionResetPassword is a forgot-password link.
 	EmailActionResetPassword = "reset_password"
-	// EmailActionChangeEmail confirms a requested email change: it moves the
-	// account's pending_email into email. Only one is ever outstanding per
-	// user - a new request deletes the previous link.
+	// EmailActionChangeEmail confirms a pending email change.
 	EmailActionChangeEmail = "change_email"
 )
 
@@ -35,9 +32,7 @@ type EmailActionToken struct {
 type EmailActionTokenRepository interface {
 	Create(userId, tokenHash, action string, expiresAt time.Time) error
 	GetByHash(tokenHash string) (*EmailActionToken, error)
-	// GetLatestByUserIdAndAction is used to rate-limit resends - a fresh
-	// email is only sent if the most recent still-valid token for this
-	// user/action is older than the cooldown.
+	// GetLatestByUserIdAndAction is used to rate-limit resends.
 	GetLatestByUserIdAndAction(userId, action string) (*EmailActionToken, error)
 	DeleteByUserIdAndAction(userId, action string) error
 }
@@ -68,8 +63,7 @@ func (r *emailActionTokenRepository) Create(userId, tokenHash, action string, ex
 		return err
 	}
 
-	// Both engines' expires_at column is timezone-naive, so normalize to UTC
-	// before binding it (same reasoning as refresh_token.Create).
+	// expires_at is timezone-naive, so store UTC.
 	_, err = r.Engine.ExecContext(context.TODO(), query, id.String(), userId, tokenHash, action, expiresAt.UTC())
 	return err
 }

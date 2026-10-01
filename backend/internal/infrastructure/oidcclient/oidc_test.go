@@ -27,11 +27,7 @@ const (
 	fakeKeyId    = "test-key-1"
 )
 
-// fakeProvider is a minimal OIDC provider for tests: discovery + JWKS are
-// served exactly to spec (borrowing go-oidc's own oidctest helper for JWKS
-// and ID-token signing, since that part is standardized), while /token and
-// /userinfo are hand-rolled here since their content is what this package's
-// own logic actually has to handle correctly.
+// fakeProvider is a minimal OIDC provider for tests.
 type fakeProvider struct {
 	server     *httptest.Server
 	privateKey *rsa.PrivateKey

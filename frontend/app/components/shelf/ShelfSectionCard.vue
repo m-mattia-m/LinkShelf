@@ -13,9 +13,7 @@ const emit = defineEmits<{
   (e: 'reordered'): void
 }>()
 
-// Two-way bound with the parent's local, unsaved order for this section's
-// links - dragging here only ever touches this local copy; nothing is
-// persisted until the parent's single "Save order" button is clicked.
+// Local, unsaved link order; the parent persists it.
 const links = defineModel<Link[]>('links', { required: true })
 
 const { t } = useI18n()

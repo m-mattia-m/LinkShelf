@@ -12,9 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuthRecord carries the fields needed to authenticate and authorize a user.
-// It intentionally lives outside the API model package since it must never be
-// serialized back to a client (it carries the password hash).
+// AuthRecord holds credentials and must never be returned to clients.
 type AuthRecord struct {
 	Id            string
 	Email         string
@@ -34,12 +32,9 @@ type UserRepository interface {
 	GetPassword(id string) (string, error)
 	Create(u model.UserBase, hashedPassword, role string) (string, error)
 	Update(u *model.User) error
-	// UsernameTaken reports whether another user (not exceptUserId, which
-	// may be empty) already has this username. Usernames are stored
-	// lowercase, so the comparison is exact.
+	// UsernameTaken reports whether another user has this (lowercase) username.
 	UsernameTaken(username, exceptUserId string) (bool, error)
-	// ListWithoutUsername returns the users that still have no username -
-	// only Id and Email are filled in.
+	// ListWithoutUsername returns users without a username (only Id and Email set).
 	ListWithoutUsername() ([]model.User, error)
 	SetUsername(userId, username string) error
 	PatchPassword(id string, hashedPassword string) error
@@ -50,20 +45,14 @@ type UserRepository interface {
 	CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error)
 	LinkProvider(userId, provider, providerId string) error
 
-	// MarkVerified sets email_verified/verified_at, used both when a
-	// verification/invite link is completed and for an admin's manual
-	// override.
+	// MarkVerified sets email_verified and verified_at.
 	MarkVerified(userId string) error
-	// SetPassword sets a user's password hash and marks it verified in one
-	// step - completing the admin-invite ("set your password") flow.
+	// SetPassword sets the password hash and marks the user verified.
 	SetPassword(userId, hashedPassword string) error
 
-	// SetPendingEmail stores a requested email change that still has to be
-	// confirmed ("" clears it). The account's current email is untouched.
+	// SetPendingEmail stores a pending email change ("" clears it).
 	SetPendingEmail(userId, email string) error
-	// ChangeEmail replaces the account's email, clears any pending change and
-	// sets email_verified to verified. Update never writes a new email, so a
-	// changed address can't silently keep the old address's verified status.
+	// ChangeEmail applies a confirmed email change and marks it verified.
 	ChangeEmail(userId, email string, verified bool) error
 }
 
@@ -363,8 +352,7 @@ func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error
 	return &record, nil
 }
 
-// CreateExternal creates a user with no local password, provisioned from an
-// external identity provider login.
+// CreateExternal creates a user from an external identity, without password.
 func (r *userRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error) {
 	query, err := buildSqlStatements(`
 		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, provider_id)
@@ -398,8 +386,7 @@ func (r *userRepository) CreateExternal(email, username, firstName, lastName, pr
 	return id, nil
 }
 
-// LinkProvider attaches an external identity to an already-existing user,
-// without touching their existing local password.
+// LinkProvider attaches an external identity to an existing user.
 func (r *userRepository) LinkProvider(userId, provider, providerId string) error {
 	query, err := buildSqlStatements(`
 		UPDATE "user"

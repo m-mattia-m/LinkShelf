@@ -1,6 +1,4 @@
-// Shares via the 'shelf-host' state whether the frontend is reached on a
-// shelf's domain (so `/` shows that shelf) or on the instance's own host
-// (null). See shared/utils/shelfHost.ts.
+// Sets 'shelf-host' to the shelf domain the frontend is reached on, or null.
 export default defineNuxtRouteMiddleware(async (to) => {
   const shelfHost = useState<string | null | undefined>('shelf-host', () => undefined)
 
@@ -11,8 +9,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         useRuntimeConfig().public.apiBase
       )
     } else {
-      // Only reached when the page didn't come from the server (no state was
-      // handed over), so ask the API from here, the same way.
+      // No server state (client-side navigation), so ask the API.
       shelfHost.value = await resolveShelfHostInBrowser()
     }
   }

@@ -20,9 +20,7 @@ onMounted(() => {
   if (!themeStore.loaded) themeStore.fetch()
 })
 
-// Reka UI's Select reserves an empty string to mean "cleared" and throws if
-// an item actually uses it as a value, so "no theme" needs a real sentinel
-// value here - selectedThemeId below converts it back to "" for the form.
+// Reka UI's Select reserves "" for cleared, so "no theme" needs a sentinel.
 const NO_THEME_VALUE = '__none__'
 
 const themeItems = computed<SelectItem[]>(() => [
@@ -39,8 +37,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ShelfBase): void
 }>()
 
-// A shelf is reached through a path or a domain, never both. The open tab
-// decides which one is saved; the other is sent empty.
+// A shelf uses a path or a domain; the open tab decides which is saved.
 type Mode = 'path' | 'domain'
 
 const tabItems = computed(() => [
@@ -58,8 +55,7 @@ const tabItems = computed(() => [
   }
 ])
 
-// A shelf that only has a domain opens on the Domain tab. One that has both
-// (created before a shelf had to choose) opens on Path, like everywhere else.
+// Domain-only shelves open on the Domain tab, all others on Path.
 function modeOf(shelf?: Pick<Shelf, 'path' | 'domain'>): Mode {
   return shelf?.domain && !shelf?.path ? 'domain' : 'path'
 }
@@ -67,8 +63,7 @@ function modeOf(shelf?: Pick<Shelf, 'path' | 'domain'>): Mode {
 const mode = ref<Mode>(modeOf(props.modelValue))
 const hadBoth = computed(() => Boolean(props.modelValue?.path && props.modelValue?.domain))
 
-// The host this app is being used on: a shelf can't take over the instance
-// itself. The backend also rejects its configured frontend host.
+// The current host, which a shelf can't claim.
 const ownHost = normalizeShelfDomain(useRequestURL().host)
 
 const form = reactive({
@@ -84,8 +79,7 @@ const form = reactive({
   footerCustomText: props.modelValue?.footerCustomText ?? ''
 })
 
-// Each of path and domain is only checked while its tab is the one in use - a
-// half-typed value on the other tab is thrown away on save anyway.
+// Only the active tab's field is validated.
 const schema = computed(() => v.object({
   title: v.pipe(v.string(), v.nonEmpty(t('validation.required'))),
   description: v.string(),
@@ -114,9 +108,7 @@ const schema = computed(() => v.object({
       value => mode.value !== 'path' || /^[a-zA-Z0-9-]*$/.test(value),
       t('validation.path.invalid')
     ),
-    // Behind a username nothing is off limits. Top-level, the words the app
-    // itself answers can't be used - except on a shelf that already has
-    // one, so its other fields stay editable (the backend does the same).
+    // Without user-based paths, reserved words are blocked unless the shelf already has one.
     v.check(
       value => mode.value !== 'path' || userBasedPaths.value || value === props.modelValue?.path || !isRouteReservedPath(value),
       t('validation.path.reserved')
@@ -126,9 +118,7 @@ const schema = computed(() => v.object({
   footerCustomText: v.pipe(v.string(), v.maxLength(500, t('validation.maxLength', { max: 500 })))
 }))
 
-// The URL the shelf will get: /<username>/<path> with user-based paths, else
-// /<path>. A shelf being edited keeps its owner's username - an admin may be
-// editing someone else's shelf.
+// The shelf's URL; keeps the owner's username when an admin edits it.
 const ownerUsername = computed(() => props.modelValue?.username || currentUser.value?.username || '')
 const pathHelp = computed(() => userBasedPaths.value
   ? `${origin}/${ownerUsername.value || '<username>'}/${form.path}`
@@ -147,14 +137,8 @@ const selectedThemeId = computed({
   }
 })
 
-/**
- * UForm ref
- */
 const formRef = ref<{ validate: () => Promise<unknown>, setErrors: (errs: FormError[]) => void }>()
 
-/**
- * Expose validate() ONLY
- */
 async function validate(): Promise<boolean> {
   try {
     await formRef.value!.validate()
@@ -170,9 +154,7 @@ function setErrors(errs: FormError[]) {
 
 defineExpose({ validate, setErrors })
 
-/**
- * Sync parent → form
- */
+// Sync parent → form
 watch(
   () => props.modelValue,
   (newShelf) => {
@@ -183,13 +165,9 @@ watch(
       domain: newShelf.domain,
       path: newShelf.path,
       icon: newShelf.icon,
-      // A missing theme's id no longer matches any picker option, which
-      // would otherwise show the raw stale id as the selection - the alert
-      // above already says it's gone, so just clear it instead.
+      // Clear a missing theme instead of showing its stale id.
       themeId: newShelf.themeMissing ? '' : newShelf.themeId,
-      // ?? default guards a shelf object that predates these fields (e.g. a
-      // stale cached response) the same way the form's own initial value
-      // above does, rather than clobbering it with undefined.
+      // Fall back to defaults for shelves missing these fields.
       noIndex: newShelf.noIndex ?? false,
       footerEnabled: newShelf.footerEnabled ?? true,
       footerCustomText: newShelf.footerCustomText ?? ''
@@ -199,9 +177,7 @@ watch(
   { immediate: true }
 )
 
-/**
- * Sync form → parent
- */
+// Sync form → parent
 watch(
   [form, mode],
   () => emit('update:modelValue', {

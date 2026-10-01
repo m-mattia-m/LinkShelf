@@ -21,8 +21,7 @@ const color = ref('#000000')
 const shape = ref<DotType>('square')
 const downloading = ref<'svg' | 'png' | null>(null)
 
-// Corner squares/dots don't share the dot style names, so each shape maps to
-// the closest-looking corner pair.
+// Map each dot style to a matching corner style.
 const cornerStylesByShape: Record<DotType, { square: CornerSquareType, dot: CornerDotType }> = {
   'square': { square: 'square', dot: 'square' },
   'rounded': { square: 'extra-rounded', dot: 'dot' },
@@ -58,8 +57,7 @@ async function render() {
 
   if (!qrCode) {
     const { default: QRCodeStyling } = await import('qr-code-styling')
-    // The modal may have closed (or the component unmounted) while the
-    // chunk was loading - nothing left to render into.
+    // The modal may have closed while loading.
     if (!previewEl.value) return
     qrCode = new QRCodeStyling(buildOptions())
     previewEl.value.replaceChildren()
@@ -72,9 +70,7 @@ async function render() {
 
 watch([open, color, shape, () => props.url], render, { immediate: true })
 
-// A fresh instance per time the modal opens, rather than reusing one across
-// opens - simpler than tracking whether the old preview element (torn down
-// with the modal's content) is still attached.
+// A fresh instance per open.
 watch(open, (isOpen) => {
   if (!isOpen) qrCode = undefined
 })

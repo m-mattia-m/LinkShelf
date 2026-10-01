@@ -42,9 +42,7 @@ describe('landing page', () => {
   })
 })
 
-// When the frontend is reached on the domain of a shelf, "/" shows that shelf
-// instead. middleware/shelf-host.global.ts decides that and hands the domain
-// over as the 'shelf-host' state.
+// On a shelf's domain, "/" shows that shelf.
 describe('landing page on the domain of a shelf', () => {
   afterEach(() => {
     clearNuxtState('shelf-host')

@@ -8,8 +8,7 @@ import { useAuthStore } from './auth'
 
 const BASE = 'http://localhost:8085'
 
-// The "nuxt" environment has one Pinia per test file, so reset the existing
-// store (including `initialized`) instead of creating a fresh Pinia.
+// Reset the store; Pinia is shared per test file.
 beforeEach(() => {
   useAuthStore().$reset()
 })

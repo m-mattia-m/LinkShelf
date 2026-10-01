@@ -51,10 +51,7 @@ func (r *refreshTokenRepository) Create(userId, tokenHash string, expiresAt time
 		return err
 	}
 
-	// Both engines' expires_at column is timezone-naive (Postgres TIMESTAMP,
-	// MySQL DATETIME) - it stores whatever wall-clock fields it's given. A
-	// non-UTC time.Time would round-trip shifted by the server's local UTC
-	// offset, so always normalize to UTC before binding it.
+	// expires_at is timezone-naive, so always store UTC.
 	_, err = r.Engine.ExecContext(context.TODO(), query, id.String(), userId, tokenHash, expiresAt.UTC())
 	return err
 }

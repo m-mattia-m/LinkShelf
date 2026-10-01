@@ -16,8 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// End-to-end regressions for the findings of the security review, run
-// against the real HTTP API and a real Postgres.
+// Regressions for the security review findings.
 
 func Test_API_Security_Link_JavascriptPayloadIsRejected(t *testing.T) {
 	sectionId, token := getSectionAndShelfInclusiveItsOwnerUser(t)
@@ -53,9 +52,7 @@ func Test_API_Security_Link_StoresTheNormalizedUrl(t *testing.T) {
 	require.Equal(t, "https://example.com/path", stored.Link)
 }
 
-// Without email verification (config.test.yaml) an email change is applied
-// directly, but the account loses its verified status - so a first OIDC login
-// with that address can no longer be linked into it.
+// Without email verification, an email change marks the account unverified.
 func Test_API_Security_EmailChange_DropsTheVerifiedStatus(t *testing.T) {
 	suffix := uuid.NewString()[:8]
 	user := &model.UserCreate{

@@ -16,13 +16,11 @@ const (
 	userIdContextKey contextKey = "userId"
 	roleContextKey   contextKey = "role"
 
-	// roleMetadataKey, set on an operation's Metadata, restricts it to callers
-	// with that exact role. Operations without it just require a valid token.
+	// roleMetadataKey restricts an operation to a role.
 	roleMetadataKey = "requiredRole"
 )
 
-// UserIdFromContext returns the authenticated caller's user ID, or "" if the
-// request reached an unauthenticated (public) operation.
+// UserIdFromContext returns the caller's user ID, or "" if unauthenticated.
 func UserIdFromContext(ctx context.Context) string {
 	v, _ := ctx.Value(userIdContextKey).(string)
 	return v
@@ -34,8 +32,7 @@ func IsAdminFromContext(ctx context.Context) bool {
 	return role == model.RoleAdmin
 }
 
-// NewAuthenticationMiddleware validates our own JWT for every operation that
-// declares a Security requirement. LOCAL and OIDC logins issue the same token.
+// NewAuthenticationMiddleware validates the JWT on operations with a Security requirement.
 func NewAuthenticationMiddleware(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		op := ctx.Operation()

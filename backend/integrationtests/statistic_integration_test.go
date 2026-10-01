@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test_API_Statistic_Get exercises the full HTTP -> domain -> repository ->
-// Postgres path for the statistics endpoint.
 func Test_API_Statistic_Get(t *testing.T) {
 	_, token := createTestUser(t)
 

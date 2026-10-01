@@ -565,8 +565,7 @@ func Test_UserRepository_ChangeEmail_Verified(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-// A change applied without confirmation must never keep the old address's
-// verified status.
+// An unconfirmed change must not keep the verified status.
 func Test_UserRepository_ChangeEmail_Unverified(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)

@@ -9,30 +9,19 @@ import (
 )
 
 type ThemeService interface {
-	// ListGrouped returns instance-provided themes alongside the caller's own
-	// - the grouping the shelf editor's theme picker and the "Themes" nav
-	// page both render.
+	// ListGrouped returns instance themes and the caller's own.
 	ListGrouped(callerUserId string) (model.ThemeGroupedResponseBody, error)
 	Get(themeId, callerUserId string, isAdmin bool) (*model.Theme, error)
 	Create(callerUserId string, base model.ThemeBase) (*model.Theme, error)
-	// Update only ever succeeds for the theme's own owner - not even an
-	// admin may edit another user's theme content (they may only delete it,
-	// see Delete), and instance-scoped themes can never be edited through
-	// the API at all since they're owned by the mounted config directory.
+	// Update is owner-only; instance themes can't be edited via the API.
 	Update(themeId, callerUserId string, base model.ThemeBase) (*model.Theme, error)
-	// Delete allows the owner or an admin to remove a user-scoped theme.
-	// Instance-scoped themes can never be deleted through the API - removing
-	// one means deleting its file from the mounted directory and restarting.
+	// Delete allows the owner or an admin; instance themes can't be deleted via the API.
 	Delete(themeId, callerUserId string, isAdmin bool) error
-	// ListAllUserScoped is the admin moderation view across every user's
-	// themes. Route-level Metadata gates this to admins.
+	// ListAllUserScoped lists every user's themes (admin-only).
 	ListAllUserScoped() ([]model.Theme, error)
-	// Resolve returns a theme's validated property map. An empty themeId gives
-	// (nil, false, nil); an id that no longer exists gives (nil, true, nil).
+	// Resolve returns a theme's properties and whether a set themeId is missing.
 	Resolve(themeId string) (config map[string]string, missing bool, err error)
-	// ValidateAssignable checks that shelfOwnerUserId may set a shelf's theme
-	// to themeId: unset, any instance theme, or a user theme owned by
-	// shelfOwnerUserId. Prevents assigning someone else's private theme.
+	// ValidateAssignable checks the theme is an instance theme or owned by shelfOwnerUserId.
 	ValidateAssignable(themeId, shelfOwnerUserId string) error
 }
 
@@ -160,9 +149,7 @@ func (s *themeServiceImpl) Resolve(themeId string) (map[string]string, bool, err
 
 	config, err := ParseThemeConfig(theme.Config)
 	if err != nil {
-		// Defensive only: config is validated before it's ever stored, so
-		// this can't happen in practice. Treat it the same as "gone" rather
-		// than surfacing a 500 to a page visitor.
+		// Stored config is always valid; treat a failure as a missing theme.
 		return nil, true, nil
 	}
 

@@ -13,9 +13,7 @@ type SectionService interface {
 	Create(callerUserId string, isAdmin bool, u *model.Section) (*model.Section, error)
 	Update(sectionId, callerUserId string, isAdmin bool, u *model.Section) (*model.Section, error)
 	Delete(sectionId, callerUserId string, isAdmin bool) error
-	// UpdateOrder saves every valid item and reports the rest as failures - it
-	// never aborts the whole batch over one bad item, mirroring
-	// SettingService.UpdateMany.
+	// UpdateOrder saves valid items and reports the rest as failures.
 	UpdateOrder(callerUserId string, isAdmin bool, items []model.SectionOrderItem) []model.SectionOrderFailure
 }
 
@@ -31,8 +29,7 @@ func NewSectionService(repository *repository.Repository, domain *Service) Secti
 	}
 }
 
-// List is the public, unauthenticated lookup used to render a shelf's public
-// link page - it intentionally performs no ownership check.
+// List is the public lookup for a shelf's sections; no ownership check.
 func (s *sectionServiceImpl) List(shelfId string) ([]model.Section, error) {
 	return s.Repository.SectionRepository.ListByShelfId(shelfId)
 }
@@ -41,8 +38,7 @@ func (s *sectionServiceImpl) Get(sectionId string) (*model.Section, error) {
 	return s.Repository.SectionRepository.Get(sectionId)
 }
 
-// shelfOwner resolves the user_id of the shelf a section belongs (or would
-// belong) to.
+// shelfOwner returns the user_id of the section's shelf.
 func (s *sectionServiceImpl) shelfOwner(shelfId string) (*model.Shelf, error) {
 	return s.Repository.ShelfRepository.Get(shelfId)
 }
@@ -143,8 +139,7 @@ func (s *sectionServiceImpl) UpdateOrder(callerUserId string, isAdmin bool, item
 	return failures
 }
 
-// canReorder resolves the section's shelf and checks the caller may write to
-// it, returning ErrNotFound/ErrForbidden the same way Update/Delete do.
+// canReorder checks the caller may write to the section's shelf.
 func (s *sectionServiceImpl) canReorder(sectionId, callerUserId string, isAdmin bool) error {
 	existing, err := s.Repository.SectionRepository.Get(sectionId)
 	if err != nil {

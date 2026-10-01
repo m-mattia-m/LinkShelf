@@ -12,14 +12,10 @@ import (
 // pgUniqueViolation is the Postgres SQLSTATE code for a unique constraint violation.
 const pgUniqueViolation = "23505"
 
-// mysqlDuplicateEntry is the MySQL error number (ER_DUP_ENTRY) for a unique
-// constraint / duplicate key violation.
+// mysqlDuplicateEntry is ER_DUP_ENTRY.
 const mysqlDuplicateEntry = 1062
 
-// MapWriteError turns a unique-constraint violation into a 409 Conflict and
-// falls back to a 400 Bad Request for anything else. Recognizes both the
-// Postgres and MySQL driver error types since the app supports either as its
-// configured database.engine.
+// MapWriteError maps unique violations (Postgres or MySQL) to 409, everything else to 400.
 func MapWriteError(fallbackMessage string, err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolation {
@@ -34,8 +30,7 @@ func MapWriteError(fallbackMessage string, err error) error {
 	return huma.Error400BadRequest(fallbackMessage, err)
 }
 
-// MapOwnershipError turns the domain package's ownership-related sentinel
-// errors into the right HTTP status, falling back to a 400 Bad Request.
+// MapOwnershipError maps ownership errors to HTTP statuses, otherwise 400.
 func MapOwnershipError(fallbackMessage string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrForbidden):

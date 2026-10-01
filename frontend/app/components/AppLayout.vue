@@ -60,8 +60,7 @@ const columns = computed<FooterColumn[]>(() => [
     ]
   }
 ])
-// ULocaleSelect expects @nuxt/ui's Locale type, which has no de-CH pack, so
-// only code/name are supplied and the type is cast.
+// @nuxt/ui has no de-CH locale pack, so only code/name are set.
 const availableLocales = computed(() => {
   const mapped = locales.value.map(l => ({
     code: l.code,

@@ -8,11 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// setDatabaseTestConfig mutates the package-global config singleton, so it
-// restores the normal test config afterward - otherwise a leftover
-// database.engine=mysql would leak into every other test in this package
-// that relies on the default (Postgres) test config, e.g. user_test.go's
-// sqlmock expectations.
+// setDatabaseTestConfig restores the default test config afterwards.
 func setDatabaseTestConfig(t *testing.T, engine string) {
 	t.Helper()
 	config.Reset()

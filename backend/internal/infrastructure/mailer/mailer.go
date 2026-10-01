@@ -1,7 +1,6 @@
 //go:generate mockgen -source=mailer.go -destination=mocks/mailer.go -package=mocks
 
-// Package mailer sends transactional email over SMTP (net/smtp) - there is no
-// existing mail dependency in this codebase to build on.
+// Package mailer sends transactional email over SMTP.
 package mailer
 
 import (
@@ -47,14 +46,12 @@ func New() Mailer {
 	}
 }
 
-// fromHeader is the message's From: header. Never use it for the SMTP
-// envelope (MAIL FROM), which only accepts a bare address.
+// fromHeader is the From: header; never the SMTP envelope address.
 func (m *smtpMailer) fromHeader() string {
 	return FormatFromHeader(m.from, m.fromName)
 }
 
-// FormatFromHeader returns `"Display Name" <addr>`, or just `addr` when name
-// is blank.
+// FormatFromHeader returns `"Name" <addr>`, or `addr` without a name.
 func FormatFromHeader(address, name string) string {
 	if strings.TrimSpace(name) == "" {
 		return address
@@ -62,9 +59,7 @@ func FormatFromHeader(address, name string) string {
 	return (&mail.Address{Name: name, Address: address}).String()
 }
 
-// normalizeTlsMode treats anything other than an exact "none"/"starttls" as
-// "tls" (implicit TLS) - the secure choice - rather than silently falling
-// back to an unencrypted connection on a blank or mistyped value.
+// normalizeTlsMode defaults anything unknown to implicit TLS.
 func normalizeTlsMode(mode string) string {
 	switch strings.ToLower(strings.TrimSpace(mode)) {
 	case "none":

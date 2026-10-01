@@ -58,9 +58,7 @@ watch(open, async (isOpen) => {
   }
 })
 
-// Password can be left blank on create only when email verification is on -
-// the account is then created "invited" and the emailed link is the only
-// way to set one (matches the backend's own requirement exactly).
+// The password is optional on create when email verification sends an invite.
 const canInviteWithoutPassword = computed(() => websiteSettings.value?.emailVerificationEnabled ?? false)
 
 const createSchema = computed(() => v.object({
@@ -81,8 +79,7 @@ const editSchema = computed(() => v.object({
   role: v.picklist(['user', 'admin'])
 }))
 
-// Renaming a user changes the URL of every shelf of theirs that has a path.
-// An admin sees all shelves, so they can be counted here.
+// Renaming changes the URLs of the user's path shelves.
 const affectedShelves = computed(() =>
   props.mode === 'edit' && props.user
     ? shelfStore.shelves.filter(shelf => shelf.userId === props.user!.id && shelf.path).length

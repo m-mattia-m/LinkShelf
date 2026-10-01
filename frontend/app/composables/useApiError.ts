@@ -24,8 +24,7 @@ export async function parseApiError(err: unknown): Promise<ApiErrorResult> {
           message: detail.message!
         }))
 
-      // huma's top-level "detail" is generic (e.g. "validation failed"), so
-      // prefer the specific messages in "errors".
+      // Prefer the specific messages over huma's generic detail.
       const specificMessages = (body.errors ?? [])
         .filter(detail => detail.message)
         .map(detail => detail.location

@@ -10,8 +10,7 @@ describe('safeHref', () => {
     expect(safeHref(input)).toBe(input)
   })
 
-  // Regression for the stored-XSS finding: the payload the backend used to
-  // accept, and other script-running schemes, never become an href.
+  // Regression: script-running schemes never become an href.
   it.each([
     'javascript:alert(document.domain)%2F%2F@example.com',
     'JavaScript:alert(1)',

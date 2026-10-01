@@ -1,5 +1,4 @@
-// Domain rules for shelves, kept in step with NormalizeDomain / ValidateDomain
-// in backend/internal/domain/shelf_domain.go. The backend has the final say.
+// Mirrors backend/internal/domain/shelf_domain.go; the backend has the final say.
 
 const LABEL = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
 // Letters only, so an IP address can never pass, or a punycode international TLD.
@@ -11,11 +10,7 @@ const MAX_LENGTH = 253
 const MAX_LABEL_LENGTH = 63
 const MAX_PORT = 65535
 
-/**
- * Trims and lowercases a domain and strips a trailing slash or dot and the
- * default ports :80 and :443. It never rejects anything; see
- * validateShelfDomain.
- */
+/** Lowercases a domain and strips trailing slash/dot and default ports. */
 export function normalizeShelfDomain(raw: string): string {
   let value = raw.trim().toLowerCase()
   value = value.replace(/\/+$/, '')
@@ -29,11 +24,7 @@ export function normalizeShelfDomain(raw: string): string {
   return host
 }
 
-/**
- * Checks an already normalized domain: a DNS name with a letters-only (or
- * punycode) TLD and an optional port. Returns the i18n key of the error, or
- * null when valid. An empty domain is valid.
- */
+/** Validates a normalized domain. Returns an i18n error key or null. */
 export function validateShelfDomain(domain: string): string | null {
   if (domain === '') return null
 

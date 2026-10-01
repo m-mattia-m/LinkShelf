@@ -20,8 +20,7 @@ type AccessTokenClaims struct {
 	jwt.RegisteredClaims
 }
 
-// issueAccessToken mints our own short-lived JWT for a user, regardless of
-// whether they authenticated locally or via an external provider.
+// issueAccessToken mints a short-lived JWT for a user.
 func issueAccessToken(userId, role string) (string, error) {
 	expiry := time.Duration(config.Int("authentication.accessTokenExpiryMinutes")) * time.Minute
 	claims := AccessTokenClaims{
@@ -37,9 +36,7 @@ func issueAccessToken(userId, role string) (string, error) {
 	return token.SignedString([]byte(config.String("authentication.jwtSecret")))
 }
 
-// ValidateAccessToken verifies our own JWT's signature and expiry. This is the
-// only check the auth middleware ever performs, no matter which auth.type is
-// configured or how the session originally started.
+// ValidateAccessToken verifies the JWT's signature and expiry.
 func ValidateAccessToken(rawToken string) (*AccessTokenClaims, error) {
 	claims := &AccessTokenClaims{}
 
@@ -56,9 +53,7 @@ func ValidateAccessToken(rawToken string) (*AccessTokenClaims, error) {
 	return claims, nil
 }
 
-// generateRefreshToken returns a random opaque token plus the SHA-256 hash
-// that is what actually gets persisted (so a DB leak doesn't hand out usable
-// refresh tokens directly).
+// generateRefreshToken returns a random token and its SHA-256 hash for storage.
 func generateRefreshToken() (rawToken, hash string, err error) {
 	buf := make([]byte, 32)
 	if _, err = rand.Read(buf); err != nil {

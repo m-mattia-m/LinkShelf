@@ -86,9 +86,7 @@ func Test_API_ResendVerification_Success(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// Test_API_ResendVerification_SwallowsError proves the endpoint never leaks
-// whether the address exists (or anything else) even if the domain layer
-// itself errors - always the same response either way.
+// The response never reveals domain errors.
 func Test_API_ResendVerification_SwallowsError(t *testing.T) {
 	svc := NewMockDomainService(t)
 	defer svc.Ctrl.Finish()
@@ -394,10 +392,7 @@ func Test_API_OidcCallback_GenericError(t *testing.T) {
 	require.ErrorContains(t, err, "failed to complete OIDC login")
 }
 
-// signTestAccessToken mints a token in the same shape/signing scheme as
-// domain's own (unexported) issueAccessToken, so controller tests can
-// exercise the Authorization-header parsing path without needing a real
-// login first.
+// signTestAccessToken mints a token like domain's issueAccessToken.
 func signTestAccessToken(t *testing.T, userId, role string) string {
 	t.Helper()
 	claims := domain.AccessTokenClaims{

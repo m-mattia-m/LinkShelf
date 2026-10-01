@@ -2,8 +2,7 @@
 import type { Link, PublicShelf, Section } from '~~/api'
 
 const props = defineProps<{
-  // The shelf is found by its path, or - when it is served on a domain of its
-  // own - by that domain, in which case there is no path.
+  // Lookup by path, or by domain for domain shelves.
   path?: string
   // Set for /<username>/<path> URLs (app.userBasedPaths), absent for /<path>.
   username?: string
@@ -35,14 +34,11 @@ const visibleSections = computed(() =>
 
 const hasAnyLinks = computed(() => links.value.length > 0)
 
-// See layouts/links.vue - shared with it via the same useState key since a
-// layout can't receive props from its page and these need to live on the
-// layout's own root element for its background/text color to react to them.
+// Shared with layouts/links.vue via useState.
 const themeVars = useState<Record<string, string>>('public-shelf-theme-vars', () => ({}))
 const footer = useState<{ enabled: boolean, customText: string }>('public-shelf-footer', () => ({ enabled: true, customText: '' }))
 
-// A link's color defaults to "#000000" in the DB, so black is treated as "no
-// override" to let the theme's --shelf-link-bg show through.
+// Black is the DB default, so it means "no override".
 function linkBackgroundStyle(link: Link): Record<string, string> {
   if (link.color && link.color.toLowerCase() !== '#000000') {
     return { backgroundColor: link.color }
@@ -83,8 +79,7 @@ onMounted(load)
 // Nuxt reuses this component when only the route params change.
 watch(() => [props.username, props.path, props.domain], load)
 
-// robots is only set when the shelf opted out of indexing, so an
-// instance-wide robots policy isn't overridden.
+// Only set robots when the shelf opted out of indexing.
 useSeoMeta({
   title: () => shelf.value?.title,
   description: () => shelf.value?.description,

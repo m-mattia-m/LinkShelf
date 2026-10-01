@@ -4,23 +4,17 @@ type User struct {
 	Id string `json:"id" bson:"id"`
 	UserBase
 	EmailVerified bool `json:"email_verified" bson:"email_verified"`
-	// HasPassword is false for an admin-invited account that hasn't set a
-	// password yet.
+	// HasPassword is false for invited accounts.
 	HasPassword bool `json:"has_password" bson:"has_password"`
-	// PendingEmail is an email change that is waiting for the new address to
-	// be confirmed through the emailed link. Email keeps the current address
-	// (still used to log in) until then.
+	// PendingEmail is an email change awaiting confirmation.
 	PendingEmail string `json:"pending_email,omitempty" bson:"pending_email"`
-	// EmailDeliveryFailed is set by CreateUser and UpdateUser when the
-	// account was saved but its verification/invite/confirm email could not
-	// be sent.
+	// EmailDeliveryFailed is set when the account was saved but its email could not be sent.
 	EmailDeliveryFailed bool `json:"email_delivery_failed,omitempty" bson:"-"`
 }
 
 type UserBase struct {
 	Email string `json:"email" bson:"email" required:"true"`
-	// Username is part of a shelf's public URL when app.userBasedPaths is
-	// enabled. Reserved and taken names are rejected by the domain layer.
+	// Username is part of shelf URLs when app.userBasedPaths is on.
 	Username  string `json:"username" bson:"username" required:"true" minLength:"3" maxLength:"30" pattern:"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" patternDescription:"lowercase letters, numbers, and hyphens, not starting or ending with a hyphen"`
 	FirstName string `json:"first_name" bson:"first_name" required:"true"`
 	LastName  string `json:"last_name" bson:"last_name" required:"true"`
@@ -29,8 +23,7 @@ type UserBase struct {
 
 type UserCreate struct {
 	UserBase
-	// Password is required for self-registration but optional when an admin
-	// creates the account, which then gets an invite link instead.
+	// Password is optional when an admin creates the account (an invite is sent).
 	Password string `json:"password" bson:"password" required:"false"`
 }
 

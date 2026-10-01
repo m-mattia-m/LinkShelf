@@ -14,8 +14,7 @@ type LinkBase struct {
 	SectionId string `json:"sectionId" bson:"sectionId" required:"true"`
 }
 
-// LinkOrderItem is one entry of a batch reorder request - the link's id and
-// the new position it should be moved to within its section.
+// LinkOrderItem is one entry of a batch reorder request.
 type LinkOrderItem struct {
 	Id    string `json:"id" bson:"id" required:"true"`
 	Order int    `json:"order" bson:"order" required:"true"`

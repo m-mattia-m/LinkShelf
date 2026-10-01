@@ -137,9 +137,7 @@ func waitForDatabase(ctx context.Context, db *sql.DB, timeout time.Duration) err
 	}
 }
 
-// doRequest performs an unauthenticated request - fine for public endpoints,
-// or for exercising a protected one's 401 path. Use doAuthedRequest for
-// anything that needs a real caller identity.
+// doRequest performs an unauthenticated request.
 func doRequest(
 	t *testing.T,
 	method, path string,
@@ -149,8 +147,7 @@ func doRequest(
 	return doRequestWithToken(t, method, path, body, "")
 }
 
-// doAuthedRequest performs a request with the given access token attached as
-// a Bearer Authorization header.
+// doAuthedRequest performs a request with a Bearer token.
 func doAuthedRequest(
 	t *testing.T,
 	method, path string,
@@ -202,9 +199,7 @@ func ObjectToJSON(object any) string {
 	return string(bytes)
 }
 
-// loginAndGetToken exercises the real login endpoint and returns the access
-// token, so tests act as a genuine authenticated caller rather than reaching
-// around auth entirely.
+// loginAndGetToken logs in over HTTP and returns the access token.
 func loginAndGetToken(t *testing.T, email, password string) string {
 	t.Helper()
 
@@ -226,10 +221,7 @@ func loginAndGetToken(t *testing.T, email, password string) string {
 	return tokens.AccessToken
 }
 
-// createUserWithRole creates a user directly via the service layer (bypassing
-// HTTP, since self-registration can never grant a role), then logs in over
-// the real HTTP API so the test gets back a genuine bearer token to act as
-// that user.
+// createUserWithRole creates a user via the service layer and logs it in over HTTP.
 func createUserWithRole(t *testing.T, role string) (userId, token string) {
 	t.Helper()
 
@@ -254,8 +246,7 @@ func createUserWithRole(t *testing.T, role string) (userId, token string) {
 	return user.Id, loginAndGetToken(t, email, password)
 }
 
-// uniqueUsername returns a valid, never-reused username so tests can create
-// as many users as they like against the one shared database.
+// uniqueUsername returns a username that is unique across tests.
 func uniqueUsername() string {
 	return "user-" + strings.ReplaceAll(uuid.NewString(), "-", "")[:16]
 }

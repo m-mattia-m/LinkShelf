@@ -41,8 +41,7 @@ const schema = computed(() => v.object({
   title: v.pipe(v.string(t('validation.titleRequired')), v.nonEmpty(t('validation.titleRequired'))),
   link: v.pipe(v.string(t('validation.urlRequired')), v.nonEmpty(t('validation.urlRequired'))),
   icon: v.string(),
-  // Empty is valid too - it means "no color set", so the shelf's theme (or
-  // the default look) decides how the link renders instead.
+  // Empty means no color; the theme decides.
   color: v.pipe(
     v.string(),
     v.check(

@@ -7,8 +7,7 @@ await callOnce(async () => {
   try {
     websiteSettings.value = await useApi().setting.getPageSettings({ languageCode: locale.value })
   } catch (error) {
-    // The backend is not reachable while prerendering during the build, and may
-    // be down at runtime; render without settings instead of failing the page.
+    // The backend may be unreachable (prerender or downtime); render without settings.
     console.warn('[app] could not load page settings:', error)
     websiteSettings.value = null
   }

@@ -14,21 +14,12 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
-	// ErrEmailNotVerified is returned when a brand-new external identity
-	// can't be auto-provisioned because the provider did not vouch for the
-	// email - without that, anyone could sign up claiming an email they
-	// don't own.
+	// ErrEmailNotVerified: the provider didn't verify the email of a new identity.
 	ErrEmailNotVerified = errors.New("the identity provider did not confirm this email address is verified")
-	// ErrEmailNotVerifiedForLinking is returned instead of ErrEmailNotVerified
-	// when a local account with that email already exists - the two are
-	// kept distinct so the caller can tell an unverifiable signup apart from
-	// a refused auto-link to an existing account.
+	// ErrEmailNotVerifiedForLinking: like ErrEmailNotVerified, but the account exists.
 	ErrEmailNotVerifiedForLinking = errors.New("an account with this email already exists, but the identity provider did not confirm this email address is verified, so it can't be linked automatically")
 	ErrOidcNotConfigured          = errors.New("OIDC login is not enabled")
-	// ErrAccountNotLinkable is returned when a local account with the SSO
-	// login's email exists but was never proven to own that address, or is
-	// already linked to another SSO identity. Linking it anyway would let
-	// whoever set that email on the account take over the SSO user.
+	// ErrAccountNotLinkable: the local account is unverified or already linked.
 	ErrAccountNotLinkable = errors.New("an account with this email already exists, but it can't be linked to this single sign-on login automatically")
 )
 
@@ -37,12 +28,9 @@ type AuthService interface {
 	Refresh(rawRefreshToken string) (*model.TokenPair, error)
 	Logout(rawRefreshToken string) error
 	OidcAuthorizationURL() (*model.OidcLoginResponseBody, error)
-	// OidcCallback completes an OIDC login. currentUserId, when non-nil, means
-	// the caller was already authenticated and this is a link-to-my-account
-	// request rather than a login/auto-provision one.
+	// OidcCallback completes an OIDC login, or links the identity when currentUserId is set.
 	OidcCallback(ctx context.Context, code, state string, currentUserId *string) (*model.TokenPair, error)
-	// IsOidcEnabled reports whether authentication.type is OIDC, so callers
-	// (e.g. the settings endpoint) can tell clients whether to offer SSO.
+	// IsOidcEnabled reports whether authentication.type is OIDC.
 	IsOidcEnabled() bool
 }
 
@@ -75,9 +63,7 @@ func (s *authServiceImpl) Login(email, password string) (*model.TokenPair, error
 
 	verificationEnabled := config.Bool("authentication.emailVerification.enabled")
 
-	// No password yet means an admin-invited account that hasn't completed
-	// registration - it can never match any password check below, so bail
-	// out here instead of running checkPassword against an empty hash.
+	// Invited accounts have no password yet.
 	if record.Password == "" {
 		if verificationEnabled {
 			_ = s.Domain.EmailVerificationService.Resend(email)
@@ -159,9 +145,7 @@ func (s *authServiceImpl) OidcCallback(ctx context.Context, code, state string, 
 	return s.resolveOidcIdentity(identity, currentUserId)
 }
 
-// resolveOidcIdentity turns a verified OIDC identity into a session, split out
-// of OidcCallback so it can be unit tested without a real/mocked OIDC
-// exchange.
+// resolveOidcIdentity turns a verified OIDC identity into a session.
 func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, currentUserId *string) (*model.TokenPair, error) {
 	// Link mode: attach this external identity to the already-authenticated user.
 	if currentUserId != nil {
@@ -184,9 +168,7 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		return s.issueTokenPair(record.Id, record.Role)
 	}
 
-	// First-time external login: link to an existing user by email, or
-	// provision a new one. Both require a provider-verified email, otherwise
-	// anyone could claim another user's account or an email they don't own.
+	// First login: link by email or provision; both require a provider-verified email.
 	existing, err := s.Repository.UserRepository.FindByEmail(identity.Email)
 	if err != nil {
 		return nil, err
@@ -196,9 +178,7 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		if !identity.EmailVerified {
 			return nil, ErrEmailNotVerifiedForLinking
 		}
-		// Both sides must have proven the address: the provider (above) and
-		// the local account. An account that never confirmed its email, or
-		// that already belongs to another SSO identity, is refused.
+		// The local account must have verified the address too, and not be linked elsewhere.
 		if !existing.EmailVerified || (existing.ProviderId != nil && *existing.ProviderId != "") {
 			return nil, ErrAccountNotLinkable
 		}
@@ -214,10 +194,7 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		return nil, ErrEmailNotVerified
 	}
 
-	// There is no step in this flow where the person could pick a name, so it
-	// is derived: the preferred_username claim if the provider sent one,
-	// otherwise the part of the email address before the "@". They can rename
-	// themselves afterwards.
+	// Derive a username from preferred_username or the email prefix.
 	username, err := availableUsername(s.Repository, identity.PreferredUsername, emailLocalPart(identity.Email))
 	if err != nil {
 		return nil, err

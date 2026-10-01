@@ -13,13 +13,9 @@ import (
 type ShelfService interface {
 	Get(id, callerUserId string, isAdmin bool) (*model.Shelf, error)
 	GetByPath(path string) (*model.Shelf, error)
-	// GetByDomain is the public lookup for a shelf served on its own domain.
-	// It returns nil for a domain no shelf has, and for a value that can't be
-	// a domain at all.
+	// GetByDomain returns the shelf served on domain, or nil.
 	GetByDomain(domain string) (*model.Shelf, error)
-	// IsDomainRegistered reports whether any shelf is served on domain, which
-	// is what decides if a browser origin on that domain may call the API
-	// (see app.strictOrigins).
+	// IsDomainRegistered reports whether any shelf is served on domain (used for CORS).
 	IsDomainRegistered(domain string) (bool, error)
 	GetByUsernameAndPath(username, path string) (*model.Shelf, error)
 	List(callerUserId string, isAdmin bool) ([]model.Shelf, error)
@@ -40,9 +36,7 @@ func NewShelfService(repository *repository.Repository, domain *Service) ShelfSe
 	}
 }
 
-// annotateThemeMissing sets ThemeMissing so the edit page can tell "no theme
-// picked" apart from "the picked theme is gone". The Theme map is only needed
-// by the public view (annotatePublicTheme).
+// annotateThemeMissing flags shelves whose selected theme no longer exists.
 func (s *shelfServiceImpl) annotateThemeMissing(shelf *model.Shelf) error {
 	_, missing, err := s.Domain.ThemeService.Resolve(shelf.ThemeId)
 	if err != nil {
@@ -52,10 +46,7 @@ func (s *shelfServiceImpl) annotateThemeMissing(shelf *model.Shelf) error {
 	return nil
 }
 
-// annotatePublicTheme resolves the shelf's theme into its rendered CSS
-// property map for the public link page - nil (silently falling back to the
-// page's own default look) if none is selected or the selected one no
-// longer exists.
+// annotatePublicTheme resolves the shelf's theme into CSS properties, or nil.
 func (s *shelfServiceImpl) annotatePublicTheme(shelf *model.Shelf) error {
 	config, _, err := s.Domain.ThemeService.Resolve(shelf.ThemeId)
 	if err != nil {
@@ -80,10 +71,7 @@ func (s *shelfServiceImpl) Get(id, callerUserId string, isAdmin bool) (*model.Sh
 	return shelf, nil
 }
 
-// GetByPath is the public, unauthenticated lookup used to render a shelf's
-// public link page - it intentionally performs no ownership check. It only
-// answers while app.userBasedPaths is off: with it on, /<path> without a
-// username is no longer a valid URL and must not resolve.
+// GetByPath is the public lookup by path. It only answers while app.userBasedPaths is off.
 func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
 	if config.Bool("app.userBasedPaths") {
 		return nil, nil
@@ -99,18 +87,13 @@ func (s *shelfServiceImpl) GetByPath(path string) (*model.Shelf, error) {
 	return shelf, nil
 }
 
-// GetByDomain is GetByPath for a shelf that is served on a domain of its own.
-// Unlike a path lookup it doesn't depend on app.userBasedPaths, since a domain
-// is unique on the whole instance either way.
+// GetByDomain is the public lookup by domain.
 func (s *shelfServiceImpl) GetByDomain(domain string) (*model.Shelf, error) {
 	domain = NormalizeDomain(domain)
 	if ValidateDomain(domain) != nil {
 		return nil, nil
 	}
-	// The instance's own hosts never show a shelf, even if a row claims one
-	// (e.g. saved before app.additionalOrigins listed that host). The
-	// frontend asks this for every host it is reached on, so this is also
-	// what keeps "/" on the instance's own domains the app's landing page.
+	// The instance's own hosts never resolve to a shelf.
 	if _, reserved := reservedShelfDomains()[domain]; reserved {
 		return nil, nil
 	}
@@ -133,8 +116,7 @@ func (s *shelfServiceImpl) IsDomainRegistered(domain string) (bool, error) {
 	return s.Repository.ShelfRepository.DomainInUse(domain, "")
 }
 
-// GetByUsernameAndPath is GetByPath for /<username>/<path>, and only answers
-// while app.userBasedPaths is on.
+// GetByUsernameAndPath is the public lookup while app.userBasedPaths is on.
 func (s *shelfServiceImpl) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
 	if !config.Bool("app.userBasedPaths") {
 		return nil, nil
@@ -150,10 +132,7 @@ func (s *shelfServiceImpl) GetByUsernameAndPath(username, path string) (*model.S
 	return shelf, nil
 }
 
-// validatePath checks a shelf's path before it is saved. With
-// app.userBasedPaths on, it only has to be unique among the owner's shelves;
-// off, it must be unique across the instance and not a reserved route. An
-// empty path (domain-only shelf) is always fine.
+// validatePath checks that a path is unique and, without user-based paths, not reserved.
 func (s *shelfServiceImpl) validatePath(path, ownerId, exceptShelfId string) error {
 	if path == "" {
 		return nil
@@ -183,10 +162,7 @@ func (s *shelfServiceImpl) validatePath(path, ownerId, exceptShelfId string) err
 	return nil
 }
 
-// validateDomain checks a shelf's domain before it is saved: the format, that
-// it isn't one of this instance's own hosts, and that no other shelf has it.
-// An empty domain (a shelf that is only reachable through its path) is always
-// fine.
+// validateDomain checks the format, reserved hosts and uniqueness of a domain.
 func (s *shelfServiceImpl) validateDomain(domain, exceptShelfId string) error {
 	domain, err := checkShelfDomain(domain)
 	if err != nil || domain == "" {
@@ -203,10 +179,7 @@ func (s *shelfServiceImpl) validateDomain(domain, exceptShelfId string) error {
 	return nil
 }
 
-// validateLocation checks that exactly one of path and domain is set and
-// normalizes request.Domain. existing is nil when creating. Only changed
-// values are checked, so a shelf on a value that is no longer allowed can
-// still be edited.
+// validateLocation requires exactly one of path and domain; unchanged values aren't re-checked.
 func (s *shelfServiceImpl) validateLocation(request, existing *model.Shelf, ownerId string) error {
 	request.Domain = NormalizeDomain(request.Domain)
 
@@ -249,9 +222,7 @@ func (s *shelfServiceImpl) List(callerUserId string, isAdmin bool) ([]model.Shel
 	return s.Repository.ShelfRepository.ListByUserId(callerUserId)
 }
 
-// Create assigns ownership to the caller and re-checks that the caller still
-// exists, so a valid JWT for a deleted user yields a 404 instead of a foreign
-// key error.
+// Create assigns the caller as owner, returning 404 if the caller no longer exists.
 func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf) (string, error) {
 	user, err := s.Repository.UserRepository.Get(callerUserId)
 	if err != nil {
@@ -265,9 +236,7 @@ func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf
 		return "", err
 	}
 
-	// A username is normally always set (every creation path requires one and
-	// startup backfills the rest), so this only guards a state that should
-	// not exist: a URL with the username missing.
+	// Should not happen: every user has a username.
 	if config.Bool("app.userBasedPaths") && shelfRequest.Path != "" && user.Username == "" {
 		return "", fmt.Errorf("%w: set a username before creating a shelf with a path", ErrInvalidInput)
 	}
@@ -325,8 +294,7 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 	return shelf, nil
 }
 
-// Delete relies on the caller having already fetched the shelf through Get,
-// which enforces ownership.
+// Delete expects the caller to have checked ownership via Get.
 func (s *shelfServiceImpl) Delete(shelfRequest *model.Shelf) error {
 	return s.Repository.ShelfRepository.Delete(shelfRequest)
 }

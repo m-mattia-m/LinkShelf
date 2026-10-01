@@ -10,8 +10,7 @@ definePageMeta({
 const { t } = useI18n()
 const websiteSettings = useState('settings') as unknown as Ref<SettingPageBody | null>
 
-// Only an explicit "off" hides the form: with no settings loaded (backend
-// briefly unreachable) the request itself will report what is wrong.
+// Only an explicit "off" hides the form.
 const disabled = computed(() => websiteSettings.value?.passwordResetEnabled === false)
 
 const schema = computed(() => v.object({
@@ -34,8 +33,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   try {
     const api = useApi()
     await api.auth.postForgotPassword({ forgotPasswordRequest: { email: payload.data.email } })
-    // The backend answers the same way for every address, so this says
-    // nothing about whether an account exists - and neither may the page.
+    // Same response for every address, so don't reveal anything.
     sentTo.value = payload.data.email
   } catch (err) {
     const result = await parseApiError(err)

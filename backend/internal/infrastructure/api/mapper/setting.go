@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// SettingPageFlags are the values the settings page reports that come from the
-// configuration rather than from the stored settings.
+// SettingPageFlags are config-derived values of the settings page.
 type SettingPageFlags struct {
 	OidcEnabled              bool
 	RegistrationEnabled      bool

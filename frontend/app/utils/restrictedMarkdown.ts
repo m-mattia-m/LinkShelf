@@ -15,11 +15,7 @@ const LINK_PATTERN = /\[([^\]]+)]\((https?:\/\/[^\s")]+|mailto:[^\s")]+)\)/g
 const BOLD_PATTERN = /\*\*(.+?)\*\*/g
 const ITALIC_PATTERN = /\*(.+?)\*/g
 
-/**
- * Renders a restricted subset of Markdown (bold, italic, links) into safe HTML
- * for v-html. The input is HTML-escaped first, so these are the only tags it
- * can ever produce.
- */
+/** Renders bold, italic and links as HTML. The input is escaped first. */
 export function renderRestrictedMarkdown(text: string): string {
   return escapeHtml(text)
     .replace(LINK_PATTERN, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
