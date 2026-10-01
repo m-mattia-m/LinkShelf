@@ -17,9 +17,7 @@ type LinkRepository interface {
 	Create(l *model.Link) (string, error)
 	Update(l *model.Link) error
 	Delete(l *model.Link) error
-	// UpdateOrder sets the order of a single link. Used by the batch reorder
-	// endpoint, one call per item so a bad id in the batch fails only that
-	// item.
+	// UpdateOrder sets the order of a single link.
 	UpdateOrder(id string, order int) error
 }
 

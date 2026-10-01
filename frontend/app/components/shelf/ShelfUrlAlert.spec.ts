@@ -17,8 +17,7 @@ const NOW_USER_BASED = 'This shelf\'s URL now includes your username'
 const NO_LONGER_USER_BASED = 'This shelf\'s URL no longer includes a username'
 const RESERVED = 'This path can\'t be reached'
 
-// Nuxt UI's alert has no ARIA role, so "nothing is shown" has to be checked
-// against the alert titles themselves.
+// The alert has no ARIA role, so check its titles.
 function expectNoAlert() {
   for (const title of [NOW_USER_BASED, NO_LONGER_USER_BASED, RESERVED]) {
     expect(screen.queryByText(title)).not.toBeInTheDocument()
@@ -104,8 +103,7 @@ describe('ShelfUrlAlert', () => {
 
 describe('ShelfUrlAlert with an older backend', () => {
   it('says nothing when the shelf carries no creation mode, instead of guessing', async () => {
-    // A backend that predates the field leaves it out of the response, and
-    // the generated client then hands it over as undefined.
+    // Older backends omit the field.
     setUserBasedPaths(true)
     const shelf = buildShelf({ path: 'my-links', username: 'alice' })
     delete (shelf as Partial<Shelf>).createdWithUserBasedPaths

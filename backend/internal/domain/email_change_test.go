@@ -13,9 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// These tests cover the fix for the OIDC account pre-hijack: an email change
-// used to be written straight into the account while email_verified stayed
-// true, so an account could claim an address it never proved it owns.
+// Email changes must not keep the old address's verified status (OIDC pre-hijack).
 
 func setupEmailChangeTestConfig(t *testing.T, verificationEnabled bool) {
 	t.Helper()
@@ -43,8 +41,7 @@ func Test_Unit_User_Update_EmailChange_IsPendingUntilConfirmed(t *testing.T) {
 		GetLatestByUserIdAndAction("user-uuid-test", repository.EmailActionChangeEmail).
 		Return(nil, nil)
 
-	// Every older link must be gone before pending_email changes, otherwise
-	// a link sent to one address could confirm another.
+	// Older links must be deleted before pending_email changes.
 	gomock.InOrder(
 		svc.EmailActionTokenRepository.EXPECT().
 			DeleteByUserIdAndAction("user-uuid-test", repository.EmailActionChangeEmail).
@@ -182,8 +179,7 @@ func Test_Unit_User_Update_EmailChange_RateLimited_WritesNothing(t *testing.T) {
 	require.Nil(t, updated)
 }
 
-// Q19: without email verification (no SMTP) the change is applied right
-// away, but never with the old address's verified status.
+// Without email verification the change is applied, but unverified.
 func Test_Unit_User_Update_EmailChange_WithoutVerification_AppliesItUnverified(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
@@ -281,8 +277,7 @@ func Test_Unit_EmailChange_Confirm_RejectsATokenWithoutPendingEmail(t *testing.T
 	require.ErrorIs(t, err, ErrInvalidToken)
 }
 
-// A plain verify-email link must not be usable to confirm an email change
-// (and the other way round), and expired links are refused.
+// Tokens are bound to their action and expire.
 func Test_Unit_EmailChange_Confirm_RejectsOtherAndExpiredTokens(t *testing.T) {
 	for name, token := range map[string]*repository.EmailActionToken{
 		"verify token":  {UserId: "user-uuid-test", Action: repository.EmailActionVerify, ExpiresAt: time.Now().Add(time.Hour)},

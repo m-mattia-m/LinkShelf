@@ -11,8 +11,7 @@ type SectionBase struct {
 	ShelfId string `json:"shelfId" bson:"shelfId" required:"true"`
 }
 
-// SectionOrderItem is one entry of a batch reorder request - the section's id
-// and the new position it should be moved to within its shelf.
+// SectionOrderItem is one entry of a batch reorder request.
 type SectionOrderItem struct {
 	Id    string `json:"id" bson:"id" required:"true"`
 	Order int    `json:"order" bson:"order" required:"true"`

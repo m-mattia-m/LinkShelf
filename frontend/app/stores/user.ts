@@ -13,9 +13,7 @@ export const useUserStore = defineStore('userStore', {
       this.loaded = true
     },
 
-    // Only used from the admin "manage users" page, so the caller's own
-    // token is always attached - it's what lets the backend honor a
-    // requested role instead of silently defaulting to "user".
+    // Admin-only: the token lets the backend honor the requested role.
     async create(userCreate: UserCreate): Promise<User> {
       const api = useApi()
       const authStore = useAuthStore()

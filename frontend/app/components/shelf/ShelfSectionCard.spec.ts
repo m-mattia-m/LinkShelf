@@ -42,8 +42,7 @@ describe('ShelfSectionCard', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
-  // Regression for the stored-XSS finding: a javascript: URL is shown as
-  // text but never becomes a clickable href.
+  // Regression: javascript: URLs are shown as text, never as href.
   it('shows a non-http(s) link as plain text without an href', async () => {
     const payload = 'javascript:alert(document.domain)%2F%2F@example.com'
     const { container } = await renderSuspended(ShelfSectionCard, {
@@ -161,8 +160,7 @@ describe('ShelfSectionCard', () => {
     })
   })
 
-  // HTML5 drag-and-drop is unreliable in happy-dom, so vuedraggable's events
-  // are triggered directly (mountSuspended for findComponent()).
+  // HTML5 drag is unreliable in happy-dom, so trigger vuedraggable events directly.
   describe('drag-and-drop reordering', () => {
     it('emits "reordered" when the draggable list reports a drag end', async () => {
       const links = [buildLink({ id: 'link-1', order: 0 }), buildLink({ id: 'link-2', order: 1 })]

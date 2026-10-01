@@ -7,8 +7,7 @@ const { user, ensureUser } = useCurrentUser()
 const authStore = useAuthStore()
 const router = useRouter()
 
-// ULocaleSelect expects @nuxt/ui's Locale type, which has no de-CH pack, so
-// only code/name are supplied and the type is cast. Same as in AppLayout.vue.
+// @nuxt/ui has no de-CH locale pack, so only code/name are set.
 const availableLocales = computed(() => {
   const mapped = locales.value.map(l => ({
     code: l.code,
@@ -38,9 +37,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
       icon: 'uil-palette',
       active: route.path.startsWith('/app/themes')
     },
-    // Settings (general site config, user management) are admin-only - a
-    // regular user can't reach these pages either (see middleware/admin.ts),
-    // so there's no point showing the link.
+    // Settings are admin-only.
     ...(authStore.isAdmin
       ? [{
           label: t('app.settings.title'),

@@ -43,8 +43,7 @@ describe('public link page', () => {
     expect(screen.getByRole('link', { name: /A Link/ })).toHaveAttribute('href', 'https://example.com')
   })
 
-  // Regression for the stored-XSS finding: the public page is where a
-  // visitor (or a logged-in admin) would click it.
+  // Regression: javascript: URLs must not be clickable.
   it('never renders a javascript: link as a clickable href', async () => {
     server.use(
       http.get(`${BASE}/v1/shelves/by-path/my-shelf`, () => HttpResponse.json(PublicShelfToJSON(buildPublicShelf() as never))),

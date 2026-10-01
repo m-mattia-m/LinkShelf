@@ -18,9 +18,7 @@ type Service struct {
 	EmailVerificationService EmailVerificationService
 }
 
-// NewService wires up every domain service. oidc is nil when
-// authentication.type is not OIDC. m is nil when
-// authentication.emailVerification.enabled is false.
+// NewService wires up every domain service. oidc and m are nil when disabled.
 func NewService(repository *repository.Repository, oidc *oidcclient.Client, m mailer.Mailer) *Service {
 	service := Service{}
 	service.UserService = NewUserService(repository, &service)

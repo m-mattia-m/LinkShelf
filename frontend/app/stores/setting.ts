@@ -7,8 +7,7 @@ export interface SettingKeyValue {
 
 export type { SettingUpdateFailure }
 
-// Maps a setting key back to its current value on the last-loaded page, so a
-// save only sends the keys that actually changed.
+// Current values of the loaded page, to send only changed keys.
 function currentValue(page: SettingPageBody | null, key: string): string {
   switch (key) {
     case 'about': return page?.about ?? ''
@@ -41,8 +40,7 @@ export const useSettingStore = defineStore('settingStore', {
       this.loaded = true
     },
 
-    // Sends only changed keys in one batched request. Never throws: request
-    // failures are reported like per-item validation failures.
+    // Sends changed keys in one request. Never throws; errors are reported as failures.
     async updateMany(languageCode: string, entries: SettingKeyValue[]): Promise<SettingUpdateFailure[]> {
       const api = useApi()
 

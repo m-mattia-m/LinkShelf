@@ -15,24 +15,17 @@ const (
 	usernameSuffixLimit = 10000
 )
 
-// usernamePattern is the whole username format: lowercase letters, digits and
-// hyphens, not starting or ending with a hyphen. Usernames are always stored
-// lowercase, which is what lets a plain UNIQUE column act case-insensitively
-// on both Postgres and MySQL.
+// usernamePattern: lowercase letters, digits and inner hyphens.
 var usernamePattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
 
-// routeReservedNames are top-level URL segments already used by the frontend
-// or backend. A username or (with user-based paths off) a shelf path with one
-// of these names would clash with the route.
+// routeReservedNames are top-level routes of the frontend or backend.
 var routeReservedNames = map[string]struct{}{
 	"app": {}, "auth": {}, "docs": {}, "cloud": {}, "about": {}, "contact": {},
 	"imprint": {}, "privacy-policy": {}, "terms-of-use": {},
 	"api": {}, "v1": {}, "swagger": {}, "health": {}, "images": {},
 }
 
-// otherReservedNames collide with no route today but are too likely to be
-// mistaken for the instance itself (or to become routes), so they can't be
-// picked as a username. They are irrelevant for shelf paths.
+// otherReservedNames are blocked as usernames only.
 var otherReservedNames = map[string]struct{}{
 	"admin": {}, "root": {}, "support": {}, "help": {}, "static": {}, "assets": {},
 	"public": {}, "login": {}, "logout": {}, "sign-in": {}, "sign-up": {},
@@ -40,9 +33,7 @@ var otherReservedNames = map[string]struct{}{
 	"users": {}, "me": {}, "www": {}, "null": {}, "undefined": {},
 }
 
-// isRouteReserved reports whether name (compared case-insensitively) is taken
-// by a route. The configured assets base path counts too, since that is where
-// the backend serves uploaded files from.
+// isRouteReserved reports whether name is a route, including the assets base path.
 func isRouteReserved(name string) bool {
 	name = strings.ToLower(name)
 	if _, ok := routeReservedNames[name]; ok {
@@ -64,9 +55,7 @@ func isReservedUsername(name string) bool {
 	return ok
 }
 
-// validateUsername checks the format and the reserved words. It does not
-// check whether the name is taken - that needs the database (see
-// checkUsernameAvailable).
+// validateUsername checks format and reserved words, not availability.
 func validateUsername(username string) error {
 	if len(username) < usernameMinLength || len(username) > usernameMaxLength || !usernamePattern.MatchString(username) {
 		return fmt.Errorf("%w: username must be %d-%d characters of lowercase letters, numbers and hyphens, and must not start or end with a hyphen",
@@ -78,8 +67,7 @@ func validateUsername(username string) error {
 	return nil
 }
 
-// checkUsernameAvailable returns ErrConflict when another user already has the
-// username. exceptUserId is the user being renamed (empty for a new user).
+// checkUsernameAvailable returns ErrConflict if another user has the username.
 func checkUsernameAvailable(repo *repository.Repository, username, exceptUserId string) error {
 	taken, err := repo.UserRepository.UsernameTaken(username, exceptUserId)
 	if err != nil {
@@ -91,10 +79,7 @@ func checkUsernameAvailable(repo *repository.Repository, username, exceptUserId 
 	return nil
 }
 
-// sanitizeUsername turns arbitrary text (an OIDC claim, an email prefix) into
-// the username alphabet: lowercase, every other character becomes a hyphen,
-// runs of hyphens collapse and the ends are trimmed. The result may still be
-// empty, too short or too long - see availableUsername.
+// sanitizeUsername maps arbitrary text to the username alphabet. The result may be invalid.
 func sanitizeUsername(raw string) string {
 	var b strings.Builder
 	lastHyphen := true // swallows leading hyphens
@@ -121,9 +106,7 @@ func emailLocalPart(email string) string {
 	return email[:at]
 }
 
-// availableUsername derives an unused username from the first candidate that
-// survives sanitizing, falling back to "member". If the result is too short,
-// reserved or taken, it appends -2, -3, ... until one works.
+// availableUsername derives an unused username, appending -2, -3, ... if needed.
 func availableUsername(repo *repository.Repository, candidates ...string) (string, error) {
 	base := "member"
 	for _, candidate := range candidates {

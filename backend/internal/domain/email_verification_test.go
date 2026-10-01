@@ -106,8 +106,7 @@ func Test_Unit_EmailVerification_Send_WithinCooldown_SkipsSending(t *testing.T) 
 		GetLatestByUserIdAndAction("user-uuid-test", repository.EmailActionVerify).
 		Return(&repository.EmailActionToken{CreatedAt: time.Now()}, nil)
 
-	// No Create/Mailer.Send expectations - gomock will fail the test if
-	// either is called, proving the cooldown actually short-circuits.
+	// No send expected: the cooldown must short-circuit.
 	err := svc.Service.EmailVerificationService.SendInitial(user)
 
 	require.NoError(t, err)

@@ -30,15 +30,12 @@ function buildShelfProp(overrides: Partial<Shelf> = {}): Shelf {
 beforeEach(() => {
   const themeStore = useThemeStore()
   themeStore.$reset()
-  // Default to "themes loaded" so most tests skip the on-mount fetch; the
-  // theme selection tests opt out explicitly.
+  // Default to loaded themes to skip the on-mount fetch.
   themeStore.loaded = true
 })
 
 afterEach(() => {
-  // vi.spyOn() is idempotent - without restoring, a later test's spyOn on
-  // the same store action would reuse the previous test's spy and its call
-  // history instead of starting fresh.
+  // Restore spies so each test starts fresh.
   vi.restoreAllMocks()
 })
 
@@ -50,8 +47,7 @@ describe('ShelfForm', () => {
 
     expect(screen.getByLabelText('Title')).toHaveValue('Existing Shelf')
     expect(screen.getByLabelText('Description')).toHaveValue('Existing description')
-    // "Path" is also the label of the (unrelated) Path tab trigger, so
-    // getByLabelText is ambiguous here - the textbox role disambiguates.
+    // "Path" is also a tab label, so query by role.
     expect(screen.getByRole('textbox', { name: 'Path' })).toHaveValue('existing-path')
   })
 
@@ -60,13 +56,10 @@ describe('ShelfForm', () => {
       props: { modelValue: buildShelfProp({ domain: 'example.com' }) }
     })
 
-    // Reka UI's TabsTrigger switches tabs on a left mousedown. testing-library's
-    // fireEvent.mouseDown doesn't reproduce this reliably here, so dispatch a
-    // real MouseEvent directly.
+    // Reka UI tabs switch on mousedown; fireEvent isn't reliable here.
     const domainTab = screen.getByRole('tab', { name: 'Domain' })
     domainTab.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
-    // A plain nextTick() isn't enough for Reka UI's Tabs to finish switching
-    // panels here, so give it a macrotask to settle.
+    // Reka UI tabs need a macrotask to switch.
     await new Promise(resolve => setTimeout(resolve, 0))
 
     expect(screen.getByRole('textbox', { name: 'Domain' })).toHaveValue('example.com')
@@ -161,9 +154,7 @@ describe('ShelfForm', () => {
     })
   })
 
-  // The Select's visible current-value text is duplicated by a hidden
-  // native <option> Reka UI renders for form semantics, so scope to the
-  // visible value slot to avoid ambiguous text matches.
+  // Scope to the visible value; Reka UI also renders a hidden <option>.
   function selectedThemeLabel(text: string) {
     return screen.getByText(text, { selector: '[data-slot="value"]' })
   }
@@ -180,8 +171,7 @@ describe('ShelfForm', () => {
       await waitFor(() => {
         expect(fetchSpy).toHaveBeenCalledTimes(1)
       })
-      // Wait out the fetch's own promise (not just the call) so it can't
-      // resolve mid-flight into the next test's freshly-reset store.
+      // Await the fetch so it can't leak into the next test.
       await fetchSpy.mock.results[0]!.value
       expect(selectedThemeLabel('No theme (default look)')).toBeInTheDocument()
     })

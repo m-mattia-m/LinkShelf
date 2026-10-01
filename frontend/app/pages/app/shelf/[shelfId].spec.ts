@@ -28,9 +28,7 @@ function mockShelfDetail() {
 }
 
 beforeEach(() => {
-  // The "/app/*" global auth middleware runs on any real navigation
-  // (including the `route:` option below, since it's an actual router
-  // navigation) and redirects to /auth/sign-in when unauthenticated.
+  // The auth middleware redirects unauthenticated navigation.
   useAuthStore().setTokens(buildTokenPair())
   useState<SettingPageBody | null>('settings').value = buildSettingPageBody({ userBasedPaths: false })
   mockShelfDetail()
@@ -254,8 +252,7 @@ describe('shelf detail page', () => {
       expect(screen.getByText('My Shelf')).toBeInTheDocument()
     })
 
-    // Both the page's trigger and the dialog's button are named "Delete", so
-    // each is queried within its own container.
+    // Both buttons are named "Delete", so scope each query.
     await fireEvent.click(within(container as HTMLElement).getByRole('button', { name: 'Delete' }))
 
     const dialog = await within(baseElement as HTMLElement).findByRole('dialog', { hidden: true })
@@ -315,17 +312,12 @@ describe('shelf detail page', () => {
       })
     )
 
-    // mountSuspended for findComponent(); drag-end is triggered directly since
-    // HTML5 drag is unreliable in jsdom. The template has no single root, so
-    // re-derive the query scope from wrapper.element on each use.
+    // HTML5 drag is unreliable in jsdom, so trigger drag-end directly.
     const wrapper = await mountSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
-    // waitFor's MutationObserver watches document.body by default, but this
-    // tree is detached from it - fall back to a plain wait for the initial
-    // shelf/section/link fetches to resolve instead of polling for them.
+    // The tree is detached from document.body, so waitFor can't observe it.
     await new Promise(resolve => setTimeout(resolve, 300))
 
-    // Not .toBeInTheDocument() - this tree is intentionally detached from
-    // window.document (see the note above), which that matcher requires.
+    // toBeInTheDocument() needs an attached tree.
     expect(within(wrapper.element as HTMLElement).getByText('Section A')).toBeTruthy()
 
     const saveOrderButton = within(wrapper.element as HTMLElement).getByRole('button', { name: 'Save order' })

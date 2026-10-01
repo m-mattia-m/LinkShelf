@@ -17,9 +17,7 @@ type SectionRepository interface {
 	Create(s *model.Section) (string, error)
 	Update(s *model.Section) error
 	Delete(s *model.Section) error
-	// UpdateOrder sets the order of a single section. Used by the batch
-	// reorder endpoint, one call per item so a bad id in the batch fails only
-	// that item.
+	// UpdateOrder sets the order of a single section.
 	UpdateOrder(id string, order int) error
 }
 

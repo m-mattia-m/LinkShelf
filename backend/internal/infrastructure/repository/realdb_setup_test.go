@@ -14,12 +14,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-// TestRepository is a real Repository backed by a throwaway Postgres or
-// MySQL container - whichever database.engine is configured (env
-// DATABASE_ENGINE) - migrated exactly the way NewRepository() migrates
-// it in production. CI runs this test binary twice, once per engine (see
-// .github/workflows/ci.yaml), so both engines' dialect-specific SQL is
-// actually exercised, not just assumed compatible.
+// TestRepository uses a throwaway Postgres or MySQL container per database.engine.
 var TestRepository *Repository
 
 func setupRealDB() (func(), error) {

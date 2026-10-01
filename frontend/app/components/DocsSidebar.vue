@@ -6,8 +6,7 @@ if (!page.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
-// `exact` is forwarded to the underlying link: without it "/docs" counts as
-// active on every "/docs/..." page.
+// Without `exact`, "/docs" is active on every docs page.
 type DocsNavLink = ContentNavigationLink & { exact?: boolean, _order?: number }
 
 interface DocsNavItem {

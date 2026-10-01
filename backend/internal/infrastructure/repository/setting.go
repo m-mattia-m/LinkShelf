@@ -27,8 +27,7 @@ func NewSettingRepository(engine *sql.DB, table string) (SettingRepository, erro
 	}, nil
 }
 
-// settingKeyColumn is "key" quoted for whichever engine is configured - MySQL
-// reserves KEY (rejects it as a bare column reference), Postgres doesn't.
+// settingKeyColumn is "key" quoted per engine (KEY is reserved in MySQL).
 func settingKeyColumn() (string, error) {
 	_, driver, _, err := getConnectionInformation()
 	if err != nil {
@@ -113,10 +112,7 @@ func (r *settingRepository) GetByKey(key string) (*model.Setting, error) {
 	return &setting, nil
 }
 
-// Upsert's conflict-handling clause has no shared syntax between engines
-// (Postgres's ON CONFLICT/EXCLUDED vs MySQL's ON DUPLICATE KEY UPDATE), so
-// this builds the two dialects' queries directly rather than going through
-// buildSqlStatements's generic ?-to-$N conversion.
+// Upsert syntax differs per engine, so both queries are built directly.
 func (r *settingRepository) Upsert(key string, language string, value string) error {
 	_, driver, _, err := getConnectionInformation()
 	if err != nil {

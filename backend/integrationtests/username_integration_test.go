@@ -16,8 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// userBasedPaths switches app.userBasedPaths for one test and restores the
-// default afterwards, since the server reads the setting on every request.
+// userBasedPaths sets app.userBasedPaths for one test.
 func userBasedPaths(t *testing.T, enabled bool) {
 	t.Helper()
 	config.Set("app.userBasedPaths", enabled)
@@ -318,9 +317,7 @@ func Test_API_UserBasedPaths_Off_AnExistingReservedPathCanStillBeEdited(t *testi
 	id, status := createShelfWithPath(t, token, "docs")
 	require.Equal(t, http.StatusCreated, status)
 
-	// Switching the feature off leaves this shelf on a path that is now
-	// reserved. Its title can still be changed, but the path cannot be moved
-	// onto another reserved word.
+	// The path is now reserved: the title stays editable, the path can't move to another reserved word.
 	userBasedPaths(t, false)
 	_ = userId
 

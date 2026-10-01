@@ -27,10 +27,7 @@ func UpdateSetting(svc *domain.Service) func(c context.Context, input *model.Set
 	}
 }
 
-// UpdateSettingsBatch saves many settings in a single request. Invalid items
-// never reach the database and valid items are saved even if others in the
-// same batch fail - the response's `failures` list reports which keys were
-// rejected and why, alongside the resulting (fully up to date) settings page.
+// UpdateSettingsBatch saves valid items and reports the rest as failures.
 func UpdateSettingsBatch(svc *domain.Service) func(c context.Context, input *model.SettingBatchRequest) (*model.SettingBatchResponse, error) {
 	return func(c context.Context, input *model.SettingBatchRequest) (*model.SettingBatchResponse, error) {
 		if len(input.Body.Settings) == 0 {
@@ -44,9 +41,7 @@ func UpdateSettingsBatch(svc *domain.Service) func(c context.Context, input *mod
 			return nil, huma.Error400BadRequest("failed to get settings", err)
 		}
 
-		// The batch's items all belong to the same page language in practice
-		// (the frontend saves one language at a time) - use the first item's
-		// to decide which language's page to render back.
+		// The frontend saves one language at a time.
 		languageCode := input.Body.Settings[0].LanguageCode
 
 		page := mapper.MapSettingToSettingPageResponse(languageCode, settings, settingPageFlags(svc))
@@ -71,9 +66,7 @@ func GetPageSettings(svc *domain.Service) func(c context.Context, input *model.S
 	}
 }
 
-// GetEmailDeliveryInfo is admin-only and deliberately minimal (host + from
-// address only) - SMTP itself is configured exclusively via config, never
-// through the UI, so there's nothing here to edit.
+// GetEmailDeliveryInfo returns the SMTP host and from address. Admin-only.
 func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *struct{}) (*model.EmailDeliveryInfoResponse, error) {
 	return func(c context.Context, input *struct{}) (*model.EmailDeliveryInfoResponse, error) {
 		return &model.EmailDeliveryInfoResponse{
@@ -86,14 +79,11 @@ func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *st
 	}
 }
 
-// settingPageFlags gathers the configuration-derived values every settings
-// response carries, so the three endpoints that return the settings page
-// can't drift apart.
+// settingPageFlags returns the config-derived values of the settings page.
 func settingPageFlags(svc *domain.Service) mapper.SettingPageFlags {
 	return mapper.SettingPageFlags{
 		OidcEnabled: svc.AuthService.IsOidcEnabled(),
-		// Sign-up and password reset both depend on local auth, so the
-		// frontend can keep checking just these two flags for them.
+		// Sign-up and reset depend on local auth.
 		RegistrationEnabled:      config.Bool("authentication.registrationEnabled") && config.LocalAuthEnabled(),
 		EmailVerificationEnabled: config.Bool("authentication.emailVerification.enabled"),
 		UserBasedPaths:           config.Bool("app.userBasedPaths"),

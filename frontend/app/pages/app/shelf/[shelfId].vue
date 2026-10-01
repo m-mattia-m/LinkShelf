@@ -51,8 +51,7 @@ const shareItems = computed(() => [
   [{ label: t('app.shelf.detail.qrCode'), icon: 'i-lucide-qr-code', disabled: !publicUrl.value, onSelect: () => { qrOpen.value = true } }]
 ])
 
-// Local drag order, persisted only on "Save order". Re-derived whenever the
-// stores refetch.
+// Local drag order, saved on "Save order".
 const orderedSections = ref<Section[]>([])
 const linkOrders = reactive<Record<string, Link[]>>({})
 const orderDirty = ref(false)
@@ -90,9 +89,7 @@ async function saveOrder() {
   }
 }
 
-// Unsaved order changes are easy to lose silently (tab close, in-app nav) -
-// warn before either. Deliberately no autosave-on-drop: with several active
-// users this would fire a request per drag frame instead of one on demand.
+// Warn before leaving with unsaved order changes.
 function onBeforeUnload(e: BeforeUnloadEvent) {
   if (!orderDirty.value) return
   e.preventDefault()

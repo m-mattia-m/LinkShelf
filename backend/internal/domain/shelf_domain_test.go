@@ -138,8 +138,7 @@ func Test_Unit_CheckShelfDomain_ReservesTheFrontendPortToo(t *testing.T) {
 	require.ErrorIs(t, err, ErrInvalidInput)
 }
 
-// Regression: a shelf could claim the instance's second domain from
-// app.additionalOrigins and replace "/" on it with its own page.
+// Regression: additionalOrigins hosts can't be claimed.
 func Test_Unit_CheckShelfDomain_ReservesTheAdditionalOrigins(t *testing.T) {
 	config.Reset()
 	t.Cleanup(config.Reset)

@@ -1,6 +1,4 @@
-// Package oidcclient wraps a single, generically configured OIDC provider:
-// discovery, a PKCE-protected authorization-code flow, and ID token
-// verification.
+// Package oidcclient wraps an OIDC provider with PKCE login and ID token verification.
 package oidcclient
 
 import (
@@ -36,8 +34,7 @@ type Client struct {
 	oauth     oauth2.Config
 }
 
-// New performs OIDC discovery at startup so a misconfigured issuer fails fast.
-// stateRepo persists PKCE state so any backend replica can complete a login.
+// New runs OIDC discovery so a misconfigured issuer fails at startup.
 func New(ctx context.Context, stateRepo repository.OidcStateRepository) (*Client, error) {
 	issuer := config.String("authentication.oidc.issuer")
 	provider, err := oidc.NewProvider(ctx, issuer)
@@ -61,9 +58,7 @@ func New(ctx context.Context, stateRepo repository.OidcStateRepository) (*Client
 	}, nil
 }
 
-// AuthorizationURL starts a new PKCE-protected login attempt and returns the
-// URL the frontend should redirect the browser to, along with the state it
-// must send back on POST /v1/auth/oidc/callback.
+// AuthorizationURL starts a PKCE login and returns the redirect URL and state.
 func (c *Client) AuthorizationURL() (authURL, state string, err error) {
 	state, err = randomString()
 	if err != nil {
@@ -78,9 +73,7 @@ func (c *Client) AuthorizationURL() (authURL, state string, err error) {
 	return c.oauth.AuthCodeURL(state, oauth2.S256ChallengeOption(verifier)), state, nil
 }
 
-// Exchange completes a login attempt: it exchanges the authorization code for
-// tokens (using the matching PKCE verifier for that state) and verifies the
-// returned ID token.
+// Exchange redeems the code for tokens and verifies the ID token.
 func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, error) {
 	pending, err := c.stateRepo.GetByState(state)
 	if err != nil {
@@ -110,15 +103,12 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 		return nil, fmt.Errorf("id_token verification failed: %w", err)
 	}
 
-	// The ID token is only guaranteed to carry 'sub'; profile and email claims
-	// depend on provider configuration, so userinfo is the source of truth.
+	// Profile and email claims come from userinfo; the ID token only guarantees sub.
 	userInfo, err := c.provider.UserInfo(ctx, oauth2.StaticTokenSource(token))
 	if err != nil {
 		return nil, fmt.Errorf("fetching userinfo failed: %w", err)
 	}
-	// Per the OIDC spec, the userinfo subject must match the ID token's -
-	// otherwise a malicious provider (or a compromised userinfo endpoint)
-	// could attach a different identity's profile to this token exchange.
+	// The userinfo subject must match the ID token's (OIDC spec).
 	if userInfo.Subject != idToken.Subject {
 		return nil, fmt.Errorf("userinfo subject %q does not match id_token subject %q", userInfo.Subject, idToken.Subject)
 	}
@@ -126,8 +116,7 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 	var profile struct {
 		GivenName  string `json:"given_name"`
 		FamilyName string `json:"family_name"`
-		// The "profile" scope is already requested, so providers that
-		// support it return this in the userinfo response.
+		// Returned thanks to the "profile" scope.
 		PreferredUsername string `json:"preferred_username"`
 	}
 	if err := userInfo.Claims(&profile); err != nil {

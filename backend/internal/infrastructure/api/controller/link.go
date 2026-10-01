@@ -20,8 +20,7 @@ func CreateLink(svc *domain.Service) func(c context.Context, input *model.LinkRe
 	}
 }
 
-// GetLinks renders a shelf's links for its public link page and requires no
-// authentication - it's deliberately unscoped by ownership.
+// GetLinks is public; no ownership check.
 func GetLinks(svc *domain.Service) func(c context.Context, input *model.LinkRequestShelfFilter) (*model.LinkResponseList, error) {
 	return func(c context.Context, input *model.LinkRequestShelfFilter) (*model.LinkResponseList, error) {
 		links, err := svc.LinkService.List(input.ShelfId)
@@ -54,10 +53,7 @@ func DeleteLink(svc *domain.Service) func(c context.Context, input *model.LinkRe
 	}
 }
 
-// UpdateLinksOrder saves the order of many links in a single request. Invalid
-// items (unknown id, or one the caller doesn't own) never abort the rest of
-// the batch - they're reported back in the response's failures list. A link
-// can only be reordered within the section it already belongs to.
+// UpdateLinksOrder reorders links; invalid items are reported as failures.
 func UpdateLinksOrder(svc *domain.Service) func(c context.Context, input *model.LinkOrderRequest) (*model.LinkOrderResponse, error) {
 	return func(c context.Context, input *model.LinkOrderRequest) (*model.LinkOrderResponse, error) {
 		if len(input.Body.Links) == 0 {

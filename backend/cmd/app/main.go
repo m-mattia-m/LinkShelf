@@ -36,9 +36,7 @@ func main() {
 		zap.L().Fatal(err.Error())
 	}
 
-	// Order matters: the bootstrap admin gets its configured username first,
-	// then everyone else who has none gets one derived, and only then can the
-	// path check name owners.
+	// Order matters: bootstrap admin, then username backfill, then the path check.
 	if err := domain.BackfillUsernames(repo); err != nil {
 		zap.L().Fatal(err.Error())
 	}

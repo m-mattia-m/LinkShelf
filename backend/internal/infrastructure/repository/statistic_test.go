@@ -47,11 +47,7 @@ func Test_StatisticRepository_GetShelfAmount_NoRows(t *testing.T) {
 	require.Nil(t, count)
 }
 
-// Test_StatisticRepository_GetShelfAmount_QueryError is intentionally omitted:
-// on a non-ErrNoRows query error the method still returns a non-nil *int
-// (the zero-valued local `count`) alongside the error, the same pre-existing
-// behavior documented via the commented-out QueryError tests in shelf_test.go
-// and setting_test.go.
+// A QueryError test is omitted: the method returns a non-nil count alongside the error.
 
 func Test_StatisticRepository_GetSectionAmount_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -92,8 +88,7 @@ func Test_StatisticRepository_GetSectionAmount_NoRows(t *testing.T) {
 	require.Nil(t, count)
 }
 
-// Test_StatisticRepository_GetSectionAmount_QueryError is intentionally
-// omitted for the same reason as GetShelfAmount's above.
+// QueryError test omitted, see GetShelfAmount.
 
 func Test_StatisticRepository_GetLinkAmount_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -134,5 +129,4 @@ func Test_StatisticRepository_GetLinkAmount_NoRows(t *testing.T) {
 	require.Nil(t, count)
 }
 
-// Test_StatisticRepository_GetLinkAmount_QueryError is intentionally omitted
-// for the same reason as GetShelfAmount's above.
+// QueryError test omitted, see GetShelfAmount.

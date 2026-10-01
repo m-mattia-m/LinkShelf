@@ -18,52 +18,30 @@ import (
 	"go.uber.org/zap"
 )
 
-// resendCooldown throttles both the explicit resend endpoint and the
-// automatic resend triggered by a login attempt, so a single account can't be
-// used to spam an inbox (or a third party's) with repeated emails.
+// resendCooldown rate-limits verification and reset emails per account.
 const resendCooldown = 60 * time.Second
 
 type EmailVerificationService interface {
-	// SendInitial sends the first email for a newly created user: an
-	// invite/set-password link if it has no password yet, otherwise a plain
-	// verify-email link.
+	// SendInitial sends an invite link to passwordless users, otherwise a verify link.
 	SendInitial(user *model.User) error
-	// Resend re-sends whatever link is still pending for the given email,
-	// rate-limited. It never reports whether the address exists, is already
-	// verified, or was rate-limited - all of those look identical to the
-	// caller, by design.
+	// Resend re-sends the pending link. It never reveals whether the address exists.
 	Resend(email string) error
-	// VerifyEmail completes plain verification for an account that already
-	// has a password.
+	// VerifyEmail verifies an account that already has a password.
 	VerifyEmail(rawToken string) error
-	// SetPassword completes the admin-invite flow: sets the first password
-	// and marks the account verified, consuming the token.
+	// SetPassword completes an invite: sets the first password and verifies the account.
 	SetPassword(rawToken, newPassword string) error
-	// RequestPasswordReset emails a reset link for the given address. Like
-	// Resend it never reports whether the address exists or the request was
-	// rate-limited, so it can't be used to enumerate accounts. It only errors
-	// when the feature is disabled or something internal fails.
+	// RequestPasswordReset emails a reset link. It never reveals whether the address exists.
 	RequestPasswordReset(email string) error
-	// ResetPassword completes the forgot-password flow: sets the new
-	// password, marks the address verified (the link proved control of it) and
-	// ends every session of that account.
+	// ResetPassword sets the new password, marks the email verified and ends all sessions.
 	ResetPassword(rawToken, newPassword string) error
-	// MarkVerified is the admin override - forces a user's email to
-	// verified without any token at all.
+	// MarkVerified is the admin override without a token.
 	MarkVerified(userId string) error
-	// RequestEmailChange stores newEmail as the account's pending email,
-	// emails a confirm link to it and a heads-up to currentEmail. The account
-	// keeps currentEmail until the link is used. A repeat request within
-	// resendCooldown is refused with ErrTooManyRequests. delivered is false
-	// when the confirm link could not be sent (the request is still stored,
-	// so asking again later recovers).
+	// RequestEmailChange stores newEmail as pending and emails a confirm link to it.
+	// delivered is false if the link could not be sent.
 	RequestEmailChange(userId, currentEmail, newEmail string) (delivered bool, err error)
-	// ConfirmEmailChange completes an email change with the emailed token. It
-	// fails with ErrConflict if another account took the address meanwhile.
+	// ConfirmEmailChange applies a pending email change. ErrConflict if the address was taken meanwhile.
 	ConfirmEmailChange(rawToken string) error
-	// NotifyProviderLinked tells the owner of an account that a single
-	// sign-on identity was linked to it. Best-effort: a failure is only
-	// logged, and it is a no-op without a mailer.
+	// NotifyProviderLinked emails the owner that an SSO identity was linked. Best-effort.
 	NotifyProviderLinked(email string)
 }
 
@@ -105,12 +83,9 @@ func (s *emailVerificationServiceImpl) Resend(email string) error {
 	return s.send(record.Id, record.Email, action)
 }
 
-// send enforces the resend cooldown, then (re)issues and emails a fresh
-// token, replacing any previous still-pending one for the same action.
+// send enforces the cooldown, then issues and emails a fresh token.
 func (s *emailVerificationServiceImpl) send(userId, email, action string) error {
-	// Nil mailer means authentication.emailVerification.enabled is false -
-	// callers are expected to check that first, but this is a safe no-op
-	// rather than a nil-pointer panic if one doesn't.
+	// Email verification is disabled.
 	if s.mailer == nil {
 		return nil
 	}
@@ -146,8 +121,7 @@ func (s *emailVerificationServiceImpl) send(userId, email, action string) error 
 		sendErr = s.mailer.Send(verifyEmailMessage(email, rawToken))
 	}
 
-	// Log here because every issuance flow passes through and several callers
-	// discard the error as best-effort.
+	// Logged here because several callers ignore the error.
 	if sendErr != nil {
 		zap.L().Error("failed to send account email", zap.String("action", action), zap.Error(sendErr))
 	}
@@ -155,8 +129,7 @@ func (s *emailVerificationServiceImpl) send(userId, email, action string) error 
 	return sendErr
 }
 
-// tokenLifetime is how long a freshly issued link works. A reset link is
-// short-lived on purpose: it is a way into the account.
+// tokenLifetime is how long a link works; reset links are short-lived.
 func tokenLifetime(action string) time.Duration {
 	if action == repository.EmailActionResetPassword {
 		return time.Duration(config.Int("authentication.passwordReset.tokenExpiryMinutes")) * time.Minute
@@ -164,8 +137,7 @@ func tokenLifetime(action string) time.Duration {
 	return time.Duration(config.Int("authentication.emailVerification.tokenExpiryHours")) * time.Hour
 }
 
-// passwordResetEnabled is false as well when local (password) auth is off:
-// a reset would set a password nobody can sign in with.
+// passwordResetEnabled is false without local auth.
 func passwordResetEnabled() bool {
 	return config.Bool("authentication.passwordReset.enabled") && config.LocalAuthEnabled()
 }
@@ -204,8 +176,7 @@ func (s *emailVerificationServiceImpl) ResetPassword(rawToken, newPassword strin
 		return err
 	}
 
-	// A reset is often done because the old password leaked, so nobody who
-	// was signed in with it may stay signed in.
+	// End all sessions; the old password may have leaked.
 	return s.Repository.RefreshTokenRepository.DeleteByUserId(token.UserId)
 }
 
@@ -232,8 +203,7 @@ func (s *emailVerificationServiceImpl) SetPassword(rawToken, newPassword string)
 	return s.Repository.UserRepository.SetPassword(token.UserId, hashedPassword)
 }
 
-// consumeToken validates a raw token against the given expected action and
-// deletes every pending token of that action for the user (single-use).
+// consumeToken validates a token for action and deletes the user's pending tokens of that action.
 func (s *emailVerificationServiceImpl) consumeToken(rawToken, expectedAction string) (*repository.EmailActionToken, error) {
 	hash := hashOpaqueToken(rawToken)
 
@@ -274,10 +244,7 @@ func (s *emailVerificationServiceImpl) RequestEmailChange(userId, currentEmail, 
 		return false, err
 	}
 
-	// The order matters: a confirm token applies whatever pending_email holds
-	// when it is used, so every older link has to be gone before
-	// pending_email changes. Otherwise a link sent to one address could
-	// confirm a different, never-verified one.
+	// Delete older links first so none can confirm a different pending email.
 	if err := s.Repository.EmailActionTokenRepository.DeleteByUserIdAndAction(userId, repository.EmailActionChangeEmail); err != nil {
 		return false, err
 	}
@@ -314,8 +281,7 @@ func (s *emailVerificationServiceImpl) ConfirmEmailChange(rawToken string) error
 		return ErrInvalidToken
 	}
 
-	// The address was free when the change was requested, but someone may
-	// have registered it since.
+	// The address may have been registered since the request.
 	other, err := s.Repository.UserRepository.FindByEmail(user.PendingEmail)
 	if err != nil {
 		return err
@@ -339,9 +305,7 @@ func (s *emailVerificationServiceImpl) NotifyProviderLinked(email string) {
 	}
 }
 
-// generateOpaqueToken mirrors generateRefreshToken (jwt.go): a random opaque
-// token handed out to the client, and the SHA-256 hash that's actually
-// persisted, so a DB leak doesn't hand out usable links directly.
+// generateOpaqueToken returns a random token and its SHA-256 hash for storage.
 func generateOpaqueToken() (rawToken, hash string, err error) {
 	buf := make([]byte, 32)
 	if _, err = rand.Read(buf); err != nil {
@@ -396,8 +360,7 @@ func confirmEmailChangeMessage(to, rawToken string) mailer.Message {
 	}
 }
 
-// emailChangeRequestedMessage goes to the address being replaced, so a
-// hijacked session can't quietly move the account to another inbox.
+// emailChangeRequestedMessage notifies the old address of a requested change.
 func emailChangeRequestedMessage(to, newEmail string) mailer.Message {
 	return mailer.Message{
 		To:      to,

@@ -69,8 +69,7 @@ function actionItems(theme: Theme) {
   ]
 }
 
-// Import opens the create dialog pre-filled from an exported config file. It
-// always creates a new theme.
+// Import opens the create dialog pre-filled from a file.
 const importFileInput = ref<HTMLInputElement>()
 const importInitial = ref<ThemeBase>()
 const importOpen = ref(false)

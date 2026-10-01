@@ -3,29 +3,12 @@ app:
   description: LinkShelf is an OpenSource alternative to linktree.
   environment: production
   frontendUrl: "http://localhost:3000"
-  # Other full http(s) origins the instance is also reachable on, besides
-  # frontendUrl (e.g. a second domain pointed at the same frontend). Allowed
-  # by the strictOrigins check, and reserved so no shelf can use them as its
-  # custom domain. A shelf's own domain doesn't belong here, that is handled
-  # automatically.
+  # Other origins the frontend is served on. Allowed by strictOrigins and reserved from shelf domains.
   additionalOrigins: []
-  # When true, a shelf's public URL is /<username>/<path>, so two users can
-  # both own /profile. When false (the default) it is /<path>, unique across
-  # the whole instance - the simpler choice for a single-user or private
-  # instance. Switching back to false fails on startup if two shelves then
-  # share a path.
+  # true: shelf URLs are /<username>/<path>. false: /<path>, unique per instance.
   userBasedPaths: false
-  # When true, the API only accepts what belongs to this instance:
-  #   - browsers may call it only from the origin of frontendUrl, one of
-  #     additionalOrigins, or from the domain of a shelf that has one (so a
-  #     shelf served on its own domain can still load its content). Requests
-  #     without an Origin header, such as the frontend's server-side calls or
-  #     curl, are not affected.
-  #   - it only answers requests whose Host is server.host (plus server.port
-  #     when domain.openapi.usePort is true). Anything else gets a 421. The
-  #     health endpoints are always exempt so probes that use a pod IP work.
-  # Requires frontendUrl and server.host to be set to the real public values.
-  # Leave it false while they are still the localhost defaults.
+  # Only allow browser calls from known origins and requests addressed to server.host (else 421).
+  # Requires frontendUrl and server.host to be the real public values.
   strictOrigins: false
 server:
   scheme: http
@@ -47,96 +30,52 @@ domain:
   openapi:
     usePort: false
 themes:
-  # Directory of instance-theme YAML files (one file per theme, each with a
-  # "name" and a "config"), scanned once at startup. Removing a file removes
-  # that theme on the next restart; leave empty to skip instance themes
-  # entirely. Mount a host directory here the same way compose.dev.yaml
-  # mounts config.default.yaml.
-  #
-  # Defaults to the "modern chic" theme pack this repo ships in
-  # backend/themes/ (copied to /app/themes in the container image - see
-  # .container/Containerfile), so every fresh install gets a handful of
-  # ready-to-use instance themes out of the box. Point this at your own
-  # directory instead (or set it back to "") to replace or turn them off.
+  # Directory of instance-theme YAML files, synced at startup. Defaults to the bundled themes; "" disables them.
   directory: "themes"
 assets:
-  # Directory of static files (e.g. theme background images) an instance
-  # admin wants to make available to themes, scanned once at startup and
-  # served at basePath (e.g. a file "my-dog.webp" here becomes
-  # "{basePath}/my-dog.webp"). Leave directory empty to skip entirely.
+  # Directory of static files (e.g. theme background images) served at basePath. "" disables it.
   directory: ""
   basePath: "/images"
 authentication:
   type: LOCAL # LOCAL # OIDC
-  # jwtSecret signs the access tokens this backend issues itself, no matter
-  # which auth type is active below. Anyone who knows it can sign in as any
-  # user, including an admin. Required: set it via the
-  # AUTHENTICATION_JWTSECRET environment variable to a random value of at
-  # least 32 bytes, e.g. the output of `openssl rand -base64 48`. Startup
-  # fails while it is empty, too short or a known placeholder.
+  # Required, at least 32 bytes, e.g. `openssl rand -base64 48`. Set via AUTHENTICATION_JWTSECRET.
   jwtSecret: ""
   accessTokenExpiryMinutes: 5
   refreshTokenExpiryMinutes: 1440 # 24h
   bootstrapAdmin:
-    # Created with role=admin on startup if no account with this email exists
-    # yet. An existing account is never changed, so a password changed after
-    # the first login stays changed across restarts.
-    # Leave email and password empty (the default) to skip bootstrapping an
-    # admin account, e.g. set AUTHENTICATION_BOOTSTRAPADMIN_EMAIL and
-    # AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD for the first start only.
+    # Admin created on startup if the email doesn't exist yet. Leave empty to skip.
     email: ""
-    # Must not exceed 72 bytes - bcrypt, used to hash it, ignores anything past that.
+    # Max 72 bytes (bcrypt limit).
     password: ""
-    # Applied as configured, without the checks a user-chosen username goes
-    # through (so it may be a reserved word such as "admin").
+    # Not validated, so it may be a reserved word.
     username: admin
   oidc:
-    # issuer and clientId are required when authentication.type is OIDC.
-    # Works with any standards-compliant OIDC issuer (Keycloak, Zitadel,
-    # Auth0, Google, ...).
+    # issuer and clientId are required when type is OIDC.
     issuer: ""
     clientId: ""
-    # clientSecret is optional: the login flow always runs PKCE, so a public
-    # client registered without a secret works fine - leave this empty in
-    # that case.
+    # Optional: PKCE is always used.
     clientSecret: ""
-    # Must match the frontend's OIDC callback page, which completes the
-    # login by POSTing the code+state here to /v1/auth/oidc/callback.
     redirectUrl: "http://localhost:3000/auth/callback"
-  # Set to false to turn off everything that uses a local password: password
-  # login, self-registration and "forgot password". Only allowed when type is
-  # OIDC, so that everyone signs in through the identity provider. Leave it on
-  # while existing password accounts still need to sign in.
+  # false disables password login, registration and reset. Only allowed with OIDC.
   localAuthEnabled: true
-  # Set to false to disable public self-registration (POST /v1/users without
-  # an admin token). Admins can still create accounts, and OIDC
-  # auto-provisioning is unaffected either way.
+  # false disables public self-registration.
   registrationEnabled: true
   emailVerification:
-    # When true, smtp.host and smtp.from must be set (checked at startup) and
-    # local/password accounts must verify their email before they can log in.
-    # OIDC accounts are always exempt.
+    # Requires smtp.host and smtp.from. OIDC accounts are exempt.
     enabled: true
     tokenExpiryHours: 24
   passwordReset:
-    # When true, the sign-in page offers "Forgot password?" and emails a
-    # reset link. smtp.host and smtp.from must be set (checked at startup).
-    # Set to false on an instance without working email.
+    # Requires smtp.host and smtp.from.
     enabled: true
     tokenExpiryMinutes: 60
 smtp:
-  # Defaults to the Mailpit dev container (see compose.yaml) for local
-  # development - matches the pattern of database.host/port also pointing at
-  # its published compose port.
+  # Defaults to the Mailpit dev container.
   host: localhost
   port: 1025
   username: ""
   password: ""
   from: "no-reply@linkshelf.local"
-  # Optional display name shown next to `from` in the email client, e.g.
-  # "LinkShelf by Fermion" -> `"LinkShelf by Fermion" <no-reply@linkshelf.local>`.
-  # Only ever used in that header, never in the SMTP envelope address - leave
-  # blank to send just the bare address as the From header too.
+  # Optional display name for the From header.
   fromName: ""
-  # none | starttls | tls - Mailpit speaks plain SMTP with no TLS at all.
+  # none | starttls | tls
   tlsMode: none

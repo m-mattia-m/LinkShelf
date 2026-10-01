@@ -1,6 +1,5 @@
 <script setup lang="ts">
-// Icon names come from public/icon-names.json, loaded lazily on first open
-// and shared across instances via useState.
+// Icon names are loaded lazily and shared via useState.
 interface IconNameSets {
   'lucide': string[]
   'simple-icons': string[]

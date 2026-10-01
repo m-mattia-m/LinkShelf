@@ -11,9 +11,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-// CreateUser is public (self-registration) and also the admin "add a user"
-// endpoint: a valid admin Bearer token may set the new user's role. The
-// operation has no Security requirement, so the token is checked here.
+// CreateUser handles self-registration and admin user creation (admins may set a role).
 func CreateUser(svc *domain.Service) func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserRequestBody) (*model.UserResponse, error) {
 		isAdmin := false
@@ -77,8 +75,7 @@ func GetUserById(svc *domain.Service) func(c context.Context, input *model.UserR
 	}
 }
 
-// UpdateUser lets a user update their own profile, or an admin update
-// anyone's - but only an admin caller may change the role field.
+// UpdateUser updates the caller's own profile, or any profile for admins. Only admins may change roles.
 func UpdateUser(svc *domain.Service) func(c context.Context, input *model.UserFilterFilterAndBody) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserFilterFilterAndBody) (*model.UserResponse, error) {
 		isAdmin := IsAdminFromContext(c)
@@ -107,9 +104,7 @@ func UpdateUser(svc *domain.Service) func(c context.Context, input *model.UserFi
 	}
 }
 
-// PatchUserPassword only ever lets someone patch their own password - not
-// even an admin may patch another user's password through this endpoint,
-// since it requires knowing the current password.
+// PatchUserPassword changes the caller's own password.
 func PatchUserPassword(svc *domain.Service) func(c context.Context, input *model.UserPatchPasswordFilterAndBody) (*struct{}, error) {
 	return func(c context.Context, input *model.UserPatchPasswordFilterAndBody) (*struct{}, error) {
 		if input.UserId != UserIdFromContext(c) {
@@ -125,9 +120,7 @@ func PatchUserPassword(svc *domain.Service) func(c context.Context, input *model
 	}
 }
 
-// MarkUserVerified is an admin-only override: it forces a user's email to
-// verified without requiring the emailed link at all - a safety valve for
-// when SMTP delivery is broken or blocked.
+// MarkUserVerified lets an admin mark an email verified, e.g. when SMTP is broken.
 func MarkUserVerified(svc *domain.Service) func(c context.Context, input *model.UserRequestFilter) (*model.UserResponse, error) {
 	return func(c context.Context, input *model.UserRequestFilter) (*model.UserResponse, error) {
 		if err := svc.EmailVerificationService.MarkVerified(input.UserId); err != nil {

@@ -9,9 +9,7 @@ import (
 	"time"
 )
 
-// OidcState is a single-use PKCE state/verifier pair for an in-flight OIDC
-// login. It's persisted (not kept in memory) so multiple backend replicas can
-// all handle the callback regardless of which one issued the authorization URL.
+// OidcState is a single-use PKCE state, stored in the DB so any replica can handle the callback.
 type OidcState struct {
 	State        string
 	CodeVerifier string
@@ -45,8 +43,7 @@ func (r *oidcStateRepository) Create(state, codeVerifier string, expiresAt time.
 		return err
 	}
 
-	// See refresh_token.go's Create for why expiresAt is normalized to UTC:
-	// both engines' column type is timezone-naive.
+	// expires_at is timezone-naive, so store UTC.
 	_, err = r.Engine.ExecContext(context.TODO(), query, state, codeVerifier, expiresAt.UTC())
 	return err
 }

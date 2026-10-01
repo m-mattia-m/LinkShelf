@@ -40,8 +40,7 @@ type ThemeListResponse struct {
 	Body []Theme `json:"body" bson:"body"`
 }
 
-// ThemeGroupedResponseBody groups themes the way the shelf's theme picker
-// displays them: instance-provided vs the caller's own.
+// ThemeGroupedResponseBody groups instance themes and the caller's own.
 type ThemeGroupedResponseBody struct {
 	Instance []Theme `json:"instance" bson:"instance"`
 	Mine     []Theme `json:"mine" bson:"mine"`

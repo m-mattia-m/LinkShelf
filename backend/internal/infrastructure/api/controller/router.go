@@ -54,8 +54,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		},
 	}
 
-	// Kubernetes hits these every few seconds, which would otherwise drown out
-	// every other access log line.
+	// Skip access logs for health probes.
 	healthPaths := []string{healthLivenessPath, healthReadinessPath}
 	router := gin.New()
 	router.Use(gin.Recovery())
@@ -96,9 +95,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		c.Redirect(http.StatusPermanentRedirect, "/swagger")
 	})
 
-	// Serves an instance admin's mounted assets directory (e.g. theme
-	// background images) at assets.basePath, e.g. a file "my-dog.webp"
-	// becomes "{basePath}/my-dog.webp". A no-op if assets.directory isn't set.
+	// Serves assets.directory at assets.basePath.
 	if assetsDir := strings.TrimSpace(config.String("assets.directory")); assetsDir != "" {
 		router.Static(config.String("assets.basePath"), assetsDir)
 	}

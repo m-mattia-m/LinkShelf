@@ -94,8 +94,7 @@ describe('ShelfLinkFormDialog', () => {
     expect(emitted().saved).toBeFalsy()
   })
 
-  // Not covered: an invalid hex in the color field. UColorPicker normalizes
-  // it to a valid hex before the form's validation sees it.
+  // Invalid hex isn't tested: UColorPicker normalizes it.
 
   it('clears a set color back to the "Set a color" button', async () => {
     const { baseElement } = await renderSuspended(ShelfLinkFormDialog, {

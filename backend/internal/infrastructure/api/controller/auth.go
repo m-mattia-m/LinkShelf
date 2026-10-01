@@ -26,9 +26,7 @@ func Login(svc *domain.Service) func(c context.Context, input *model.LoginReques
 	}
 }
 
-// ResendVerification is intentionally silent about whether the address
-// exists, is already verified, or was rate-limited - all look identical to
-// the caller, so it can never be used to enumerate accounts.
+// ResendVerification never reveals whether the address exists.
 func ResendVerification(svc *domain.Service) func(c context.Context, input *model.ResendVerificationRequestBody) (*struct{}, error) {
 	return func(c context.Context, input *model.ResendVerificationRequestBody) (*struct{}, error) {
 		_ = svc.EmailVerificationService.Resend(input.Body.Email)
@@ -48,8 +46,7 @@ func VerifyEmail(svc *domain.Service) func(c context.Context, input *model.Verif
 	}
 }
 
-// ConfirmEmailChange applies a pending email change with the token emailed to
-// the new address.
+// ConfirmEmailChange applies a pending email change.
 func ConfirmEmailChange(svc *domain.Service) func(c context.Context, input *model.VerifyEmailRequestBody) (*struct{}, error) {
 	return func(c context.Context, input *model.VerifyEmailRequestBody) (*struct{}, error) {
 		if err := svc.EmailVerificationService.ConfirmEmailChange(input.Body.Token); err != nil {
@@ -65,8 +62,7 @@ func ConfirmEmailChange(svc *domain.Service) func(c context.Context, input *mode
 	}
 }
 
-// SetPassword completes the admin-invite flow: consumes a set-password token
-// and sets the account's first password, marking it verified in the process.
+// SetPassword completes an invite by setting the first password.
 func SetPassword(svc *domain.Service) func(c context.Context, input *model.SetPasswordRequestBody) (*struct{}, error) {
 	return func(c context.Context, input *model.SetPasswordRequestBody) (*struct{}, error) {
 		if err := svc.EmailVerificationService.SetPassword(input.Body.Token, input.Body.NewPassword); err != nil {
@@ -79,8 +75,7 @@ func SetPassword(svc *domain.Service) func(c context.Context, input *model.SetPa
 	}
 }
 
-// ForgotPassword emails a reset link. It answers the same way whether or not
-// the address belongs to an account, so it can't be used to look accounts up.
+// ForgotPassword emails a reset link. It never reveals whether the address exists.
 func ForgotPassword(svc *domain.Service) func(c context.Context, input *model.ForgotPasswordRequestBody) (*struct{}, error) {
 	return func(c context.Context, input *model.ForgotPasswordRequestBody) (*struct{}, error) {
 		err := svc.EmailVerificationService.RequestPasswordReset(input.Body.Email)
@@ -138,10 +133,7 @@ func OidcLogin(svc *domain.Service) func(c context.Context, input *struct{}) (*m
 	}
 }
 
-// OidcCallback behaves as a link-to-my-account request when called with a
-// valid Bearer token already present, and as a login-or-auto-provision
-// request otherwise - so it deliberately carries no Security requirement of
-// its own.
+// OidcCallback links to the current account when a Bearer token is present, otherwise logs in.
 func OidcCallback(svc *domain.Service) func(c context.Context, input *model.OidcCallbackRequestBody) (*model.TokenResponse, error) {
 	return func(c context.Context, input *model.OidcCallbackRequestBody) (*model.TokenResponse, error) {
 		var currentUserId *string

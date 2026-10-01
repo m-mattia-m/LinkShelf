@@ -10,56 +10,27 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-# Public URLs of the frontend and the backend API. Derived from the ingress
-# hosts when empty. Without an ingress the image defaults apply, which suits
-# `kubectl port-forward` on localhost.
+# Public frontend and API URLs. Derived from the ingress hosts when empty.
 frontendUrl: ""
 apiUrl: ""
 # Defaults to <frontendUrl>/auth/callback.
 oidcRedirectUrl: ""
 
-# Lock the API to this instance: browsers may only call it from frontendUrl or
-# from the domain of a shelf, and it only answers requests addressed to the
-# apiUrl host (app.strictOrigins in the backend config). It takes effect when
-# the ingress is enabled, since that is what tells the chart the real public
-# addresses. Set it to false to keep the API open.
+# Restrict the API to this instance's origins and host (app.strictOrigins). Requires the ingress.
 strictOrigins: true
 
-# Optional, cookie-free visitor analytics via Plausible (https://plausible.io).
-# Disabled by default - whether to track visitors is the instance owner's
-# call, not the chart's.
+# Optional Plausible analytics, disabled by default.
 plausible:
   enabled: false
-  # The site identifier registered in Plausible. Recommended to set
-  # explicitly; falls back to the request's hostname when empty.
+  # Site identifier in Plausible. Defaults to the request hostname.
   domain: ""
-  # Plausible instance to send events to. Defaults to Plausible Cloud
-  # (https://plausible.io) when empty - point this at your own self-hosted
-  # Plausible instance instead.
+  # Plausible instance. Defaults to Plausible Cloud.
   apiHost: ""
-  # Proxies the Plausible script and API calls through this app's own domain
-  # (under /_plausible) instead of apiHost directly, to reduce ad-blocker
-  # interference.
+  # Proxy Plausible through /_plausible to reduce ad-blocker interference.
   proxy: false
 
-# All backend config as a list of container environment variables, in plain
-# Kubernetes syntax: a literal "value", or "valueFrom" for anything that
-# should come from a Secret (the chart never renders one itself - point this
-# at whatever you, or something like External Secrets, already created).
-# There is no separate "secrets" section: a secret is just an env entry that
-# uses valueFrom instead of value, so nothing has to be kept in sync across
-# sections. Entries here win over the values the chart derives (e.g. the
-# ingress-derived URLs, or database.engine below).
-#
-# Every key of the backend config file maps to its dotted path, upper-cased
-# with underscores, e.g. smtp.host -> SMTP_HOST, app.name -> APP_NAME. See
-# backend/config.default.yaml for all keys. AUTHENTICATION_JWTSECRET is
-# required and must be set here (or via valueFrom.secretKeyRef) - never in
-# configFile below, which becomes a plaintext ConfigMap. Bring your own
-# database (below) needs DATABASE_HOST, _PORT, _USERNAME, _PASSWORD and _NAME
-# too, unless postgresql.enabled is true - here or in configFile, whichever
-# suits (non-secret values only; keep the password here via
-# valueFrom.secretKeyRef).
+# Backend config as env vars (smtp.host -> SMTP_HOST, see backend/config.default.yaml).
+# Use valueFrom for secrets. AUTHENTICATION_JWTSECRET is required. Entries here override derived values.
 env: []
   # - name: AUTHENTICATION_JWTSECRET
   #   valueFrom:
@@ -91,21 +62,12 @@ env: []
   # Shelves live at /<username>/<path> instead of /<path>:
   # - name: APP_USERBASEDPATHS
   #   value: "true"
-  # Make the instance itself reachable on another domain too, besides the
-  # ingress.frontend.host it's derived from (also add it to ingress.extraHosts
-  # and ingress.tls):
+  # Serve the instance on another domain too (also add it to ingress.extraHosts and ingress.tls):
   # - name: APP_ADDITIONALORIGINS
   #   value: "https://links.example.org"
 
-# Overwrite the whole backend config file instead of (or in addition to) individual
-# env entries above. Whatever is set here is rendered into a ConfigMap and becomes
-# the second of the backend's three config layers - config.default.yaml, then this
-# file, then env vars - so entries in `env` above still win over the same key here.
-# Useful for settings that are awkward as a single env var, e.g. server.trustedProxies
-# or a full oidc block. When this is non-empty the chart automatically mounts the
-# ConfigMap and points CONFIGURATION_FILE_PATH at it, unless you already set that key
-# in env yourself. Never put secrets here, a ConfigMap is plain text - use env with
-# valueFrom.secretKeyRef instead. See backend/config.default.yaml for all keys.
+# Backend config file, rendered into a ConfigMap and loaded before env vars.
+# Useful for lists or the oidc block. Never put secrets here.
 configFile: {}
   # server:
   #   trustedProxies:
@@ -113,19 +75,13 @@ configFile: {}
   # logging:
   #   level: debug
 
-# Bring your own database, with DATABASE_HOST/_PORT/_USERNAME/_PASSWORD/_NAME
-# in env above (or configFile below, for the non-secret ones). Ignored when
-# postgresql.enabled is true.
+# External database; set DATABASE_* in env. Ignored when postgresql.enabled is true.
 database:
   engine: POSTGRES # @schema enum:[POSTGRES,MYSQL]
-  # Extra connection parameters, e.g. sslmode=require. Empty keeps the image
-  # default.
+  # Extra connection parameters, e.g. sslmode=require.
   params: ""
 
-# Optional Postgres from the groundhog2k/postgres chart, meant for evaluation.
-# Not supported on OpenShift, bring your own database there. All values under
-# postgresql are passed to that chart, see
-# https://github.com/groundhog2k/helm-charts/tree/master/charts/postgres
+# Optional bundled Postgres for evaluation (groundhog2k/postgres chart). Not supported on OpenShift.
 postgresql:
   enabled: false
   settings:
@@ -133,8 +89,7 @@ postgresql:
     existingSecret: ""
     superuserPassword:
       secretKey: POSTGRES_PASSWORD
-  # Secret with the linkshelf database, user and password, required when
-  # enabled. LinkShelf reads the same Secret.
+  # Secret with the database, user and password, required when enabled. Also read by LinkShelf.
   userDatabase:
     existingSecret: ""
     name:
@@ -152,8 +107,7 @@ service:
   backendPort: 8085
   annotations: {}
 
-# The frontend and the backend need separate hosts, the browser talks to the
-# backend directly.
+# The frontend and backend need separate hosts.
 ingress:
   enabled: false
   className: ""
@@ -162,12 +116,7 @@ ingress:
     host: ""
   backend:
     host: ""
-  # More hosts that go to the frontend, for shelves that are served on a domain
-  # of their own (a shelf's domain field). List each domain, or a wildcard like
-  # "*.links.example.com" for all of them. The ingress controller has to pass
-  # the original Host header on, and the domain needs a TLS certificate: add it
-  # to tls below. Without a rule for it a domain never reaches LinkShelf, and
-  # shelves work through their path only.
+  # Extra frontend hosts for shelves with their own domain (wildcards allowed). Add them to tls too.
   extraHosts: []
     # - profile.example.com
     # - "*.links.example.com"
@@ -186,8 +135,7 @@ serviceAccount:
 podAnnotations: {}
 podLabels: {}
 
-# No user or group IDs on purpose: the image runs as 1001 and OpenShift's
-# restricted SCC assigns its own.
+# No user/group IDs: the image runs as 1001 and OpenShift assigns its own.
 podSecurityContext:
   runAsNonRoot: true
   seccompProfile:
@@ -231,14 +179,12 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
-# Whole ConfigMaps/Secrets imported as env vars, native Kubernetes envFrom
-# syntax. For individual variables, add to env above instead.
+# ConfigMaps/Secrets imported via envFrom.
 extraEnvFrom: []
 extraVolumes: []
 extraVolumeMounts: []
 
-# Extra manifests, rendered with the release. Each entry is a map or a string,
-# both go through `tpl`, so {{ .Release.Name }} works inside.
+# Extra manifests rendered with the release (passed through tpl).
 additionalResources: []
   # - apiVersion: v1
   #   kind: ConfigMap

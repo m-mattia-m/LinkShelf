@@ -11,9 +11,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// allowSelfRegistration is needed by every test that creates a user as a
-// non-admin caller, since Create() checks
-// authentication.registrationEnabled for that path.
+// allowSelfRegistration enables authentication.registrationEnabled.
 func allowSelfRegistration(t *testing.T) {
 	t.Helper()
 	config.Reset()
@@ -816,9 +814,7 @@ func Test_Unit_User_Update_Success_UnchangedUsernameIsNotChecked(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
-	// "admin" is reserved, but it is what this account already has (the
-	// bootstrap admin), so saving other profile fields must still work and
-	// must not ask the repository about it.
+	// The bootstrap admin keeps its reserved username when saving other fields.
 	svc.UserRepository.EXPECT().Get("user-1").Return(existingUserWithUsername("admin"), nil).Times(2)
 	svc.UserRepository.EXPECT().Update(gomock.Any()).Return(nil)
 

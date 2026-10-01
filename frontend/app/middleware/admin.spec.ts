@@ -3,8 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { buildAdminTokenPair, buildTokenPair } from '../../test/mocks/factories'
 import adminMiddleware from './admin'
 
-// Mock navigateTo as a passthrough so the middleware's redirect return value
-// is deterministic when it's invoked outside the router.
+// Passthrough navigateTo so the redirect is deterministic.
 mockNuxtImport('navigateTo', () => (to: unknown) => to)
 
 beforeEach(() => {

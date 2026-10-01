@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeShelfDomain, validateShelfDomain } from './shelfDomain'
 
-// The cases mirror Test_Unit_NormalizeDomain and Test_Unit_ValidateDomain in
-// backend/internal/domain/shelf_domain_test.go: both sides have to agree.
+// Mirrors the backend's shelf_domain_test.go.
 describe('normalizeShelfDomain', () => {
   it.each([
     ['profile.example.com', 'profile.example.com'],

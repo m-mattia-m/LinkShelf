@@ -27,27 +27,18 @@ type SettingPageBody struct {
 	PrivacyPolicy       string `json:"privacy_policy" bson:"privacy_policy"`
 	RedirectToDashboard bool   `json:"redirect_to_dashboard" bson:"redirect_to_dashboard"`
 	OidcEnabled         bool   `json:"oidc_enabled" bson:"oidc_enabled"`
-	// RegistrationEnabled and EmailVerificationEnabled mirror the
-	// authentication.registrationEnabled / authentication.emailVerification.enabled
-	// config so the frontend can adapt (hide sign-up, show a "check your
-	// email" step) without guessing from a failed request.
+	// RegistrationEnabled and EmailVerificationEnabled mirror the auth config.
 	RegistrationEnabled      bool `json:"registration_enabled" bson:"registration_enabled"`
 	EmailVerificationEnabled bool `json:"email_verification_enabled" bson:"email_verification_enabled"`
-	// UserBasedPaths mirrors app.userBasedPaths: public shelf URLs are
-	// /<username>/<path> instead of /<path>.
+	// UserBasedPaths mirrors app.userBasedPaths.
 	UserBasedPaths bool `json:"user_based_paths" bson:"user_based_paths"`
-	// PasswordResetEnabled mirrors authentication.passwordReset.enabled, so
-	// the sign-in page only offers "Forgot password?" when a reset email can
-	// actually be sent.
+	// PasswordResetEnabled mirrors authentication.passwordReset.enabled.
 	PasswordResetEnabled bool `json:"password_reset_enabled" bson:"password_reset_enabled"`
-	// LocalAuthEnabled mirrors authentication.localAuthEnabled, so the
-	// sign-in page only shows the email/password form when it can be used.
+	// LocalAuthEnabled mirrors authentication.localAuthEnabled.
 	LocalAuthEnabled bool `json:"local_auth_enabled" bson:"local_auth_enabled"`
 }
 
-// EmailDeliveryInfo is deliberately minimal (host + from address only, no
-// port/credentials/TLS mode) and only ever served to an authenticated admin -
-// SMTP itself is configured exclusively via config, never through the UI.
+// EmailDeliveryInfo is the admin-only SMTP summary (no credentials).
 type EmailDeliveryInfo struct {
 	Enabled bool   `json:"enabled" bson:"enabled"`
 	Host    string `json:"host" bson:"host"`
@@ -70,9 +61,7 @@ type SettingBatchRequest struct {
 	Body SettingBatchRequestBody `json:"body" bson:"body"`
 }
 
-// SettingUpdateFailure reports why one item of a batch update was not saved -
-// either it failed validation (never reached the database) or the upsert
-// itself errored.
+// SettingUpdateFailure reports why a batch item was not saved.
 type SettingUpdateFailure struct {
 	Key          string `json:"key" bson:"key"`
 	LanguageCode string `json:"language_code" bson:"language_code"`

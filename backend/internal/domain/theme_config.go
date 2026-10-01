@@ -7,8 +7,6 @@ import (
 )
 
 // ThemeProperties is the allowlist of CSS custom properties a theme may set.
-// No raw CSS is ever accepted, which is what makes user-authored themes safe to
-// render on public pages.
 var ThemeProperties = []string{
 	"--shelf-bg",
 	"--shelf-text",
@@ -43,9 +41,7 @@ var (
 	imagePathPattern  = regexp.MustCompile(`^(https?://[^\s'"<>]+|/images/[a-zA-Z0-9._-]+)$`)
 )
 
-// hasNoInjectionCharacters rejects characters that would let a value break out
-// of its "property: value;" declaration. url(...) is only allowed through
-// --shelf-bg-image's own validator.
+// hasNoInjectionCharacters rejects characters that could break out of a declaration.
 func hasNoInjectionCharacters(value string) bool {
 	if len(value) == 0 || len(value) > maxThemeValueLength {
 		return false
@@ -87,10 +83,7 @@ func validateFontFamily(value string) error {
 	return nil
 }
 
-// validateImageReference is the one property allowed to carry a URL - either
-// an absolute http(s) URL or a same-origin path served from the instance's
-// mounted assets directory (see config "assets.directory"). Anything else
-// (javascript:, data:, file:, or a bare relative path) is rejected.
+// validateImageReference allows an absolute http(s) URL or a path under the assets base path.
 func validateImageReference(value string) error {
 	if len(value) == 0 || len(value) > maxThemeValueLength {
 		return fmt.Errorf("%w: not a valid image reference", ErrInvalidInput)
@@ -101,8 +94,7 @@ func validateImageReference(value string) error {
 	return nil
 }
 
-// ParseThemeConfig parses "--name: value;" text into a validated map,
-// rejecting unknown properties, invalid values and duplicates.
+// ParseThemeConfig parses "--name: value;" text into a validated map.
 func ParseThemeConfig(raw string) (map[string]string, error) {
 	values := make(map[string]string)
 
@@ -141,9 +133,7 @@ func ParseThemeConfig(raw string) (map[string]string, error) {
 	return values, nil
 }
 
-// SerializeThemeConfig re-emits a validated property map as canonical
-// "--property: value;\n" text, in a fixed order, so what's stored/exported is
-// always exactly what was validated - never the caller's original formatting.
+// SerializeThemeConfig emits a validated property map in canonical form.
 func SerializeThemeConfig(values map[string]string) string {
 	var b strings.Builder
 	for _, name := range ThemeProperties {
@@ -154,9 +144,7 @@ func SerializeThemeConfig(values map[string]string) string {
 	return b.String()
 }
 
-// ValidateThemeConfig parses and re-serializes raw theme config text,
-// returning the canonical form to store, or an error naming the first
-// problem found.
+// ValidateThemeConfig parses and canonicalizes raw theme config.
 func ValidateThemeConfig(raw string) (string, error) {
 	values, err := ParseThemeConfig(raw)
 	if err != nil {

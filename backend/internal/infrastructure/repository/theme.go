@@ -20,13 +20,9 @@ type ThemeRepository interface {
 	Create(t *model.Theme) (string, error)
 	Update(t *model.Theme) error
 	Delete(id string) error
-	// UpsertInstanceBySourceFile creates or updates the instance-scoped theme
-	// matching sourceFile, used by the startup directory sync.
+	// UpsertInstanceBySourceFile creates or updates the instance theme for sourceFile.
 	UpsertInstanceBySourceFile(t *model.Theme) error
-	// DeleteInstanceNotIn removes every instance-scoped theme whose
-	// source_file is not in keepSourceFiles, used by the startup directory
-	// sync to drop themes whose file was removed. An empty keepSourceFiles
-	// removes all instance-scoped themes.
+	// DeleteInstanceNotIn removes instance themes whose source file is not in keepSourceFiles.
 	DeleteInstanceNotIn(keepSourceFiles []string) error
 }
 

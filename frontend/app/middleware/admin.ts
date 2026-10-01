@@ -1,5 +1,4 @@
-// Runs after auth.global.ts. Client-only because the role comes from the
-// locally stored access token.
+// Client-only: the role comes from the stored access token.
 export default defineNuxtRouteMiddleware(() => {
   if (!import.meta.client) return
 

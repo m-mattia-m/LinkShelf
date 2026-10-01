@@ -11,16 +11,11 @@ import (
 	"strings"
 )
 
-// linkHostPattern matches a domain.tld-shaped host with a TLD of at least 2
-// letters. There is deliberately no TLD allowlist.
+// linkHostPattern matches a domain.tld host (TLD of 2+ letters).
 var linkHostPattern = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`)
 
-// normalizeLinkURL accepts a URL with or without a scheme (defaulting to
-// https), but if a scheme is present it must be http/https, and the host
-// must look like a real domain. It returns the URL that was actually
-// validated - callers must store that, never the raw input: the raw input of
-// "javascript:alert(1)%2F%2F@example.com" passes the check once "https://"
-// is prepended, yet a browser runs it as a javascript: URL.
+// normalizeLinkURL validates a link (https by default) and returns the URL to store.
+// Never store the raw input: a javascript: URL can pass as userinfo.
 func normalizeLinkURL(value string) (string, error) {
 	candidate := value
 	if !strings.Contains(candidate, "://") {
@@ -36,8 +31,7 @@ func normalizeLinkURL(value string) (string, error) {
 		return "", fmt.Errorf("%w: scheme must be \"http\" or \"https\", got %q", ErrInvalidInput, parsed.Scheme)
 	}
 
-	// A bookmark never needs credentials in the URL, and userinfo is exactly
-	// what lets a non-http payload hide in front of a valid-looking host.
+	// Reject userinfo; it's how a non-http payload hides before a valid host.
 	if parsed.User != nil {
 		return "", fmt.Errorf("%w: %q must not contain a username or password", ErrInvalidInput, value)
 	}
@@ -55,9 +49,7 @@ type LinkService interface {
 	Create(callerUserId string, isAdmin bool, u *model.Link) (*model.Link, error)
 	Update(linkId, callerUserId string, isAdmin bool, linkRequest *model.Link) (*model.Link, error)
 	Delete(linkId, callerUserId string, isAdmin bool) error
-	// UpdateOrder saves every valid item and reports the rest as failures - it
-	// never aborts the whole batch over one bad item, mirroring
-	// SettingService.UpdateMany.
+	// UpdateOrder saves valid items and reports the rest as failures.
 	UpdateOrder(callerUserId string, isAdmin bool, items []model.LinkOrderItem) []model.LinkOrderFailure
 }
 
@@ -73,8 +65,7 @@ func NewLinkService(repository *repository.Repository, domain *Service) LinkServ
 	}
 }
 
-// List is the public, unauthenticated lookup used to render a shelf's public
-// link page - it intentionally performs no ownership check.
+// List is the public lookup for a shelf's links; no ownership check.
 func (s *linkServiceImpl) List(shelfId string) ([]model.Link, error) {
 	return s.Repository.LinkRepository.ListByShelfId(shelfId)
 }
@@ -201,10 +192,7 @@ func (s *linkServiceImpl) UpdateOrder(callerUserId string, isAdmin bool, items [
 	return failures
 }
 
-// canReorder resolves the link's shelf (via its section) and checks the
-// caller may write to it, returning ErrNotFound/ErrForbidden the same way
-// Update/Delete do. It never changes section_id - a reorder batch can only
-// move a link within whichever section it already belongs to.
+// canReorder checks the caller may write to the link's shelf.
 func (s *linkServiceImpl) canReorder(linkId, callerUserId string, isAdmin bool) error {
 	existing, err := s.Repository.LinkRepository.Get(linkId)
 	if err != nil {

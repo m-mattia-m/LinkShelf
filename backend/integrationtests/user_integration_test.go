@@ -161,8 +161,7 @@ func Test_API_User_Update(t *testing.T) {
 	created, err := TestService.UserService.Create(user, false)
 	require.NoError(t, err)
 
-	// Only the account owner (or an admin) may update a profile - log in as
-	// the user itself to exercise the realistic self-update path.
+	// Update as the user itself.
 	token := loginAndGetToken(t, user.Email, user.Password)
 
 	updateRequest := model.UserBase{

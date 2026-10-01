@@ -221,8 +221,7 @@ func Test_Unit_HostMatches(t *testing.T) {
 	})
 }
 
-// strictRouter builds the real router with app.strictOrigins on, so the
-// middleware order (host guard, then CORS) is part of what is tested.
+// strictRouter builds the real router with app.strictOrigins on.
 func strictRouter(t *testing.T, svc *MockService) http.Handler {
 	t.Helper()
 

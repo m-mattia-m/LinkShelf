@@ -84,9 +84,7 @@ func Test_Router_BuildsWithoutError(t *testing.T) {
 	require.NotNil(t, router)
 }
 
-// Both public lookups are registered side by side, so this goes through the
-// real router: the two paths must not collide in gin, and each must reach its
-// own handler.
+// Both public lookups must route to their own handler.
 func Test_Router_ServesBothPublicShelfLookups(t *testing.T) {
 	config.Reset()
 	require.NoError(t, config.LoadConfig())

@@ -28,9 +28,7 @@ const form = reactive({
   email: ''
 })
 
-// Renaming changes the URL of every shelf that has a path, so it is
-// confirmed first - but only when user-based paths are on and there is
-// something to break.
+// Renaming changes shelf URLs, so confirm when user-based paths are on.
 const confirmOpen = ref(false)
 const pendingProfile = ref<Schema | null>(null)
 const affectedShelves = computed(() =>
@@ -97,8 +95,7 @@ async function save(data: Schema) {
       }
     })
     authStore.user = updated
-    // A changed email only takes effect once the new address is confirmed,
-    // so the field goes back to the email that is still in use.
+    // A changed email applies only after confirmation.
     form.email = updated.email
     // The shelves' URLs follow the username, so their cached copies are stale.
     if (userBasedPaths.value) await shelfStore.fetch()

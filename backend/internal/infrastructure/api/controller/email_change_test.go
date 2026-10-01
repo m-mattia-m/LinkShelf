@@ -116,8 +116,7 @@ func Test_API_OidcCallback_AccountNotLinkable_Is409(t *testing.T) {
 	require.ErrorContains(t, err, "can't be linked")
 }
 
-// With local auth off, sign-up and "forgot password" are reported off too,
-// so the frontend hides them without knowing about the new flag.
+// Without local auth, sign-up and password reset are reported off.
 func Test_SettingPageFlags_LocalAuthDisabledTurnsOffSignUpAndPasswordReset(t *testing.T) {
 	svc := NewMockDomainService(t)
 	defer svc.Ctrl.Finish()

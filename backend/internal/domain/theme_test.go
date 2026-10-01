@@ -257,8 +257,7 @@ func Test_Unit_Theme_Update_Forbidden_AdminCannotEditOthersTheme(t *testing.T) {
 		Get("theme-uuid-test").
 		Return(&model.Theme{Id: "theme-uuid-test", Scope: model.ThemeScopeUser, OwnerUserId: "owner-uuid-test"}, nil)
 
-	// Update takes no isAdmin parameter at all - not even an admin may edit
-	// someone else's theme content, only delete it (see the Delete tests).
+	// Not even an admin may edit someone else's theme.
 	theme, err := svc.Service.ThemeService.Update("theme-uuid-test", "admin-uuid-test", model.ThemeBase{Name: "New", Config: "--shelf-bg: #fff;"})
 
 	require.ErrorIs(t, err, ErrForbidden)

@@ -16,25 +16,16 @@ type ShelfRepository interface {
 	ListByUserId(userId string) ([]model.Shelf, error)
 	Get(id string) (*model.Shelf, error)
 	GetByPath(path string) (*model.Shelf, error)
-	// GetByDomain resolves a shelf by the domain it is served on. domain must
-	// already be normalized (see domain.NormalizeDomain), which is what makes
-	// a plain equality check enough.
+	// GetByDomain resolves a shelf by its normalized domain.
 	GetByDomain(domain string) (*model.Shelf, error)
-	// GetByUsernameAndPath resolves /<username>/<path>, used instead of
-	// GetByPath while app.userBasedPaths is enabled.
+	// GetByUsernameAndPath resolves /<username>/<path>.
 	GetByUsernameAndPath(username, path string) (*model.Shelf, error)
-	// PathInUse reports whether another shelf (not exceptShelfId, which may
-	// be empty) already has this path, compared case-insensitively like the
-	// public lookup does. PathInUseByUser is the same restricted to one owner.
+	// PathInUse reports whether another shelf has this path (case-insensitive).
 	PathInUse(path, exceptShelfId string) (bool, error)
 	PathInUseByUser(userId, path, exceptShelfId string) (bool, error)
-	// DomainInUse reports whether a shelf other than exceptShelfId (which may
-	// be empty) already has this normalized domain, so an empty exceptShelfId
-	// asks whether any shelf has it.
+	// DomainInUse reports whether a shelf other than exceptShelfId has this domain.
 	DomainInUse(domain, exceptShelfId string) (bool, error)
-	// ListPathCollisions returns every shelf whose path is also used by at
-	// least one other shelf - only possible after user-based paths were
-	// switched off again.
+	// ListPathCollisions returns shelves sharing a path.
 	ListPathCollisions() ([]PathCollision, error)
 	Create(s *model.Shelf) (string, error)
 	Update(s *model.Shelf) error
@@ -49,9 +40,7 @@ type PathCollision struct {
 	Username string
 }
 
-// shelfSelect is shared by every read so they all fill the owner's username
-// the same way. It is a plain fragment rather than a column list so each
-// query can append its own WHERE.
+// shelfSelect is the shared SELECT for shelf reads, including the owner's username.
 const shelfSelect = `
 		SELECT s.id, s.title, s.path, s.domain, s.description, s.theme_id, s.icon, s.user_id, u.username, s.created_user_based_paths, s.no_index, s.footer_enabled, s.footer_custom_text
 		FROM shelf s
@@ -70,10 +59,7 @@ func NewShelfRepository(engine *sql.DB, table string) (ShelfRepository, error) {
 	}, nil
 }
 
-// nullIfEmpty maps "" to a SQL NULL, since path/domain are stored as NULL
-// (not "") when unset - a plain UNIQUE constraint then allows any number of
-// shelves to leave them unset, on both Postgres and MySQL. See
-// migrations/postgres/0003_dashboard.up.sql for why.
+// nullIfEmpty stores "" as NULL so UNIQUE allows many unset values.
 func nullIfEmpty(s string) any {
 	if s == "" {
 		return nil
@@ -81,9 +67,7 @@ func nullIfEmpty(s string) any {
 	return s
 }
 
-// scanShelf reads a shelf row where path/domain/theme_id may be SQL NULL,
-// translating NULL back to "" so nothing above the repository layer has to
-// know about it.
+// scanShelf reads a shelf row, mapping NULLs to "".
 func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 	var (
 		shelf    model.Shelf

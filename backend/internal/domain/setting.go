@@ -8,9 +8,7 @@ import (
 	"fmt"
 )
 
-// settingKeys are the only keys the setting page actually reads (see
-// model.SettingPageBody / mapper.MapSettingToSettingPageResponse) - anything
-// else would silently write an orphan row nobody ever reads back.
+// settingKeys are the keys the setting page reads.
 var settingKeys = map[string]bool{
 	"about":                 true,
 	"about_show":            true,
@@ -25,9 +23,7 @@ var settingKeys = map[string]bool{
 	"redirect_to_dashboard": true,
 }
 
-// booleanSettingKeys are the keys mapped to a bool (via `== "true"`) by
-// mapper.MapSettingToSettingPageResponse - their value must actually be
-// "true" or "false".
+// booleanSettingKeys must be "true" or "false".
 var booleanSettingKeys = map[string]bool{
 	"about_show":            true,
 	"contact_show":          true,
@@ -37,8 +33,7 @@ var booleanSettingKeys = map[string]bool{
 	"redirect_to_dashboard": true,
 }
 
-// supportedLanguageCodes mirrors frontend/nuxt.config.ts's i18n.locales -
-// keep both lists in sync if a locale is ever added or removed.
+// supportedLanguageCodes mirrors i18n.locales in frontend/nuxt.config.ts.
 var supportedLanguageCodes = map[string]bool{
 	"en":    true,
 	"de":    true,
@@ -49,8 +44,7 @@ var supportedLanguageCodes = map[string]bool{
 type SettingService interface {
 	List() ([]model.Setting, error)
 	Update(setting model.Setting) error
-	// UpdateMany saves every valid setting and reports the rest as failures -
-	// it never aborts the whole batch over one bad item.
+	// UpdateMany saves valid settings and reports the rest as failures.
 	UpdateMany(settings []model.Setting) []model.SettingUpdateFailure
 }
 
@@ -99,8 +93,7 @@ func (s *settingServiceImpl) UpdateMany(settings []model.Setting) []model.Settin
 	return failures
 }
 
-// validateSetting returns a human-readable reason the setting can't be
-// saved, or "" if it's valid.
+// validateSetting returns why a setting is invalid, or "".
 func validateSetting(setting model.Setting) string {
 	if !settingKeys[setting.Key] {
 		return fmt.Sprintf("unknown setting key %q", setting.Key)

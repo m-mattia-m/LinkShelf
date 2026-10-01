@@ -64,9 +64,7 @@ func Test_Unit_EnsureBootstrapAdmin_CreatesNewAdmin(t *testing.T) {
 	require.NoError(t, EnsureBootstrapAdmin(repo))
 }
 
-// Regression for the restart reset: an existing account - whose password may
-// have been changed after the first login, or whose role an admin may have
-// changed - is never written to. The mock fails on any call besides FindByEmail.
+// Regression: an existing account is never modified on restart.
 func Test_Unit_EnsureBootstrapAdmin_LeavesAnExistingAccountUntouched(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

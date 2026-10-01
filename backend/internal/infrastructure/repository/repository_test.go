@@ -14,9 +14,7 @@ func TestMain(m *testing.M) {
 		panic("failed to load test config: " + err.Error())
 	}
 
-	// setupRealDB is a no-op unless built with -tags=realdb, in which case it
-	// spins up a real Postgres or MySQL container (per database.engine) and
-	// points TestRepository at it - see realdb_setup_test.go.
+	// setupRealDB starts a real database only with -tags=realdb.
 	cleanup, err := setupRealDB()
 	if err != nil {
 		panic("failed to set up realdb test tier: " + err.Error())

@@ -21,8 +21,7 @@ const schema = computed(() => v.object({
 
 type Schema = v.InferOutput<typeof schema.value>
 
-// Off only when authentication.localAuthEnabled is false (SSO only). Missing
-// settings count as on, as before the setting existed.
+// Missing settings count as enabled.
 const localAuthEnabled = computed(() => websiteSettings.value?.localAuthEnabled !== false)
 
 // No fields means UAuthForm renders no email/password form at all.

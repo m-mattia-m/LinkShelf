@@ -830,8 +830,7 @@ func Test_Unit_Shelf_Creation_PathRules_UserBasedPathsOn(t *testing.T) {
 	})
 }
 
-// expectShelfUpdateLookups sets up the reads Update performs before it
-// validates anything: the caller, and the stored shelf owned by user-1.
+// expectShelfUpdateLookups expects the caller and a shelf owned by user-1.
 func expectShelfUpdateLookups(svc *MockService, storedPath string) {
 	svc.UserRepository.EXPECT().Get("user-1").Return(&model.User{Id: "user-1"}, nil)
 	svc.ShelfRepository.EXPECT().Get("shelf-1").Return(&model.Shelf{

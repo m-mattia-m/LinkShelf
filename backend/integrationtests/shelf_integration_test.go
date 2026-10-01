@@ -345,8 +345,7 @@ func Test_API_Shelf_GetPublicByPath_Success(t *testing.T) {
 	require.Equal(t, "A public shelf description", publicShelf.Description)
 	require.Equal(t, "i-lucide-book-open", publicShelf.Icon)
 	require.Equal(t, "Shelf-Public-Path", publicShelf.Path)
-	// no theme was selected, so it resolves to nil (render the built-in
-	// default look) rather than leaking the internal theme_id.
+	// No theme selected, so it resolves to nil.
 	require.Nil(t, publicShelf.Theme)
 
 	// the public payload must not leak internal fields
@@ -372,14 +371,12 @@ func Test_API_Shelf_GetPublicByPath_NotFound(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
 
-// uniqueSuffix is a short lowercase token that is valid inside a domain label
-// and a path, so tests that share one database can't collide.
+// uniqueSuffix is valid in a domain label and a path.
 func uniqueSuffix() string {
 	return strings.ToLower(uuid.NewString()[:8])
 }
 
-// createShelfRequest posts a shelf and returns the response, closing nothing:
-// the caller decides what to read.
+// createShelfRequest posts a shelf; the caller reads and closes the response.
 func createShelfRequest(t *testing.T, token string, shelf model.ShelfBase) *http.Response {
 	t.Helper()
 
@@ -412,8 +409,7 @@ func Test_API_Shelf_Domain_CreateAndPublicLookup(t *testing.T) {
 	require.Equal(t, "profile-"+suffix+".example.com:9443", created.Domain)
 	require.Empty(t, created.Path)
 
-	// The public lookup finds it by any spelling of the domain, and exposes
-	// nothing but the public fields.
+	// The lookup accepts any spelling of the domain and returns only public fields.
 	lookup := doRequest(t, http.MethodGet, "/v1/shelves/by-domain/Profile-"+suffix+".example.com%3A9443", nil)
 	defer lookup.Body.Close()
 	require.Equal(t, http.StatusOK, lookup.StatusCode)

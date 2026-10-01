@@ -36,14 +36,11 @@ func Test_BuildMessage(t *testing.T) {
 }
 
 func Test_FromHeader(t *testing.T) {
-	// No display name configured: the header is just the bare address, same
-	// as the envelope.
+	// Without a display name, the header is the bare address.
 	m := &smtpMailer{from: "no-reply@example.com"}
 	require.Equal(t, "no-reply@example.com", m.fromHeader())
 
-	// A display name is quoted/escaped per RFC 5322 and only ever affects the
-	// header - the envelope address (m.from, used separately for MAIL FROM)
-	// stays untouched.
+	// The display name only affects the header, not the envelope.
 	m = &smtpMailer{from: "no-reply@example.com", fromName: "LinkShelf by Fermion"}
 	require.Equal(t, `"LinkShelf by Fermion" <no-reply@example.com>`, m.fromHeader())
 	require.Equal(t, "no-reply@example.com", m.from)

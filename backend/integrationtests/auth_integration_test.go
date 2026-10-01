@@ -170,9 +170,7 @@ func Test_API_Auth_Login_Blocked_WhenEmailVerificationEnabledAndNotVerified(t *t
 }
 
 func Test_API_Auth_Login_Succeeds_AfterAdminMarksVerified(t *testing.T) {
-	// Create the admin (and log it in) before flipping the gate on - an
-	// ordinary admin account is not exempt from verification either (only
-	// the config-driven bootstrap admin is), so this must happen first.
+	// Create the admin before enabling verification; only the bootstrap admin is exempt.
 	_, adminToken := createTestAdmin(t)
 
 	config.Set("authentication.emailVerification.enabled", true)
@@ -229,9 +227,7 @@ func Test_API_Auth_SetPassword_InvalidToken(t *testing.T) {
 }
 
 func Test_API_Auth_OidcLogin_NotConfigured(t *testing.T) {
-	// This test harness runs with authentication.type=LOCAL, so OIDC is
-	// disabled - the endpoint must fail cleanly rather than panic on a nil
-	// OIDC client.
+	// The harness runs with LOCAL auth, so OIDC must fail cleanly.
 	resp := doRequest(t, http.MethodGet, "/v1/auth/oidc/login", nil)
 	defer func() { _ = resp.Body.Close() }()
 
