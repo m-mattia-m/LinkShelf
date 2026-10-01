@@ -2,57 +2,25 @@
 
 [![CI](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml/badge.svg)](https://github.com/m-mattia-m/LinkShelf/actions/workflows/ci.yaml) ![backend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/badges/.badges/main/coverage.svg) ![frontend coverage](https://raw.githubusercontent.com/m-mattia-m/LinkShelf/refs/heads/badges/.badges/main/coverage-frontend.svg) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m-mattia-m/LinkShelf?filename=backend%2Fgo.mod) ![Release](https://img.shields.io/github/v/release/m-mattia-m/LinkShelf)
 
-Open source Linktree alternative. Collect your links on a page (a *shelf*), style it, share it. Self-hosted.
+LinkShelf is an open source, self-hosted Linktree alternative. Collect your links on a page (a *shelf*), style it with a
+theme and share it under your own URL or domain. It runs as a single container and is built to be deployed on Kubernetes
+as well as with Docker Compose.
 
 ![LinkShelf dashboard and shelf editor](frontend/public/presentation.webp)
 
 ## Features
 
-**Shelves**
-
-- Unlimited shelves, sections and links
-- Drag and drop ordering
-- Icons from Lucide and Simple Icons, optional color per link
-- Share via URL or QR code
-- Optional footer: default "Powered by LinkShelf", your own text (bold, italic, links), or none
-- `noindex` per shelf to keep it out of search engines
-
-**URLs**
-
-- Path: `/<path>`
-- User-based paths: `/<username>/<path>`, so two users can both own `/profile`
-- Custom domain per shelf: `profile.example.com`
-
-**Themes**
-
-- 13 built-in themes
-- Own themes: colors, gradients, font, corner radius, background image
-- Import and export as plain text
-- Instance themes from a mounted directory, plus static assets like background images
-- Validated on save: no raw CSS, so themes are safe on public pages
-
-**Accounts and auth**
-
-- Local accounts or OIDC (Keycloak, Zitadel, Auth0, Google, ...)
-- Email verification, password reset, invite by email (needs SMTP)
-- Bootstrap admin from config
-- Registration can be turned off
-
-**Admin**
-
-- Manage users: create, invite, edit, verify, delete
-- Moderate user themes
-- Edit About, Contact, Imprint, Terms and Privacy pages (Markdown, per language)
-- Dashboard with shelf, section and link counts
-
-**Self-hosting**
-
-- One container image, frontend and backend together
-- PostgreSQL or MySQL
-- Helm chart, works on OpenShift
-- Strict origins to lock the API to your instance
-- OpenAPI spec and Swagger UI at `/swagger`
-- UI in English, Deutsch, Schwiizerdütsch and Español
+- **Unlimited shelves:** create as many shelves as you want and group links into sections.
+- **Accounts:** local accounts or OIDC (Keycloak, Zitadel, Auth0, Google, ...). Registration can be turned off.
+- **Own domains:** serve a shelf under `/<path>`, `/<username>/<path>` or its own custom domain.
+- **Theming:** 13 built-in themes, user themes, and instance themes from a mounted directory.
+- **Admin dashboard:** manage users, moderate themes and edit the About, Imprint, Terms and Privacy pages.
+- **SMTP:** optional mail integration for verification, password reset and invites.
+- **Responsive:** works on desktop and mobile.
+- **Kubernetes:** Helm chart, works on OpenShift.
+- **Database:** PostgreSQL or MySQL.
+- **API:** OpenAPI spec and Swagger UI at `/swagger`.
+- **Languages:** UI in English, Deutsch, Schwiizerdütsch and Español.
 
 ## Quick start
 
@@ -62,15 +30,27 @@ Open source Linktree alternative. Collect your links on a page (a *shelf*), styl
 3. Open `http://localhost:3000`
 4. Sign in with the bootstrap admin you configured
 
+## (Day-2) Operations
+
+- **Upgrades:** bump the image or chart version. On startup the app applies pending database migrations itself
+  (golang-migrate), nothing to run manually.
+- **Rollback:** rolling back the chart rolls back the pods, not the database. It only works if the older version can
+  still run on the migrated schema. Rollbacks are not tested yet.
+- **Backup/restore:** all state is in the database (plus the optional mounted themes/assets directories). Back up the
+  database with SQL dumps or your platform's tooling, e.g. CNPG with WAL archiving.
+- **Multiple replicas:** the app is stateless, so `replicaCount > 1` works. Tested briefly with 3 pods, not yet
+  thoroughly.
+
 ## Docs
 
 - [Self-hosting](frontend/content/docs/self-hosting/getting-started.md)
-  - [Docker](frontend/content/docs/self-hosting/docker.md)
-  - [Kubernetes](frontend/content/docs/self-hosting/kubernetes.md)
-  - [Configuration](frontend/content/docs/self-hosting/configuration.md)
-  - [Custom domains](frontend/content/docs/self-hosting/custom-domains.md)
+    - [Docker](frontend/content/docs/self-hosting/docker.md)
+    - [Kubernetes](frontend/content/docs/self-hosting/kubernetes.md)
+    - [Configuration](frontend/content/docs/self-hosting/configuration.md)
+    - [Custom domains](frontend/content/docs/self-hosting/custom-domains.md)
 - [Usage](frontend/content/docs/usage/getting-started.md)
 - [Helm chart](charts/linkshelf/README.md)
+- [FAQ](frontend/content/docs/faq/index.md)
 
 ## Contributing and Development
 

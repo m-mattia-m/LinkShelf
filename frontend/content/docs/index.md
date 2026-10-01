@@ -10,6 +10,7 @@ navigation: true
 - [Usage](/docs/usage/getting-started): build and share a shelf
 - [Self-hosting](/docs/self-hosting/getting-started): run your own instance
 - [Cloud](/docs/cloud/getting-started): not available yet
+- [FAQ](/docs/faq): upgrades, rollbacks, backups, replicas
 
 ## Guides
 
