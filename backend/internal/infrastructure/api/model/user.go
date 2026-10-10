@@ -10,6 +10,8 @@ type User struct {
 	PendingEmail string `json:"pending_email,omitempty" bson:"pending_email"`
 	// EmailDeliveryFailed is set when the account was saved but its email could not be sent.
 	EmailDeliveryFailed bool `json:"email_delivery_failed,omitempty" bson:"-"`
+	// MaxShelves is the shelf limit, null for unlimited. Read-only here, see the limits endpoints.
+	MaxShelves *int `json:"max_shelves" bson:"max_shelves" nullable:"true" doc:"Shelf limit, null for unlimited."`
 }
 
 type UserBase struct {
@@ -100,4 +102,22 @@ type SetPasswordRequest struct {
 
 type SetPasswordRequestBody struct {
 	Body SetPasswordRequest `json:"body" bson:"body"`
+}
+
+type UserLimits struct {
+	MaxShelves *int `json:"max_shelves" bson:"max_shelves" nullable:"true" doc:"Shelf limit, null for unlimited."`
+	ShelfCount int  `json:"shelf_count" bson:"shelf_count"`
+}
+
+type UserLimitsResponse struct {
+	Body UserLimits `json:"body" bson:"body"`
+}
+
+type UserLimitsPatch struct {
+	MaxShelves *int `json:"max_shelves" bson:"max_shelves" required:"true" nullable:"true" doc:"Shelf limit, zero or more. null for unlimited."`
+}
+
+type UserLimitsPatchRequest struct {
+	UserRequestFilter
+	Body UserLimitsPatch `json:"body" bson:"body"`
 }

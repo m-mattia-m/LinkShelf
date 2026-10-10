@@ -515,7 +515,7 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_StoresTheEmailLowercased(t
 	svc.UserRepository.EXPECT().FindByEmail(identity.Email).Return(nil, nil)
 	svc.UserRepository.EXPECT().UsernameTaken(gomock.Any(), "").Return(false, nil).AnyTimes()
 	svc.UserRepository.EXPECT().
-		CreateExternal("new.user@test.com", gomock.Any(), gomock.Any(), gomock.Any(), model.ProviderOIDC, identity.Subject).
+		CreateExternal("new.user@test.com", gomock.Any(), gomock.Any(), gomock.Any(), model.ProviderOIDC, identity.Subject, gomock.Any()).
 		Return("new-user-id", nil)
 	svc.RefreshTokenRepository.EXPECT().Create("new-user-id", gomock.Any(), gomock.Any()).Return(nil)
 
@@ -567,7 +567,7 @@ func Test_Unit_Auth_ResolveOidcIdentity_AutoProvision_VerifiedEmail_Success(t *t
 
 	svc.UserRepository.
 		EXPECT().
-		CreateExternal(identity.Email, "new-user", identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject).
+		CreateExternal(identity.Email, "new-user", identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject, gomock.Any()).
 		Return("new-user-id", nil)
 
 	svc.RefreshTokenRepository.
@@ -629,8 +629,8 @@ func provisionOidcUser(t *testing.T, identity *oidcclient.Identity, taken ...str
 
 	var got string
 	svc.UserRepository.EXPECT().
-		CreateExternal(identity.Email, gomock.Any(), identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject).
-		DoAndReturn(func(_, username, _, _, _, _ string) (string, error) {
+		CreateExternal(identity.Email, gomock.Any(), identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject, gomock.Any()).
+		DoAndReturn(func(_, username, _, _, _, _ string, _ *int) (string, error) {
 			got = username
 			return "new-user-id", nil
 		})

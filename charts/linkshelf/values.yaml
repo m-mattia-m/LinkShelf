@@ -62,6 +62,19 @@ env: []
   # Shelves live at /<username>/<path> instead of /<path>:
   # - name: APP_USERBASEDPATHS
   #   value: "true"
+  # Shelf limit for new users (empty = unlimited) and a link shown at the limit:
+  # - name: LIMITS_DEFAULTMAXSHELVES
+  #   value: "2"
+  # - name: LIMITS_UPGRADEURL
+  #   value: "https://account.example.com"
+  # Service token that can only read and set shelf limits, off by default:
+  # - name: AUTHENTICATION_SERVICETOKEN_ENABLED
+  #   value: "true"
+  # - name: AUTHENTICATION_SERVICETOKEN_TOKEN
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: linkshelf-secrets
+  #       key: service-token
   # Serve the instance on another domain too (also add it to ingress.extraHosts and ingress.tls):
   # - name: APP_ADDITIONALORIGINS
   #   value: "https://links.example.org"

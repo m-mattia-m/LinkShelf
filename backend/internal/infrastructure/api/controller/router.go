@@ -248,6 +248,26 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Security:    bearerSecurity(),
 	}, PatchUserPassword(svc))
 	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "get-user-limits",
+		Summary:     "Get user limits",
+		Description: "Shelf limit (null = unlimited) and current shelf count. Admin or service token.",
+		Path:        "/v1/users/{userId}/limits",
+		Tags:        []string{"User"},
+		Security:    bearerSecurity(),
+		Metadata:    requireAdminOrServiceToken(),
+	}, GetUserLimits(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPatch,
+		OperationID: "patch-user-limits",
+		Summary:     "Patch user limits",
+		Description: "Set the shelf limit (null = unlimited, 0 or more). Admin or service token.",
+		Path:        "/v1/users/{userId}/limits",
+		Tags:        []string{"User"},
+		Security:    bearerSecurity(),
+		Metadata:    requireAdminOrServiceToken(),
+	}, PatchUserLimits(svc))
+	huma.Register(api, huma.Operation{
 		Method:      http.MethodPatch,
 		OperationID: "patch-user-verify",
 		Summary:     "Mark user verified",

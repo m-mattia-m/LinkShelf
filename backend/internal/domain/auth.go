@@ -200,7 +200,11 @@ func (s *authServiceImpl) resolveOidcIdentity(identity *oidcclient.Identity, cur
 		return nil, err
 	}
 
-	userId, err := s.Repository.UserRepository.CreateExternal(normalizeEmail(identity.Email), username, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject)
+	defaultMax, err := config.DefaultMaxShelves()
+	if err != nil {
+		return nil, err
+	}
+	userId, err := s.Repository.UserRepository.CreateExternal(normalizeEmail(identity.Email), username, identity.FirstName, identity.LastName, model.ProviderOIDC, identity.Subject, defaultMax)
 	if err != nil {
 		return nil, err
 	}

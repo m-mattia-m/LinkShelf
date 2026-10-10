@@ -56,33 +56,33 @@ func (mr *MockUserRepositoryMockRecorder) ChangeEmail(userId, email, verified an
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(u model.UserBase, hashedPassword, role string) (string, error) {
+func (m *MockUserRepository) Create(u model.UserBase, hashedPassword, role string, maxShelves *int) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", u, hashedPassword, role)
+	ret := m.ctrl.Call(m, "Create", u, hashedPassword, role, maxShelves)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserRepositoryMockRecorder) Create(u, hashedPassword, role any) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Create(u, hashedPassword, role, maxShelves any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), u, hashedPassword, role)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), u, hashedPassword, role, maxShelves)
 }
 
 // CreateExternal mocks base method.
-func (m *MockUserRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error) {
+func (m *MockUserRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string, maxShelves *int) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateExternal", email, username, firstName, lastName, provider, providerId)
+	ret := m.ctrl.Call(m, "CreateExternal", email, username, firstName, lastName, provider, providerId, maxShelves)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateExternal indicates an expected call of CreateExternal.
-func (mr *MockUserRepositoryMockRecorder) CreateExternal(email, username, firstName, lastName, provider, providerId any) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) CreateExternal(email, username, firstName, lastName, provider, providerId, maxShelves any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExternal", reflect.TypeOf((*MockUserRepository)(nil).CreateExternal), email, username, firstName, lastName, provider, providerId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExternal", reflect.TypeOf((*MockUserRepository)(nil).CreateExternal), email, username, firstName, lastName, provider, providerId, maxShelves)
 }
 
 // Delete mocks base method.
@@ -229,6 +229,21 @@ func (m *MockUserRepository) PatchPassword(id, hashedPassword string) error {
 func (mr *MockUserRepositoryMockRecorder) PatchPassword(id, hashedPassword any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPassword", reflect.TypeOf((*MockUserRepository)(nil).PatchPassword), id, hashedPassword)
+}
+
+// SetMaxShelves mocks base method.
+func (m *MockUserRepository) SetMaxShelves(userId string, maxShelves *int) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMaxShelves", userId, maxShelves)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetMaxShelves indicates an expected call of SetMaxShelves.
+func (mr *MockUserRepositoryMockRecorder) SetMaxShelves(userId, maxShelves any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMaxShelves", reflect.TypeOf((*MockUserRepository)(nil).SetMaxShelves), userId, maxShelves)
 }
 
 // SetPassword mocks base method.

@@ -23,6 +23,7 @@ Name | Type
 `registrationEnabled` | boolean
 `termsOfUse` | string
 `termsOfUseShow` | boolean
+`upgradeUrl` | string
 `userBasedPaths` | boolean
 
 ## Example
@@ -49,6 +50,7 @@ const example = {
   "registrationEnabled": null,
   "termsOfUse": null,
   "termsOfUseShow": null,
+  "upgradeUrl": null,
   "userBasedPaths": null,
 } satisfies SettingPageBody
 

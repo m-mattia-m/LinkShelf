@@ -139,3 +139,99 @@ func Test_AuthMiddleware_AdminOp_AdminBearer_OK(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.Code)
 	require.Contains(t, resp.Body.String(), "\"isAdmin\":true")
 }
+
+const testServiceToken = "service-token-of-at-least-32-bytes-0123456789"
+
+// newServiceTokenTestAPI adds a route the service token may call next to the admin one.
+func newServiceTokenTestAPI(t *testing.T, enabled bool) humatest.TestAPI {
+	t.Helper()
+	config.Reset()
+	config.Set("authentication.jwtSecret", "test-secret")
+	config.Set("authentication.serviceToken.enabled", enabled)
+	config.Set("authentication.serviceToken.token", testServiceToken)
+
+	_, api := humatest.New(t)
+	api.UseMiddleware(NewAuthenticationMiddleware(api))
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "service-op",
+		Path:        "/service",
+		Security:    bearerSecurity(),
+		Metadata:    requireAdminOrServiceToken(),
+	}, whoAmI)
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "admin-op",
+		Path:        "/admin",
+		Security:    bearerSecurity(),
+		Metadata:    requireAdmin(),
+	}, whoAmI)
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "authenticated-op",
+		Path:        "/authenticated",
+		Security:    bearerSecurity(),
+	}, whoAmI)
+	return api
+}
+
+func Test_AuthMiddleware_ServiceToken_AllowedOnItsOperation(t *testing.T) {
+	api := newServiceTokenTestAPI(t, true)
+
+	resp := api.Get("/service", "Authorization: Bearer "+testServiceToken)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+}
+
+func Test_AuthMiddleware_ServiceToken_RejectedEverywhereElse(t *testing.T) {
+	api := newServiceTokenTestAPI(t, true)
+
+	for _, path := range []string{"/admin", "/authenticated"} {
+		resp := api.Get(path, "Authorization: Bearer "+testServiceToken)
+		require.Equal(t, http.StatusUnauthorized, resp.Code, path)
+	}
+}
+
+func Test_AuthMiddleware_ServiceToken_RejectedWhenDisabled(t *testing.T) {
+	api := newServiceTokenTestAPI(t, false)
+
+	resp := api.Get("/service", "Authorization: Bearer "+testServiceToken)
+
+	require.Equal(t, http.StatusUnauthorized, resp.Code)
+}
+
+func Test_AuthMiddleware_ServiceToken_WrongTokenRejected(t *testing.T) {
+	api := newServiceTokenTestAPI(t, true)
+
+	resp := api.Get("/service", "Authorization: Bearer "+testServiceToken+"x")
+
+	require.Equal(t, http.StatusUnauthorized, resp.Code)
+}
+
+func Test_AuthMiddleware_ServiceToken_EnabledWithEmptyTokenMatchesNothing(t *testing.T) {
+	api := newServiceTokenTestAPI(t, true)
+	config.Set("authentication.serviceToken.token", "")
+
+	resp := api.Get("/service", "Authorization: Bearer ")
+
+	require.Equal(t, http.StatusUnauthorized, resp.Code)
+}
+
+func Test_AuthMiddleware_ServiceOp_AdminJwtStillWorks(t *testing.T) {
+	api := newServiceTokenTestAPI(t, false)
+	token := signTestJWT(t, "admin-1", model.RoleAdmin, 5*time.Minute)
+
+	resp := api.Get("/service", "Authorization: Bearer "+token)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+}
+
+func Test_AuthMiddleware_ServiceOp_NonAdminJwtForbidden(t *testing.T) {
+	api := newServiceTokenTestAPI(t, true)
+	token := signTestJWT(t, "user-1", model.RoleUser, 5*time.Minute)
+
+	resp := api.Get("/service", "Authorization: Bearer "+token)
+
+	require.Equal(t, http.StatusForbidden, resp.Code)
+}

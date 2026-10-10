@@ -27,6 +27,7 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"password",
 		"email_verified",
 		"pending_email",
+		"max_shelves",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
@@ -36,6 +37,7 @@ func Test_UserRepository_List_Success(t *testing.T) {
 		"user",
 		"hashed-password",
 		true,
+		nil,
 		nil,
 	)
 
@@ -86,6 +88,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"password",
 		"email_verified",
 		"pending_email",
+		"max_shelves",
 	}).AddRow(
 		"user-uuid-test",
 		"test@test.com",
@@ -96,6 +99,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 		"",
 		false,
 		"new@test.com",
+		5,
 	)
 
 	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
@@ -107,6 +111,7 @@ func Test_UserRepository_Get_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, user)
 	require.Equal(t, "test@test.com", user.Email)
+	require.Equal(t, 5, *user.MaxShelves)
 	require.False(t, user.EmailVerified)
 	require.False(t, user.HasPassword)
 	require.Equal(t, "new@test.com", user.PendingEmail)
@@ -186,6 +191,7 @@ func Test_UserRepository_Create_Success(t *testing.T) {
 			"Last",
 			"hashed-password",
 			"user",
+			nil,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -196,7 +202,7 @@ func Test_UserRepository_Create_Success(t *testing.T) {
 		LastName:  "Last",
 	}
 
-	id, err := repo.Create(base, "hashed-password", "user")
+	id, err := repo.Create(base, "hashed-password", "user", nil)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
@@ -214,7 +220,7 @@ func Test_UserRepository_Create_ExecError(t *testing.T) {
 	mock.ExpectExec(`INSERT INTO "user"`).
 		WillReturnError(errors.New("insert failed"))
 
-	id, err := repo.Create(model.UserBase{}, "hashed-password", "user")
+	id, err := repo.Create(model.UserBase{}, "hashed-password", "user", nil)
 
 	require.Error(t, err)
 	require.Empty(t, id)
@@ -463,10 +469,10 @@ func Test_UserRepository_CreateExternal_Success(t *testing.T) {
 	repo := &userRepository{Engine: db}
 
 	mock.ExpectExec(`INSERT INTO "user"`).
-		WithArgs(sqlmock.AnyArg(), "test@test.com", "test-user", "First", "Last", "OIDC", "oidc-subject-test").
+		WithArgs(sqlmock.AnyArg(), "test@test.com", "test-user", "First", "Last", "OIDC", "oidc-subject-test", nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	id, err := repo.CreateExternal("test@test.com", "test-user", "First", "Last", "OIDC", "oidc-subject-test")
+	id, err := repo.CreateExternal("test@test.com", "test-user", "First", "Last", "OIDC", "oidc-subject-test", nil)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
@@ -483,7 +489,7 @@ func Test_UserRepository_CreateExternal_ExecError(t *testing.T) {
 	mock.ExpectExec(`INSERT INTO "user"`).
 		WillReturnError(errors.New("insert failed"))
 
-	_, err = repo.CreateExternal("test@test.com", "test-user", "First", "Last", "OIDC", "oidc-subject-test")
+	_, err = repo.CreateExternal("test@test.com", "test-user", "First", "Last", "OIDC", "oidc-subject-test", nil)
 
 	require.Error(t, err)
 }
@@ -751,11 +757,73 @@ func Test_UserRepository_Create_EmptyUsernameIsStoredAsNull(t *testing.T) {
 	repo := &userRepository{Engine: db}
 
 	mock.ExpectExec(`INSERT INTO "user"`).
-		WithArgs(sqlmock.AnyArg(), "a@test.com", nil, "First", "Last", "hashed", "user").
+		WithArgs(sqlmock.AnyArg(), "a@test.com", nil, "First", "Last", "hashed", "user", nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	_, err = repo.Create(model.UserBase{Email: "a@test.com", FirstName: "First", LastName: "Last"}, "hashed", "user")
+	_, err = repo.Create(model.UserBase{Email: "a@test.com", FirstName: "First", LastName: "Last"}, "hashed", "user", nil)
 
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_Create_StoresMaxShelves(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+	limit := 2
+
+	mock.ExpectExec(`INSERT INTO "user"`).
+		WithArgs(sqlmock.AnyArg(), "a@test.com", nil, "First", "Last", "hashed", "user", 2).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	_, err = repo.Create(model.UserBase{Email: "a@test.com", FirstName: "First", LastName: "Last"}, "hashed", "user", &limit)
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_SetMaxShelves(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+	limit := 3
+
+	mock.ExpectExec(`UPDATE "user"`).
+		WithArgs(3, "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`UPDATE "user"`).
+		WithArgs(nil, "user-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	found, err := repo.SetMaxShelves("user-1", &limit)
+	require.NoError(t, err)
+	require.True(t, found)
+
+	found, err = repo.SetMaxShelves("user-1", nil)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_UserRepository_SetMaxShelves_UnknownUser(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &userRepository{Engine: db}
+
+	mock.ExpectExec(`UPDATE "user"`).
+		WithArgs(nil, "missing").
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery(`FROM\s+"user"\s+WHERE id =`).
+		WithArgs("missing").
+		WillReturnError(sql.ErrNoRows)
+
+	found, err := repo.SetMaxShelves("missing", nil)
+	require.NoError(t, err)
+	require.False(t, found)
 }

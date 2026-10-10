@@ -47,6 +47,12 @@ authentication:
   passwordReset:
     enabled: false
     tokenExpiryMinutes: 60
+  serviceToken:
+    enabled: false
+    token: ""
+limits:
+  defaultMaxShelves:
+  upgradeUrl: ""
 smtp:
   host: ""
   port: 1025

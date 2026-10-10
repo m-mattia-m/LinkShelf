@@ -142,6 +142,9 @@
 
   "app.shelf.title": "Shelf",
   "app.shelf.empty": "Du hesch na kei Shelves.",
+  "app.shelf.limit.usage": "{count} / {max} Regal",
+  "app.shelf.limit.reached": "Du hesch dis Regal-Limit erreicht.",
+  "app.shelf.limit.upgrade": "Upgrade",
   "app.shelf.actions.open": "Öffne",
   "app.shelf.actions.edit": "Bearbeite",
   "app.shelf.actions.delete": "Lösche",
@@ -210,6 +213,8 @@
   "app.settings.users.form.usernameChangeWarningOne": "Bim Speichere ändert sich d öffentlich URL vom Shelf vo dem Benutzer. Links, wo mit em alte Benutzername gteilt worde sind, funktioniered nümme.",
   "app.settings.users.form.usernameChangeWarningMany": "Bim Speichere ändert sich d öffentlich URL vo de {count} Shelves vo dem Benutzer. Links, wo mit em alte Benutzername gteilt worde sind, funktioniered nümme.",
   "app.settings.users.form.passwordInviteHint": "Leer lah, zum dä Benutzer stattdesse per E-Mail iilade.",
+  "app.settings.users.form.maxShelves": "Max. Regal",
+  "app.settings.users.form.maxShelvesHint": "Leer la für unbegrenzt.",
 
   "app.settings.emailDelivery.title": "E-Mail-Versand",
   "app.settings.emailDelivery.disabled": "D E-Mail-Bestätigung isch deaktiviert.",

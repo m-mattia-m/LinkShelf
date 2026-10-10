@@ -6,9 +6,11 @@ import (
 	"backend/internal/infrastructure/api/model"
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"go.uber.org/zap"
 )
 
 // CreateUser handles self-registration and admin user creation (admins may set a role).
@@ -153,4 +155,47 @@ func DeleteUser(svc *domain.Service) func(c context.Context, input *model.UserRe
 
 		return nil, nil
 	}
+}
+
+// GetUserLimits returns a user's shelf limit and usage. Admin or service token.
+func GetUserLimits(svc *domain.Service) func(c context.Context, input *model.UserRequestFilter) (*model.UserLimitsResponse, error) {
+	return func(c context.Context, input *model.UserRequestFilter) (*model.UserLimitsResponse, error) {
+		limits, err := svc.UserService.GetLimits(input.UserId)
+		if err != nil {
+			return nil, mapper.MapOwnershipError("failed to get user limits", err)
+		}
+		return &model.UserLimitsResponse{Body: *limits}, nil
+	}
+}
+
+// PatchUserLimits sets a user's shelf limit. Admin or service token.
+func PatchUserLimits(svc *domain.Service) func(c context.Context, input *model.UserLimitsPatchRequest) (*model.UserLimitsResponse, error) {
+	return func(c context.Context, input *model.UserLimitsPatchRequest) (*model.UserLimitsResponse, error) {
+		if input.Body.MaxShelves != nil && *input.Body.MaxShelves < 0 {
+			return nil, huma.Error400BadRequest("validation failed: max_shelves must be zero or a positive number")
+		}
+
+		limits, previous, err := svc.UserService.SetMaxShelves(input.UserId, input.Body.MaxShelves)
+		if err != nil {
+			if errors.Is(err, domain.ErrInvalidInput) {
+				return nil, huma.Error400BadRequest("validation failed: max_shelves must be zero or a positive number")
+			}
+			return nil, mapper.MapOwnershipError("failed to set user limits", err)
+		}
+
+		if IsServiceTokenFromContext(c) {
+			zap.L().Info("service token changed user limit",
+				zap.String("user_id", input.UserId),
+				zap.String("old_max_shelves", formatLimit(previous)),
+				zap.String("new_max_shelves", formatLimit(limits.MaxShelves)))
+		}
+		return &model.UserLimitsResponse{Body: *limits}, nil
+	}
+}
+
+func formatLimit(n *int) string {
+	if n == nil {
+		return "unlimited"
+	}
+	return strconv.Itoa(*n)
 }

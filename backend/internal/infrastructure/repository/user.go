@@ -30,7 +30,7 @@ type UserRepository interface {
 	List() ([]model.User, error)
 	Get(id string) (*model.User, error)
 	GetPassword(id string) (string, error)
-	Create(u model.UserBase, hashedPassword, role string) (string, error)
+	Create(u model.UserBase, hashedPassword, role string, maxShelves *int) (string, error)
 	Update(u *model.User) error
 	// UsernameTaken reports whether another user has this (lowercase) username.
 	UsernameTaken(username, exceptUserId string) (bool, error)
@@ -42,8 +42,11 @@ type UserRepository interface {
 
 	FindByEmail(email string) (*AuthRecord, error)
 	FindByProviderId(providerId string) (*AuthRecord, error)
-	CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error)
+	CreateExternal(email, username, firstName, lastName, provider, providerId string, maxShelves *int) (string, error)
 	LinkProvider(userId, provider, providerId string) error
+
+	// SetMaxShelves sets the shelf limit, nil for unlimited. Reports whether the user exists.
+	SetMaxShelves(userId string, maxShelves *int) (bool, error)
 
 	// MarkVerified sets email_verified and verified_at.
 	MarkVerified(userId string) error
@@ -71,7 +74,7 @@ func NewUserRepository(engine *sql.DB, table string) (UserRepository, error) {
 
 func (r *userRepository) List() ([]model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, username, first_name, last_name, role, password, email_verified, pending_email
+		SELECT id, email, username, first_name, last_name, role, password, email_verified, pending_email, max_shelves
 		FROM "user"
 	`)
 	if err != nil {
@@ -89,6 +92,7 @@ func (r *userRepository) List() ([]model.User, error) {
 		var user model.User
 		var password string
 		var username, pendingEmail sql.NullString
+		var maxShelves sql.NullInt64
 		err := rows.Scan(
 			&user.Id,
 			&user.Email,
@@ -99,12 +103,14 @@ func (r *userRepository) List() ([]model.User, error) {
 			&password,
 			&user.EmailVerified,
 			&pendingEmail,
+			&maxShelves,
 		)
 		if err != nil {
 			return nil, err
 		}
 		user.Username = username.String
 		user.PendingEmail = pendingEmail.String
+		user.MaxShelves = nullIntToPtr(maxShelves)
 		user.HasPassword = password != ""
 		users = append(users, user)
 	}
@@ -114,7 +120,7 @@ func (r *userRepository) List() ([]model.User, error) {
 
 func (r *userRepository) Get(id string) (*model.User, error) {
 	query, err := buildSqlStatements(`
-		SELECT id, email, username, first_name, last_name, role, password, email_verified, pending_email
+		SELECT id, email, username, first_name, last_name, role, password, email_verified, pending_email, max_shelves
 		FROM "user"
 		WHERE id = ?
 	`)
@@ -125,6 +131,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 	var user model.User
 	var password string
 	var username, pendingEmail sql.NullString
+	var maxShelves sql.NullInt64
 	err = r.Engine.QueryRowContext(context.TODO(), query, id).Scan(
 		&user.Id,
 		&user.Email,
@@ -135,6 +142,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 		&password,
 		&user.EmailVerified,
 		&pendingEmail,
+		&maxShelves,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -145,6 +153,7 @@ func (r *userRepository) Get(id string) (*model.User, error) {
 	}
 	user.Username = username.String
 	user.PendingEmail = pendingEmail.String
+	user.MaxShelves = nullIntToPtr(maxShelves)
 	user.HasPassword = password != ""
 
 	return &user, nil
@@ -172,10 +181,10 @@ func (r *userRepository) GetPassword(id string) (string, error) {
 	return password, err
 }
 
-func (r *userRepository) Create(u model.UserBase, hashedPassword, role string) (string, error) {
+func (r *userRepository) Create(u model.UserBase, hashedPassword, role string, maxShelves *int) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, role)
-		VALUES (?, ?, ?, ?, ?, ?, 'LOCAL', ?)
+		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, role, max_shelves)
+		VALUES (?, ?, ?, ?, ?, ?, 'LOCAL', ?, ?)
 	`)
 	if err != nil {
 		return "", err
@@ -197,6 +206,7 @@ func (r *userRepository) Create(u model.UserBase, hashedPassword, role string) (
 		u.LastName,
 		hashedPassword,
 		role,
+		ptrToNullInt(maxShelves),
 	)
 	if err != nil {
 		return "", err
@@ -353,10 +363,10 @@ func (r *userRepository) FindByProviderId(providerId string) (*AuthRecord, error
 }
 
 // CreateExternal creates a user from an external identity, without password.
-func (r *userRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string) (string, error) {
+func (r *userRepository) CreateExternal(email, username, firstName, lastName, provider, providerId string, maxShelves *int) (string, error) {
 	query, err := buildSqlStatements(`
-		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, provider_id)
-		VALUES (?, ?, ?, ?, ?, '', ?, ?)
+		INSERT INTO "user" (id, email, username, first_name, last_name, password, provider, provider_id, max_shelves)
+		VALUES (?, ?, ?, ?, ?, '', ?, ?, ?)
 	`)
 	if err != nil {
 		return "", err
@@ -378,6 +388,7 @@ func (r *userRepository) CreateExternal(email, username, firstName, lastName, pr
 		lastName,
 		provider,
 		providerId,
+		ptrToNullInt(maxShelves),
 	)
 	if err != nil {
 		return "", err
@@ -534,4 +545,41 @@ func (r *userRepository) SetUsername(userId, username string) error {
 
 	_, err = r.Engine.ExecContext(context.TODO(), query, username, userId)
 	return err
+}
+
+func (r *userRepository) SetMaxShelves(userId string, maxShelves *int) (bool, error) {
+	query, err := buildSqlStatements(`
+		UPDATE "user"
+		SET max_shelves = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return false, err
+	}
+
+	res, err := r.Engine.ExecContext(context.TODO(), query, ptrToNullInt(maxShelves), userId)
+	if err != nil {
+		return false, err
+	}
+	// MySQL reports 0 rows for an unchanged value, so check existence separately.
+	if n, err := res.RowsAffected(); err == nil && n > 0 {
+		return true, nil
+	}
+	user, err := r.Get(userId)
+	return user != nil, err
+}
+
+func nullIntToPtr(n sql.NullInt64) *int {
+	if !n.Valid {
+		return nil
+	}
+	v := int(n.Int64)
+	return &v
+}
+
+func ptrToNullInt(n *int) any {
+	if n == nil {
+		return nil
+	}
+	return *n
 }

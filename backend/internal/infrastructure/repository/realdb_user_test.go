@@ -19,7 +19,7 @@ func Test_RealDB_UserRepository_CRUD(t *testing.T) {
 		Email:     email,
 		FirstName: "Real",
 		LastName:  "DB",
-	}, "hashed-password", "user")
+	}, "hashed-password", "user", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 
@@ -61,10 +61,10 @@ func Test_RealDB_UserRepository_DuplicateEmail_IsRejected(t *testing.T) {
 	repo := TestRepository.UserRepository
 	email := "realdb-dup-" + uuid.NewString() + "@example.com"
 
-	_, err := repo.Create(model.UserBase{Email: email, FirstName: "A", LastName: "A"}, "hashed", "user")
+	_, err := repo.Create(model.UserBase{Email: email, FirstName: "A", LastName: "A"}, "hashed", "user", nil)
 	require.NoError(t, err)
 
-	_, err = repo.Create(model.UserBase{Email: email, FirstName: "B", LastName: "B"}, "hashed", "user")
+	_, err = repo.Create(model.UserBase{Email: email, FirstName: "B", LastName: "B"}, "hashed", "user", nil)
 	require.Error(t, err, "a second user with the same email must be rejected by the DB's unique constraint")
 }
 
@@ -74,7 +74,7 @@ func Test_RealDB_UserRepository_PendingEmailAndChangeEmail(t *testing.T) {
 	email := "realdb-pending-" + uuid.NewString() + "@example.com"
 	newEmail := "realdb-pending-new-" + uuid.NewString() + "@example.com"
 
-	id, err := repo.Create(model.UserBase{Email: email, FirstName: "Pending", LastName: "Email"}, "hashed", "user")
+	id, err := repo.Create(model.UserBase{Email: email, FirstName: "Pending", LastName: "Email"}, "hashed", "user", nil)
 	require.NoError(t, err)
 	require.NoError(t, repo.MarkVerified(id))
 
@@ -110,10 +110,10 @@ func Test_RealDB_UserRepository_DuplicateEmail_DifferentCase_IsRejected(t *testi
 	repo := TestRepository.UserRepository
 	local := "realdb-case-" + uuid.NewString()
 
-	_, err := repo.Create(model.UserBase{Email: local + "@example.com", FirstName: "A", LastName: "A"}, "hashed", "user")
+	_, err := repo.Create(model.UserBase{Email: local + "@example.com", FirstName: "A", LastName: "A"}, "hashed", "user", nil)
 	require.NoError(t, err)
 
-	_, err = repo.Create(model.UserBase{Email: strings.ToUpper(local) + "@EXAMPLE.COM", FirstName: "B", LastName: "B"}, "hashed", "user")
+	_, err = repo.Create(model.UserBase{Email: strings.ToUpper(local) + "@EXAMPLE.COM", FirstName: "B", LastName: "B"}, "hashed", "user", nil)
 	require.Error(t, err)
 }
 
@@ -121,7 +121,7 @@ func Test_RealDB_UserRepository_AuthMethods(t *testing.T) {
 	repo := TestRepository.UserRepository
 	email := "realdb-auth-" + uuid.NewString() + "@example.com"
 
-	id, err := repo.Create(model.UserBase{Email: email, FirstName: "Auth", LastName: "Flow"}, "hashed", "user")
+	id, err := repo.Create(model.UserBase{Email: email, FirstName: "Auth", LastName: "Flow"}, "hashed", "user", nil)
 	require.NoError(t, err)
 
 	byEmail, err := repo.FindByEmail(email)
@@ -145,7 +145,7 @@ func Test_RealDB_UserRepository_AuthMethods(t *testing.T) {
 
 	externalEmail := "realdb-external-" + uuid.NewString() + "@example.com"
 	externalProviderId := "oidc-sub-" + uuid.NewString()
-	externalId, err := repo.CreateExternal(externalEmail, "external-"+uuid.NewString()[:8], "External", "User", "OIDC", externalProviderId)
+	externalId, err := repo.CreateExternal(externalEmail, "external-"+uuid.NewString()[:8], "External", "User", "OIDC", externalProviderId, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, externalId)
 
@@ -154,4 +154,57 @@ func Test_RealDB_UserRepository_AuthMethods(t *testing.T) {
 	require.NotNil(t, externalUser)
 	require.Equal(t, externalEmail, externalUser.Email)
 	require.Equal(t, "OIDC", externalUser.Provider)
+}
+
+func Test_RealDB_UserRepository_MaxShelves(t *testing.T) {
+	repo := TestRepository.UserRepository
+	limit := 2
+
+	id, err := repo.Create(model.UserBase{
+		Email:     "realdb-" + uuid.NewString() + "@example.com",
+		FirstName: "Lim",
+		LastName:  "It",
+	}, "hashed", "user", &limit)
+	require.NoError(t, err)
+
+	user, err := repo.Get(id)
+	require.NoError(t, err)
+	require.Equal(t, 2, *user.MaxShelves)
+
+	// Unchanged value still reports the user as found (MySQL affects 0 rows).
+	found, err := repo.SetMaxShelves(id, &limit)
+	require.NoError(t, err)
+	require.True(t, found)
+
+	found, err = repo.SetMaxShelves(id, nil)
+	require.NoError(t, err)
+	require.True(t, found)
+	user, err = repo.Get(id)
+	require.NoError(t, err)
+	require.Nil(t, user.MaxShelves)
+
+	zero := 0
+	_, err = repo.SetMaxShelves(id, &zero)
+	require.NoError(t, err)
+	user, _ = repo.Get(id)
+	require.Equal(t, 0, *user.MaxShelves)
+
+	found, err = repo.SetMaxShelves(uuid.NewString(), nil)
+	require.NoError(t, err)
+	require.False(t, found)
+}
+
+func Test_RealDB_ShelfRepository_CountByUserId(t *testing.T) {
+	userId := realDBTestUser(t)
+	repo := TestRepository.ShelfRepository
+
+	count, err := repo.CountByUserId(userId)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	_, err = repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "A"}, UserId: userId})
+	require.NoError(t, err)
+	count, err = repo.CountByUserId(userId)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
 }

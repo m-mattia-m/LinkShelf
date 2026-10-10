@@ -24,6 +24,8 @@ var (
 	ErrEmailVerificationPending = errors.New("this account's email address has not been verified yet")
 	// ErrTooManyRequests: the same email action was requested within resendCooldown.
 	ErrTooManyRequests = errors.New("please wait a minute before trying again")
+	// ErrShelfLimitReached: the owner already has max_shelves shelves.
+	ErrShelfLimitReached = errors.New("shelf limit reached")
 	// ErrLocalAuthDisabled: authentication.localAuthEnabled is false.
 	ErrLocalAuthDisabled = errors.New("password login is disabled on this instance")
 )

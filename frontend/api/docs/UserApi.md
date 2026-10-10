@@ -7,7 +7,9 @@ All URIs are relative to *http://localhost*
 | [**deleteUser**](UserApi.md#deleteuser) | **DELETE** /v1/users/{userId} | Delete user |
 | [**getCurrentUser**](UserApi.md#getcurrentuser) | **GET** /v1/users/me | Get current user |
 | [**getUserById**](UserApi.md#getuserbyid) | **GET** /v1/users/{userId} | Get user by ID |
+| [**getUserLimits**](UserApi.md#getuserlimits) | **GET** /v1/users/{userId}/limits | Get user limits |
 | [**listUsers**](UserApi.md#listusers) | **GET** /v1/users | List users |
+| [**patchUserLimits**](UserApi.md#patchuserlimits) | **PATCH** /v1/users/{userId}/limits | Patch user limits |
 | [**patchUserPassword**](UserApi.md#patchuserpassword) | **PATCH** /v1/users/{userId}/password | Patch user password |
 | [**patchUserVerify**](UserApi.md#patchuserverify) | **PATCH** /v1/users/{userId}/verify | Mark user verified |
 | [**postCreateUser**](UserApi.md#postcreateuser) | **POST** /v1/users | Create user |
@@ -223,6 +225,78 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## getUserLimits
+
+> UserLimits getUserLimits(userId)
+
+Get user limits
+
+Shelf limit (null &#x3D; unlimited) and current shelf count. Admin or service token.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  UserApi,
+} from '';
+import type { GetUserLimitsRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
+
+  const body = {
+    // string | The identifier of the chosen form you want.
+    userId: userId_example,
+  } satisfies GetUserLimitsRequest;
+
+  try {
+    const data = await api.getUserLimits(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **userId** | `string` | The identifier of the chosen form you want. | [Defaults to `undefined`] |
+
+### Return type
+
+[**UserLimits**](UserLimits.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## listUsers
 
 > Array&lt;User&gt; listUsers()
@@ -275,6 +349,81 @@ This endpoint does not need any parameter.
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: `application/json`, `application/problem+json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+| **0** | Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## patchUserLimits
+
+> UserLimits patchUserLimits(userId, userLimitsPatch)
+
+Patch user limits
+
+Set the shelf limit (null &#x3D; unlimited, 0 or more). Admin or service token.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  UserApi,
+} from '';
+import type { PatchUserLimitsRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new UserApi(config);
+
+  const body = {
+    // string | The identifier of the chosen form you want.
+    userId: userId_example,
+    // UserLimitsPatch
+    userLimitsPatch: ...,
+  } satisfies PatchUserLimitsRequest;
+
+  try {
+    const data = await api.patchUserLimits(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **userId** | `string` | The identifier of the chosen form you want. | [Defaults to `undefined`] |
+| **userLimitsPatch** | [UserLimitsPatch](UserLimitsPatch.md) |  | |
+
+### Return type
+
+[**UserLimits**](UserLimits.md)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
 - **Accept**: `application/json`, `application/problem+json`
 
 

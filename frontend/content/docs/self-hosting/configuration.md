@@ -135,6 +135,19 @@ authentication:
     # Set to false on an instance without working email.
     enabled: true
     tokenExpiryMinutes: 60
+  # Static bearer token for an external service, see "Shelf limits" below.
+  # Off by default. When enabled, token is required (checked at startup).
+  serviceToken:
+    enabled: false
+    # At least 32 bytes, different from jwtSecret, e.g. `openssl rand -base64 48`.
+    # Set it via AUTHENTICATION_SERVICETOKEN_TOKEN.
+    token: ""
+limits:
+  # Shelf limit copied onto every new user. Empty means unlimited. Existing
+  # users keep their limit, change it per user in the admin settings.
+  defaultMaxShelves:
+  # Optional http(s) link shown to users who hit a limit.
+  upgradeUrl: ""
 smtp:
   # Defaults to the Mailpit dev container (see compose.yaml) for local
   # development - matches the pattern of database.host/port also pointing at
@@ -210,6 +223,41 @@ reserved: no shelf can use them as its custom domain, so `/` on them always stay
 traffic there takes the same steps as a [shelf's
 custom domain](/docs/self-hosting/custom-domains#set-it-up). In the Helm chart, add the domain to `ingress.extraHosts`
 and `ingress.tls`, and set `APP_ADDITIONALORIGINS` in `env`.
+
+## Shelf limits
+
+Every user has a shelf limit. Empty means unlimited, which is what everyone gets by default.
+
+- `limits.defaultMaxShelves` (`LIMITS_DEFAULTMAXSHELVES`) is copied onto each new account: sign-up, invites, first SSO
+  login and the bootstrap admin. Changing it later doesn't touch existing accounts.
+- An admin sets the limit of a single user in **Settings > Users**. Leave it empty for unlimited. `0` is allowed and
+  blocks creating shelves. Negative numbers are rejected.
+- Creating a shelf past the limit fails with `403`. Existing shelves are never deleted or hidden, so lowering a limit
+  below the current number only blocks new shelves. Admins have a limit like everyone else.
+- Two shelves created at the same moment can end up one over the limit.
+- With `limits.upgradeUrl` set, the dashboard and the error message point there. Leave it empty to show nothing.
+
+### Service token
+
+An external service, such as a billing system, can change limits without an admin account. It is off by default.
+
+1. Generate a token: `openssl rand -base64 48`
+2. Set `authentication.serviceToken.enabled` to `true` and the token in `authentication.serviceToken.token`
+   (`AUTHENTICATION_SERVICETOKEN_ENABLED`, `AUTHENTICATION_SERVICETOKEN_TOKEN`). Keep it in a secret, not in a file.
+3. The service sends it as `Authorization: Bearer <token>`
+
+It works on two endpoints and nowhere else, every other endpoint answers `401`:
+
+| Endpoint | Body | Result |
+| --- | --- | --- |
+| `GET /v1/users/{userId}/limits` | | `{ "max_shelves": 5, "shelf_count": 2 }` |
+| `PATCH /v1/users/{userId}/limits` | `{ "max_shelves": 5 }` or `null` for unlimited | the new limits |
+
+Each change made with the token is logged with the user ID and the old and new value, never the token.
+
+LinkShelf refuses to start with the token enabled and empty, shorter than 32 bytes, a known placeholder or equal to
+`authentication.jwtSecret`. Anyone with the token can lift the limit of any user, so treat it like a password. To
+rotate it, change the value and restart.
 
 ## Password reset
 

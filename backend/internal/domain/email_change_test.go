@@ -313,8 +313,8 @@ func Test_Unit_User_Creation_StoresTheEmailLowercased(t *testing.T) {
 
 	svc.UserRepository.EXPECT().UsernameTaken("new-user", "").Return(false, nil)
 	svc.UserRepository.EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleUser).
-		DoAndReturn(func(u model.UserBase, _, _ string) (string, error) {
+		Create(gomock.Any(), gomock.Any(), model.RoleUser, gomock.Any()).
+		DoAndReturn(func(u model.UserBase, _, _ string, _ *int) (string, error) {
 			require.Equal(t, "new.user@test.com", u.Email)
 			return "user-uuid-test", nil
 		})

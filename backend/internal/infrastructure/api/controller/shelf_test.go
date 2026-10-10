@@ -5,6 +5,7 @@ import (
 	"backend/internal/infrastructure/api/model"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -547,4 +548,22 @@ func Test_API_UpdateShelf_PathConflictIs409(t *testing.T) {
 	var detailed huma.StatusError
 	require.ErrorAs(t, err, &detailed)
 	require.Equal(t, 409, detailed.GetStatus())
+}
+
+func Test_API_CreateShelf_Failure_LimitReached(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.ShelfService.
+		EXPECT().
+		Create(gomock.Any(), gomock.Any()).
+		Return("", fmt.Errorf("%w: your account is limited to 2 shelves", domain.ErrShelfLimitReached))
+
+	resp, err := CreateShelf(svc.Service)(context.Background(), &model.ShelfRequestBody{})
+
+	require.Nil(t, resp)
+	var se huma.StatusError
+	require.True(t, errors.As(err, &se))
+	require.Equal(t, 403, se.GetStatus())
+	require.Contains(t, err.Error(), "limited to 2 shelves")
 }

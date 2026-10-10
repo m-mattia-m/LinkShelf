@@ -123,6 +123,12 @@ export interface SettingPageBody {
     termsOfUseShow: boolean;
     /**
      * 
+     * @type {string}
+     * @memberof SettingPageBody
+     */
+    upgradeUrl: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof SettingPageBody
      */
@@ -149,6 +155,7 @@ export function instanceOfSettingPageBody(value: object): value is SettingPageBo
     if (!('registrationEnabled' in value) || value['registrationEnabled'] === undefined) return false;
     if (!('termsOfUse' in value) || value['termsOfUse'] === undefined) return false;
     if (!('termsOfUseShow' in value) || value['termsOfUseShow'] === undefined) return false;
+    if (!('upgradeUrl' in value) || value['upgradeUrl'] === undefined) return false;
     if (!('userBasedPaths' in value) || value['userBasedPaths'] === undefined) return false;
     return true;
 }
@@ -180,6 +187,7 @@ export function SettingPageBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
         'registrationEnabled': json['registration_enabled'],
         'termsOfUse': json['terms_of_use'],
         'termsOfUseShow': json['terms_of_use_show'],
+        'upgradeUrl': json['upgrade_url'],
         'userBasedPaths': json['user_based_paths'],
     };
 }
@@ -211,6 +219,7 @@ export function SettingPageBodyToJSONTyped(value?: Omit<SettingPageBody, '$schem
         'registration_enabled': value['registrationEnabled'],
         'terms_of_use': value['termsOfUse'],
         'terms_of_use_show': value['termsOfUseShow'],
+        'upgrade_url': value['upgradeUrl'],
         'user_based_paths': value['userBasedPaths'],
     };
 }

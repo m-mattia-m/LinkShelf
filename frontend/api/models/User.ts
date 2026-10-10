@@ -68,6 +68,12 @@ export interface User {
      */
     lastName: string;
     /**
+     * Shelf limit, null for unlimited.
+     * @type {number}
+     * @memberof User
+     */
+    maxShelves: number | null;
+    /**
      * 
      * @type {string}
      * @memberof User
@@ -97,6 +103,7 @@ export function instanceOfUser(value: object): value is User {
     if (!('hasPassword' in value) || value['hasPassword'] === undefined) return false;
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
+    if (!('maxShelves' in value) || value['maxShelves'] === undefined) return false;
     if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
@@ -119,6 +126,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'hasPassword': json['has_password'],
         'id': json['id'],
         'lastName': json['last_name'],
+        'maxShelves': json['max_shelves'],
         'pendingEmail': json['pending_email'] == null ? undefined : json['pending_email'],
         'role': json['role'] == null ? undefined : json['role'],
         'username': json['username'],
@@ -143,6 +151,7 @@ export function UserToJSONTyped(value?: Omit<User, '$schema'> | null, ignoreDisc
         'has_password': value['hasPassword'],
         'id': value['id'],
         'last_name': value['lastName'],
+        'max_shelves': value['maxShelves'],
         'pending_email': value['pendingEmail'],
         'role': value['role'],
         'username': value['username'],

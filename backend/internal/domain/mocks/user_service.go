@@ -84,6 +84,21 @@ func (mr *MockUserServiceMockRecorder) Get(id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUserService)(nil).Get), id)
 }
 
+// GetLimits mocks base method.
+func (m *MockUserService) GetLimits(userId string) (*model.UserLimits, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLimits", userId)
+	ret0, _ := ret[0].(*model.UserLimits)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLimits indicates an expected call of GetLimits.
+func (mr *MockUserServiceMockRecorder) GetLimits(userId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLimits", reflect.TypeOf((*MockUserService)(nil).GetLimits), userId)
+}
+
 // List mocks base method.
 func (m *MockUserService) List() ([]model.User, error) {
 	m.ctrl.T.Helper()
@@ -111,6 +126,22 @@ func (m *MockUserService) PatchPassword(userId string, u *model.UserRequestBodyO
 func (mr *MockUserServiceMockRecorder) PatchPassword(userId, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPassword", reflect.TypeOf((*MockUserService)(nil).PatchPassword), userId, u)
+}
+
+// SetMaxShelves mocks base method.
+func (m *MockUserService) SetMaxShelves(userId string, maxShelves *int) (*model.UserLimits, *int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMaxShelves", userId, maxShelves)
+	ret0, _ := ret[0].(*model.UserLimits)
+	ret1, _ := ret[1].(*int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SetMaxShelves indicates an expected call of SetMaxShelves.
+func (mr *MockUserServiceMockRecorder) SetMaxShelves(userId, maxShelves any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMaxShelves", reflect.TypeOf((*MockUserService)(nil).SetMaxShelves), userId, maxShelves)
 }
 
 // Update mocks base method.

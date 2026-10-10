@@ -9,6 +9,8 @@ definePageMeta({
 const { t } = useI18n()
 
 const shelfStore = useShelfStore()
+const authStore = useAuthStore()
+const { maxShelves, count } = useShelfLimit()
 const statistic = ref<Statistic>()
 const loading = ref(true)
 
@@ -17,6 +19,7 @@ onMounted(async () => {
     const api = useApi()
     await Promise.all([
       callOnce(shelfStore.fetch),
+      authStore.fetchUser(),
       api.statistic.getStatistic().then((result) => { statistic.value = result })
     ])
   } catch (err) {
@@ -27,7 +30,7 @@ onMounted(async () => {
 })
 
 const tiles = computed(() => [
-  { icon: 'i-lucide-books', label: t('app.dashboard.shelfCount'), value: statistic.value?.shelfNumber ?? 0 },
+  { icon: 'i-lucide-books', label: t('app.dashboard.shelfCount'), value: maxShelves.value === null ? (statistic.value?.shelfNumber ?? 0) : `${count.value} / ${maxShelves.value}` },
   { icon: 'i-lucide-list', label: t('app.dashboard.sectionCount'), value: statistic.value?.sectionNumber ?? 0 },
   { icon: 'i-lucide-link', label: t('app.dashboard.linkCount'), value: statistic.value?.linkNumber ?? 0 }
 ])

@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { ShelfToJSON } from '~~/api'
 import type { Shelf } from '~~/api'
 import { server } from '../../../test/mocks/server'
+import { buildTokenPair, buildUser } from '../../../test/mocks/factories'
 import { useThemeStore } from '~/stores/theme'
+import { useShelfStore } from '~/stores/shelf'
 import ShelfFormDialog from './ShelfFormDialog.vue'
 
 const BASE = 'http://localhost:8085'
@@ -28,6 +30,8 @@ function buildShelfProp(overrides: Partial<Shelf> = {}): Shelf {
 
 beforeEach(() => {
   useThemeStore().loaded = true
+  useAuthStore().$reset()
+  useShelfStore().$reset()
 })
 
 describe('ShelfFormDialog', () => {
@@ -35,6 +39,28 @@ describe('ShelfFormDialog', () => {
     await renderSuspended(ShelfFormDialog, { props: { mode: 'create' } })
 
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument()
+  })
+
+  it('disables the "New" button once the shelf limit is reached', async () => {
+    const authStore = useAuthStore()
+    authStore.setTokens(buildTokenPair())
+    authStore.user = buildUser({ id: 'user-1', maxShelves: 1 })
+    useShelfStore().shelves = [buildShelfProp({ userId: 'user-1' })]
+
+    await renderSuspended(ShelfFormDialog, { props: { mode: 'create' } })
+
+    expect(screen.getByRole('button', { name: 'New' })).toBeDisabled()
+  })
+
+  it('keeps the "New" button enabled below the limit', async () => {
+    const authStore = useAuthStore()
+    authStore.setTokens(buildTokenPair())
+    authStore.user = buildUser({ id: 'user-1', maxShelves: 2 })
+    useShelfStore().shelves = [buildShelfProp({ userId: 'user-1' })]
+
+    await renderSuspended(ShelfFormDialog, { props: { mode: 'create' } })
+
+    expect(screen.getByRole('button', { name: 'New' })).toBeEnabled()
   })
 
   it('shows no trigger button in edit mode', async () => {

@@ -18,6 +18,9 @@ type UserService interface {
 	Create(u *model.UserCreate, callerIsAdmin bool) (*model.User, error)
 	Update(userId string, userRequest *model.User, callerIsAdmin bool) (*model.User, error)
 	PatchPassword(userId string, u *model.UserRequestBodyOnlyPassword) error
+	GetLimits(userId string) (*model.UserLimits, error)
+	// SetMaxShelves returns the new limits and the previous max_shelves.
+	SetMaxShelves(userId string, maxShelves *int) (*model.UserLimits, *int, error)
 	Delete(u *model.User) error
 }
 
@@ -79,7 +82,12 @@ func (s *userServiceImpl) Create(u *model.UserCreate, callerIsAdmin bool) (*mode
 		}
 	}
 
-	userId, err := s.Repository.UserRepository.Create(u.UserBase, hashedPassword, role)
+	defaultMax, err := config.DefaultMaxShelves()
+	if err != nil {
+		return nil, err
+	}
+
+	userId, err := s.Repository.UserRepository.Create(u.UserBase, hashedPassword, role, defaultMax)
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +178,39 @@ func (s *userServiceImpl) Update(userId string, userRequest *model.User, callerI
 		user.EmailDeliveryFailed = deliveryFailed
 	}
 	return user, nil
+}
+
+func (s *userServiceImpl) GetLimits(userId string) (*model.UserLimits, error) {
+	user, err := s.Repository.UserRepository.Get(userId)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrNotFound
+	}
+	count, err := s.Repository.ShelfRepository.CountByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	return &model.UserLimits{MaxShelves: user.MaxShelves, ShelfCount: count}, nil
+}
+
+func (s *userServiceImpl) SetMaxShelves(userId string, maxShelves *int) (*model.UserLimits, *int, error) {
+	if maxShelves != nil && *maxShelves < 0 {
+		return nil, nil, fmt.Errorf("%w: max_shelves must be zero or a positive number", ErrInvalidInput)
+	}
+	previous, err := s.GetLimits(userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	found, err := s.Repository.UserRepository.SetMaxShelves(userId, maxShelves)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !found {
+		return nil, nil, ErrNotFound
+	}
+	return &model.UserLimits{MaxShelves: maxShelves, ShelfCount: previous.ShelfCount}, previous.MaxShelves, nil
 }
 
 // checkEmailAvailable returns ErrConflict if another account uses email (case-insensitive).

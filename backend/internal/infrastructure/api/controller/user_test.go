@@ -664,3 +664,105 @@ func Test_API_UpdateUser_UsernameProblemsMapToTheRightStatus(t *testing.T) {
 		})
 	}
 }
+
+func Test_API_GetUserLimits(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	limit := 5
+	svc.UserService.EXPECT().
+		GetLimits("u1").
+		Return(&model.UserLimits{MaxShelves: &limit, ShelfCount: 2}, nil)
+
+	resp, err := GetUserLimits(svc.Service)(context.Background(), &model.UserRequestFilter{UserId: "u1"})
+
+	require.NoError(t, err)
+	require.Equal(t, 5, *resp.Body.MaxShelves)
+	require.Equal(t, 2, resp.Body.ShelfCount)
+}
+
+func Test_API_GetUserLimits_NotFound(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserService.EXPECT().GetLimits("missing").Return(nil, domain.ErrNotFound)
+
+	_, err := GetUserLimits(svc.Service)(context.Background(), &model.UserRequestFilter{UserId: "missing"})
+
+	var se huma.StatusError
+	require.True(t, errors.As(err, &se))
+	require.Equal(t, 404, se.GetStatus())
+}
+
+func Test_API_PatchUserLimits(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	next := 0
+	svc.UserService.EXPECT().
+		SetMaxShelves("u1", &next).
+		Return(&model.UserLimits{MaxShelves: &next, ShelfCount: 4}, nil, nil)
+
+	ctx := context.WithValue(context.Background(), serviceContextKey, true)
+	resp, err := PatchUserLimits(svc.Service)(ctx, &model.UserLimitsPatchRequest{
+		UserRequestFilter: model.UserRequestFilter{UserId: "u1"},
+		Body:              model.UserLimitsPatch{MaxShelves: &next},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 0, *resp.Body.MaxShelves)
+}
+
+func Test_API_PatchUserLimits_NullMeansUnlimited(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	old := 3
+	svc.UserService.EXPECT().
+		SetMaxShelves("u1", nil).
+		Return(&model.UserLimits{}, &old, nil)
+
+	resp, err := PatchUserLimits(svc.Service)(context.Background(), &model.UserLimitsPatchRequest{
+		UserRequestFilter: model.UserRequestFilter{UserId: "u1"},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Body.MaxShelves)
+}
+
+func Test_API_PatchUserLimits_NegativeIsABadRequest(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	negative := -1
+	_, err := PatchUserLimits(svc.Service)(context.Background(), &model.UserLimitsPatchRequest{
+		UserRequestFilter: model.UserRequestFilter{UserId: "u1"},
+		Body:              model.UserLimitsPatch{MaxShelves: &negative},
+	})
+
+	var se huma.StatusError
+	require.True(t, errors.As(err, &se))
+	require.Equal(t, 400, se.GetStatus())
+	require.Contains(t, err.Error(), "validation failed")
+}
+
+func Test_API_PatchUserLimits_UnknownUser(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserService.EXPECT().SetMaxShelves("missing", nil).Return(nil, nil, domain.ErrNotFound)
+
+	_, err := PatchUserLimits(svc.Service)(context.Background(), &model.UserLimitsPatchRequest{
+		UserRequestFilter: model.UserRequestFilter{UserId: "missing"},
+	})
+
+	var se huma.StatusError
+	require.True(t, errors.As(err, &se))
+	require.Equal(t, 404, se.GetStatus())
+}
+
+func Test_API_FormatLimit(t *testing.T) {
+	n := 4
+	require.Equal(t, "unlimited", formatLimit(nil))
+	require.Equal(t, "4", formatLimit(&n))
+}

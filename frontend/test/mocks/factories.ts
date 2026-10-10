@@ -47,6 +47,7 @@ export function buildUser(overrides: Partial<User> = {}): User {
     lastName: 'Doe',
     hasPassword: true,
     role: 'user',
+    maxShelves: null,
     ...overrides
   } as User
 }

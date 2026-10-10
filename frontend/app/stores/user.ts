@@ -32,6 +32,13 @@ export const useUserStore = defineStore('userStore', {
       return updated
     },
 
+    // Admin-only. null = unlimited.
+    async setMaxShelves(userId: string, maxShelves: number | null): Promise<void> {
+      const api = useApi()
+      await api.user.patchUserLimits({ userId, userLimitsPatch: { maxShelves } })
+      await this.fetch()
+    },
+
     async patchPassword(userId: string, body: UserRequestBodyOnlyPassword): Promise<void> {
       const api = useApi()
       await api.user.patchUserPassword({ userId, userRequestBodyOnlyPassword: body })

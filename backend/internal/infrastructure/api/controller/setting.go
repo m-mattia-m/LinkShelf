@@ -7,6 +7,7 @@ import (
 	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/mailer"
 	"context"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -89,5 +90,6 @@ func settingPageFlags(svc *domain.Service) mapper.SettingPageFlags {
 		UserBasedPaths:           config.Bool("app.userBasedPaths"),
 		PasswordResetEnabled:     config.Bool("authentication.passwordReset.enabled") && config.LocalAuthEnabled(),
 		LocalAuthEnabled:         config.LocalAuthEnabled(),
+		UpgradeUrl:               strings.TrimSpace(config.String("limits.upgradeUrl")),
 	}
 }

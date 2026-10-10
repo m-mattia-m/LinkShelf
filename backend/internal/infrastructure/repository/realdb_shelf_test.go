@@ -16,7 +16,7 @@ func realDBTestUser(t *testing.T) string {
 		Email:     "realdb-shelf-" + uuid.NewString() + "@example.com",
 		FirstName: "Shelf",
 		LastName:  "Owner",
-	}, "hashed", "user")
+	}, "hashed", "user", nil)
 	require.NoError(t, err)
 	return id
 }

@@ -109,6 +109,10 @@ is no bootstrap admin by default; to get an admin, add `AUTHENTICATION_BOOTSTRAP
 `AUTHENTICATION_BOOTSTRAPADMIN_USERNAME`. That account needs no email verification, so it works before SMTP is set up.
 It is only created when it doesn't exist yet, later restarts never change it. Add `SMTP_PASSWORD` and `AUTHENTICATION_OIDC_CLIENTSECRET` the same way if you use them.
 
+The optional [service token](/docs/self-hosting/configuration#service-token) works the same way: set
+`AUTHENTICATION_SERVICETOKEN_ENABLED` to `"true"` and `AUTHENTICATION_SERVICETOKEN_TOKEN` from a Secret. The chart refuses
+to render with it enabled and no token.
+
 ## Database
 
 Set `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `DATABASE_NAME` in `env` (each can

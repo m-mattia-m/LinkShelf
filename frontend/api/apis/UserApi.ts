@@ -19,6 +19,8 @@ import type {
   User,
   UserBase,
   UserCreate,
+  UserLimits,
+  UserLimitsPatch,
   UserRequestBodyOnlyPassword,
 } from '../models/index';
 import {
@@ -30,6 +32,10 @@ import {
     UserBaseToJSON,
     UserCreateFromJSON,
     UserCreateToJSON,
+    UserLimitsFromJSON,
+    UserLimitsToJSON,
+    UserLimitsPatchFromJSON,
+    UserLimitsPatchToJSON,
     UserRequestBodyOnlyPasswordFromJSON,
     UserRequestBodyOnlyPasswordToJSON,
 } from '../models/index';
@@ -40,6 +46,15 @@ export interface DeleteUserRequest {
 
 export interface GetUserByIdRequest {
     userId: string;
+}
+
+export interface GetUserLimitsRequest {
+    userId: string;
+}
+
+export interface PatchUserLimitsRequest {
+    userId: string;
+    userLimitsPatch: Omit<UserLimitsPatch, '$schema'>;
 }
 
 export interface PatchUserPasswordRequest {
@@ -199,6 +214,53 @@ export class UserApi extends runtime.BaseAPI {
     }
 
     /**
+     * Shelf limit (null = unlimited) and current shelf count. Admin or service token.
+     * Get user limits
+     */
+    async getUserLimitsRaw(requestParameters: GetUserLimitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserLimits>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling getUserLimits().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/users/{userId}/limits`;
+        urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserLimitsFromJSON(jsonValue));
+    }
+
+    /**
+     * Shelf limit (null = unlimited) and current shelf count. Admin or service token.
+     * Get user limits
+     */
+    async getUserLimits(requestParameters: GetUserLimitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserLimits> {
+        const response = await this.getUserLimitsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * List all users.
      * List users
      */
@@ -234,6 +296,63 @@ export class UserApi extends runtime.BaseAPI {
      */
     async listUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<User>> {
         const response = await this.listUsersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Set the shelf limit (null = unlimited, 0 or more). Admin or service token.
+     * Patch user limits
+     */
+    async patchUserLimitsRaw(requestParameters: PatchUserLimitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserLimits>> {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError(
+                'userId',
+                'Required parameter "userId" was null or undefined when calling patchUserLimits().'
+            );
+        }
+
+        if (requestParameters['userLimitsPatch'] == null) {
+            throw new runtime.RequiredError(
+                'userLimitsPatch',
+                'Required parameter "userLimitsPatch" was null or undefined when calling patchUserLimits().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/v1/users/{userId}/limits`;
+        urlPath = urlPath.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UserLimitsPatchToJSON(requestParameters['userLimitsPatch']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserLimitsFromJSON(jsonValue));
+    }
+
+    /**
+     * Set the shelf limit (null = unlimited, 0 or more). Admin or service token.
+     * Patch user limits
+     */
+    async patchUserLimits(requestParameters: PatchUserLimitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserLimits> {
+        const response = await this.patchUserLimitsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

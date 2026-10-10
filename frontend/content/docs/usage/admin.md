@@ -26,6 +26,7 @@ straight to the dashboard.
 - Edit, change password, delete
 - Status: `Active`, `Pending verification`, `Invited`
 - Resend the verification email, or mark a user as verified by hand
+- Set a **Max shelves** limit per user, empty for unlimited, see [Shelf limits](/docs/self-hosting/configuration#shelf-limits)
 
 Changing a username changes the URL of their shelves if [user-based paths](/docs/self-hosting/configuration#user-based-paths)
 are on.

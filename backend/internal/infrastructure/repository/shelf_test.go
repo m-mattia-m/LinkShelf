@@ -683,3 +683,21 @@ func Test_ShelfRepository_DomainInUse(t *testing.T) {
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func Test_ShelfRepository_CountByUserId(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`SELECT COUNT\(\*\)\s+FROM shelf\s+WHERE user_id =`).
+		WithArgs("user-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
+
+	count, err := repo.CountByUserId("user-1")
+
+	require.NoError(t, err)
+	require.Equal(t, 3, count)
+	require.NoError(t, mock.ExpectationsWereMet())
+}

@@ -27,6 +27,7 @@ type ShelfRepository interface {
 	DomainInUse(domain, exceptShelfId string) (bool, error)
 	// ListPathCollisions returns shelves sharing a path.
 	ListPathCollisions() ([]PathCollision, error)
+	CountByUserId(userId string) (int, error)
 	Create(s *model.Shelf) (string, error)
 	Update(s *model.Shelf) error
 	Delete(s *model.Shelf) error
@@ -424,4 +425,19 @@ func (r *shelfRepository) Delete(s *model.Shelf) error {
 	}
 
 	return nil
+}
+
+func (r *shelfRepository) CountByUserId(userId string) (int, error) {
+	query, err := buildSqlStatements(`
+		SELECT COUNT(*)
+		FROM shelf
+		WHERE user_id = ?
+	`)
+	if err != nil {
+		return 0, err
+	}
+
+	var count int
+	err = r.Engine.QueryRowContext(context.TODO(), query, userId).Scan(&count)
+	return count, err
 }

@@ -2,10 +2,11 @@ import { renderSuspended } from '@nuxt/test-utils/runtime'
 import { fireEvent, screen, waitFor, within } from '@testing-library/vue'
 import { HttpResponse, http } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { ShelfToJSON } from '~~/api'
+import { ShelfToJSON, UserToJSON } from '~~/api'
+import type { SettingPageBody } from '~~/api'
 import { server } from '../../../../test/mocks/server'
 import { errorResponse } from '../../../../test/mocks/handlers'
-import { buildShelf } from '../../../../test/mocks/factories'
+import { buildShelf, buildTokenPair, buildUser } from '../../../../test/mocks/factories'
 import { resetOnceCache } from '../../../../test/reset-once-cache'
 import { useThemeStore } from '~/stores/theme'
 import ShelfIndexPage from './index.vue'
@@ -15,7 +16,14 @@ const BASE = 'http://localhost:8085'
 beforeEach(() => {
   resetOnceCache()
   useThemeStore().loaded = true
+  useAuthStore().$reset()
+  useState('settings').value = null
 })
+
+function limitedUser(maxShelves: number | null) {
+  useAuthStore().setTokens(buildTokenPair())
+  server.use(http.get(`${BASE}/v1/users/me`, () => HttpResponse.json(UserToJSON(buildUser({ id: 'user-1', maxShelves })))))
+}
 
 describe('shelf index page', () => {
   it('shows a loading state, then the fetched shelves in the table', async () => {
@@ -155,6 +163,64 @@ describe('shelf index page', () => {
     // The skeleton placeholder must not stay behind when the request fails.
     await waitFor(() => {
       expect(document.querySelector('.animate-pulse')).toBeNull()
+    })
+  })
+
+  describe('shelf limit', () => {
+    const own = (id: string) => buildShelf({ id, title: id, userId: 'user-1' })
+
+    it('shows usage and disables creation at the limit, with the upgrade link', async () => {
+      limitedUser(1)
+      useState('settings').value = { upgradeUrl: 'https://account.example.com' } as unknown as SettingPageBody
+      server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([own('a')].map(ShelfToJSON))))
+
+      await renderSuspended(ShelfIndexPage)
+
+      await waitFor(() => {
+        expect(screen.getByText('1 / 1 shelves')).toBeInTheDocument()
+      })
+      expect(screen.getByText('You\'ve reached your shelf limit.')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Upgrade' })).toHaveAttribute('href', 'https://account.example.com')
+      expect(screen.getByRole('button', { name: 'New' })).toBeDisabled()
+    })
+
+    it('keeps creation enabled below the limit and shows no upgrade link', async () => {
+      limitedUser(3)
+      server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([own('a')].map(ShelfToJSON))))
+
+      await renderSuspended(ShelfIndexPage)
+
+      await waitFor(() => {
+        expect(screen.getByText('1 / 3 shelves')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Upgrade')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'New' })).toBeEnabled()
+    })
+
+    it('shows nothing about limits for unlimited users', async () => {
+      limitedUser(null)
+      server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([own('a')].map(ShelfToJSON))))
+
+      await renderSuspended(ShelfIndexPage)
+
+      await waitFor(() => {
+        expect(screen.getByText('a')).toBeInTheDocument()
+      })
+      expect(screen.queryByText(/shelves$/)).not.toBeInTheDocument()
+    })
+
+    it('disables both creation buttons in the empty state at a limit of zero', async () => {
+      limitedUser(0)
+      server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([])))
+
+      await renderSuspended(ShelfIndexPage)
+
+      await waitFor(() => {
+        expect(screen.getByText('0 / 0 shelves')).toBeInTheDocument()
+      })
+      for (const button of screen.getAllByRole('button', { name: 'New' })) {
+        expect(button).toBeDisabled()
+      }
     })
   })
 })

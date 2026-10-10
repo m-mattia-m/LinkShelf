@@ -12,11 +12,13 @@ definePageMeta({
 const { t } = useI18n()
 
 const shelfStore = useShelfStore()
+const authStore = useAuthStore()
+const { maxShelves, count, reached, upgradeUrl } = useShelfLimit()
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    await callOnce(shelfStore.fetch)
+    await Promise.all([callOnce(shelfStore.fetch), authStore.fetchUser()])
   } catch (err) {
     await handleApiError(err)
   } finally {
@@ -106,6 +108,17 @@ const columns: TableColumn<Shelf>[] = [
 
       <ShelfFormDialog mode="create" />
     </div>
+
+    <UAlert
+      v-if="!loading && maxShelves !== null"
+      :color="reached ? 'warning' : 'neutral'"
+      variant="subtle"
+      icon="i-lucide-gauge"
+      class="mb-4"
+      :title="t('app.shelf.limit.usage', { count, max: maxShelves })"
+      :description="reached ? t('app.shelf.limit.reached') : undefined"
+      :actions="reached && upgradeUrl ? [{ label: t('app.shelf.limit.upgrade'), to: upgradeUrl, target: '_blank', color: 'neutral', variant: 'outline' }] : undefined"
+    />
 
     <div
       v-if="loading"

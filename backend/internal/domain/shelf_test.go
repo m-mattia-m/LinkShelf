@@ -1030,3 +1030,70 @@ func Test_Unit_Shelf_Creation_IgnoresAModeSuppliedByTheClient(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func Test_Unit_Shelf_Creation_BlockedAtTheUserLimit(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	config.Set("limits.upgradeUrl", "https://account.example.com")
+	t.Cleanup(func() { config.Set("limits.upgradeUrl", "") })
+
+	limit := 2
+	svc.UserRepository.EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", MaxShelves: &limit}, nil)
+	svc.ShelfRepository.EXPECT().CountByUserId("user-uuid-test").Return(2, nil)
+
+	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", &model.Shelf{})
+
+	require.ErrorIs(t, err, ErrShelfLimitReached)
+	require.ErrorContains(t, err, "https://account.example.com")
+	require.Empty(t, shelfId)
+}
+
+func Test_Unit_Shelf_Creation_AllowedBelowTheUserLimit(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	limit := 2
+	svc.UserRepository.EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", MaxShelves: &limit}, nil)
+	svc.ShelfRepository.EXPECT().CountByUserId("user-uuid-test").Return(1, nil)
+	svc.ShelfRepository.EXPECT().PathInUse("p", "").Return(false, nil)
+	svc.ShelfRepository.EXPECT().Create(gomock.Any()).Return("shelf-uuid-test", nil)
+
+	shelfId, err := svc.Service.ShelfService.Create("user-uuid-test", &model.Shelf{PublicShelf: model.PublicShelf{Path: "p"}})
+
+	require.NoError(t, err)
+	require.Equal(t, "shelf-uuid-test", shelfId)
+}
+
+func Test_Unit_Shelf_Creation_ZeroLimitBlocksEverything(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	limit := 0
+	svc.UserRepository.EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", MaxShelves: &limit}, nil)
+	svc.ShelfRepository.EXPECT().CountByUserId("user-uuid-test").Return(0, nil)
+
+	_, err := svc.Service.ShelfService.Create("user-uuid-test", &model.Shelf{})
+
+	require.ErrorIs(t, err, ErrShelfLimitReached)
+}
+
+func Test_Unit_Shelf_Creation_CountErrorIsReturned(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	limit := 2
+	svc.UserRepository.EXPECT().
+		Get("user-uuid-test").
+		Return(&model.User{Id: "user-uuid-test", MaxShelves: &limit}, nil)
+	svc.ShelfRepository.EXPECT().CountByUserId("user-uuid-test").Return(0, errors.New("db down"))
+
+	_, err := svc.Service.ShelfService.Create("user-uuid-test", &model.Shelf{})
+
+	require.ErrorContains(t, err, "db down")
+}
