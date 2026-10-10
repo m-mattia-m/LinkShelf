@@ -163,6 +163,33 @@ describe('UserFormDialog', () => {
     expect(limitsBody).toEqual({ max_shelves: 7 })
   })
 
+  it('clears the shelf limit to unlimited when the field is emptied', async () => {
+    const user = buildUser({ id: 'user-1', maxShelves: 2 })
+    let limitsBody: unknown
+    server.use(
+      http.get(`${BASE}/v1/users`, () => HttpResponse.json([user].map(UserToJSON))),
+      http.put(`${BASE}/v1/users/user-1`, () => HttpResponse.json(UserToJSON(user))),
+      http.patch(`${BASE}/v1/users/user-1/limits`, async ({ request }) => {
+        limitsBody = await request.json()
+        return HttpResponse.json({ max_shelves: null, shelf_count: 0 })
+      })
+    )
+
+    const { emitted, baseElement } = await renderSuspended(UserFormDialog, {
+      props: { mode: 'edit', user, open: true }
+    })
+
+    const dialog = within(baseElement as HTMLElement)
+    await fireEvent.update(dialog.getByLabelText('Max shelves'), '')
+    await fireEvent.blur(dialog.getByLabelText('Max shelves'))
+    await fireEvent.click(dialog.getByRole('button', { name: 'Submit' }))
+
+    await waitFor(() => {
+      expect(emitted().saved).toBeTruthy()
+    })
+    expect(limitsBody).toEqual({ max_shelves: null })
+  })
+
   it('does not call the limits endpoint when the limit is unchanged', async () => {
     const user = buildUser({ id: 'user-1', maxShelves: null })
     let limitsCalled = false

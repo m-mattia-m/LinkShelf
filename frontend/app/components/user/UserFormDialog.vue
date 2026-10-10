@@ -79,7 +79,8 @@ const editSchema = computed(() => v.object({
   email: emailSchema(),
   password: v.string(),
   role: v.picklist(['user', 'admin']),
-  maxShelves: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0)))
+  // Clearing the input yields undefined.
+  maxShelves: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(0)))
 }))
 
 // Renaming changes the URLs of the user's path shelves.
@@ -120,8 +121,9 @@ async function save(close: () => void) {
         email: form.email,
         role: form.role
       })
-      if (form.maxShelves !== (props.user.maxShelves ?? null)) {
-        await userStore.setMaxShelves(props.user.id, form.maxShelves)
+      const maxShelves = form.maxShelves ?? null
+      if (maxShelves !== (props.user.maxShelves ?? null)) {
+        await userStore.setMaxShelves(props.user.id, maxShelves)
       }
     } else {
       await userStore.create({
