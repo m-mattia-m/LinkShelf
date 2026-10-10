@@ -17,6 +17,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 const { t } = useI18n()
 const shelfStore = useShelfStore()
+const { reached } = useShelfLimit()
 
 const formModel = ref<ShelfBase>()
 const saving = ref(false)
@@ -56,6 +57,7 @@ async function save(close: () => void) {
       v-if="mode === 'create'"
       icon="i-lucide-plus"
       :label="t('common.new')"
+      :disabled="reached"
     />
 
     <template #body>

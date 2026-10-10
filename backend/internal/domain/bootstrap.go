@@ -38,12 +38,17 @@ func EnsureBootstrapAdmin(repo *repository.Repository) error {
 		return err
 	}
 
+	defaultMax, err := config.DefaultMaxShelves()
+	if err != nil {
+		return err
+	}
+
 	userId, err := repo.UserRepository.Create(model.UserBase{
 		Email:     email,
 		Username:  username,
 		FirstName: "Admin",
 		LastName:  "Admin",
-	}, hashedPassword, model.RoleAdmin)
+	}, hashedPassword, model.RoleAdmin, defaultMax)
 	if err != nil {
 		return err
 	}

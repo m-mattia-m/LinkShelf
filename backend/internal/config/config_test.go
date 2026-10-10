@@ -377,3 +377,125 @@ func Test_Validate_WithoutStrictOriginsTheUrlsMayBeEmpty(t *testing.T) {
 
 	require.NoError(t, validate())
 }
+
+func validWithServiceToken(enabled bool, token string) {
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "LOCAL")
+	Set("authentication.serviceToken.enabled", enabled)
+	Set("authentication.serviceToken.token", token)
+}
+
+func Test_Validate_ServiceTokenIsIgnoredWhenDisabled(t *testing.T) {
+	validWithServiceToken(false, "")
+	require.NoError(t, validate())
+	require.False(t, ServiceTokenEnabled())
+}
+
+func Test_Validate_EnabledServiceTokenMustBeStrong(t *testing.T) {
+	for _, token := range []string{
+		"",
+		"short",
+		"0123456789012345678901234567890", // 31 bytes
+		"change-me-to-a-long-random-value-in-production",
+		testJwtSecret,
+	} {
+		validWithServiceToken(true, token)
+		require.ErrorContains(t, validate(), "serviceToken.token", token)
+	}
+}
+
+func Test_Validate_AcceptsAStrongServiceToken(t *testing.T) {
+	validWithServiceToken(true, "01234567890123456789012345678901")
+	require.NoError(t, validate())
+	require.True(t, ServiceTokenEnabled())
+}
+
+func Test_LoadConfig_ServiceTokenIsOffByDefaultAndSettableFromTheEnvironment(t *testing.T) {
+	Reset()
+	require.NoError(t, LoadConfig())
+	require.False(t, ServiceTokenEnabled())
+
+	Reset()
+	t.Setenv("AUTHENTICATION_SERVICETOKEN_ENABLED", "true")
+	t.Setenv("AUTHENTICATION_SERVICETOKEN_TOKEN", "an-env-token-of-at-least-32-bytes-long")
+	require.NoError(t, LoadConfig())
+	require.True(t, ServiceTokenEnabled())
+	require.Equal(t, "an-env-token-of-at-least-32-bytes-long", ServiceToken())
+}
+
+func Test_DefaultMaxShelves(t *testing.T) {
+	five := 5
+	zero := 0
+	for name, tc := range map[string]struct {
+		value   any
+		want    *int
+		wantErr bool
+	}{
+		"unset":    {value: nil},
+		"empty":    {value: ""},
+		"null":     {value: "null"},
+		"int":      {value: 5, want: &five},
+		"string":   {value: " 5 ", want: &five},
+		"float":    {value: float64(5), want: &five},
+		"zero":     {value: 0, want: &zero},
+		"negative": {value: -1, wantErr: true},
+		"text":     {value: "many", wantErr: true},
+		"fraction": {value: 1.5, wantErr: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			Reset()
+			Set("limits.defaultMaxShelves", tc.value)
+			got, err := DefaultMaxShelves()
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func Test_LoadConfig_DefaultsToUnlimitedShelves(t *testing.T) {
+	Reset()
+	require.NoError(t, LoadConfig())
+	got, err := DefaultMaxShelves()
+	require.NoError(t, err)
+	require.Nil(t, got)
+
+	Reset()
+	t.Setenv("LIMITS_DEFAULTMAXSHELVES", "2")
+	require.NoError(t, LoadConfig())
+	got, err = DefaultMaxShelves()
+	require.NoError(t, err)
+	require.Equal(t, 2, *got)
+}
+
+func Test_Validate_RejectsANegativeDefaultMaxShelves(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "LOCAL")
+	Set("limits.defaultMaxShelves", -3)
+	require.ErrorContains(t, validate(), "defaultMaxShelves")
+}
+
+func Test_Validate_UpgradeUrlMustBeHttp(t *testing.T) {
+	for url, ok := range map[string]bool{
+		"":                            true,
+		"https://account.example.com": true,
+		"javascript:alert(1)":         false,
+		"ftp://example.com":           false,
+		"/relative":                   false,
+	} {
+		Reset()
+		Set("authentication.jwtSecret", testJwtSecret)
+		Set("authentication.type", "LOCAL")
+		Set("limits.upgradeUrl", url)
+		if ok {
+			require.NoError(t, validate(), url)
+		} else {
+			require.ErrorContains(t, validate(), "upgradeUrl", url)
+		}
+	}
+}

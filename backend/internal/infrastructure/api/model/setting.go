@@ -36,6 +36,8 @@ type SettingPageBody struct {
 	PasswordResetEnabled bool `json:"password_reset_enabled" bson:"password_reset_enabled"`
 	// LocalAuthEnabled mirrors authentication.localAuthEnabled.
 	LocalAuthEnabled bool `json:"local_auth_enabled" bson:"local_auth_enabled"`
+	// UpgradeUrl mirrors limits.upgradeUrl, empty if unset.
+	UpgradeUrl string `json:"upgrade_url" bson:"upgrade_url"`
 }
 
 // EmailDeliveryInfo is the admin-only SMTP summary (no credentials).

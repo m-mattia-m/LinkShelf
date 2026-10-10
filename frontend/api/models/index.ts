@@ -39,5 +39,7 @@ export * from './TokenPair';
 export * from './User';
 export * from './UserBase';
 export * from './UserCreate';
+export * from './UserLimits';
+export * from './UserLimitsPatch';
 export * from './UserRequestBodyOnlyPassword';
 export * from './VerifyEmailRequest';

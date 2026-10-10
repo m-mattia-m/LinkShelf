@@ -1,5 +1,5 @@
 
-# User
+# UserLimitsPatch
 
 
 ## Properties
@@ -7,38 +7,18 @@
 Name | Type
 ------------ | -------------
 `$schema` | string
-`email` | string
-`emailDeliveryFailed` | boolean
-`emailVerified` | boolean
-`firstName` | string
-`hasPassword` | boolean
-`id` | string
-`lastName` | string
 `maxShelves` | number
-`pendingEmail` | string
-`role` | string
-`username` | string
 
 ## Example
 
 ```typescript
-import type { User } from ''
+import type { UserLimitsPatch } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "$schema": null,
-  "email": null,
-  "emailDeliveryFailed": null,
-  "emailVerified": null,
-  "firstName": null,
-  "hasPassword": null,
-  "id": null,
-  "lastName": null,
   "maxShelves": null,
-  "pendingEmail": null,
-  "role": null,
-  "username": null,
-} satisfies User
+} satisfies UserLimitsPatch
 
 console.log(example)
 
@@ -47,7 +27,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as User
+const exampleParsed = JSON.parse(exampleJSON) as UserLimitsPatch
 console.log(exampleParsed)
 ```
 

@@ -232,6 +232,16 @@ func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf
 		return "", ErrNotFound
 	}
 
+	if user.MaxShelves != nil {
+		count, err := s.Repository.ShelfRepository.CountByUserId(callerUserId)
+		if err != nil {
+			return "", err
+		}
+		if count >= *user.MaxShelves {
+			return "", shelfLimitError(*user.MaxShelves)
+		}
+	}
+
 	if err := s.Domain.ThemeService.ValidateAssignable(shelfRequest.ThemeId, callerUserId); err != nil {
 		return "", err
 	}
@@ -297,4 +307,11 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 // Delete expects the caller to have checked ownership via Get.
 func (s *shelfServiceImpl) Delete(shelfRequest *model.Shelf) error {
 	return s.Repository.ShelfRepository.Delete(shelfRequest)
+}
+
+func shelfLimitError(limit int) error {
+	if u := strings.TrimSpace(config.String("limits.upgradeUrl")); u != "" {
+		return fmt.Errorf("%w: your account is limited to %d shelves, upgrade at %s", ErrShelfLimitReached, limit, u)
+	}
+	return fmt.Errorf("%w: your account is limited to %d shelves", ErrShelfLimitReached, limit)
 }

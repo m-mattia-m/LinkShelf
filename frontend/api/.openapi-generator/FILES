@@ -54,6 +54,8 @@ docs/User.md
 docs/UserApi.md
 docs/UserBase.md
 docs/UserCreate.md
+docs/UserLimits.md
+docs/UserLimitsPatch.md
 docs/UserRequestBodyOnlyPassword.md
 docs/VerifyEmailRequest.md
 index.ts
@@ -96,6 +98,8 @@ models/TokenPair.ts
 models/User.ts
 models/UserBase.ts
 models/UserCreate.ts
+models/UserLimits.ts
+models/UserLimitsPatch.ts
 models/UserRequestBodyOnlyPassword.ts
 models/VerifyEmailRequest.ts
 models/index.ts

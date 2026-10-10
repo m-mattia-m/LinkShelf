@@ -17,6 +17,9 @@ func CreateShelf(svc *domain.Service) func(c context.Context, input *model.Shelf
 			if errors.Is(err, domain.ErrNotFound) {
 				return nil, huma.Error404NotFound("user not found", err)
 			}
+			if errors.Is(err, domain.ErrShelfLimitReached) {
+				return nil, huma.Error403Forbidden(err.Error())
+			}
 			if errors.Is(err, domain.ErrForbidden) || errors.Is(err, domain.ErrInvalidInput) || errors.Is(err, domain.ErrConflict) {
 				return nil, mapper.MapOwnershipError("failed to create shelf", err)
 			}

@@ -3,9 +3,11 @@ package config
 import (
 	"flag"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/knadh/koanf/parsers/yaml"
@@ -100,7 +102,18 @@ type Configuration struct {
 			// TokenExpiryMinutes is how long an emailed reset link stays valid.
 			TokenExpiryMinutes int `yaml:"tokenExpiryMinutes"`
 		} `yaml:"passwordReset"`
+		// ServiceToken is a static credential for the user-limits endpoints only.
+		ServiceToken struct {
+			Enabled bool   `yaml:"enabled"`
+			Token   string `yaml:"token" json:"-"`
+		} `yaml:"serviceToken"`
 	} `yaml:"authentication"`
+	Limits struct {
+		// DefaultMaxShelves is copied onto new users. Empty means unlimited.
+		DefaultMaxShelves any `yaml:"defaultMaxShelves"`
+		// UpgradeUrl is shown when a user hits a limit. Optional.
+		UpgradeUrl string `yaml:"upgradeUrl"`
+	} `yaml:"limits"`
 	Smtp struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
@@ -189,6 +202,15 @@ func validate() error {
 	if err := validateJwtSecret(String("authentication.jwtSecret")); err != nil {
 		return err
 	}
+	if err := validateServiceToken(); err != nil {
+		return err
+	}
+	if _, err := DefaultMaxShelves(); err != nil {
+		return err
+	}
+	if err := validateUpgradeUrl(String("limits.upgradeUrl")); err != nil {
+		return err
+	}
 
 	switch strings.ToUpper(String("authentication.type")) {
 	case "LOCAL":
@@ -247,19 +269,90 @@ var knownPlaceholderJwtSecrets = []string{
 }
 
 func validateJwtSecret(secret string) error {
+	return validateSecret("authentication.jwtSecret", secret)
+}
+
+func validateSecret(name, secret string) error {
 	secret = strings.TrimSpace(secret)
 	if secret == "" {
-		return fmt.Errorf("authentication.jwtSecret must be set, e.g. to the output of `openssl rand -base64 48`")
+		return fmt.Errorf("%s must be set, e.g. to the output of `openssl rand -base64 48`", name)
 	}
 	for _, placeholder := range knownPlaceholderJwtSecrets {
 		if strings.EqualFold(secret, placeholder) {
-			return fmt.Errorf("authentication.jwtSecret is a publicly known placeholder, set it to a random value, e.g. the output of `openssl rand -base64 48`")
+			return fmt.Errorf("%s is a publicly known placeholder, set it to a random value, e.g. the output of `openssl rand -base64 48`", name)
 		}
 	}
 	if len(secret) < minJwtSecretBytes {
-		return fmt.Errorf("authentication.jwtSecret must be at least %d bytes long, e.g. the output of `openssl rand -base64 48`", minJwtSecretBytes)
+		return fmt.Errorf("%s must be at least %d bytes long, e.g. the output of `openssl rand -base64 48`", name, minJwtSecretBytes)
 	}
 	return nil
+}
+
+func validateServiceToken() error {
+	if !ServiceTokenEnabled() {
+		return nil
+	}
+	token := ServiceToken()
+	if err := validateSecret("authentication.serviceToken.token", token); err != nil {
+		return err
+	}
+	if token == strings.TrimSpace(String("authentication.jwtSecret")) {
+		return fmt.Errorf("authentication.serviceToken.token must differ from authentication.jwtSecret")
+	}
+	return nil
+}
+
+func validateUpgradeUrl(raw string) error {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+		return fmt.Errorf("limits.upgradeUrl must be a full http(s) URL, got %q", raw)
+	}
+	return nil
+}
+
+// ServiceTokenEnabled reports whether the service token is switched on (default: false).
+func ServiceTokenEnabled() bool { return Bool("authentication.serviceToken.enabled") }
+
+// ServiceToken returns the configured token, trimmed.
+func ServiceToken() string { return strings.TrimSpace(String("authentication.serviceToken.token")) }
+
+// DefaultMaxShelves returns the shelf limit for new users, nil for unlimited.
+func DefaultMaxShelves() (*int, error) {
+	const key = "limits.defaultMaxShelves"
+	var n int
+	switch v := k.Get(key).(type) {
+	case nil:
+		return nil, nil
+	case int:
+		n = v
+	case int64:
+		n = int(v)
+	case float64:
+		if v != math.Trunc(v) {
+			return nil, fmt.Errorf("%s must be a whole number or empty, got %v", key, v)
+		}
+		n = int(v)
+	case string:
+		v = strings.TrimSpace(v)
+		if v == "" || strings.EqualFold(v, "null") {
+			return nil, nil
+		}
+		parsed, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, fmt.Errorf("%s must be a whole number or empty, got %q", key, v)
+		}
+		n = parsed
+	default:
+		return nil, fmt.Errorf("%s must be a whole number or empty, got %v", key, v)
+	}
+	if n < 0 {
+		return nil, fmt.Errorf("%s must be zero or a positive number, got %d", key, n)
+	}
+	return &n, nil
 }
 
 // LocalAuthEnabled reports whether local auth is available (default: true).

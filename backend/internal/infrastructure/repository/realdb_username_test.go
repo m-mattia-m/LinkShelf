@@ -21,7 +21,7 @@ func realDBUserWithUsername(t *testing.T, username string) string {
 		Username:  username,
 		FirstName: "Real",
 		LastName:  "DB",
-	}, "hashed", "user")
+	}, "hashed", "user", nil)
 	require.NoError(t, err)
 	return id
 }
@@ -73,7 +73,7 @@ func Test_RealDB_UserRepository_UsernameIsUnique(t *testing.T) {
 		Username:  username,
 		FirstName: "Other",
 		LastName:  "User",
-	}, "hashed", "user")
+	}, "hashed", "user", nil)
 
 	require.Error(t, err, "the same username cannot belong to two users")
 }
@@ -130,7 +130,7 @@ func Test_RealDB_UserRepository_CreateExternalStoresTheUsername(t *testing.T) {
 	username := realDBUsername()
 	providerId := "oidc-" + uuid.NewString()
 
-	id, err := repo.CreateExternal("realdb-"+uuid.NewString()+"@example.com", username, "Ext", "User", "OIDC", providerId)
+	id, err := repo.CreateExternal("realdb-"+uuid.NewString()+"@example.com", username, "Ext", "User", "OIDC", providerId, nil)
 	require.NoError(t, err)
 
 	fetched, err := repo.Get(id)

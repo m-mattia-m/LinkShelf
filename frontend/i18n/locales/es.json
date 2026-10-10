@@ -142,6 +142,9 @@
 
   "app.shelf.title": "Shelf",
   "app.shelf.empty": "Todavía no tienes Shelves.",
+  "app.shelf.limit.usage": "{count} / {max} estantes",
+  "app.shelf.limit.reached": "Has alcanzado tu límite de estantes.",
+  "app.shelf.limit.upgrade": "Mejorar plan",
   "app.shelf.actions.open": "Abrir",
   "app.shelf.actions.edit": "Editar",
   "app.shelf.actions.delete": "Eliminar",
@@ -210,6 +213,8 @@
   "app.settings.users.form.usernameChangeWarningOne": "Al guardar, cambia la URL pública del Shelf de este usuario. Los enlaces compartidos con el nombre de usuario anterior dejan de funcionar.",
   "app.settings.users.form.usernameChangeWarningMany": "Al guardar, cambia la URL pública de los {count} Shelves de este usuario. Los enlaces compartidos con el nombre de usuario anterior dejan de funcionar.",
   "app.settings.users.form.passwordInviteHint": "Déjala en blanco para invitar a este usuario por correo.",
+  "app.settings.users.form.maxShelves": "Máx. estantes",
+  "app.settings.users.form.maxShelvesHint": "Déjalo vacío para ilimitado.",
 
   "app.settings.emailDelivery.title": "Envío de correos",
   "app.settings.emailDelivery.disabled": "La verificación de correo está desactivada.",

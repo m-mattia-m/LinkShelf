@@ -160,4 +160,41 @@ describe('useUserStore', () => {
       expect(store.users[0]?.emailVerified).toBe(true)
     })
   })
+
+  describe('setMaxShelves', () => {
+    it('patches the limit and refetches the list', async () => {
+      const store = useUserStore()
+      const limited = buildUser({ id: 'user-1', maxShelves: 5 })
+      let body: unknown
+      server.use(
+        http.patch(`${BASE}/v1/users/:userId/limits`, async ({ params, request }) => {
+          expect(params.userId).toBe('user-1')
+          body = await request.json()
+          return HttpResponse.json({ max_shelves: 5, shelf_count: 1 })
+        }),
+        http.get(`${BASE}/v1/users`, () => HttpResponse.json([UserToJSON(limited)]))
+      )
+
+      await store.setMaxShelves('user-1', 5)
+
+      expect(body).toEqual({ max_shelves: 5 })
+      expect(store.users[0]?.maxShelves).toBe(5)
+    })
+
+    it('sends null for unlimited', async () => {
+      const store = useUserStore()
+      let body: unknown
+      server.use(
+        http.patch(`${BASE}/v1/users/:userId/limits`, async ({ request }) => {
+          body = await request.json()
+          return HttpResponse.json({ max_shelves: null, shelf_count: 1 })
+        }),
+        http.get(`${BASE}/v1/users`, () => HttpResponse.json([]))
+      )
+
+      await store.setMaxShelves('user-1', null)
+
+      expect(body).toEqual({ max_shelves: null })
+    })
+  })
 })

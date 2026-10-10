@@ -50,8 +50,8 @@ func Test_Unit_EnsureBootstrapAdmin_CreatesNewAdmin(t *testing.T) {
 		Return(nil, nil)
 
 	userRepository.EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
-		DoAndReturn(func(u model.UserBase, hashedPassword, role string) (string, error) {
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin, gomock.Any()).
+		DoAndReturn(func(u model.UserBase, hashedPassword, role string, _ *int) (string, error) {
 			require.Equal(t, "admin@example.com", u.Email)
 			require.NotEmpty(t, hashedPassword)
 			return "new-admin-id", nil
@@ -91,8 +91,8 @@ func Test_Unit_EnsureBootstrapAdmin_StoresTheEmailLowercased(t *testing.T) {
 
 	userRepository.EXPECT().FindByEmail("admin@example.com").Return(nil, nil)
 	userRepository.EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
-		DoAndReturn(func(u model.UserBase, _, _ string) (string, error) {
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin, gomock.Any()).
+		DoAndReturn(func(u model.UserBase, _, _ string, _ *int) (string, error) {
 			require.Equal(t, "admin@example.com", u.Email)
 			return "new-admin-id", nil
 		})
@@ -130,7 +130,7 @@ func Test_Unit_EnsureBootstrapAdmin_PropagatesCreateError(t *testing.T) {
 		FindByEmail("admin@example.com").
 		Return(nil, nil)
 	userRepository.EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin, gomock.Any()).
 		Return("", createErr)
 
 	require.ErrorIs(t, EnsureBootstrapAdmin(repo), createErr)
@@ -148,8 +148,8 @@ func Test_Unit_EnsureBootstrapAdmin_CreatesTheAdminWithTheConfiguredUsername(t *
 
 	userRepository.EXPECT().FindByEmail("admin@example.com").Return(nil, nil)
 	userRepository.EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
-		DoAndReturn(func(u model.UserBase, _, _ string) (string, error) {
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin, gomock.Any()).
+		DoAndReturn(func(u model.UserBase, _, _ string, _ *int) (string, error) {
 			require.Equal(t, "admin", u.Username)
 			return "new-admin-id", nil
 		})
@@ -169,8 +169,8 @@ func Test_Unit_EnsureBootstrapAdmin_UsesTheConfiguredUsernameWithoutValidatingIt
 
 	userRepository.EXPECT().FindByEmail("admin@example.com").Return(nil, nil)
 	userRepository.EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
-		DoAndReturn(func(u model.UserBase, _, _ string) (string, error) {
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin, gomock.Any()).
+		DoAndReturn(func(u model.UserBase, _, _ string, _ *int) (string, error) {
 			// Only surrounding whitespace is trimmed.
 			require.Equal(t, "Not A Valid Name!", u.Username)
 			return "new-admin-id", nil

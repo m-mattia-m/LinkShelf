@@ -68,6 +68,17 @@ authentication:
     # Requires smtp.host and smtp.from.
     enabled: true
     tokenExpiryMinutes: 60
+  # Static bearer token for an external service. Can only read and set a user's shelf limit.
+  serviceToken:
+    enabled: false
+    # Required when enabled, at least 32 bytes and different from jwtSecret, e.g. `openssl rand -base64 48`.
+    # Set via AUTHENTICATION_SERVICETOKEN_TOKEN.
+    token: ""
+limits:
+  # Shelf limit copied onto new users. Empty = unlimited. Existing users are not changed.
+  defaultMaxShelves:
+  # Optional http(s) link shown to users who hit a limit.
+  upgradeUrl: ""
 smtp:
   # Defaults to the Mailpit dev container.
   host: localhost

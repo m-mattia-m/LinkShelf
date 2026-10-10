@@ -41,6 +41,21 @@ func (m *MockShelfRepository) EXPECT() *MockShelfRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CountByUserId mocks base method.
+func (m *MockShelfRepository) CountByUserId(userId string) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountByUserId", userId)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountByUserId indicates an expected call of CountByUserId.
+func (mr *MockShelfRepositoryMockRecorder) CountByUserId(userId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountByUserId", reflect.TypeOf((*MockShelfRepository)(nil).CountByUserId), userId)
+}
+
 // Create mocks base method.
 func (m *MockShelfRepository) Create(s *model.Shelf) (string, error) {
 	m.ctrl.T.Helper()

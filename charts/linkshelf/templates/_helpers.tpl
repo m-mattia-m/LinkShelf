@@ -154,6 +154,11 @@ Rendered as YAML.
 {{- end }}
 {{- end }}
 
+{{/* The literal value of an env entry as a string, "" when unset. Args: env, name. */}}
+{{- define "linkshelf.envValue" -}}
+{{- if hasKey .env .name }}{{ get (get .env .name) "value" | toString }}{{ end }}
+{{- end }}
+
 {{- define "linkshelf.validate" -}}
 {{- $env := include "linkshelf.env" . | fromYaml }}
 {{- if ne "true" (include "linkshelf.envConfigured" (dict "env" $env "name" "AUTHENTICATION_JWTSECRET")) }}
@@ -161,6 +166,9 @@ Rendered as YAML.
 {{- end }}
 {{- if and (eq "true" (include "linkshelf.envConfigured" (dict "env" $env "name" "AUTHENTICATION_BOOTSTRAPADMIN_EMAIL"))) (ne "true" (include "linkshelf.envConfigured" (dict "env" $env "name" "AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD"))) }}
 {{- fail "AUTHENTICATION_BOOTSTRAPADMIN_EMAIL is set in env, so also set AUTHENTICATION_BOOTSTRAPADMIN_PASSWORD" }}
+{{- end }}
+{{- if and (eq "true" (include "linkshelf.envValue" (dict "env" $env "name" "AUTHENTICATION_SERVICETOKEN_ENABLED"))) (ne "true" (include "linkshelf.envConfigured" (dict "env" $env "name" "AUTHENTICATION_SERVICETOKEN_TOKEN"))) }}
+{{- fail "AUTHENTICATION_SERVICETOKEN_ENABLED is true in env, so also set AUTHENTICATION_SERVICETOKEN_TOKEN (valueFrom.secretKeyRef)" }}
 {{- end }}
 {{- if .Values.postgresql.enabled }}
 {{- range $name := (list "DATABASE_HOST" "DATABASE_PORT" "DATABASE_USERNAME" "DATABASE_PASSWORD" "DATABASE_NAME") }}

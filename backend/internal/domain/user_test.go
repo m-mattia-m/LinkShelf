@@ -64,7 +64,7 @@ func Test_Unit_User_Creation_Success_SelfRegistration_DefaultsToUserRole(t *test
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleUser).
+		Create(gomock.Any(), gomock.Any(), model.RoleUser, gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -129,7 +129,7 @@ func Test_Unit_User_Creation_Success_AdminBypassesRegistrationDisabled(t *testin
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleUser).
+		Create(gomock.Any(), gomock.Any(), model.RoleUser, gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -205,7 +205,7 @@ func Test_Unit_User_Creation_Success_AdminInvitesPasswordlessAccount(t *testing.
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), "", model.RoleUser).
+		Create(gomock.Any(), "", model.RoleUser, gomock.Any()).
 		Return("invited-uuid-test", nil)
 
 	svc.UserRepository.
@@ -255,7 +255,7 @@ func Test_Unit_User_Creation_Success_AdminSetsRole(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any(), model.RoleAdmin).
+		Create(gomock.Any(), gomock.Any(), model.RoleAdmin, gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -303,7 +303,7 @@ func Test_Unit_User_Creation_Failure_Creation(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", errors.New("an error occurred"))
 
 	userRequest := model.UserCreate{
@@ -333,7 +333,7 @@ func Test_Unit_User_Creation_Failure_Get(t *testing.T) {
 
 	svc.UserRepository.
 		EXPECT().
-		Create(gomock.Any(), gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("user-uuid-test", nil)
 
 	svc.UserRepository.
@@ -837,4 +837,111 @@ func Test_Unit_User_Update_Failure_UsernameLookupFails(t *testing.T) {
 
 	require.ErrorContains(t, err, "db unavailable")
 	require.Nil(t, updated)
+}
+
+func Test_Unit_User_Creation_CopiesTheDefaultMaxShelves(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
+	config.Set("limits.defaultMaxShelves", 2)
+	t.Cleanup(func() { config.Set("limits.defaultMaxShelves", nil) })
+
+	svc.UserRepository.EXPECT().UsernameTaken("test-user", "").Return(false, nil)
+	svc.UserRepository.EXPECT().
+		Create(gomock.Any(), gomock.Any(), model.RoleUser, gomock.Any()).
+		DoAndReturn(func(_ model.UserBase, _, _ string, maxShelves *int) (string, error) {
+			require.NotNil(t, maxShelves)
+			require.Equal(t, 2, *maxShelves)
+			return "user-uuid-test", nil
+		})
+	svc.UserRepository.EXPECT().Get("user-uuid-test").Return(&model.User{Id: "user-uuid-test"}, nil)
+
+	_, err := svc.Service.UserService.Create(&model.UserCreate{
+		UserBase: model.UserBase{Username: "test-user", Email: "test@test.com", FirstName: "A", LastName: "B"},
+		Password: "secret",
+	}, false)
+
+	require.NoError(t, err)
+}
+
+func Test_Unit_User_Creation_DefaultsToUnlimitedShelves(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+	allowSelfRegistration(t)
+
+	svc.UserRepository.EXPECT().UsernameTaken("test-user", "").Return(false, nil)
+	svc.UserRepository.EXPECT().
+		Create(gomock.Any(), gomock.Any(), model.RoleUser, nil).
+		Return("user-uuid-test", nil)
+	svc.UserRepository.EXPECT().Get("user-uuid-test").Return(&model.User{Id: "user-uuid-test"}, nil)
+
+	_, err := svc.Service.UserService.Create(&model.UserCreate{
+		UserBase: model.UserBase{Username: "test-user", Email: "test@test.com", FirstName: "A", LastName: "B"},
+		Password: "secret",
+	}, false)
+
+	require.NoError(t, err)
+}
+
+func Test_Unit_User_GetLimits(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	limit := 5
+	svc.UserRepository.EXPECT().Get("u1").Return(&model.User{Id: "u1", MaxShelves: &limit}, nil)
+	svc.ShelfRepository.EXPECT().CountByUserId("u1").Return(3, nil)
+
+	limits, err := svc.Service.UserService.GetLimits("u1")
+
+	require.NoError(t, err)
+	require.Equal(t, 5, *limits.MaxShelves)
+	require.Equal(t, 3, limits.ShelfCount)
+}
+
+func Test_Unit_User_GetLimits_UnknownUser(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.EXPECT().Get("missing").Return(nil, nil)
+
+	_, err := svc.Service.UserService.GetLimits("missing")
+
+	require.ErrorIs(t, err, ErrNotFound)
+}
+
+func Test_Unit_User_SetMaxShelves(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	old, next := 2, 10
+	svc.UserRepository.EXPECT().Get("u1").Return(&model.User{Id: "u1", MaxShelves: &old}, nil)
+	svc.ShelfRepository.EXPECT().CountByUserId("u1").Return(1, nil)
+	svc.UserRepository.EXPECT().SetMaxShelves("u1", &next).Return(true, nil)
+
+	limits, previous, err := svc.Service.UserService.SetMaxShelves("u1", &next)
+
+	require.NoError(t, err)
+	require.Equal(t, 10, *limits.MaxShelves)
+	require.Equal(t, 2, *previous)
+}
+
+func Test_Unit_User_SetMaxShelves_RejectsNegative(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	negative := -1
+	_, _, err := svc.Service.UserService.SetMaxShelves("u1", &negative)
+
+	require.ErrorIs(t, err, ErrInvalidInput)
+}
+
+func Test_Unit_User_SetMaxShelves_UnknownUser(t *testing.T) {
+	svc := NewMockService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.UserRepository.EXPECT().Get("missing").Return(nil, nil)
+
+	_, _, err := svc.Service.UserService.SetMaxShelves("missing", nil)
+
+	require.ErrorIs(t, err, ErrNotFound)
 }

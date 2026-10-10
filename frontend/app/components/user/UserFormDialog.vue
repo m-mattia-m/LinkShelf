@@ -37,7 +37,8 @@ const form = reactive({
   username: props.user?.username ?? '',
   email: props.user?.email ?? '',
   password: '',
-  role: (props.user?.role ?? 'user') as 'user' | 'admin'
+  role: (props.user?.role ?? 'user') as 'user' | 'admin',
+  maxShelves: props.user?.maxShelves ?? null as number | null
 })
 
 watch(open, async (isOpen) => {
@@ -48,6 +49,7 @@ watch(open, async (isOpen) => {
   form.email = props.user?.email ?? ''
   form.password = ''
   form.role = (props.user?.role ?? 'user') as 'user' | 'admin'
+  form.maxShelves = props.user?.maxShelves ?? null
 
   if (props.mode === 'edit' && userBasedPaths.value && !shelfStore.loaded) {
     try {
@@ -76,7 +78,9 @@ const editSchema = computed(() => v.object({
   username: usernameSchema(),
   email: emailSchema(),
   password: v.string(),
-  role: v.picklist(['user', 'admin'])
+  role: v.picklist(['user', 'admin']),
+  // Clearing the input yields undefined.
+  maxShelves: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(0)))
 }))
 
 // Renaming changes the URLs of the user's path shelves.
@@ -117,6 +121,10 @@ async function save(close: () => void) {
         email: form.email,
         role: form.role
       })
+      const maxShelves = form.maxShelves ?? null
+      if (maxShelves !== (props.user.maxShelves ?? null)) {
+        await userStore.setMaxShelves(props.user.id, maxShelves)
+      }
     } else {
       await userStore.create({
         firstName: form.firstName,
@@ -233,6 +241,21 @@ async function save(close: () => void) {
             v-model="form.role"
             :items="roleOptions"
             value-key="value"
+            class="w-full"
+          />
+        </UFormField>
+
+        <UFormField
+          v-if="mode === 'edit'"
+          :label="t('app.settings.users.form.maxShelves')"
+          :hint="t('app.settings.users.form.maxShelvesHint')"
+          name="maxShelves"
+        >
+          <UInputNumber
+            v-model="form.maxShelves"
+            :min="0"
+            :increment="false"
+            :decrement="false"
             class="w-full"
           />
         </UFormField>

@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/model"
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -13,11 +16,14 @@ import (
 type contextKey string
 
 const (
-	userIdContextKey contextKey = "userId"
-	roleContextKey   contextKey = "role"
+	userIdContextKey  contextKey = "userId"
+	roleContextKey    contextKey = "role"
+	serviceContextKey contextKey = "serviceToken"
 
 	// roleMetadataKey restricts an operation to a role.
 	roleMetadataKey = "requiredRole"
+	// serviceTokenMetadataKey lets the service token call an operation.
+	serviceTokenMetadataKey = "allowServiceToken"
 )
 
 // UserIdFromContext returns the caller's user ID, or "" if unauthenticated.
@@ -32,6 +38,25 @@ func IsAdminFromContext(ctx context.Context) bool {
 	return role == model.RoleAdmin
 }
 
+// IsServiceTokenFromContext reports whether the caller authenticated with the service token.
+func IsServiceTokenFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(serviceContextKey).(bool)
+	return v
+}
+
+// matchesServiceToken compares in constant time, regardless of length.
+func matchesServiceToken(bearer string) bool {
+	if !config.ServiceTokenEnabled() {
+		return false
+	}
+	token := config.ServiceToken()
+	if token == "" {
+		return false
+	}
+	a, b := sha256.Sum256([]byte(bearer)), sha256.Sum256([]byte(token))
+	return subtle.ConstantTimeCompare(a[:], b[:]) == 1
+}
+
 // NewAuthenticationMiddleware validates the JWT on operations with a Security requirement.
 func NewAuthenticationMiddleware(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
@@ -44,6 +69,18 @@ func NewAuthenticationMiddleware(api huma.API) func(ctx huma.Context, next func(
 		bearer := strings.TrimSpace(strings.TrimPrefix(ctx.Header("Authorization"), "Bearer "))
 		if bearer == "" {
 			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "missing bearer token")
+			return
+		}
+
+		if matchesServiceToken(bearer) {
+			if allowed, _ := op.Metadata[serviceTokenMetadataKey].(bool); !allowed {
+				_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "invalid or expired token")
+				return
+			}
+			ctx = huma.WithValue(ctx, userIdContextKey, "service")
+			ctx = huma.WithValue(ctx, roleContextKey, model.RoleAdmin)
+			ctx = huma.WithValue(ctx, serviceContextKey, true)
+			next(ctx)
 			return
 		}
 
@@ -68,6 +105,11 @@ func NewAuthenticationMiddleware(api huma.API) func(ctx huma.Context, next func(
 // requireAdmin marks an operation as admin-only. Pass into huma.Operation{Metadata: ...}.
 func requireAdmin() map[string]any {
 	return map[string]any{roleMetadataKey: model.RoleAdmin}
+}
+
+// requireAdminOrServiceToken is requireAdmin, also open to the service token.
+func requireAdminOrServiceToken() map[string]any {
+	return map[string]any{roleMetadataKey: model.RoleAdmin, serviceTokenMetadataKey: true}
 }
 
 // bearerSecurity marks an operation as requiring a valid access token.

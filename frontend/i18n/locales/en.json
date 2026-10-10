@@ -142,6 +142,9 @@
 
   "app.shelf.title": "Shelf",
   "app.shelf.empty": "You don't have any shelves yet.",
+  "app.shelf.limit.usage": "{count} / {max} shelves",
+  "app.shelf.limit.reached": "You've reached your shelf limit.",
+  "app.shelf.limit.upgrade": "Upgrade",
   "app.shelf.actions.open": "Open",
   "app.shelf.actions.edit": "Edit",
   "app.shelf.actions.delete": "Delete",
@@ -210,6 +213,8 @@
   "app.settings.users.form.usernameChangeWarningOne": "Saving changes the public URL of this user's shelf. Links shared with the old username stop working.",
   "app.settings.users.form.usernameChangeWarningMany": "Saving changes the public URL of this user's {count} shelves. Links shared with the old username stop working.",
   "app.settings.users.form.passwordInviteHint": "Leave blank to invite this user by email instead.",
+  "app.settings.users.form.maxShelves": "Max shelves",
+  "app.settings.users.form.maxShelvesHint": "Leave empty for unlimited.",
 
   "app.settings.emailDelivery.title": "Email delivery",
   "app.settings.emailDelivery.disabled": "Email verification is disabled.",
