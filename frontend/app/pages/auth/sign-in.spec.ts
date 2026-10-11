@@ -129,18 +129,21 @@ describe('sign-in page', () => {
     // @ts-expect-error - reassigning window.location for the test
     delete window.location
     // @ts-expect-error - a minimal stub is enough for this redirect assertion
-    window.location = { href: '' }
+    window.location = { href: originalLocation.href }
 
-    await renderSuspended(SignInPage)
+    try {
+      await renderSuspended(SignInPage)
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Continue with SSO' }))
+      await fireEvent.click(screen.getByRole('button', { name: 'Continue with SSO' }))
 
-    await waitFor(() => {
-      expect(window.location.href).toBe('https://idp.example.com/authorize')
-    })
-    expect(sessionStorage.getItem('linkshelf.oidcState')).toBe('my-state')
-    // @ts-expect-error - restoring the real window.location after the test
-    window.location = originalLocation
+      await waitFor(() => {
+        expect(window.location.href).toBe('https://idp.example.com/authorize')
+      })
+      expect(sessionStorage.getItem('linkshelf.oidcState')).toBe('my-state')
+    } finally {
+      // @ts-expect-error - restoring the real window.location after the test
+      window.location = originalLocation
+    }
   })
 
   it('does not show the SSO button when OIDC is disabled', async () => {
