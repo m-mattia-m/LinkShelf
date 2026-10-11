@@ -41,6 +41,8 @@ app:
   # Requires frontendUrl and server.host to be set to the real public values.
   # Leave it false while they are still the localhost defaults.
   strictOrigins: false
+  # External links in the dashboard sidebar, opened in a new tab. icon is an Iconify name (optional).
+  sidebarLinks: []
 server:
   scheme: http
   host: localhost
@@ -223,6 +225,22 @@ reserved: no shelf can use them as its custom domain, so `/` on them always stay
 traffic there takes the same steps as a [shelf's
 custom domain](/docs/self-hosting/custom-domains#set-it-up). In the Helm chart, add the domain to `ingress.extraHosts`
 and `ingress.tls`, and set `APP_ADDITIONALORIGINS` in `env`.
+
+## Sidebar links
+
+`app.sidebarLinks` adds external links to the dashboard sidebar. They open in a new tab.
+
+```yaml
+app:
+  sidebarLinks:
+    - name: Status
+      url: https://status.example.com
+      icon: i-lucide-activity
+```
+
+`name` and `url` are required, and `url` must be a full http(s) URL. `icon` is an [Iconify](https://icones.js.org) name
+and falls back to a generic link icon. The list can't be set through an environment variable, use a config file
+(`CONFIGURATION_FILE_PATH`).
 
 ## Shelf limits
 

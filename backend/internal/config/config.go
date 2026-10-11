@@ -23,6 +23,13 @@ var searchPaths = []string{".", "..", "../..", "../../..", "../../../..", "backe
 
 var k = koanf.New(".")
 
+// SidebarLink is an external link shown in the dashboard sidebar.
+type SidebarLink struct {
+	Name string `yaml:"name"`
+	Url  string `yaml:"url"`
+	Icon string `yaml:"icon"`
+}
+
 // Configuration mirrors config.default.yaml.
 type Configuration struct {
 	App struct {
@@ -38,6 +45,8 @@ type Configuration struct {
 		UserBasedPaths bool `yaml:"userBasedPaths"`
 		// StrictOrigins restricts CORS to known origins and requests to Server.Host.
 		StrictOrigins bool `yaml:"strictOrigins"`
+		// SidebarLinks are external links in the dashboard sidebar.
+		SidebarLinks []SidebarLink `yaml:"sidebarLinks"`
 	} `yaml:"app"`
 	Server struct {
 		Scheme         string   `yaml:"scheme"`
@@ -211,6 +220,9 @@ func validate() error {
 	if err := validateUpgradeUrl(String("limits.upgradeUrl")); err != nil {
 		return err
 	}
+	if _, err := SidebarLinks(); err != nil {
+		return err
+	}
 
 	switch strings.ToUpper(String("authentication.type")) {
 	case "LOCAL":
@@ -353,6 +365,26 @@ func DefaultMaxShelves() (*int, error) {
 		return nil, fmt.Errorf("%s must be zero or a positive number, got %d", key, n)
 	}
 	return &n, nil
+}
+
+// SidebarLinks returns the validated app.sidebarLinks, never nil.
+func SidebarLinks() ([]SidebarLink, error) {
+	links := []SidebarLink{}
+	if err := k.Unmarshal("app.sidebarLinks", &links); err != nil {
+		return nil, fmt.Errorf("app.sidebarLinks does not match the expected structure: %w", err)
+	}
+	for i := range links {
+		l := &links[i]
+		l.Name, l.Url, l.Icon = strings.TrimSpace(l.Name), strings.TrimSpace(l.Url), strings.TrimSpace(l.Icon)
+		if l.Name == "" {
+			return nil, fmt.Errorf("app.sidebarLinks[%d].name must be set", i)
+		}
+		u, err := url.Parse(l.Url)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+			return nil, fmt.Errorf("app.sidebarLinks[%d].url must be a full http(s) URL, got %q", i, l.Url)
+		}
+	}
+	return links, nil
 }
 
 // LocalAuthEnabled reports whether local auth is available (default: true).

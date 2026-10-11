@@ -21,6 +21,7 @@ Name | Type
 `privacyPolicyShow` | boolean
 `redirectToDashboard` | boolean
 `registrationEnabled` | boolean
+`sidebarLinks` | [Array&lt;SidebarLink&gt;](SidebarLink.md)
 `termsOfUse` | string
 `termsOfUseShow` | boolean
 `upgradeUrl` | string
@@ -48,6 +49,7 @@ const example = {
   "privacyPolicyShow": null,
   "redirectToDashboard": null,
   "registrationEnabled": null,
+  "sidebarLinks": null,
   "termsOfUse": null,
   "termsOfUseShow": null,
   "upgradeUrl": null,

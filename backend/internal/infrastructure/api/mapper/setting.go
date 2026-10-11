@@ -14,6 +14,7 @@ type SettingPageFlags struct {
 	PasswordResetEnabled     bool
 	LocalAuthEnabled         bool
 	UpgradeUrl               string
+	SidebarLinks             []model.SidebarLink
 }
 
 func MapSettingToSettingPageResponse(languageCode string, settings []model.Setting, flags SettingPageFlags) *model.SettingPageResponse {
@@ -43,8 +44,16 @@ func MapSettingToSettingPageResponse(languageCode string, settings []model.Setti
 			PasswordResetEnabled:     flags.PasswordResetEnabled,
 			LocalAuthEnabled:         flags.LocalAuthEnabled,
 			UpgradeUrl:               flags.UpgradeUrl,
+			SidebarLinks:             sidebarLinksOrEmpty(flags.SidebarLinks),
 		},
 	}
+}
+
+func sidebarLinksOrEmpty(links []model.SidebarLink) []model.SidebarLink {
+	if links == nil {
+		return []model.SidebarLink{}
+	}
+	return links
 }
 
 func getSettingValue(settingsMap map[string]model.Setting, key string, languageCode string) string {

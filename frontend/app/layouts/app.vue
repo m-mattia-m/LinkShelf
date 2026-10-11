@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
+import type { SettingPageBody } from '~~/api'
 
 const route = useRoute()
 const { t, locale, locales, setLocale } = useI18n()
 const { user, ensureUser } = useCurrentUser()
 const authStore = useAuthStore()
+const settings = useState<SettingPageBody | null>('settings')
 const router = useRouter()
 
 // @nuxt/ui has no de-CH locale pack, so only code/name are set.
@@ -64,6 +66,12 @@ const items = computed<NavigationMenuItem[][]>(() => [
       : [])
   ],
   [
+    ...(settings.value?.sidebarLinks ?? []).flatMap((link) => {
+      const to = safeHref(link.url)
+      return to
+        ? [{ label: link.name, to, target: '_blank', icon: link.icon || 'i-lucide-external-link' }]
+        : []
+    }),
     {
       label: 'Discord',
       to: 'https://discord.com/linkshelf',

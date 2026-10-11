@@ -82,6 +82,12 @@ func GetEmailDeliveryInfo(svc *domain.Service) func(c context.Context, input *st
 
 // settingPageFlags returns the config-derived values of the settings page.
 func settingPageFlags(svc *domain.Service) mapper.SettingPageFlags {
+	// LoadConfig already validated the links.
+	links, _ := config.SidebarLinks()
+	sidebarLinks := make([]model.SidebarLink, 0, len(links))
+	for _, l := range links {
+		sidebarLinks = append(sidebarLinks, model.SidebarLink{Name: l.Name, Url: l.Url, Icon: l.Icon})
+	}
 	return mapper.SettingPageFlags{
 		OidcEnabled: svc.AuthService.IsOidcEnabled(),
 		// Sign-up and reset depend on local auth.
@@ -91,5 +97,6 @@ func settingPageFlags(svc *domain.Service) mapper.SettingPageFlags {
 		PasswordResetEnabled:     config.Bool("authentication.passwordReset.enabled") && config.LocalAuthEnabled(),
 		LocalAuthEnabled:         config.LocalAuthEnabled(),
 		UpgradeUrl:               strings.TrimSpace(config.String("limits.upgradeUrl")),
+		SidebarLinks:             sidebarLinks,
 	}
 }
