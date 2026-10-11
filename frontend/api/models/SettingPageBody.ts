@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SidebarLink } from './SidebarLink';
+import {
+    SidebarLinkFromJSON,
+    SidebarLinkFromJSONTyped,
+    SidebarLinkToJSON,
+    SidebarLinkToJSONTyped,
+} from './SidebarLink';
+
 /**
  * 
  * @export
@@ -111,6 +119,12 @@ export interface SettingPageBody {
     registrationEnabled: boolean;
     /**
      * 
+     * @type {Array<SidebarLink>}
+     * @memberof SettingPageBody
+     */
+    sidebarLinks: Array<SidebarLink> | null;
+    /**
+     * 
      * @type {string}
      * @memberof SettingPageBody
      */
@@ -153,6 +167,7 @@ export function instanceOfSettingPageBody(value: object): value is SettingPageBo
     if (!('privacyPolicyShow' in value) || value['privacyPolicyShow'] === undefined) return false;
     if (!('redirectToDashboard' in value) || value['redirectToDashboard'] === undefined) return false;
     if (!('registrationEnabled' in value) || value['registrationEnabled'] === undefined) return false;
+    if (!('sidebarLinks' in value) || value['sidebarLinks'] === undefined) return false;
     if (!('termsOfUse' in value) || value['termsOfUse'] === undefined) return false;
     if (!('termsOfUseShow' in value) || value['termsOfUseShow'] === undefined) return false;
     if (!('upgradeUrl' in value) || value['upgradeUrl'] === undefined) return false;
@@ -185,6 +200,7 @@ export function SettingPageBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
         'privacyPolicyShow': json['privacy_policy_show'],
         'redirectToDashboard': json['redirect_to_dashboard'],
         'registrationEnabled': json['registration_enabled'],
+        'sidebarLinks': (json['sidebar_links'] == null ? null : (json['sidebar_links'] as Array<any>).map(SidebarLinkFromJSON)),
         'termsOfUse': json['terms_of_use'],
         'termsOfUseShow': json['terms_of_use_show'],
         'upgradeUrl': json['upgrade_url'],
@@ -217,6 +233,7 @@ export function SettingPageBodyToJSONTyped(value?: Omit<SettingPageBody, '$schem
         'privacy_policy_show': value['privacyPolicyShow'],
         'redirect_to_dashboard': value['redirectToDashboard'],
         'registration_enabled': value['registrationEnabled'],
+        'sidebar_links': (value['sidebarLinks'] == null ? null : (value['sidebarLinks'] as Array<any>).map(SidebarLinkToJSON)),
         'terms_of_use': value['termsOfUse'],
         'terms_of_use_show': value['termsOfUseShow'],
         'upgrade_url': value['upgradeUrl'],

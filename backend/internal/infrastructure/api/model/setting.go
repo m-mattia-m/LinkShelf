@@ -38,6 +38,14 @@ type SettingPageBody struct {
 	LocalAuthEnabled bool `json:"local_auth_enabled" bson:"local_auth_enabled"`
 	// UpgradeUrl mirrors limits.upgradeUrl, empty if unset.
 	UpgradeUrl string `json:"upgrade_url" bson:"upgrade_url"`
+	// SidebarLinks mirrors app.sidebarLinks.
+	SidebarLinks []SidebarLink `json:"sidebar_links" bson:"sidebar_links"`
+}
+
+type SidebarLink struct {
+	Name string `json:"name" bson:"name"`
+	Url  string `json:"url" bson:"url"`
+	Icon string `json:"icon" bson:"icon"`
 }
 
 // EmailDeliveryInfo is the admin-only SMTP summary (no credentials).

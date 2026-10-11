@@ -31,6 +31,7 @@ export * from './SettingPageBody';
 export * from './SettingUpdateFailure';
 export * from './Shelf';
 export * from './ShelfBase';
+export * from './SidebarLink';
 export * from './Statistic';
 export * from './Theme';
 export * from './ThemeBase';

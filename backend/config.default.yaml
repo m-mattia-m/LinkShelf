@@ -10,6 +10,12 @@ app:
   # Only allow browser calls from known origins and requests addressed to server.host (else 421).
   # Requires frontendUrl and server.host to be the real public values.
   strictOrigins: false
+  # External links in the dashboard sidebar, opened in a new tab. icon is an Iconify name (optional).
+  sidebarLinks: []
+  # sidebarLinks:
+  #   - name: Status
+  #     url: https://status.example.com
+  #     icon: i-lucide-activity
 server:
   scheme: http
   host: localhost

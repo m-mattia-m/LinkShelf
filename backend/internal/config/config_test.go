@@ -499,3 +499,25 @@ func Test_Validate_UpgradeUrlMustBeHttp(t *testing.T) {
 		}
 	}
 }
+
+func Test_SidebarLinks(t *testing.T) {
+	Reset()
+	links, err := SidebarLinks()
+	require.NoError(t, err)
+	require.Empty(t, links)
+
+	Set("app.sidebarLinks", []map[string]any{{"name": " Status ", "url": "https://status.example.com", "icon": "i-lucide-activity"}})
+	links, err = SidebarLinks()
+	require.NoError(t, err)
+	require.Equal(t, []SidebarLink{{Name: "Status", Url: "https://status.example.com", Icon: "i-lucide-activity"}}, links)
+
+	for name, link := range map[string]map[string]any{
+		"missing name": {"url": "https://example.com"},
+		"js url":       {"name": "x", "url": "javascript:alert(1)"},
+		"relative url": {"name": "x", "url": "/docs"},
+	} {
+		Set("app.sidebarLinks", []map[string]any{link})
+		_, err = SidebarLinks()
+		require.ErrorContains(t, err, "app.sidebarLinks", name)
+	}
+}

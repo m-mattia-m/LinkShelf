@@ -43,6 +43,7 @@ docs/SettingUpdateFailure.md
 docs/Shelf.md
 docs/ShelfApi.md
 docs/ShelfBase.md
+docs/SidebarLink.md
 docs/Statistic.md
 docs/StatisticApi.md
 docs/Theme.md
@@ -90,6 +91,7 @@ models/SettingPageBody.ts
 models/SettingUpdateFailure.ts
 models/Shelf.ts
 models/ShelfBase.ts
+models/SidebarLink.ts
 models/Statistic.ts
 models/Theme.ts
 models/ThemeBase.ts
