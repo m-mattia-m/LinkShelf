@@ -9,7 +9,7 @@ navigation: true
 
 - [Usage](/docs/usage/getting-started): build and share a shelf
 - [Self-hosting](/docs/self-hosting/getting-started): run your own instance
-- [Cloud](/docs/cloud/getting-started): not available yet
+- [Cloud](/docs/cloud/getting-started): use the managed version, see [pricing](https://account.linkshelf.cloud)
 - [FAQ](/docs/faq): upgrades, rollbacks, backups, replicas
 
 ## Guides
