@@ -205,6 +205,27 @@ func Test_AuthorizationURL_Success(t *testing.T) {
 	require.Contains(t, authURL, "code_challenge_method=S256")
 }
 
+func Test_AuthorizationURL_ExtraScopes(t *testing.T) {
+	fp := newFakeProvider(t)
+	setOidcTestConfig(t, fp.server.URL)
+	config.Set("authentication.oidc.extraScopes", []string{"urn:zitadel:iam:org:id:123", " ", "email"})
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
+	stateRepo.EXPECT().
+		Create(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	client, err := New(context.Background(), stateRepo)
+	require.NoError(t, err)
+
+	authURL, _, err := client.AuthorizationURL()
+
+	require.NoError(t, err)
+	require.Contains(t, authURL, "scope=openid+profile+email+urn%3Azitadel%3Aiam%3Aorg%3Aid%3A123")
+}
+
 func Test_AuthorizationURL_StateRepoFailure(t *testing.T) {
 	fp := newFakeProvider(t)
 	setOidcTestConfig(t, fp.server.URL)

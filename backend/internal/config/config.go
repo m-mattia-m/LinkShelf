@@ -96,6 +96,8 @@ type Configuration struct {
 			ClientId     string `yaml:"clientId"`
 			ClientSecret string `yaml:"clientSecret" json:"-"`
 			RedirectUrl  string `yaml:"redirectUrl"`
+			// ExtraScopes are requested on top of openid, profile and email.
+			ExtraScopes []string `yaml:"extraScopes"`
 		} `yaml:"oidc"`
 		// LocalAuthEnabled gates password login, registration and reset. Only false with OIDC.
 		LocalAuthEnabled bool `yaml:"localAuthEnabled"`

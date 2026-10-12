@@ -62,6 +62,9 @@ authentication:
     # Optional: PKCE is always used.
     clientSecret: ""
     redirectUrl: "http://localhost:3000/auth/callback"
+    # Optional: scopes requested in addition to openid, profile and email.
+    # e.g. Zitadel: ["urn:zitadel:iam:org:id:<org-id>"] to use that org's login policy and IdPs.
+    extraScopes: []
   # false disables password login, registration and reset. Only allowed with OIDC.
   localAuthEnabled: true
   # false disables public self-registration.

@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -53,9 +54,25 @@ func New(ctx context.Context, stateRepo repository.OidcStateRepository) (*Client
 			ClientSecret: config.String("authentication.oidc.clientSecret"),
 			RedirectURL:  config.String("authentication.oidc.redirectUrl"),
 			Endpoint:     provider.Endpoint(),
-			Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+			Scopes:       scopes(config.Strings("authentication.oidc.extraScopes")),
 		},
 	}, nil
+}
+
+// scopes returns the base scopes plus any configured extras, without blanks or duplicates.
+func scopes(extra []string) []string {
+	out := []string{oidc.ScopeOpenID, "profile", "email"}
+	seen := map[string]bool{}
+	for _, s := range out {
+		seen[s] = true
+	}
+	for _, s := range extra {
+		if s = strings.TrimSpace(s); s != "" && !seen[s] {
+			seen[s] = true
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // AuthorizationURL starts a PKCE login and returns the redirect URL and state.
