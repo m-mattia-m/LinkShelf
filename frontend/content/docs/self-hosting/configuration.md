@@ -116,6 +116,12 @@ authentication:
     # Must match the frontend's OIDC callback page, which completes the
     # login by POSTing the code+state here to /v1/auth/oidc/callback.
     redirectUrl: "http://localhost:3000/auth/callback"
+    # Optional: scopes requested in addition to openid, profile and email.
+    # With Zitadel, "urn:zitadel:iam:org:id:<org-id>" makes the login page use
+    # that organization's login policy and identity providers (e.g. GitHub,
+    # Google). As an environment variable, separate entries with commas:
+    # AUTHENTICATION_OIDC_EXTRASCOPES=urn:zitadel:iam:org:id:<org-id>
+    extraScopes: []
   # Set to false to turn off everything that uses a local password: password
   # login, self-registration and "forgot password". Only allowed when type is
   # OIDC, so that everyone signs in through the identity provider. Leave it on
