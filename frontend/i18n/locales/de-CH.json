@@ -36,6 +36,10 @@
   "auth.callback.completing": "D Aamäldig wird abgschlosse ...",
   "auth.callback.failed": "D Aamäldig het nöd chöne abgschlosse werde.",
   "auth.callback.backToSignIn": "Zrugg zur Aamäldig",
+  "auth.emailPending.title": "E-Mail-Adresse bestätige",
+  "auth.emailPending.description": "Dis Konto isch erstellt worde, aber dini E-Mail-Adresse isch no nöd bestätigt. Öffne dr Bestätigungslink, wo mir dir gschickt hei, und meld di nachhär a.",
+  "auth.emailPending.signIn": "Aamälde",
+  "auth.emailPending.hint": "Kei E-Mail becho? Lueg im Spam-Ordner nach.",
 
   "auth.verifyEmail.verifying": "Dini E-Mail-Adrässe wird bestätigt ...",
   "auth.verifyEmail.success.title": "Dini E-Mail-Adrässe isch bestätigt worde.",

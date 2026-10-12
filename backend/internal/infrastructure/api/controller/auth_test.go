@@ -355,6 +355,13 @@ func Test_API_OidcCallback_EmailNotVerified_MapsToConflict(t *testing.T) {
 	})
 
 	require.Error(t, err)
+	var apiErr huma.StatusError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, 409, apiErr.GetStatus())
+	require.Contains(t, err.Error(), "new account could not be created")
+	var model409 *huma.ErrorModel
+	require.ErrorAs(t, err, &model409)
+	require.Contains(t, model409.Errors, &huma.ErrorDetail{Location: "oidc", Message: EmailNotVerifiedCode})
 }
 
 func Test_API_OidcCallback_EmailNotVerifiedForLinking_MapsToConflict(t *testing.T) {

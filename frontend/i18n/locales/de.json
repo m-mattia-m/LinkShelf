@@ -36,6 +36,10 @@
   "auth.callback.completing": "Anmeldung wird abgeschlossen ...",
   "auth.callback.failed": "Die Anmeldung konnte nicht abgeschlossen werden.",
   "auth.callback.backToSignIn": "Zurück zur Anmeldung",
+  "auth.emailPending.title": "E-Mail-Adresse bestätigen",
+  "auth.emailPending.description": "Dein Konto wurde erstellt, aber deine E-Mail-Adresse ist noch nicht bestätigt. Öffne den Bestätigungslink, den wir dir geschickt haben, und melde dich danach an.",
+  "auth.emailPending.signIn": "Anmelden",
+  "auth.emailPending.hint": "Keine E-Mail erhalten? Prüfe deinen Spam-Ordner.",
 
   "auth.verifyEmail.verifying": "Deine E-Mail-Adresse wird bestätigt ...",
   "auth.verifyEmail.success.title": "Deine E-Mail-Adresse wurde bestätigt.",

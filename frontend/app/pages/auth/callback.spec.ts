@@ -90,4 +90,33 @@ describe('auth callback page', () => {
     })
     expect(useAuthStore().isAuthenticated).toBe(false)
   })
+
+  it('redirects to the email-pending page when the identity provider has not verified the email', async () => {
+    sessionStorage.setItem('linkshelf.oidcState', 'my-state')
+    server.use(http.post(`${BASE}/v1/auth/oidc/callback`, () =>
+      errorResponse(409, 'a new account could not be created', [{ location: 'oidc', message: 'email_not_verified' }])))
+
+    await renderSuspended(CallbackPage, {
+      route: { path: '/auth/callback', query: { code: 'the-code', state: 'my-state' } }
+    })
+
+    const route = useRoute()
+    await waitFor(() => {
+      expect(route.fullPath).toBe('/auth/email-pending')
+    })
+    expect(useAuthStore().isAuthenticated).toBe(false)
+  })
+
+  it('keeps the failed state for other 409 conflicts', async () => {
+    sessionStorage.setItem('linkshelf.oidcState', 'my-state')
+    server.use(http.post(`${BASE}/v1/auth/oidc/callback`, () => errorResponse(409, 'cannot link')))
+
+    await renderSuspended(CallbackPage, {
+      route: { path: '/auth/callback', query: { code: 'the-code', state: 'my-state' } }
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Sign-in could not be completed.')).toBeInTheDocument()
+    })
+  })
 })
