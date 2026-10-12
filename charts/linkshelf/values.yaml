@@ -87,6 +87,10 @@ configFile: {}
   #     - 10.0.0.0/8
   # logging:
   #   level: debug
+  # authentication:
+  #   oidc:
+  #     additionalRedirectUrls:
+  #       - https://account.example.com/auth/callback
 
 # External database; set DATABASE_* in env. Ignored when postgresql.enabled is true.
 database:

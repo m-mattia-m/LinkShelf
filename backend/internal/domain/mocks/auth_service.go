@@ -85,18 +85,18 @@ func (mr *MockAuthServiceMockRecorder) Logout(rawRefreshToken any) *gomock.Call 
 }
 
 // OidcAuthorizationURL mocks base method.
-func (m *MockAuthService) OidcAuthorizationURL() (*model.OidcLoginResponseBody, error) {
+func (m *MockAuthService) OidcAuthorizationURL(redirectUrl string) (*model.OidcLoginResponseBody, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OidcAuthorizationURL")
+	ret := m.ctrl.Call(m, "OidcAuthorizationURL", redirectUrl)
 	ret0, _ := ret[0].(*model.OidcLoginResponseBody)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // OidcAuthorizationURL indicates an expected call of OidcAuthorizationURL.
-func (mr *MockAuthServiceMockRecorder) OidcAuthorizationURL() *gomock.Call {
+func (mr *MockAuthServiceMockRecorder) OidcAuthorizationURL(redirectUrl any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OidcAuthorizationURL", reflect.TypeOf((*MockAuthService)(nil).OidcAuthorizationURL))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OidcAuthorizationURL", reflect.TypeOf((*MockAuthService)(nil).OidcAuthorizationURL), redirectUrl)
 }
 
 // OidcCallback mocks base method.

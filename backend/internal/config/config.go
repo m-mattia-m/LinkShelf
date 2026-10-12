@@ -98,6 +98,10 @@ type Configuration struct {
 			RedirectUrl  string `yaml:"redirectUrl"`
 			// ExtraScopes are requested on top of openid, profile and email.
 			ExtraScopes []string `yaml:"extraScopes"`
+			// AdditionalRedirectUrls are further redirect URLs a client may ask for with
+			// ?redirect_url=, e.g. a separate site which signs in through the same OIDC
+			// client. Exact match only.
+			AdditionalRedirectUrls []string `yaml:"additionalRedirectUrls"`
 		} `yaml:"oidc"`
 		// LocalAuthEnabled gates password login, registration and reset. Only false with OIDC.
 		LocalAuthEnabled bool `yaml:"localAuthEnabled"`
@@ -237,6 +241,12 @@ func validate() error {
 			strings.TrimSpace(String("authentication.oidc.clientId")) == "" {
 			return fmt.Errorf("authentication.oidc.issuer and clientId must be set when authentication.type is OIDC")
 		}
+		for _, raw := range Strings("authentication.oidc.additionalRedirectUrls") {
+			u, err := url.Parse(strings.TrimSpace(raw))
+			if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" || u.Fragment != "" || strings.Contains(raw, "#") {
+				return fmt.Errorf("authentication.oidc.additionalRedirectUrls must be full http(s) URLs without a fragment, got %q", raw)
+			}
+		}
 	default:
 		return fmt.Errorf("unsupported authentication.type %q, must be LOCAL or OIDC", String("authentication.type"))
 	}
@@ -329,6 +339,24 @@ func validateUpgradeUrl(raw string) error {
 }
 
 // ServiceTokenEnabled reports whether the service token is switched on (default: false).
+// OidcRedirectUrlAllowed reports whether a client may start an OIDC login with
+// this redirect URL: the configured one or one of the additional ones, compared
+// as a whole so that no prefix or look-alike host passes.
+func OidcRedirectUrlAllowed(redirectUrl string) bool {
+	if redirectUrl == "" {
+		return false
+	}
+	if redirectUrl == strings.TrimSpace(String("authentication.oidc.redirectUrl")) {
+		return true
+	}
+	for _, allowed := range Strings("authentication.oidc.additionalRedirectUrls") {
+		if redirectUrl == strings.TrimSpace(allowed) {
+			return true
+		}
+	}
+	return false
+}
+
 func ServiceTokenEnabled() bool { return Bool("authentication.serviceToken.enabled") }
 
 // ServiceToken returns the configured token, trimmed.

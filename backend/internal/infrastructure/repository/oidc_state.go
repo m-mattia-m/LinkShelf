@@ -13,11 +13,13 @@ import (
 type OidcState struct {
 	State        string
 	CodeVerifier string
-	ExpiresAt    time.Time
+	// RedirectUrl is the redirect URL the login started with; empty means the configured one.
+	RedirectUrl string
+	ExpiresAt   time.Time
 }
 
 type OidcStateRepository interface {
-	Create(state, codeVerifier string, expiresAt time.Time) error
+	Create(state, codeVerifier, redirectUrl string, expiresAt time.Time) error
 	GetByState(state string) (*OidcState, error)
 	DeleteByState(state string) error
 }
@@ -34,23 +36,23 @@ func NewOidcStateRepository(engine *sql.DB, table string) (OidcStateRepository, 
 	}, nil
 }
 
-func (r *oidcStateRepository) Create(state, codeVerifier string, expiresAt time.Time) error {
+func (r *oidcStateRepository) Create(state, codeVerifier, redirectUrl string, expiresAt time.Time) error {
 	query, err := buildSqlStatements(`
-		INSERT INTO oidc_state (state, code_verifier, expires_at)
-		VALUES (?, ?, ?)
+		INSERT INTO oidc_state (state, code_verifier, redirect_url, expires_at)
+		VALUES (?, ?, ?, ?)
 	`)
 	if err != nil {
 		return err
 	}
 
 	// expires_at is timezone-naive, so store UTC.
-	_, err = r.Engine.ExecContext(context.TODO(), query, state, codeVerifier, expiresAt.UTC())
+	_, err = r.Engine.ExecContext(context.TODO(), query, state, codeVerifier, redirectUrl, expiresAt.UTC())
 	return err
 }
 
 func (r *oidcStateRepository) GetByState(state string) (*OidcState, error) {
 	query, err := buildSqlStatements(`
-		SELECT state, code_verifier, expires_at
+		SELECT state, code_verifier, redirect_url, expires_at
 		FROM oidc_state
 		WHERE state = ?
 	`)
@@ -62,6 +64,7 @@ func (r *oidcStateRepository) GetByState(state string) (*OidcState, error) {
 	err = r.Engine.QueryRowContext(context.TODO(), query, state).Scan(
 		&result.State,
 		&result.CodeVerifier,
+		&result.RedirectUrl,
 		&result.ExpiresAt,
 	)
 

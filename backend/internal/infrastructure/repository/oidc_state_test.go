@@ -18,10 +18,10 @@ func Test_OidcStateRepository_Create_Success(t *testing.T) {
 	repo := &oidcStateRepository{Engine: db}
 
 	mock.ExpectExec(`INSERT INTO oidc_state`).
-		WithArgs("state-test", "verifier-test", sqlmock.AnyArg()).
+		WithArgs("state-test", "verifier-test", "https://account.example.com/auth/callback", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.Create("state-test", "verifier-test", time.Now().Add(10*time.Minute))
+	err = repo.Create("state-test", "verifier-test", "https://account.example.com/auth/callback", time.Now().Add(10*time.Minute))
 
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -35,8 +35,8 @@ func Test_OidcStateRepository_GetByState_Success(t *testing.T) {
 	repo := &oidcStateRepository{Engine: db}
 
 	expiry := time.Now().Add(10 * time.Minute)
-	rows := sqlmock.NewRows([]string{"state", "code_verifier", "expires_at"}).
-		AddRow("state-test", "verifier-test", expiry)
+	rows := sqlmock.NewRows([]string{"state", "code_verifier", "redirect_url", "expires_at"}).
+		AddRow("state-test", "verifier-test", "https://account.example.com/auth/callback", expiry)
 
 	mock.ExpectQuery(`FROM\s+oidc_state\s+WHERE state =`).
 		WithArgs("state-test").
@@ -47,6 +47,7 @@ func Test_OidcStateRepository_GetByState_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, "verifier-test", result.CodeVerifier)
+	require.Equal(t, "https://account.example.com/auth/callback", result.RedirectUrl)
 }
 
 func Test_OidcStateRepository_GetByState_NoRows(t *testing.T) {

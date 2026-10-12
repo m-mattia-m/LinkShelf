@@ -27,7 +27,8 @@ type AuthService interface {
 	Login(email, password string) (*model.TokenPair, error)
 	Refresh(rawRefreshToken string) (*model.TokenPair, error)
 	Logout(rawRefreshToken string) error
-	OidcAuthorizationURL() (*model.OidcLoginResponseBody, error)
+	// OidcAuthorizationURL starts a login; redirectUrl is optional and must be allowlisted.
+	OidcAuthorizationURL(redirectUrl string) (*model.OidcLoginResponseBody, error)
 	// OidcCallback completes an OIDC login, or links the identity when currentUserId is set.
 	OidcCallback(ctx context.Context, code, state string, currentUserId *string) (*model.TokenPair, error)
 	// IsOidcEnabled reports whether authentication.type is OIDC.
@@ -119,12 +120,12 @@ func (s *authServiceImpl) IsOidcEnabled() bool {
 	return s.oidc != nil
 }
 
-func (s *authServiceImpl) OidcAuthorizationURL() (*model.OidcLoginResponseBody, error) {
+func (s *authServiceImpl) OidcAuthorizationURL(redirectUrl string) (*model.OidcLoginResponseBody, error) {
 	if s.oidc == nil {
 		return nil, ErrOidcNotConfigured
 	}
 
-	authURL, state, err := s.oidc.AuthorizationURL()
+	authURL, state, err := s.oidc.AuthorizationURL(redirectUrl)
 	if err != nil {
 		return nil, err
 	}

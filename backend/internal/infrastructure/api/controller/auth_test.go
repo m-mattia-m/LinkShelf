@@ -4,6 +4,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/model"
+	"backend/internal/infrastructure/oidcclient"
 	"context"
 	"errors"
 	"testing"
@@ -250,14 +251,49 @@ func Test_API_OidcLogin_Success(t *testing.T) {
 
 	svc.AuthService.
 		EXPECT().
-		OidcAuthorizationURL().
+		OidcAuthorizationURL("").
 		Return(&model.OidcLoginResponseBody{AuthorizationUrl: "https://idp.example.com/authorize", State: "state-value"}, nil)
 
 	handler := OidcLogin(svc.Service)
-	resp, err := handler(context.Background(), &struct{}{})
+	resp, err := handler(context.Background(), &model.OidcLoginRequest{})
 
 	require.NoError(t, err)
 	require.Equal(t, "https://idp.example.com/authorize", resp.Body.AuthorizationUrl)
+}
+
+func Test_API_OidcLogin_PassesRedirectUrlThrough(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.AuthService.
+		EXPECT().
+		OidcAuthorizationURL("https://account.example.com/auth/callback").
+		Return(&model.OidcLoginResponseBody{AuthorizationUrl: "https://idp.example.com/authorize", State: "state-value"}, nil)
+
+	handler := OidcLogin(svc.Service)
+	resp, err := handler(context.Background(), &model.OidcLoginRequest{RedirectUrl: "https://account.example.com/auth/callback"})
+
+	require.NoError(t, err)
+	require.Equal(t, "state-value", resp.Body.State)
+}
+
+func Test_API_OidcLogin_RedirectUrlNotAllowed_MapsToBadRequest(t *testing.T) {
+	svc := NewMockDomainService(t)
+	defer svc.Ctrl.Finish()
+
+	svc.AuthService.
+		EXPECT().
+		OidcAuthorizationURL("https://evil.example.com/cb").
+		Return(nil, oidcclient.ErrRedirectUrlNotAllowed)
+
+	handler := OidcLogin(svc.Service)
+	_, err := handler(context.Background(), &model.OidcLoginRequest{RedirectUrl: "https://evil.example.com/cb"})
+
+	require.Error(t, err)
+	var apiErr huma.StatusError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, 400, apiErr.GetStatus())
+	require.ErrorContains(t, err, "the redirect URL is not allowed")
 }
 
 func Test_API_OidcLogin_NotConfigured(t *testing.T) {
@@ -266,11 +302,11 @@ func Test_API_OidcLogin_NotConfigured(t *testing.T) {
 
 	svc.AuthService.
 		EXPECT().
-		OidcAuthorizationURL().
+		OidcAuthorizationURL("").
 		Return(nil, domain.ErrOidcNotConfigured)
 
 	handler := OidcLogin(svc.Service)
-	_, err := handler(context.Background(), &struct{}{})
+	_, err := handler(context.Background(), &model.OidcLoginRequest{})
 
 	require.Error(t, err)
 	require.ErrorContains(t, err, "failed to start OIDC login")

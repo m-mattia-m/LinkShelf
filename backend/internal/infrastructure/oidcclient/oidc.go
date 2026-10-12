@@ -7,11 +7,13 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
 
@@ -25,6 +27,9 @@ type Identity struct {
 	// PreferredUsername is optional in OIDC, so it is often empty.
 	PreferredUsername string
 }
+
+// ErrRedirectUrlNotAllowed is returned when a login asks for a redirect URL that is not configured.
+var ErrRedirectUrlNotAllowed = errors.New("the redirect URL is not allowed")
 
 const stateExpiry = 10 * time.Minute
 
@@ -76,18 +81,30 @@ func scopes(extra []string) []string {
 }
 
 // AuthorizationURL starts a PKCE login and returns the redirect URL and state.
-func (c *Client) AuthorizationURL() (authURL, state string, err error) {
+// redirectUrl is optional: empty uses the configured authentication.oidc.redirectUrl,
+// anything else must be on the allowlist (exact match) and is bound to the state.
+func (c *Client) AuthorizationURL(redirectUrl string) (authURL, state string, err error) {
+	redirectUrl = strings.TrimSpace(redirectUrl)
+	if redirectUrl != "" && !config.OidcRedirectUrlAllowed(redirectUrl) {
+		zap.L().Info("OIDC login refused: redirect URL not allowed", zap.String("redirectUrl", redirectUrl))
+		return "", "", ErrRedirectUrlNotAllowed
+	}
+
 	state, err = randomString()
 	if err != nil {
 		return "", "", err
 	}
 	verifier := oauth2.GenerateVerifier()
 
-	if err := c.stateRepo.Create(state, verifier, time.Now().Add(stateExpiry)); err != nil {
+	if err := c.stateRepo.Create(state, verifier, redirectUrl, time.Now().Add(stateExpiry)); err != nil {
 		return "", "", err
 	}
 
-	return c.oauth.AuthCodeURL(state, oauth2.S256ChallengeOption(verifier)), state, nil
+	opts := []oauth2.AuthCodeOption{oauth2.S256ChallengeOption(verifier)}
+	if redirectUrl != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("redirect_uri", redirectUrl))
+	}
+	return c.oauth.AuthCodeURL(state, opts...), state, nil
 }
 
 // Exchange redeems the code for tokens and verifies the ID token.
@@ -105,7 +122,12 @@ func (c *Client) Exchange(ctx context.Context, code, state string) (*Identity, e
 		return nil, err
 	}
 
-	token, err := c.oauth.Exchange(ctx, code, oauth2.VerifierOption(pending.CodeVerifier))
+	// The code exchange must send the same redirect_uri the login started with.
+	opts := []oauth2.AuthCodeOption{oauth2.VerifierOption(pending.CodeVerifier)}
+	if pending.RedirectUrl != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("redirect_uri", pending.RedirectUrl))
+	}
+	token, err := c.oauth.Exchange(ctx, code, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("token exchange failed: %w", err)
 	}

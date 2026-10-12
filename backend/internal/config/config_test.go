@@ -521,3 +521,49 @@ func Test_SidebarLinks(t *testing.T) {
 		require.ErrorContains(t, err, "app.sidebarLinks", name)
 	}
 }
+
+func oidcValidBase() {
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "OIDC")
+	Set("authentication.oidc.issuer", "https://issuer.example.com")
+	Set("authentication.oidc.clientId", "client-id")
+}
+
+func Test_Validate_OidcAdditionalRedirectUrls(t *testing.T) {
+	oidcValidBase()
+	Set("authentication.oidc.additionalRedirectUrls", []string{"https://account.example.com/auth/callback", " http://localhost:3001/auth/callback "})
+	require.NoError(t, validate())
+
+	for name, bad := range map[string]string{
+		"bad scheme": "ftp://account.example.com/cb",
+		"no scheme":  "account.example.com/cb",
+		"no host":    "https:///cb",
+		"fragment":   "https://account.example.com/cb#frag",
+		"empty":      "  ",
+	} {
+		t.Run(name, func(t *testing.T) {
+			oidcValidBase()
+			Set("authentication.oidc.additionalRedirectUrls", []string{bad})
+			err := validate()
+			require.Error(t, err)
+			require.ErrorContains(t, err, "authentication.oidc.additionalRedirectUrls must be full http(s) URLs without a fragment")
+		})
+	}
+}
+
+func Test_OidcRedirectUrlAllowed(t *testing.T) {
+	Reset()
+	Set("authentication.oidc.redirectUrl", "https://app.example.com/auth/callback")
+	Set("authentication.oidc.additionalRedirectUrls", []string{" https://account.example.com/auth/callback "})
+
+	require.True(t, OidcRedirectUrlAllowed("https://app.example.com/auth/callback"))
+	require.True(t, OidcRedirectUrlAllowed("https://account.example.com/auth/callback"))
+
+	require.False(t, OidcRedirectUrlAllowed(""))
+	require.False(t, OidcRedirectUrlAllowed("https://account.example.com/auth/callback/"))
+	require.False(t, OidcRedirectUrlAllowed("https://account.example.com/auth/callback?x=1"))
+	require.False(t, OidcRedirectUrlAllowed("https://ACCOUNT.example.com/auth/callback"))
+	require.False(t, OidcRedirectUrlAllowed("https://account.example.com.evil.com/auth/callback"))
+	require.False(t, OidcRedirectUrlAllowed("https://account.example.com"))
+}

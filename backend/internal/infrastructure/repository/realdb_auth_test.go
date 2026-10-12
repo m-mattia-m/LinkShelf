@@ -56,12 +56,13 @@ func Test_RealDB_OidcStateRepository_CRUD(t *testing.T) {
 	repo := TestRepository.OidcStateRepository
 	state := "state-" + uuid.NewString()
 
-	require.NoError(t, repo.Create(state, "verifier-value", time.Now().Add(10*time.Minute)))
+	require.NoError(t, repo.Create(state, "verifier-value", "https://account.example.com/auth/callback", time.Now().Add(10*time.Minute)))
 
 	fetched, err := repo.GetByState(state)
 	require.NoError(t, err)
 	require.NotNil(t, fetched)
 	require.Equal(t, "verifier-value", fetched.CodeVerifier)
+	require.Equal(t, "https://account.example.com/auth/callback", fetched.RedirectUrl)
 
 	missing, err := repo.GetByState("does-not-exist-" + uuid.NewString())
 	require.NoError(t, err)
