@@ -13,6 +13,45 @@ entries:
         - name: Documentation
           url: https://github.com/m-mattia-m/LinkShelf/tree/main/charts/linkshelf
     apiVersion: v2
+    appVersion: v0.10.0
+    created: "2026-10-12T17:25:30.000066573Z"
+    dependencies:
+    - alias: postgresql
+      condition: postgresql.enabled
+      name: postgres
+      repository: https://groundhog2k.github.io/helm-charts/
+      version: 1.6.8
+    description: LinkShelf, an open-source alternative to Linktree.
+    digest: c05b6d2ccd52db0731f2b90ef8bd39ab747bd112830b879cf79af92feeb845e3
+    home: https://github.com/m-mattia-m/LinkShelf
+    icon: https://raw.githubusercontent.com/m-mattia-m/LinkShelf/main/branding/LinkShelf.png
+    keywords:
+    - linkshelf
+    - linktree
+    - links
+    kubeVersion: '>=1.25.0-0'
+    maintainers:
+    - name: m-mattia-m
+      url: https://github.com/m-mattia-m
+    name: linkshelf
+    sources:
+    - https://github.com/m-mattia-m/LinkShelf
+    type: application
+    urls:
+    - https://github.com/m-mattia-m/LinkShelf/releases/download/linkshelf-0.10.0/linkshelf-0.10.0.tgz
+    version: 0.10.0
+  - annotations:
+      artifacthub.io/images: |
+        - name: linkshelf
+          image: ghcr.io/m-mattia-m/linkshelf:latest
+          platforms:
+            - linux/amd64
+            - linux/arm64
+      artifacthub.io/license: AGPL-3.0-only
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://github.com/m-mattia-m/LinkShelf/tree/main/charts/linkshelf
+    apiVersion: v2
     appVersion: v0.9.0
     created: "2026-10-11T20:02:34.669395257Z"
     dependencies:
@@ -500,4 +539,4 @@ entries:
     urls:
     - https://github.com/m-mattia-m/LinkShelf/releases/download/linkshelf-0.1.2/linkshelf-0.1.2.tgz
     version: 0.1.2
-generated: "2026-10-11T20:02:34.669575383Z"
+generated: "2026-10-12T17:25:30.000189944Z"
