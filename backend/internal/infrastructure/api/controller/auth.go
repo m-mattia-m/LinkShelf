@@ -3,6 +3,7 @@ package controller
 import (
 	"backend/internal/domain"
 	"backend/internal/infrastructure/api/model"
+	"backend/internal/infrastructure/oidcclient"
 	"context"
 	"errors"
 	"strings"
@@ -123,10 +124,13 @@ func Logout(svc *domain.Service) func(c context.Context, input *model.LogoutRequ
 	}
 }
 
-func OidcLogin(svc *domain.Service) func(c context.Context, input *struct{}) (*model.OidcLoginResponse, error) {
-	return func(c context.Context, input *struct{}) (*model.OidcLoginResponse, error) {
-		body, err := svc.AuthService.OidcAuthorizationURL()
+func OidcLogin(svc *domain.Service) func(c context.Context, input *model.OidcLoginRequest) (*model.OidcLoginResponse, error) {
+	return func(c context.Context, input *model.OidcLoginRequest) (*model.OidcLoginResponse, error) {
+		body, err := svc.AuthService.OidcAuthorizationURL(input.RedirectUrl)
 		if err != nil {
+			if errors.Is(err, oidcclient.ErrRedirectUrlNotAllowed) {
+				return nil, huma.Error400BadRequest("the redirect URL is not allowed", err)
+			}
 			return nil, huma.Error400BadRequest("failed to start OIDC login", err)
 		}
 		return &model.OidcLoginResponse{Body: *body}, nil

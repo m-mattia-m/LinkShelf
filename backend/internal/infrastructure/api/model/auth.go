@@ -38,6 +38,10 @@ type LogoutRequestBody struct {
 	Body RefreshRequest `json:"body" bson:"body"`
 }
 
+type OidcLoginRequest struct {
+	RedirectUrl string `query:"redirect_url" maxLength:"2048" doc:"Optional. Where the identity provider sends the browser back to. Must be the configured redirect URL or one of authentication.oidc.additionalRedirectUrls, matched exactly. Defaults to the configured redirect URL."`
+}
+
 type OidcLoginResponseBody struct {
 	AuthorizationUrl string `json:"authorization_url" bson:"authorization_url"`
 	State            string `json:"state" bson:"state"`

@@ -300,7 +300,7 @@ func Test_Unit_Auth_Oidc_NotConfigured(t *testing.T) {
 	svc := NewMockService(t)
 	defer svc.Ctrl.Finish()
 
-	_, err := svc.Service.AuthService.OidcAuthorizationURL()
+	_, err := svc.Service.AuthService.OidcAuthorizationURL("")
 	require.ErrorIs(t, err, ErrOidcNotConfigured)
 
 	_, err = svc.Service.AuthService.OidcCallback(context.Background(), "code", "state", nil)

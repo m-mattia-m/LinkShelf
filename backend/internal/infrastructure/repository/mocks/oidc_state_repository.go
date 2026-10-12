@@ -42,17 +42,17 @@ func (m *MockOidcStateRepository) EXPECT() *MockOidcStateRepositoryMockRecorder 
 }
 
 // Create mocks base method.
-func (m *MockOidcStateRepository) Create(state, codeVerifier string, expiresAt time.Time) error {
+func (m *MockOidcStateRepository) Create(state, codeVerifier, redirectUrl string, expiresAt time.Time) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", state, codeVerifier, expiresAt)
+	ret := m.ctrl.Call(m, "Create", state, codeVerifier, redirectUrl, expiresAt)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockOidcStateRepositoryMockRecorder) Create(state, codeVerifier, expiresAt any) *gomock.Call {
+func (mr *MockOidcStateRepositoryMockRecorder) Create(state, codeVerifier, redirectUrl, expiresAt any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockOidcStateRepository)(nil).Create), state, codeVerifier, expiresAt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockOidcStateRepository)(nil).Create), state, codeVerifier, redirectUrl, expiresAt)
 }
 
 // DeleteByState mocks base method.

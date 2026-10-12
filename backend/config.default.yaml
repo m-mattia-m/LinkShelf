@@ -65,6 +65,11 @@ authentication:
     # Optional: scopes requested in addition to openid, profile and email.
     # e.g. Zitadel: ["urn:zitadel:iam:org:id:<org-id>"] to use that org's login policy and IdPs.
     extraScopes: []
+    # Optional: further redirect URLs a client may request with
+    # GET /v1/auth/oidc/login?redirect_url=..., e.g. a separate site that signs in
+    # through this same OIDC client. Exact match only. Each one must also be
+    # registered as a redirect URI at the identity provider.
+    additionalRedirectUrls: []
   # false disables password login, registration and reset. Only allowed with OIDC.
   localAuthEnabled: true
   # false disables public self-registration.

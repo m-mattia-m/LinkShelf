@@ -122,6 +122,14 @@ authentication:
     # Google). As an environment variable, separate entries with commas:
     # AUTHENTICATION_OIDC_EXTRASCOPES=urn:zitadel:iam:org:id:<org-id>
     extraScopes: []
+    # Optional: further redirect URLs a client may request with
+    # GET /v1/auth/oidc/login?redirect_url=..., e.g. a separate site that
+    # signs in through this same OIDC client. Matched exactly (no wildcards or
+    # prefixes), and every entry must also be registered as a redirect URI at
+    # the identity provider. Without the parameter the redirectUrl above is
+    # used. As an environment variable, separate entries with commas:
+    # AUTHENTICATION_OIDC_ADDITIONALREDIRECTURLS=https://account.example.com/auth/callback
+    additionalRedirectUrls: []
   # Set to false to turn off everything that uses a local password: password
   # login, self-registration and "forgot password". Only allowed when type is
   # OIDC, so that everyone signs in through the identity provider. Leave it on

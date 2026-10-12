@@ -8,6 +8,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,6 +41,8 @@ type fakeProvider struct {
 	userInfoSubject     string // defaults to idTokenSubject when empty
 	userInfoClaims      map[string]any
 	userInfoUnavailable bool
+	// lastRedirectUri is the redirect_uri form value of the last token request.
+	lastRedirectUri string
 }
 
 func newFakeProvider(t *testing.T) *fakeProvider {
@@ -90,6 +94,9 @@ func newFakeProvider(t *testing.T) *fakeProvider {
 }
 
 func (fp *fakeProvider) serveToken(w http.ResponseWriter, r *http.Request) {
+	_ = r.ParseForm()
+	fp.lastRedirectUri = r.PostForm.Get("redirect_uri")
+
 	if fp.tokenExchangeFails {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid_grant"})
@@ -189,13 +196,13 @@ func Test_AuthorizationURL_Success(t *testing.T) {
 	defer ctrl.Finish()
 	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
 	stateRepo.EXPECT().
-		Create(gomock.Any(), gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 
 	client, err := New(context.Background(), stateRepo)
 	require.NoError(t, err)
 
-	authURL, state, err := client.AuthorizationURL()
+	authURL, state, err := client.AuthorizationURL("")
 
 	require.NoError(t, err)
 	require.NotEmpty(t, state)
@@ -203,6 +210,132 @@ func Test_AuthorizationURL_Success(t *testing.T) {
 	require.Contains(t, authURL, "state="+state)
 	require.Contains(t, authURL, "code_challenge=")
 	require.Contains(t, authURL, "code_challenge_method=S256")
+}
+
+const (
+	configuredRedirect = "https://app.example.com/auth/callback"
+	accountRedirect    = "https://account.example.com/auth/callback"
+)
+
+func newClientWithStateRepo(t *testing.T, stateRepo *mocks.MockOidcStateRepository, additional ...string) (*Client, *fakeProvider) {
+	t.Helper()
+	fp := newFakeProvider(t)
+	setOidcTestConfig(t, fp.server.URL)
+	config.Set("authentication.oidc.additionalRedirectUrls", additional)
+	client, err := New(context.Background(), stateRepo)
+	require.NoError(t, err)
+	return client, fp
+}
+
+func redirectUriOf(t *testing.T, authURL string) string {
+	t.Helper()
+	u, err := url.Parse(authURL)
+	require.NoError(t, err)
+	return u.Query().Get("redirect_uri")
+}
+
+func Test_AuthorizationURL_NoRedirectUrl_UsesConfiguredAndStoresEmpty(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
+	stateRepo.EXPECT().Create(gomock.Any(), gomock.Any(), "", gomock.Any()).Return(nil)
+	client, _ := newClientWithStateRepo(t, stateRepo, accountRedirect)
+
+	authURL, _, err := client.AuthorizationURL("")
+
+	require.NoError(t, err)
+	require.Equal(t, configuredRedirect, redirectUriOf(t, authURL))
+}
+
+func Test_AuthorizationURL_AdditionalRedirectUrl_OverridesAndIsStored(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
+	stateRepo.EXPECT().Create(gomock.Any(), gomock.Any(), accountRedirect, gomock.Any()).Return(nil)
+	client, _ := newClientWithStateRepo(t, stateRepo, accountRedirect)
+
+	authURL, _, err := client.AuthorizationURL(accountRedirect)
+
+	require.NoError(t, err)
+	require.Equal(t, accountRedirect, redirectUriOf(t, authURL))
+	require.Contains(t, authURL, "redirect_uri="+url.QueryEscape(accountRedirect))
+	require.NotContains(t, authURL, url.QueryEscape(configuredRedirect))
+	require.Equal(t, 1, strings.Count(authURL, "redirect_uri="))
+}
+
+func Test_AuthorizationURL_ConfiguredRedirectUrlPassedExplicitly_IsAllowed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
+	stateRepo.EXPECT().Create(gomock.Any(), gomock.Any(), configuredRedirect, gomock.Any()).Return(nil)
+	client, _ := newClientWithStateRepo(t, stateRepo)
+
+	authURL, _, err := client.AuthorizationURL(configuredRedirect)
+
+	require.NoError(t, err)
+	require.Equal(t, configuredRedirect, redirectUriOf(t, authURL))
+}
+
+func Test_AuthorizationURL_RefusedRedirectUrls_StoreNothing(t *testing.T) {
+	refused := map[string]string{
+		"other host":           "https://evil.example.com/auth/callback",
+		"trailing slash":       accountRedirect + "/",
+		"query added":          accountRedirect + "?next=https://evil.example.com",
+		"look-alike host":      "https://account.example.com.evil.com/auth/callback",
+		"host only":            "https://account.example.com",
+		"different scheme":     "http://account.example.com/auth/callback",
+		"different case":       "https://ACCOUNT.example.com/auth/callback",
+		"prefix of an allowed": "https://account.example.com/auth",
+	}
+	for name, redirectUrl := range refused {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			stateRepo := mocks.NewMockOidcStateRepository(ctrl) // no expectations: Create must not be called
+			client, _ := newClientWithStateRepo(t, stateRepo, accountRedirect)
+
+			_, _, err := client.AuthorizationURL(redirectUrl)
+
+			require.ErrorIs(t, err, ErrRedirectUrlNotAllowed)
+		})
+	}
+}
+
+func Test_Exchange_UsesStoredRedirectUrl(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
+	stateRepo.EXPECT().GetByState("the-state").Return(&repository.OidcState{
+		State:        "the-state",
+		CodeVerifier: "a-code-verifier-that-is-long-enough-for-pkce",
+		RedirectUrl:  accountRedirect,
+		ExpiresAt:    time.Now().Add(time.Minute),
+	}, nil)
+	stateRepo.EXPECT().DeleteByState("the-state").Return(nil)
+	client, fp := newClientWithStateRepo(t, stateRepo, accountRedirect)
+
+	_, err := client.Exchange(context.Background(), "auth-code", "the-state")
+
+	require.NoError(t, err)
+	require.Equal(t, accountRedirect, fp.lastRedirectUri)
+}
+
+func Test_Exchange_EmptyStoredRedirectUrl_UsesConfigured(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
+	stateRepo.EXPECT().GetByState("the-state").Return(&repository.OidcState{
+		State:        "the-state",
+		CodeVerifier: "a-code-verifier-that-is-long-enough-for-pkce",
+		ExpiresAt:    time.Now().Add(time.Minute),
+	}, nil)
+	stateRepo.EXPECT().DeleteByState("the-state").Return(nil)
+	client, fp := newClientWithStateRepo(t, stateRepo, accountRedirect)
+
+	_, err := client.Exchange(context.Background(), "auth-code", "the-state")
+
+	require.NoError(t, err)
+	require.Equal(t, configuredRedirect, fp.lastRedirectUri)
 }
 
 func Test_AuthorizationURL_ExtraScopes(t *testing.T) {
@@ -214,13 +347,13 @@ func Test_AuthorizationURL_ExtraScopes(t *testing.T) {
 	defer ctrl.Finish()
 	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
 	stateRepo.EXPECT().
-		Create(gomock.Any(), gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 
 	client, err := New(context.Background(), stateRepo)
 	require.NoError(t, err)
 
-	authURL, _, err := client.AuthorizationURL()
+	authURL, _, err := client.AuthorizationURL("")
 
 	require.NoError(t, err)
 	require.Contains(t, authURL, "scope=openid+profile+email+urn%3Azitadel%3Aiam%3Aorg%3Aid%3A123")
@@ -234,13 +367,13 @@ func Test_AuthorizationURL_StateRepoFailure(t *testing.T) {
 	defer ctrl.Finish()
 	stateRepo := mocks.NewMockOidcStateRepository(ctrl)
 	stateRepo.EXPECT().
-		Create(gomock.Any(), gomock.Any(), gomock.Any()).
+		Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(assertErr)
 
 	client, err := New(context.Background(), stateRepo)
 	require.NoError(t, err)
 
-	_, _, err = client.AuthorizationURL()
+	_, _, err = client.AuthorizationURL("")
 	require.ErrorIs(t, err, assertErr)
 }
 
