@@ -36,6 +36,10 @@
   "auth.callback.completing": "Completing sign-in...",
   "auth.callback.failed": "Sign-in could not be completed.",
   "auth.callback.backToSignIn": "Back to sign in",
+  "auth.emailPending.title": "Verify your email",
+  "auth.emailPending.description": "Your account has been created, but your email address is not verified yet. Open the verification link we sent you, then sign in.",
+  "auth.emailPending.signIn": "Sign in",
+  "auth.emailPending.hint": "Didn't get an email? Check your spam folder.",
 
   "auth.verifyEmail.verifying": "Verifying your email...",
   "auth.verifyEmail.success.title": "Your email has been verified.",

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ResponseError, type ErrorModel } from '~~/api'
+
 definePageMeta({
   layout: false
 })
@@ -9,6 +11,17 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const failed = ref(false)
+
+// The backend tags the "new account, email not verified yet" 409 with this code.
+async function isEmailNotVerified(err: unknown): Promise<boolean> {
+  if (!(err instanceof ResponseError) || err.response.status !== 409) return false
+  try {
+    const body = await err.response.clone().json() as ErrorModel
+    return (body.errors ?? []).some(detail => detail.message === 'email_not_verified')
+  } catch {
+    return false
+  }
+}
 
 onMounted(async () => {
   const code = typeof route.query.code === 'string' ? route.query.code : null
@@ -24,6 +37,10 @@ onMounted(async () => {
     await authStore.completeOidcLogin(code, state)
     await router.push('/app')
   } catch (err) {
+    if (await isEmailNotVerified(err)) {
+      await router.replace('/auth/email-pending')
+      return
+    }
     await handleApiError(err)
     failed.value = true
   }

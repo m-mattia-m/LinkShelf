@@ -36,6 +36,10 @@
   "auth.callback.completing": "Completando el inicio de sesión...",
   "auth.callback.failed": "No se pudo completar el inicio de sesión.",
   "auth.callback.backToSignIn": "Volver a iniciar sesión",
+  "auth.emailPending.title": "Verifica tu correo electrónico",
+  "auth.emailPending.description": "Tu cuenta se ha creado, pero tu correo electrónico aún no está verificado. Abre el enlace de verificación que te hemos enviado e inicia sesión después.",
+  "auth.emailPending.signIn": "Iniciar sesión",
+  "auth.emailPending.hint": "¿No has recibido ningún correo? Revisa tu carpeta de spam.",
 
   "auth.verifyEmail.verifying": "Verificando tu correo...",
   "auth.verifyEmail.success.title": "Tu correo fue verificado.",

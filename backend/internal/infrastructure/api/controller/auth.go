@@ -133,6 +133,10 @@ func OidcLogin(svc *domain.Service) func(c context.Context, input *struct{}) (*m
 	}
 }
 
+// EmailNotVerifiedCode marks the 409 for a brand-new account whose email the identity
+// provider has not verified yet, so the frontend can show a "verify your email" page.
+const EmailNotVerifiedCode = "email_not_verified"
+
 // OidcCallback links to the current account when a Bearer token is present, otherwise logs in.
 func OidcCallback(svc *domain.Service) func(c context.Context, input *model.OidcCallbackRequestBody) (*model.TokenResponse, error) {
 	return func(c context.Context, input *model.OidcCallbackRequestBody) (*model.TokenResponse, error) {
@@ -152,7 +156,7 @@ func OidcCallback(svc *domain.Service) func(c context.Context, input *model.Oidc
 				return nil, huma.Error409Conflict("an account with this email already exists and could not be auto-linked because the identity provider did not confirm this email address is verified", err)
 			}
 			if errors.Is(err, domain.ErrEmailNotVerified) {
-				return nil, huma.Error409Conflict("a new account could not be created because the identity provider did not confirm this email address is verified", err)
+				return nil, huma.Error409Conflict("a new account could not be created because the identity provider did not confirm this email address is verified", err, &huma.ErrorDetail{Location: "oidc", Message: EmailNotVerifiedCode})
 			}
 			return nil, huma.Error400BadRequest("failed to complete OIDC login", err)
 		}
