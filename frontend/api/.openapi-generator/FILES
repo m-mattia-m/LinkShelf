@@ -1,6 +1,7 @@
 apis/AuthApi.ts
 apis/LinkApi.ts
 apis/SectionApi.ts
+apis/ServiceApi.ts
 apis/SettingApi.ts
 apis/ShelfApi.ts
 apis/StatisticApi.ts
@@ -8,6 +9,8 @@ apis/ThemeApi.ts
 apis/UserApi.ts
 apis/index.ts
 docs/AuthApi.md
+docs/DomainRecord.md
+docs/DomainStatus.md
 docs/EmailDeliveryInfo.md
 docs/ErrorDetail.md
 docs/ErrorModel.md
@@ -33,6 +36,11 @@ docs/SectionOrderFailure.md
 docs/SectionOrderItem.md
 docs/SectionOrderRequestBody.md
 docs/SectionOrderResponseBody.md
+docs/ServiceApi.md
+docs/ServiceDomain.md
+docs/ServiceDomainList.md
+docs/ServiceDomainStatus.md
+docs/ServiceDomainStatusBody.md
 docs/SetPasswordRequest.md
 docs/Setting.md
 docs/SettingApi.md
@@ -60,6 +68,8 @@ docs/UserLimitsPatch.md
 docs/UserRequestBodyOnlyPassword.md
 docs/VerifyEmailRequest.md
 index.ts
+models/DomainRecord.ts
+models/DomainStatus.ts
 models/EmailDeliveryInfo.ts
 models/ErrorDetail.ts
 models/ErrorModel.ts
@@ -83,6 +93,10 @@ models/SectionOrderFailure.ts
 models/SectionOrderItem.ts
 models/SectionOrderRequestBody.ts
 models/SectionOrderResponseBody.ts
+models/ServiceDomain.ts
+models/ServiceDomainList.ts
+models/ServiceDomainStatus.ts
+models/ServiceDomainStatusBody.ts
 models/SetPasswordRequest.ts
 models/Setting.ts
 models/SettingBatchRequestBody.ts

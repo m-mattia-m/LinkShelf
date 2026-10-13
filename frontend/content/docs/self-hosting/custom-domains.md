@@ -69,6 +69,11 @@ server {
 Caddy and Traefik pass the original host on by default. In Kubernetes see [the chart's
 `ingress.extraHosts`](/docs/self-hosting/kubernetes#custom-domains).
 
+## Proof of ownership and automation
+
+A domain that is only saved is a claim. To prove it, serve it automatically and show the user which DNS records to set,
+connect a controller as described in [Automating custom domains](/docs/self-hosting/automating-custom-domains).
+
 ## Locking the API to your instance
 
 With `app.strictOrigins` the API only accepts browsers that come from your frontend or from the domain of a shelf, and

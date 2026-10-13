@@ -158,7 +158,7 @@ func newServiceTokenTestAPI(t *testing.T, enabled bool) humatest.TestAPI {
 		OperationID: "service-op",
 		Path:        "/service",
 		Security:    bearerSecurity(),
-		Metadata:    requireAdminOrServiceToken(),
+		Metadata:    requireAdminOrServiceScope("limits"),
 	}, whoAmI)
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
@@ -234,4 +234,74 @@ func Test_AuthMiddleware_ServiceOp_NonAdminJwtForbidden(t *testing.T) {
 	resp := api.Get("/service", "Authorization: Bearer "+token)
 
 	require.Equal(t, http.StatusForbidden, resp.Code)
+}
+
+func newServiceScopeTestAPI(t *testing.T, scopes ...string) humatest.TestAPI {
+	t.Helper()
+	config.Reset()
+	config.Set("authentication.jwtSecret", "test-secret")
+	config.Set("authentication.serviceToken.enabled", true)
+	config.Set("authentication.serviceToken.token", testServiceToken)
+	if scopes != nil {
+		config.Set("authentication.serviceToken.scopes", scopes)
+	}
+
+	_, api := humatest.New(t)
+	api.UseMiddleware(NewAuthenticationMiddleware(api))
+
+	huma.Register(api, huma.Operation{
+		Method: http.MethodGet, OperationID: "limits-op", Path: "/limits",
+		Security: bearerSecurity(), Metadata: requireAdminOrServiceScope(config.ScopeLimits),
+	}, whoAmI)
+	huma.Register(api, huma.Operation{
+		Method: http.MethodGet, OperationID: "domains-read-op", Path: "/service/read",
+		Security: bearerSecurity(), Metadata: requireServiceScope(config.ScopeDomainsRead),
+	}, whoAmI)
+	huma.Register(api, huma.Operation{
+		Method: http.MethodGet, OperationID: "domains-write-op", Path: "/service/write",
+		Security: bearerSecurity(), Metadata: requireServiceScope(config.ScopeDomainsWriteStatus),
+	}, whoAmI)
+	return api
+}
+
+func Test_AuthMiddleware_ServiceScopes_DefaultToLimitsOnly(t *testing.T) {
+	api := newServiceScopeTestAPI(t)
+	auth := "Authorization: Bearer " + testServiceToken
+
+	require.Equal(t, http.StatusOK, api.Get("/limits", auth).Code)
+	require.Equal(t, http.StatusForbidden, api.Get("/service/read", auth).Code)
+	require.Equal(t, http.StatusForbidden, api.Get("/service/write", auth).Code)
+}
+
+func Test_AuthMiddleware_ServiceScopes_EachRouteNeedsItsOwnScope(t *testing.T) {
+	auth := "Authorization: Bearer " + testServiceToken
+
+	api := newServiceScopeTestAPI(t, config.ScopeDomainsRead)
+	require.Equal(t, http.StatusOK, api.Get("/service/read", auth).Code)
+	require.Equal(t, http.StatusForbidden, api.Get("/service/write", auth).Code)
+	require.Equal(t, http.StatusForbidden, api.Get("/limits", auth).Code)
+
+	api = newServiceScopeTestAPI(t, config.ScopeDomainsWriteStatus, config.ScopeLimits)
+	require.Equal(t, http.StatusOK, api.Get("/service/write", auth).Code)
+	require.Equal(t, http.StatusOK, api.Get("/limits", auth).Code)
+	require.Equal(t, http.StatusForbidden, api.Get("/service/read", auth).Code)
+}
+
+func Test_AuthMiddleware_ServiceOnlyRoutes_RejectEveryUserToken(t *testing.T) {
+	api := newServiceScopeTestAPI(t, config.ScopeDomainsRead)
+
+	for _, role := range []string{model.RoleUser, model.RoleAdmin} {
+		token := signTestJWT(t, "someone", role, 5*time.Minute)
+		resp := api.Get("/service/read", "Authorization: Bearer "+token)
+		require.Equal(t, http.StatusUnauthorized, resp.Code, role)
+	}
+	require.Equal(t, http.StatusUnauthorized, api.Get("/service/read").Code)
+}
+
+func Test_AuthMiddleware_ServiceOnlyRoutes_DisabledTokenMatchesNothing(t *testing.T) {
+	api := newServiceScopeTestAPI(t, config.ScopeDomainsRead)
+	config.Set("authentication.serviceToken.enabled", false)
+
+	resp := api.Get("/service/read", "Authorization: Bearer "+testServiceToken)
+	require.Equal(t, http.StatusUnauthorized, resp.Code)
 }

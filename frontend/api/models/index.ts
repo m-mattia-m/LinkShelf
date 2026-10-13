@@ -1,5 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './DomainRecord';
+export * from './DomainStatus';
 export * from './EmailDeliveryInfo';
 export * from './ErrorDetail';
 export * from './ErrorModel';
@@ -23,6 +25,10 @@ export * from './SectionOrderFailure';
 export * from './SectionOrderItem';
 export * from './SectionOrderRequestBody';
 export * from './SectionOrderResponseBody';
+export * from './ServiceDomain';
+export * from './ServiceDomainList';
+export * from './ServiceDomainStatus';
+export * from './ServiceDomainStatusBody';
 export * from './SetPasswordRequest';
 export * from './Setting';
 export * from './SettingBatchRequestBody';

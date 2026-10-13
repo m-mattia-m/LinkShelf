@@ -100,6 +100,21 @@ func (mr *MockShelfRepositoryMockRecorder) DomainInUse(domain, exceptShelfId any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DomainInUse", reflect.TypeOf((*MockShelfRepository)(nil).DomainInUse), domain, exceptShelfId)
 }
 
+// DomainReadyInUse mocks base method.
+func (m *MockShelfRepository) DomainReadyInUse(domain, exceptShelfId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DomainReadyInUse", domain, exceptShelfId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DomainReadyInUse indicates an expected call of DomainReadyInUse.
+func (mr *MockShelfRepositoryMockRecorder) DomainReadyInUse(domain, exceptShelfId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DomainReadyInUse", reflect.TypeOf((*MockShelfRepository)(nil).DomainReadyInUse), domain, exceptShelfId)
+}
+
 // Get mocks base method.
 func (m *MockShelfRepository) Get(id string) (*model.Shelf, error) {
 	m.ctrl.T.Helper()
@@ -160,6 +175,21 @@ func (mr *MockShelfRepositoryMockRecorder) GetByUsernameAndPath(username, path a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUsernameAndPath", reflect.TypeOf((*MockShelfRepository)(nil).GetByUsernameAndPath), username, path)
 }
 
+// GetReadyByDomain mocks base method.
+func (m *MockShelfRepository) GetReadyByDomain(domain string) (*model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReadyByDomain", domain)
+	ret0, _ := ret[0].(*model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReadyByDomain indicates an expected call of GetReadyByDomain.
+func (mr *MockShelfRepositoryMockRecorder) GetReadyByDomain(domain any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReadyByDomain", reflect.TypeOf((*MockShelfRepository)(nil).GetReadyByDomain), domain)
+}
+
 // List mocks base method.
 func (m *MockShelfRepository) List() ([]model.Shelf, error) {
 	m.ctrl.T.Helper()
@@ -188,6 +218,21 @@ func (m *MockShelfRepository) ListByUserId(userId string) ([]model.Shelf, error)
 func (mr *MockShelfRepositoryMockRecorder) ListByUserId(userId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByUserId", reflect.TypeOf((*MockShelfRepository)(nil).ListByUserId), userId)
+}
+
+// ListDomains mocks base method.
+func (m *MockShelfRepository) ListDomains(afterId string, limit int) ([]model.Shelf, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDomains", afterId, limit)
+	ret0, _ := ret[0].([]model.Shelf)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDomains indicates an expected call of ListDomains.
+func (mr *MockShelfRepositoryMockRecorder) ListDomains(afterId, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDomains", reflect.TypeOf((*MockShelfRepository)(nil).ListDomains), afterId, limit)
 }
 
 // ListPathCollisions mocks base method.
@@ -233,6 +278,21 @@ func (m *MockShelfRepository) PathInUseByUser(userId, path, exceptShelfId string
 func (mr *MockShelfRepositoryMockRecorder) PathInUseByUser(userId, path, exceptShelfId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PathInUseByUser", reflect.TypeOf((*MockShelfRepository)(nil).PathInUseByUser), userId, path, exceptShelfId)
+}
+
+// SetDomainStatus mocks base method.
+func (m *MockShelfRepository) SetDomainStatus(shelfId, domain string, status model.DomainStatus, now int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetDomainStatus", shelfId, domain, status, now)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetDomainStatus indicates an expected call of SetDomainStatus.
+func (mr *MockShelfRepositoryMockRecorder) SetDomainStatus(shelfId, domain, status, now any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDomainStatus", reflect.TypeOf((*MockShelfRepository)(nil).SetDomainStatus), shelfId, domain, status, now)
 }
 
 // Update mocks base method.

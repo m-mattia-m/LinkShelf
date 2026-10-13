@@ -338,4 +338,64 @@ describe('shelf detail page', () => {
       expect(saveOrderButton).toBeDisabled()
     })
   })
+
+  describe('custom domain verification', () => {
+    const records = [
+      { type: 'TXT', name: '_linkshelf-challenge.profile.example.com', value: 'linkshelf-verification=abc' },
+      { type: 'CNAME', name: 'profile.example.com', value: 'domains.linkshelf.cloud' }
+    ]
+
+    function mockDomainShelf(state: 'pending' | 'ready' | 'error', reason = 'txt_missing') {
+      server.use(http.get(`${BASE}/v1/shelves/shelf-1`, () => HttpResponse.json(ShelfToJSON(buildShelf({
+        id: 'shelf-1',
+        title: 'My Shelf',
+        path: '',
+        domain: 'profile.example.com',
+        domainStatus: { state, reason, message: '', records: state === 'ready' ? [] : records }
+      })))))
+    }
+
+    it('shows a pending domain on the main screen with the records to set', async () => {
+      mockDomainShelf('pending')
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      expect(await screen.findByText('Domain verification pending')).toBeInTheDocument()
+      expect(screen.getByText('profile.example.com is not reachable yet. Add the DNS records at your DNS provider, this page checks again on its own.')).toBeInTheDocument()
+
+      // Folded away until asked for.
+      expect(screen.queryByTestId('domain-status-record')).not.toBeInTheDocument()
+      await fireEvent.click(screen.getByRole('button', { name: 'Show DNS records (2)' }))
+      expect(screen.getAllByTestId('domain-status-record')).toHaveLength(2)
+    })
+
+    it('looks again on request, and the alert is gone once the domain is ready', async () => {
+      mockDomainShelf('pending')
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+      await screen.findByText('Domain verification pending')
+
+      mockDomainShelf('ready', '')
+      await fireEvent.click(screen.getByRole('button', { name: 'Check again' }))
+
+      await waitFor(() => {
+        expect(screen.queryByText('Domain verification pending')).not.toBeInTheDocument()
+      })
+    })
+
+    it('shows no alert for a domain which is ready', async () => {
+      mockDomainShelf('ready', '')
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      await waitFor(() => {
+        expect(screen.getByText('My Shelf')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Domain verification pending')).not.toBeInTheDocument()
+    })
+
+    it('shows a problem with the domain', async () => {
+      mockDomainShelf('error', 'taken')
+      await renderSuspended(ShelfDetailPage, { route: '/app/shelf/shelf-1' })
+
+      expect(await screen.findByText('There is a problem with your domain')).toBeInTheDocument()
+    })
+  })
 })

@@ -20,7 +20,7 @@ All URIs are relative to *http://localhost*
 
 ## getOidcLogin
 
-> OidcLoginResponseBody getOidcLogin()
+> OidcLoginResponseBody getOidcLogin(redirectUrl)
 
 Start OIDC login
 
@@ -39,8 +39,13 @@ async function example() {
   console.log("🚀 Testing  SDK...");
   const api = new AuthApi();
 
+  const body = {
+    // string | Optional. Where the identity provider sends the browser back to. Must be the configured redirect URL or one of authentication.oidc.additionalRedirectUrls, matched exactly. Defaults to the configured redirect URL. (optional)
+    redirectUrl: redirectUrl_example,
+  } satisfies GetOidcLoginRequest;
+
   try {
-    const data = await api.getOidcLogin();
+    const data = await api.getOidcLogin(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -53,7 +58,10 @@ example().catch(console.error);
 
 ### Parameters
 
-This endpoint does not need any parameter.
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **redirectUrl** | `string` | Optional. Where the identity provider sends the browser back to. Must be the configured redirect URL or one of authentication.oidc.additionalRedirectUrls, matched exactly. Defaults to the configured redirect URL. | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 

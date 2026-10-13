@@ -40,6 +40,25 @@ describe('shelf index page', () => {
     expect(screen.getByText('Work')).toBeInTheDocument()
   })
 
+  it('flags a domain which still needs something from the user', async () => {
+    server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([
+      buildShelf({ id: 'shelf-1', title: 'Pending', path: '', domain: 'pending.example.com', domainStatus: { state: 'pending', reason: 'txt_missing', message: '', records: [] } }),
+      buildShelf({ id: 'shelf-2', title: 'Problem', path: '', domain: 'problem.example.com', domainStatus: { state: 'error', reason: 'taken', message: '', records: [] } }),
+      buildShelf({ id: 'shelf-3', title: 'Fine', path: '', domain: 'fine.example.com', domainStatus: { state: 'ready', reason: '', message: '', records: [] } }),
+      buildShelf({ id: 'shelf-4', title: 'Plain', path: '', domain: 'plain.example.com' })
+    ].map(ShelfToJSON))))
+
+    await renderSuspended(ShelfIndexPage)
+
+    await waitFor(() => {
+      expect(screen.getByText('pending.example.com')).toBeInTheDocument()
+    })
+    const badges = screen.getAllByTestId('domain-badge')
+    expect(badges).toHaveLength(2)
+    expect(badges[0]).toHaveTextContent('Verification pending')
+    expect(badges[1]).toHaveTextContent('Problem')
+  })
+
   it('shows an empty-state prompt when there are no shelves', async () => {
     server.use(http.get(`${BASE}/v1/shelves`, () => HttpResponse.json([])))
 

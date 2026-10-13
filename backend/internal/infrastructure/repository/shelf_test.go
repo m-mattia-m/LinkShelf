@@ -30,7 +30,7 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 		"created_user_based_paths",
 		"no_index",
 		"footer_enabled",
-		"footer_custom_text",
+		"footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
@@ -45,6 +45,7 @@ func Test_ShelfRepository_List_Success(t *testing.T) {
 		false,
 		true,
 		"",
+		"", "", "", "", 0,
 	)
 
 	mock.ExpectQuery(`FROM\s+shelf`).
@@ -100,7 +101,7 @@ func Test_ShelfRepository_Get_Success(t *testing.T) {
 		"created_user_based_paths",
 		"no_index",
 		"footer_enabled",
-		"footer_custom_text",
+		"footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
@@ -115,6 +116,7 @@ func Test_ShelfRepository_Get_Success(t *testing.T) {
 		false,
 		true,
 		"",
+		"", "", "", "", 0,
 	)
 
 	mock.ExpectQuery(`FROM\s+shelf`).
@@ -201,6 +203,7 @@ func Test_ShelfRepository_Update_Success(t *testing.T) {
 
 	mock.ExpectExec("UPDATE shelf").
 		WithArgs(
+			"updated.com", "updated.com", "updated.com", "updated.com", "updated.com", sqlmock.AnyArg(),
 			"updated-title",
 			"/updated",
 			"updated.com",
@@ -297,7 +300,7 @@ func Test_ShelfRepository_GetByPath_Success(t *testing.T) {
 		"created_user_based_paths",
 		"no_index",
 		"footer_enabled",
-		"footer_custom_text",
+		"footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test",
 		"test-shelf",
@@ -312,6 +315,7 @@ func Test_ShelfRepository_GetByPath_Success(t *testing.T) {
 		false,
 		true,
 		"",
+		"", "", "", "", 0,
 	)
 
 	mock.ExpectQuery(`FROM\s+shelf`).
@@ -352,9 +356,10 @@ func Test_ShelfRepository_ListByUserId_Success(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test", "test-shelf", "/test", "example.com", "description-test", "dark", "icon-test", "user-uuid-test", "owner-name", false, false, true, "",
+		"", "", "", "", 0,
 	)
 
 	mock.ExpectQuery(`(?s)FROM\s+shelf s.*WHERE s\.user_id =`).
@@ -394,9 +399,10 @@ func Test_ShelfRepository_List_FillsOwnerUsername(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test", "test-shelf", "my-path", nil, "", nil, "", "user-uuid-test", "owner-name", false, false, true, "",
+		"", "", "", "", 0,
 	)
 	mock.ExpectQuery(`(?s)FROM\s+shelf s\s+JOIN\s+"user" u ON u\.id = s\.user_id`).WillReturnRows(rows)
 
@@ -416,9 +422,10 @@ func Test_ShelfRepository_GetByUsernameAndPath_Success(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test", "test-shelf", "my-path", nil, "", nil, "", "user-uuid-test", "alice", false, false, true, "",
+		"", "", "", "", 0,
 	)
 	mock.ExpectQuery(`(?s)WHERE u\.username = .* AND LOWER\(s\.path\) = LOWER`).
 		WithArgs("alice", "my-path").
@@ -547,10 +554,10 @@ func Test_ShelfRepository_ReadsAndStoresTheCreationMode(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).
-		AddRow("shelf-1", "Old", "old-path", nil, "", nil, "", "user-1", "alice", false, false, true, "").
-		AddRow("shelf-2", "New", "new-path", nil, "", nil, "", "user-1", "alice", true, false, true, "")
+		AddRow("shelf-1", "Old", "old-path", nil, "", nil, "", "user-1", "alice", false, false, true, "", "", "", "", "", 0).
+		AddRow("shelf-2", "New", "new-path", nil, "", nil, "", "user-1", "alice", true, false, true, "", "", "", "", "", 0)
 	mock.ExpectQuery(`FROM\s+shelf`).WillReturnRows(rows)
 
 	shelves, err := repo.List()
@@ -581,7 +588,7 @@ func Test_ShelfRepository_UpdateNeverTouchesTheCreationMode(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	// The UPDATE statement must not mention the column at all.
-	mock.ExpectExec(`^\s*UPDATE shelf\s+SET title = \$1,\s+path = \$2,\s+domain = \$3,\s+description = \$4,\s+theme_id = \$5,\s+icon = \$6,\s+no_index = \$7,\s+footer_enabled = \$8,\s+footer_custom_text = \$9\s+WHERE id = \$10\s*$`).
+	mock.ExpectExec(`^\s*UPDATE shelf\s+SET domain_state = CASE.*,\s+title = \$7,\s+path = \$8,\s+domain = \$9,\s+description = \$10,\s+theme_id = \$11,\s+icon = \$12,\s+no_index = \$13,\s+footer_enabled = \$14,\s+footer_custom_text = \$15\s+WHERE id = \$16\s*$`).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err = repo.Update(&model.Shelf{
@@ -601,9 +608,10 @@ func Test_ShelfRepository_GetByDomain_Success(t *testing.T) {
 	repo := &shelfRepository{Engine: db}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text",
+		"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at",
 	}).AddRow(
 		"shelf-uuid-test", "test-shelf", nil, "profile.example.com", "description-test", "", "icon-test", "user-uuid-test", "owner-name", false, false, true, "",
+		"", "", "", "", 0,
 	)
 
 	mock.ExpectQuery(`(?s)FROM\s+shelf s.*WHERE s\.domain =`).
@@ -700,4 +708,112 @@ func Test_ShelfRepository_CountByUserId(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_ShelfRepository_Update_ResetsTheStatusOnlyWhenTheDomainChanges(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	// The assignments of the status come before domain = ?, so MySQL (which evaluates
+	// them in order) still compares against the old domain.
+	mock.ExpectExec(`SET domain_state = CASE WHEN COALESCE\(domain, ''\) = \$1 THEN domain_state ELSE '' END.*domain_updated_at = CASE.*ELSE \$6 END.*domain = \$9`).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	require.NoError(t, repo.Update(&model.Shelf{PublicShelf: model.PublicShelf{Id: "shelf-1", Title: "T"}, Domain: "profile.example.com"}))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_ShelfRepository_Scan_ReadsTheDomainStatus(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	columns := []string{"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at"}
+	records := `[{"type":"TXT","name":"_c.profile.example.com","value":"v"}]`
+	mock.ExpectQuery(`FROM\s+shelf`).WillReturnRows(sqlmock.NewRows(columns).
+		AddRow("s-1", "T", nil, "profile.example.com", "", nil, "", "u-1", "alice", false, false, true, "", "pending", "txt_missing", "m", records, 1700000000).
+		AddRow("s-2", "T", nil, "other.example.com", "", nil, "", "u-1", "alice", false, false, true, "", "", "", "", "", 0).
+		AddRow("s-3", "T", nil, "broken.example.com", "", nil, "", "u-1", "alice", false, false, true, "", "error", "", "", "{not json", 0))
+
+	shelves, err := repo.List()
+	require.NoError(t, err)
+
+	require.Equal(t, &model.DomainStatus{State: "pending", Reason: "txt_missing", Message: "m",
+		Records: []model.DomainRecord{{Type: "TXT", Name: "_c.profile.example.com", Value: "v"}}}, shelves[0].DomainStatus)
+	require.EqualValues(t, 1700000000, shelves[0].DomainUpdatedAt)
+	require.Nil(t, shelves[1].DomainStatus)
+	// A damaged value costs the records, not the shelf.
+	require.Equal(t, "error", shelves[2].DomainStatus.State)
+	require.Empty(t, shelves[2].DomainStatus.Records)
+}
+
+func Test_ShelfRepository_ListDomains_AfterCursor(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`WHERE s\.domain IS NOT NULL AND s\.id > \$1 ORDER BY s\.id LIMIT \$2`).
+		WithArgs("cursor-id", 3).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at"}).
+			AddRow("s-1", "T", nil, "profile.example.com", "", nil, "", "u-1", "alice", false, false, true, "", "", "", "", "", 0))
+
+	shelves, err := repo.ListDomains("cursor-id", 3)
+	require.NoError(t, err)
+	require.Len(t, shelves, 1)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test_ShelfRepository_SetDomainStatus(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+	status := model.DomainStatus{State: "pending", Reason: "txt_missing", Message: "m", Records: []model.DomainRecord{{Type: "TXT", Name: "n", Value: "v"}}}
+
+	mock.ExpectExec(`UPDATE shelf\s+SET domain_state = \$1.*WHERE id = \$6 AND domain = \$7`).
+		WithArgs("pending", "txt_missing", "m", `[{"type":"TXT","name":"n","value":"v"}]`, int64(5), "s-1", "profile.example.com").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	updated, err := repo.SetDomainStatus("s-1", "profile.example.com", status, 5)
+	require.NoError(t, err)
+	require.True(t, updated)
+
+	// The shelf has another domain by now.
+	mock.ExpectExec(`UPDATE shelf`).WillReturnResult(sqlmock.NewResult(0, 0))
+	updated, err = repo.SetDomainStatus("s-1", "old.example.com", status, 5)
+	require.NoError(t, err)
+	require.False(t, updated)
+
+	mock.ExpectExec(`UPDATE shelf`).WillReturnError(errors.New("boom"))
+	_, err = repo.SetDomainStatus("s-1", "profile.example.com", status, 5)
+	require.Error(t, err)
+}
+
+func Test_ShelfRepository_ReadyOnlyQueries(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &shelfRepository{Engine: db}
+
+	mock.ExpectQuery(`WHERE s\.domain = \$1 AND s\.domain_state = 'ready'`).
+		WithArgs("profile.example.com").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "path", "domain", "description", "theme", "icon", "user_id", "username", "created_user_based_paths", "no_index", "footer_enabled", "footer_custom_text", "domain_state", "domain_reason", "domain_message", "domain_records", "domain_updated_at"}))
+	shelf, err := repo.GetReadyByDomain("profile.example.com")
+	require.NoError(t, err)
+	require.Nil(t, shelf)
+
+	mock.ExpectQuery(`domain = \$1 AND domain_state = 'ready' AND id <> \$2`).
+		WithArgs("profile.example.com", "s-1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	taken, err := repo.DomainReadyInUse("profile.example.com", "s-1")
+	require.NoError(t, err)
+	require.True(t, taken)
 }

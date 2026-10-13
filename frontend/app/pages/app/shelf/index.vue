@@ -38,6 +38,15 @@ function getPublicUrl(shelf: Shelf): string {
   return publicShelfUrl(shelf, { userBasedPaths: websiteSettings.value?.userBasedPaths ?? false, origin })
 }
 
+// A domain which still needs something from the user is flagged in the list, so it is not found by accident.
+function domainBadge(shelf: Shelf) {
+  const state = shelf.domainStatus?.state
+  if (!shelf.domain || (state !== 'pending' && state !== 'error')) return null
+  return state === 'error'
+    ? { color: 'error' as const, icon: 'i-lucide-circle-alert', label: t('app.shelf.domainStatus.state.error') }
+    : { color: 'warning' as const, icon: 'i-lucide-clock', label: t('app.shelf.domainAlert.pending.badge') }
+}
+
 const editOpen = ref(false)
 const editingShelf = ref<Shelf>()
 
@@ -154,6 +163,25 @@ const columns: TableColumn<Shelf>[] = [
         >
           {{ row.original.title }}
         </ULink>
+      </template>
+
+      <template #domain-cell="{ row }">
+        <div
+          v-if="row.original.domain"
+          class="flex flex-wrap items-center gap-2"
+        >
+          <span>{{ row.original.domain }}</span>
+          <UBadge
+            v-if="domainBadge(row.original)"
+            :color="domainBadge(row.original)!.color"
+            :icon="domainBadge(row.original)!.icon"
+            variant="subtle"
+            size="sm"
+            data-testid="domain-badge"
+          >
+            {{ domainBadge(row.original)!.label }}
+          </UBadge>
+        </div>
       </template>
 
       <template #action-cell="{ row }">

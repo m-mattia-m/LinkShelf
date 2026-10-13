@@ -159,6 +159,37 @@ func (mr *MockShelfServiceMockRecorder) List(callerUserId, isAdmin any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockShelfService)(nil).List), callerUserId, isAdmin)
 }
 
+// ListDomains mocks base method.
+func (m *MockShelfService) ListDomains(cursor string, limit int) ([]model.ServiceDomain, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDomains", cursor, limit)
+	ret0, _ := ret[0].([]model.ServiceDomain)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListDomains indicates an expected call of ListDomains.
+func (mr *MockShelfServiceMockRecorder) ListDomains(cursor, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDomains", reflect.TypeOf((*MockShelfService)(nil).ListDomains), cursor, limit)
+}
+
+// SetDomainStatus mocks base method.
+func (m *MockShelfService) SetDomainStatus(domain, shelfId string, status model.DomainStatus) (*model.ServiceDomain, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetDomainStatus", domain, shelfId, status)
+	ret0, _ := ret[0].(*model.ServiceDomain)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetDomainStatus indicates an expected call of SetDomainStatus.
+func (mr *MockShelfServiceMockRecorder) SetDomainStatus(domain, shelfId, status any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDomainStatus", reflect.TypeOf((*MockShelfService)(nil).SetDomainStatus), domain, shelfId, status)
+}
+
 // Update mocks base method.
 func (m *MockShelfService) Update(shelfId, callerUserId string, isAdmin bool, shelfRequest *model.Shelf) (*model.Shelf, error) {
 	m.ctrl.T.Helper()

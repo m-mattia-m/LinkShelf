@@ -130,6 +130,13 @@ const domainHelp = computed(() => {
   return t('app.shelf.form.domainHelp', { url: shown })
 })
 
+// Only the status of the domain as it is saved: a typed, unsaved one has none yet.
+const domainStatus = computed(() => {
+  const status = props.modelValue?.domainStatus
+  if (!status || !props.modelValue?.domain) return null
+  return normalizeShelfDomain(form.domain) === props.modelValue.domain ? status : null
+})
+
 const selectedThemeId = computed({
   get: () => form.themeId || NO_THEME_VALUE,
   set: (value: string) => {
@@ -316,6 +323,10 @@ watch(
             @blur="form.domain = normalizeShelfDomain(form.domain)"
           />
         </UFormField>
+        <ShelfDomainStatus
+          v-if="domainStatus"
+          :status="domainStatus"
+        />
       </template>
 
       <template #path>

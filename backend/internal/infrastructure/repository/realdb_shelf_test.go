@@ -90,16 +90,115 @@ func Test_RealDB_ShelfRepository_DuplicatePath_IsRejected(t *testing.T) {
 	require.Error(t, err, "a second shelf with the same non-empty path must be rejected by the DB's unique constraint")
 }
 
-func Test_RealDB_ShelfRepository_DuplicateDomain_IsRejected(t *testing.T) {
+func Test_RealDB_ShelfRepository_DuplicateDomain_IsAllowedUntilBothAreReady(t *testing.T) {
 	repo := TestRepository.ShelfRepository
 	userId := realDBTestUser(t)
 	domain := "taken-" + uuid.NewString() + ".example.com"
+	ready := model.DomainStatus{State: model.DomainStateReady, Records: []model.DomainRecord{}}
 
-	_, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "First"}, Domain: domain, UserId: userId})
+	first, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "First"}, Domain: domain, UserId: userId})
+	require.NoError(t, err)
+	second, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Second"}, Domain: domain, UserId: userId})
+	require.NoError(t, err, "a saved domain is a claim, many shelves may claim it")
+
+	updated, err := repo.SetDomainStatus(first, domain, ready, 1)
+	require.NoError(t, err)
+	require.True(t, updated)
+
+	_, err = repo.SetDomainStatus(second, domain, ready, 1)
+	require.Error(t, err, "a second ready shelf on the same domain must be rejected by the DB's unique index")
+
+	// The loser can still hold any other state.
+	updated, err = repo.SetDomainStatus(second, domain, model.DomainStatus{State: model.DomainStateError, Reason: "taken", Records: []model.DomainRecord{}}, 2)
+	require.NoError(t, err)
+	require.True(t, updated)
+
+	found, err := repo.GetReadyByDomain(domain)
+	require.NoError(t, err)
+	require.Equal(t, first, found.Id)
+	require.Equal(t, model.DomainStateReady, found.DomainStatus.State)
+
+	inUse, err := repo.DomainReadyInUse(domain, first)
+	require.NoError(t, err)
+	require.False(t, inUse, "the ready shelf itself is excluded")
+	inUse, err = repo.DomainReadyInUse(domain, second)
+	require.NoError(t, err)
+	require.True(t, inUse)
+}
+
+func Test_RealDB_ShelfRepository_DomainStatus_RoundTripAndReset(t *testing.T) {
+	repo := TestRepository.ShelfRepository
+	userId := realDBTestUser(t)
+	domain := "status-" + uuid.NewString() + ".example.com"
+
+	id, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Status"}, Domain: domain, UserId: userId})
 	require.NoError(t, err)
 
-	_, err = repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Second"}, Domain: domain, UserId: userId})
-	require.Error(t, err, "a second shelf with the same non-empty domain must be rejected by the DB's unique constraint")
+	fetched, err := repo.Get(id)
+	require.NoError(t, err)
+	require.Nil(t, fetched.DomainStatus, "nothing reported yet")
+
+	status := model.DomainStatus{State: model.DomainStatePending, Reason: "txt_missing", Message: "set it",
+		Records: []model.DomainRecord{{Type: "TXT", Name: "_c." + domain, Value: "linkshelf-verification=abc"}}}
+	updated, err := repo.SetDomainStatus(id, domain, status, 1700000000)
+	require.NoError(t, err)
+	require.True(t, updated)
+
+	fetched, err = repo.Get(id)
+	require.NoError(t, err)
+	require.Equal(t, &status, fetched.DomainStatus)
+	require.EqualValues(t, 1700000000, fetched.DomainUpdatedAt)
+
+	updated, err = repo.SetDomainStatus(id, "other-"+domain, status, 1)
+	require.NoError(t, err)
+	require.False(t, updated, "a stale domain never matches")
+
+	// Updating the shelf without touching the domain keeps the status.
+	fetched.Title = "Renamed"
+	require.NoError(t, repo.Update(fetched))
+	fetched, err = repo.Get(id)
+	require.NoError(t, err)
+	require.NotNil(t, fetched.DomainStatus)
+
+	// Changing the domain resets it.
+	fetched.Domain = "changed-" + domain
+	require.NoError(t, repo.Update(fetched))
+	fetched, err = repo.Get(id)
+	require.NoError(t, err)
+	require.Nil(t, fetched.DomainStatus)
+
+	// ... and so does clearing it.
+	updated, err = repo.SetDomainStatus(id, fetched.Domain, status, 1)
+	require.NoError(t, err)
+	require.True(t, updated)
+	fetched.Domain, fetched.Path = "", "path-"+uuid.NewString()
+	require.NoError(t, repo.Update(fetched))
+	fetched, err = repo.Get(id)
+	require.NoError(t, err)
+	require.Nil(t, fetched.DomainStatus)
+}
+
+func Test_RealDB_ShelfRepository_ListDomains_IsOrderedAndPaged(t *testing.T) {
+	repo := TestRepository.ShelfRepository
+	userId := realDBTestUser(t)
+
+	var ids []string
+	for i := 0; i < 3; i++ {
+		id, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "Listed"}, Domain: "listed-" + uuid.NewString() + ".example.com", UserId: userId})
+		require.NoError(t, err)
+		ids = append(ids, id)
+	}
+	_, err := repo.Create(&model.Shelf{PublicShelf: model.PublicShelf{Title: "No domain", Path: "nodomain-" + uuid.NewString()}, UserId: userId})
+	require.NoError(t, err)
+
+	page, err := repo.ListDomains(ids[0], 2)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(page), 2)
+	require.Equal(t, ids[1], page[0].Id)
+	require.Equal(t, ids[2], page[1].Id)
+	for _, shelf := range page {
+		require.NotEmpty(t, shelf.Domain, "shelves without a domain are not listed")
+	}
 }
 
 func Test_RealDB_ShelfRepository_GetByDomain(t *testing.T) {

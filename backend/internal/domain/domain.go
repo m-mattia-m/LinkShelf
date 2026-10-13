@@ -16,6 +16,8 @@ type Service struct {
 	StatisticService         StatisticService
 	AuthService              AuthService
 	EmailVerificationService EmailVerificationService
+	// Events is optional, nil publishes nothing.
+	Events EventPublisher
 }
 
 // NewService wires up every domain service. oidc and m are nil when disabled.

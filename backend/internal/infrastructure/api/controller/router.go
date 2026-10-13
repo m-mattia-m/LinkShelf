@@ -255,7 +255,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/users/{userId}/limits",
 		Tags:        []string{"User"},
 		Security:    bearerSecurity(),
-		Metadata:    requireAdminOrServiceToken(),
+		Metadata:    requireAdminOrServiceScope(config.ScopeLimits),
 	}, GetUserLimits(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodPatch,
@@ -265,7 +265,7 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/users/{userId}/limits",
 		Tags:        []string{"User"},
 		Security:    bearerSecurity(),
-		Metadata:    requireAdminOrServiceToken(),
+		Metadata:    requireAdminOrServiceScope(config.ScopeLimits),
 	}, PatchUserLimits(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodPatch,
@@ -317,6 +317,27 @@ func Router(svc *domain.Service) (*gin.Engine, error) {
 		Path:        "/v1/shelves/by-path/{path}",
 		Tags:        []string{"Shelf"},
 	}, GetPublicShelfByPath(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodGet,
+		OperationID: "list-service-domains",
+		Summary:     "List custom domains",
+		Description: "Every shelf domain with the status an external controller reported, ordered by shelf id and cursor paginated. Service token with the scope domains:read only, a user token is rejected. Supports If-None-Match, answering 304 when the page did not change.",
+		Path:        "/v1/service/domains",
+		Tags:        []string{"Service"},
+		Security:    bearerSecurity(),
+		Metadata:    requireServiceScope(config.ScopeDomainsRead),
+		Errors:      []int{http.StatusNotModified},
+	}, ListServiceDomains(svc))
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		OperationID: "set-service-domain-status",
+		Summary:     "Set the status of a custom domain",
+		Description: "An external controller reports whether a domain is pending, ready or in error, and the DNS records the user has to set. Answers 409 when the shelf does not have the domain anymore, or when another shelf is already ready on it. Service token with the scope domains:write-status only.",
+		Path:        "/v1/service/domains/{domain}/status",
+		Tags:        []string{"Service"},
+		Security:    bearerSecurity(),
+		Metadata:    requireServiceScope(config.ScopeDomainsWriteStatus),
+	}, SetServiceDomainStatus(svc))
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		OperationID: "get-public-shelf-by-domain",

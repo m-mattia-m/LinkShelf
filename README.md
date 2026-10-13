@@ -13,6 +13,7 @@ as well as with Docker Compose.
 - **Unlimited shelves:** create as many shelves as you want and group links into sections.
 - **Accounts:** local accounts or OIDC (Keycloak, Zitadel, Auth0, Google, ...). Registration can be turned off.
 - **Own domains:** serve a shelf under `/<path>`, `/<username>/<path>` or its own custom domain.
+- **Automated domain setup:** signed webhooks and a token-protected API let an external controller provision DNS records, routes and certificates for custom domains. Optional, off by default.
 - **Theming:** 13 built-in themes, user themes, and instance themes from a mounted directory.
 - **Admin dashboard:** manage users, moderate themes and edit the About, Imprint, Terms and Privacy pages.
 - **SMTP:** optional mail integration for verification, password reset and invites.
@@ -48,6 +49,7 @@ as well as with Docker Compose.
     - [Kubernetes](frontend/content/docs/self-hosting/kubernetes.md)
     - [Configuration](frontend/content/docs/self-hosting/configuration.md)
     - [Custom domains](frontend/content/docs/self-hosting/custom-domains.md)
+    - [Automating custom domains](frontend/content/docs/self-hosting/automating-custom-domains.md)
 - [Usage](frontend/content/docs/usage/getting-started.md)
 - [Helm chart](charts/linkshelf/README.md)
 - [FAQ](frontend/content/docs/faq/index.md)
