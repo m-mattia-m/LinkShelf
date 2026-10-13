@@ -246,7 +246,19 @@ func (s *userServiceImpl) PatchPassword(userId string, u *model.UserRequestBodyO
 }
 
 func (s *userServiceImpl) Delete(u *model.User) error {
-	return s.Repository.UserRepository.Delete(u)
+	// The shelves go with the user, so ask before they are gone.
+	var shelves []model.Shelf
+	if s.Domain != nil && s.Domain.Events != nil {
+		shelves, _ = s.Repository.ShelfRepository.ListByUserId(u.Id)
+	}
+
+	if err := s.Repository.UserRepository.Delete(u); err != nil {
+		return err
+	}
+	for _, shelf := range shelves {
+		s.Domain.publishDomainChanged(shelf.Id, shelf.UserId, "", shelf.Domain)
+	}
+	return nil
 }
 
 func validateRole(role string) (string, error) {

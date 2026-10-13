@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { DomainStatus } from './DomainStatus';
+import {
+    DomainStatusFromJSON,
+    DomainStatusFromJSONTyped,
+    DomainStatusToJSON,
+    DomainStatusToJSONTyped,
+} from './DomainStatus';
+
 /**
  * 
  * @export
@@ -43,6 +51,12 @@ export interface Shelf {
      * @memberof Shelf
      */
     domain: string;
+    /**
+     * What an external controller reported about the domain, if one is set up.
+     * @type {DomainStatus}
+     * @memberof Shelf
+     */
+    domainStatus?: DomainStatus;
     /**
      * 
      * @type {string}
@@ -153,6 +167,7 @@ export function ShelfFromJSONTyped(json: any, ignoreDiscriminator: boolean): She
         'createdWithUserBasedPaths': json['createdWithUserBasedPaths'],
         'description': json['description'],
         'domain': json['domain'],
+        'domainStatus': json['domainStatus'] == null ? undefined : DomainStatusFromJSON(json['domainStatus']),
         'footerCustomText': json['footerCustomText'],
         'footerEnabled': json['footerEnabled'],
         'icon': json['icon'],
@@ -182,6 +197,7 @@ export function ShelfToJSONTyped(value?: Omit<Shelf, '$schema'> | null, ignoreDi
         'createdWithUserBasedPaths': value['createdWithUserBasedPaths'],
         'description': value['description'],
         'domain': value['domain'],
+        'domainStatus': DomainStatusToJSON(value['domainStatus']),
         'footerCustomText': value['footerCustomText'],
         'footerEnabled': value['footerEnabled'],
         'icon': value['icon'],

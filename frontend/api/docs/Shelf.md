@@ -10,6 +10,7 @@ Name | Type
 `createdWithUserBasedPaths` | boolean
 `description` | string
 `domain` | string
+`domainStatus` | [DomainStatus](DomainStatus.md)
 `footerCustomText` | string
 `footerEnabled` | boolean
 `icon` | string
@@ -34,6 +35,7 @@ const example = {
   "createdWithUserBasedPaths": null,
   "description": null,
   "domain": null,
+  "domainStatus": null,
   "footerCustomText": null,
   "footerEnabled": null,
   "icon": null,

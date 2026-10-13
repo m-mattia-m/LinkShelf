@@ -82,9 +82,15 @@ authentication:
     # Requires smtp.host and smtp.from.
     enabled: true
     tokenExpiryMinutes: 60
-  # Static bearer token for an external service. Can only read and set a user's shelf limit.
+  # Static bearer token for an external service. It can only call the service endpoints
+  # its scopes allow, and no user endpoint.
   serviceToken:
     enabled: false
+    # limits: read and set a user's shelf limit.
+    # domains:read: list the custom domains (GET /v1/service/domains).
+    # domains:write-status: write back the status of a domain (PUT /v1/service/domains/{domain}/status).
+    # Set via AUTHENTICATION_SERVICETOKEN_SCOPES, comma separated.
+    scopes: [limits]
     # Required when enabled, at least 32 bytes and different from jwtSecret, e.g. `openssl rand -base64 48`.
     # Set via AUTHENTICATION_SERVICETOKEN_TOKEN.
     token: ""
@@ -93,6 +99,20 @@ limits:
   defaultMaxShelves:
   # Optional http(s) link shown to users who hit a limit.
   upgradeUrl: ""
+customDomains:
+  # false: every saved domain is served and its status is informational.
+  # true: a domain is served only while an external controller reports it as "ready"
+  # (see PUT /v1/service/domains/{domain}/status), and "one domain, one shelf" only
+  # applies among ready domains. Prevents squatting a domain before proving it.
+  requireReady: false
+webhooks:
+  # Notifies external services that something changed. Best effort, see the docs
+  # "Automating custom domains". The receiver must be able to resync from the API.
+  enabled: false
+  # - url: https://example.com/hooks/linkshelf
+  #   secret: ${WEBHOOKS_EXAMPLE_SECRET}   # read from the environment, at least 32 bytes
+  #   events: ["shelf.domain.changed"]     # or ["*"]
+  endpoints: []
 smtp:
   # Defaults to the Mailpit dev container.
   host: localhost

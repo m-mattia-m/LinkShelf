@@ -7,6 +7,7 @@ import (
 	"backend/internal/infrastructure/mailer"
 	"backend/internal/infrastructure/oidcclient"
 	"backend/internal/infrastructure/repository"
+	"backend/internal/infrastructure/webhook"
 	"backend/internal/logger"
 	"context"
 	"fmt"
@@ -64,6 +65,11 @@ func main() {
 	}
 
 	svc := domain.NewService(repo, oidcClient, m)
+	// Assigned only when there is one: a nil *Dispatcher in the interface would not be nil.
+	if dispatcher := webhook.New(config.WebhookEndpoints()); dispatcher != nil {
+		defer dispatcher.Close()
+		svc.Events = dispatcher
+	}
 
 	router, err := controller.Router(svc)
 	if err != nil {

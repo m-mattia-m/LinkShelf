@@ -22,8 +22,10 @@ const (
 
 	// roleMetadataKey restricts an operation to a role.
 	roleMetadataKey = "requiredRole"
-	// serviceTokenMetadataKey lets the service token call an operation.
-	serviceTokenMetadataKey = "allowServiceToken"
+	// serviceScopeMetadataKey lets the service token call an operation, if it holds this scope.
+	serviceScopeMetadataKey = "serviceScope"
+	// serviceOnlyMetadataKey marks an operation that only the service token may call.
+	serviceOnlyMetadataKey = "serviceOnly"
 )
 
 // UserIdFromContext returns the caller's user ID, or "" if unauthenticated.
@@ -73,14 +75,24 @@ func NewAuthenticationMiddleware(api huma.API) func(ctx huma.Context, next func(
 		}
 
 		if matchesServiceToken(bearer) {
-			if allowed, _ := op.Metadata[serviceTokenMetadataKey].(bool); !allowed {
+			scope, _ := op.Metadata[serviceScopeMetadataKey].(string)
+			if scope == "" {
 				_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "invalid or expired token")
+				return
+			}
+			if !config.ServiceTokenHasScope(scope) {
+				_ = huma.WriteErr(api, ctx, http.StatusForbidden, "the service token lacks the scope "+scope)
 				return
 			}
 			ctx = huma.WithValue(ctx, userIdContextKey, "service")
 			ctx = huma.WithValue(ctx, roleContextKey, model.RoleAdmin)
 			ctx = huma.WithValue(ctx, serviceContextKey, true)
 			next(ctx)
+			return
+		}
+
+		if serviceOnly, _ := op.Metadata[serviceOnlyMetadataKey].(bool); serviceOnly {
+			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "invalid or expired token")
 			return
 		}
 
@@ -107,9 +119,15 @@ func requireAdmin() map[string]any {
 	return map[string]any{roleMetadataKey: model.RoleAdmin}
 }
 
-// requireAdminOrServiceToken is requireAdmin, also open to the service token.
-func requireAdminOrServiceToken() map[string]any {
-	return map[string]any{roleMetadataKey: model.RoleAdmin, serviceTokenMetadataKey: true}
+// requireAdminOrServiceScope is requireAdmin, also open to the service token with this scope.
+func requireAdminOrServiceScope(scope string) map[string]any {
+	return map[string]any{roleMetadataKey: model.RoleAdmin, serviceScopeMetadataKey: scope}
+}
+
+// requireServiceScope marks an operation that only the service token with this scope may call.
+// A user token is rejected, so the service routes can never be reached as a user.
+func requireServiceScope(scope string) map[string]any {
+	return map[string]any{serviceOnlyMetadataKey: true, serviceScopeMetadataKey: scope}
 }
 
 // bearerSecurity marks an operation as requiring a valid access token.

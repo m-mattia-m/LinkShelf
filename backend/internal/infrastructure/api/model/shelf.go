@@ -14,6 +14,29 @@ type PublicShelf struct {
 	FooterCustomText string `json:"footerCustomText" bson:"footerCustomText"`
 }
 
+// Domain states reported by an external controller.
+const (
+	DomainStatePending = "pending"
+	DomainStateReady   = "ready"
+	DomainStateError   = "error"
+)
+
+// DomainRecord is a DNS record the user has to set for a domain.
+type DomainRecord struct {
+	Type  string `json:"type" bson:"type" required:"true" maxLength:"16" example:"TXT"`
+	Name  string `json:"name" bson:"name" required:"true" maxLength:"255" example:"_linkshelf-challenge.profile.example.com"`
+	Value string `json:"value" bson:"value" required:"true" maxLength:"1024"`
+}
+
+// DomainStatus is what an external controller reported about a shelf's domain.
+// LinkShelf attaches no meaning to Reason, Message and Records, it only shows them.
+type DomainStatus struct {
+	State   string         `json:"state" bson:"state" enum:"pending,ready,error"`
+	Reason  string         `json:"reason" bson:"reason" doc:"A machine readable code, for example txt_missing. Translated by the frontend, unknown values fall back to message."`
+	Message string         `json:"message" bson:"message" doc:"Optional free text fallback for reason."`
+	Records []DomainRecord `json:"records" bson:"records" doc:"The DNS records to set, shown as they are."`
+}
+
 type Shelf struct {
 	PublicShelf
 	Domain string `json:"domain" bson:"domain"`
@@ -24,6 +47,10 @@ type Shelf struct {
 	CreatedWithUserBasedPaths bool `json:"createdWithUserBasedPaths" bson:"createdWithUserBasedPaths"`
 	// ThemeId is the selected theme's id ("" if none selected).
 	ThemeId string `json:"themeId" bson:"themeId"`
+	// DomainStatus is nil until an external controller reported one for the current domain.
+	DomainStatus *DomainStatus `json:"domainStatus,omitempty" bson:"domainStatus" doc:"What an external controller reported about the domain, if one is set up."`
+	// DomainUpdatedAt is the unix time of the last domain change or status write.
+	DomainUpdatedAt int64 `json:"-" bson:"-"`
 	// ThemeMissing is true when ThemeId is set but the theme no longer exists.
 	ThemeMissing bool `json:"themeMissing" bson:"themeMissing"`
 }

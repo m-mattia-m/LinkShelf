@@ -52,6 +52,10 @@ import {
     VerifyEmailRequestToJSON,
 } from '../models/index';
 
+export interface GetOidcLoginRequest {
+    redirectUrl?: string;
+}
+
 export interface PostConfirmEmailChangeRequest {
     verifyEmailRequest: Omit<VerifyEmailRequest, '$schema'>;
 }
@@ -102,8 +106,12 @@ export class AuthApi extends runtime.BaseAPI {
      * Returns the authorization URL (PKCE-protected) the frontend should redirect the browser to, and the state to send back to the callback.
      * Start OIDC login
      */
-    async getOidcLoginRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OidcLoginResponseBody>> {
+    async getOidcLoginRaw(requestParameters: GetOidcLoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OidcLoginResponseBody>> {
         const queryParameters: any = {};
+
+        if (requestParameters['redirectUrl'] != null) {
+            queryParameters['redirect_url'] = requestParameters['redirectUrl'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -124,8 +132,8 @@ export class AuthApi extends runtime.BaseAPI {
      * Returns the authorization URL (PKCE-protected) the frontend should redirect the browser to, and the state to send back to the callback.
      * Start OIDC login
      */
-    async getOidcLogin(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OidcLoginResponseBody> {
-        const response = await this.getOidcLoginRaw(initOverrides);
+    async getOidcLogin(requestParameters: GetOidcLoginRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OidcLoginResponseBody> {
+        const response = await this.getOidcLoginRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

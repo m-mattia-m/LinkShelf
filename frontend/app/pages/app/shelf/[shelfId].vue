@@ -18,6 +18,9 @@ const route = useRoute()
 const router = useRouter()
 const shelfId = route.params.shelfId as string
 
+// How often a pending custom domain is looked at again.
+const DOMAIN_POLL_MS = 15_000
+
 const shelfStore = useShelfStore()
 const sectionStore = useSectionStore()
 const linkStore = useLinkStore()
@@ -119,6 +122,31 @@ async function loadAll() {
 
 onMounted(loadAll)
 
+// The status of a custom domain is written by an external controller, a little after the shelf was saved
+// and again once the DNS records are there. While it is pending the page follows along, so the user sees
+// it turn ready without reloading.
+const checkingDomain = ref(false)
+
+async function checkDomain() {
+  checkingDomain.value = true
+  try {
+    shelf.value = await shelfStore.getById(shelfId)
+  } catch {
+    // A failed check keeps what is shown, the next one tries again.
+  } finally {
+    checkingDomain.value = false
+  }
+}
+
+const domainPending = computed(() => !!shelf.value?.domain && shelf.value.domainStatus?.state === 'pending')
+let domainPoll: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  domainPoll = setInterval(() => {
+    if (domainPending.value && !editOpen.value && !document.hidden) checkDomain()
+  }, DOMAIN_POLL_MS)
+})
+onBeforeUnmount(() => clearInterval(domainPoll))
+
 const editOpen = ref(false)
 
 function onShelfSaved(updated: Shelf) {
@@ -187,6 +215,13 @@ async function createSection() {
       <ShelfUrlAlert
         :shelf="shelf"
         class="mb-4"
+      />
+
+      <ShelfDomainAlert
+        :shelf="shelf"
+        :checking="checkingDomain"
+        class="mb-4"
+        @check="checkDomain"
       />
 
       <div class="flex justify-between items-start gap-4 pb-4">

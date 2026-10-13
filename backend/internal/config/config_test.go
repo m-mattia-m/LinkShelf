@@ -567,3 +567,89 @@ func Test_OidcRedirectUrlAllowed(t *testing.T) {
 	require.False(t, OidcRedirectUrlAllowed("https://account.example.com.evil.com/auth/callback"))
 	require.False(t, OidcRedirectUrlAllowed("https://account.example.com"))
 }
+
+func Test_ServiceTokenScopes_DefaultToLimits(t *testing.T) {
+	Reset()
+	require.Equal(t, []string{ScopeLimits}, ServiceTokenScopes())
+	require.True(t, ServiceTokenHasScope(ScopeLimits))
+	require.False(t, ServiceTokenHasScope(ScopeDomainsRead))
+
+	Set("authentication.serviceToken.scopes", []string{" ", ""})
+	require.Equal(t, []string{ScopeLimits}, ServiceTokenScopes(), "blank entries count as none")
+}
+
+func Test_Validate_ServiceTokenScopesMustBeKnown(t *testing.T) {
+	validWithServiceToken(true, "01234567890123456789012345678901")
+	Set("authentication.serviceToken.scopes", []string{"limits", "domains:read", "domains:write-status"})
+	require.NoError(t, validate())
+
+	Set("authentication.serviceToken.scopes", []string{"limits", "domains:delete"})
+	require.ErrorContains(t, validate(), `unknown scope "domains:delete"`)
+}
+
+func Test_LoadConfig_ServiceTokenScopesFromTheEnvironment(t *testing.T) {
+	Reset()
+	t.Setenv("AUTHENTICATION_SERVICETOKEN_ENABLED", "true")
+	t.Setenv("AUTHENTICATION_SERVICETOKEN_TOKEN", "an-env-token-of-at-least-32-bytes-long")
+	t.Setenv("AUTHENTICATION_SERVICETOKEN_SCOPES", "limits, domains:read")
+	require.NoError(t, LoadConfig())
+	require.Equal(t, []string{"limits", "domains:read"}, ServiceTokenScopes())
+}
+
+func Test_CustomDomainsRequireReady_OffByDefaultAndSettableFromTheEnvironment(t *testing.T) {
+	Reset()
+	require.NoError(t, LoadConfig())
+	require.False(t, CustomDomainsRequireReady())
+
+	Reset()
+	t.Setenv("CUSTOMDOMAINS_REQUIREREADY", "true")
+	require.NoError(t, LoadConfig())
+	require.True(t, CustomDomainsRequireReady())
+}
+
+func validWithWebhooks(endpoints []map[string]any) {
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "LOCAL")
+	Set("webhooks.enabled", true)
+	Set("webhooks.endpoints", endpoints)
+}
+
+func Test_WebhookEndpoints_OffUnlessEnabled(t *testing.T) {
+	Reset()
+	Set("authentication.jwtSecret", testJwtSecret)
+	Set("authentication.type", "LOCAL")
+	Set("webhooks.endpoints", []map[string]any{{"url": "https://example.com/hook", "secret": "x"}})
+	require.Nil(t, WebhookEndpoints())
+	require.NoError(t, validate())
+}
+
+func Test_WebhookEndpoints_SecretIsReadFromTheEnvironment(t *testing.T) {
+	t.Setenv("WEBHOOKS_ACCOUNT_SECRET", " an-env-secret-of-at-least-32-bytes-long ")
+	validWithWebhooks([]map[string]any{{"url": " https://account.example.com/v1/webhooks/linkshelf ", "secret": "${WEBHOOKS_ACCOUNT_SECRET}"}})
+
+	require.NoError(t, validate())
+	endpoints := WebhookEndpoints()
+	require.Len(t, endpoints, 1)
+	require.Equal(t, "https://account.example.com/v1/webhooks/linkshelf", endpoints[0].Url)
+	require.Equal(t, "an-env-secret-of-at-least-32-bytes-long", endpoints[0].Secret)
+	require.Equal(t, []string{"*"}, endpoints[0].Events, "no events means all of them")
+}
+
+func Test_Validate_WebhookEndpointsNeedAUrlAndAStrongSecret(t *testing.T) {
+	strong := "an-env-secret-of-at-least-32-bytes-long"
+
+	validWithWebhooks([]map[string]any{{"url": "ftp://example.com", "secret": strong}})
+	require.ErrorContains(t, validate(), "webhooks.endpoints[0].url")
+
+	validWithWebhooks([]map[string]any{{"url": "https://example.com/hook", "secret": "short"}})
+	require.ErrorContains(t, validate(), "webhooks.endpoints[0].secret")
+
+	// An unset variable leaves an empty secret, which is refused instead of signing with "".
+	t.Setenv("WEBHOOKS_MISSING_SECRET", "")
+	validWithWebhooks([]map[string]any{{"url": "https://example.com/hook", "secret": "${WEBHOOKS_MISSING_SECRET}"}})
+	require.ErrorContains(t, validate(), "webhooks.endpoints[0].secret")
+
+	validWithWebhooks([]map[string]any{{"url": "https://example.com/hook", "secret": strong, "events": []string{"shelf.domain.changed"}}})
+	require.NoError(t, validate())
+}

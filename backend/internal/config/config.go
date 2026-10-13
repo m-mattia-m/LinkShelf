@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -28,6 +30,15 @@ type SidebarLink struct {
 	Name string `yaml:"name"`
 	Url  string `yaml:"url"`
 	Icon string `yaml:"icon"`
+}
+
+// WebhookEndpoint is one receiver of outbound webhooks.
+type WebhookEndpoint struct {
+	Url string `yaml:"url"`
+	// Secret signs every delivery. A value of the form ${NAME} is read from the environment.
+	Secret string `yaml:"secret" json:"-"`
+	// Events lists the event types to send, "*" for all.
+	Events []string `yaml:"events"`
 }
 
 // Configuration mirrors config.default.yaml.
@@ -117,10 +128,13 @@ type Configuration struct {
 			// TokenExpiryMinutes is how long an emailed reset link stays valid.
 			TokenExpiryMinutes int `yaml:"tokenExpiryMinutes"`
 		} `yaml:"passwordReset"`
-		// ServiceToken is a static credential for the user-limits endpoints only.
+		// ServiceToken is a static credential for an external service. Scopes decide
+		// which service endpoints it may call.
 		ServiceToken struct {
 			Enabled bool   `yaml:"enabled"`
 			Token   string `yaml:"token" json:"-"`
+			// Scopes defaults to ["limits"].
+			Scopes []string `yaml:"scopes"`
 		} `yaml:"serviceToken"`
 	} `yaml:"authentication"`
 	Limits struct {
@@ -129,6 +143,15 @@ type Configuration struct {
 		// UpgradeUrl is shown when a user hits a limit. Optional.
 		UpgradeUrl string `yaml:"upgradeUrl"`
 	} `yaml:"limits"`
+	CustomDomains struct {
+		// RequireReady serves a domain only while its status is "ready", and applies
+		// "one domain, one shelf" only among ready domains.
+		RequireReady bool `yaml:"requireReady"`
+	} `yaml:"customDomains"`
+	Webhooks struct {
+		Enabled   bool              `yaml:"enabled"`
+		Endpoints []WebhookEndpoint `yaml:"endpoints"`
+	} `yaml:"webhooks"`
 	Smtp struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
@@ -221,6 +244,9 @@ func validate() error {
 		return err
 	}
 	if _, err := DefaultMaxShelves(); err != nil {
+		return err
+	}
+	if err := validateWebhooks(); err != nil {
 		return err
 	}
 	if err := validateUpgradeUrl(String("limits.upgradeUrl")); err != nil {
@@ -322,6 +348,81 @@ func validateServiceToken() error {
 	}
 	if token == strings.TrimSpace(String("authentication.jwtSecret")) {
 		return fmt.Errorf("authentication.serviceToken.token must differ from authentication.jwtSecret")
+	}
+	for _, scope := range Strings("authentication.serviceToken.scopes") {
+		if !slices.Contains(ServiceScopes, strings.TrimSpace(scope)) {
+			return fmt.Errorf("authentication.serviceToken.scopes contains the unknown scope %q, known scopes: %s", scope, strings.Join(ServiceScopes, ", "))
+		}
+	}
+	return nil
+}
+
+// Scopes a service token can hold.
+const (
+	ScopeLimits             = "limits"
+	ScopeDomainsRead        = "domains:read"
+	ScopeDomainsWriteStatus = "domains:write-status"
+)
+
+// ServiceScopes lists every known scope.
+var ServiceScopes = []string{ScopeLimits, ScopeDomainsRead, ScopeDomainsWriteStatus}
+
+// ServiceTokenScopes returns the scopes of the service token, ["limits"] when none are configured.
+func ServiceTokenScopes() []string {
+	scopes := make([]string, 0)
+	for _, scope := range Strings("authentication.serviceToken.scopes") {
+		if scope = strings.TrimSpace(scope); scope != "" {
+			scopes = append(scopes, scope)
+		}
+	}
+	if len(scopes) == 0 {
+		return []string{ScopeLimits}
+	}
+	return scopes
+}
+
+// ServiceTokenHasScope reports whether the service token may use scope.
+func ServiceTokenHasScope(scope string) bool {
+	return slices.Contains(ServiceTokenScopes(), scope)
+}
+
+// CustomDomainsRequireReady reports whether a shelf domain is only served once it is "ready".
+func CustomDomainsRequireReady() bool { return Bool("customDomains.requireReady") }
+
+var envSecretPattern = regexp.MustCompile(`^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$`)
+
+// WebhookEndpoints returns the configured endpoints with secrets resolved, nil when webhooks are off.
+func WebhookEndpoints() []WebhookEndpoint {
+	if !Bool("webhooks.enabled") {
+		return nil
+	}
+	var endpoints []WebhookEndpoint
+	_ = k.Unmarshal("webhooks.endpoints", &endpoints)
+	for i := range endpoints {
+		e := &endpoints[i]
+		e.Url, e.Secret = strings.TrimSpace(e.Url), strings.TrimSpace(e.Secret)
+		if m := envSecretPattern.FindStringSubmatch(e.Secret); m != nil {
+			e.Secret = strings.TrimSpace(os.Getenv(m[1]))
+		}
+		if len(e.Events) == 0 {
+			e.Events = []string{"*"}
+		}
+	}
+	return endpoints
+}
+
+func validateWebhooks() error {
+	if !Bool("webhooks.enabled") {
+		return nil
+	}
+	for i, e := range WebhookEndpoints() {
+		u, err := url.Parse(e.Url)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+			return fmt.Errorf("webhooks.endpoints[%d].url must be a full http(s) URL, got %q", i, e.Url)
+		}
+		if err := validateSecret(fmt.Sprintf("webhooks.endpoints[%d].secret", i), e.Secret); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -50,9 +50,15 @@ authentication:
   serviceToken:
     enabled: false
     token: ""
+    scopes: [limits]
 limits:
   defaultMaxShelves:
   upgradeUrl: ""
+customDomains:
+  requireReady: false
+webhooks:
+  enabled: false
+  endpoints: []
 smtp:
   host: ""
   port: 1025

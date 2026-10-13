@@ -6,8 +6,12 @@ import (
 	"backend/internal/config"
 	"backend/internal/infrastructure/api/model"
 	"backend/internal/infrastructure/repository"
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type ShelfService interface {
@@ -22,6 +26,11 @@ type ShelfService interface {
 	Create(callerUserId string, u *model.Shelf) (string, error)
 	Update(shelfId, callerUserId string, isAdmin bool, shelfRequest *model.Shelf) (*model.Shelf, error)
 	Delete(u *model.Shelf) error
+	// ListDomains is one page of the shelves with a domain, for the service API. An empty
+	// next cursor means the last page.
+	ListDomains(cursor string, limit int) (items []model.ServiceDomain, next string, err error)
+	// SetDomainStatus stores what an external controller reports about shelfId's domain.
+	SetDomainStatus(domain, shelfId string, status model.DomainStatus) (*model.ServiceDomain, error)
 }
 
 type shelfServiceImpl struct {
@@ -98,7 +107,13 @@ func (s *shelfServiceImpl) GetByDomain(domain string) (*model.Shelf, error) {
 		return nil, nil
 	}
 
-	shelf, err := s.Repository.ShelfRepository.GetByDomain(domain)
+	var shelf *model.Shelf
+	var err error
+	if config.CustomDomainsRequireReady() {
+		shelf, err = s.Repository.ShelfRepository.GetReadyByDomain(domain)
+	} else {
+		shelf, err = s.Repository.ShelfRepository.GetByDomain(domain)
+	}
 	if err != nil || shelf == nil {
 		return shelf, err
 	}
@@ -112,6 +127,9 @@ func (s *shelfServiceImpl) IsDomainRegistered(domain string) (bool, error) {
 	domain = NormalizeDomain(domain)
 	if ValidateDomain(domain) != nil {
 		return false, nil
+	}
+	if config.CustomDomainsRequireReady() {
+		return s.Repository.ShelfRepository.DomainReadyInUse(domain, "")
 	}
 	return s.Repository.ShelfRepository.DomainInUse(domain, "")
 }
@@ -167,6 +185,12 @@ func (s *shelfServiceImpl) validateDomain(domain, exceptShelfId string) error {
 	domain, err := checkShelfDomain(domain)
 	if err != nil || domain == "" {
 		return err
+	}
+
+	// With requireReady a saved domain is a claim, not yet a right to serve: the
+	// uniqueness applies when a controller marks it ready (SetDomainStatus).
+	if config.CustomDomainsRequireReady() {
+		return nil
 	}
 
 	taken, err := s.Repository.ShelfRepository.DomainInUse(domain, exceptShelfId)
@@ -257,7 +281,12 @@ func (s *shelfServiceImpl) Create(callerUserId string, shelfRequest *model.Shelf
 	shelfRequest.UserId = callerUserId
 	// Stamped here, never taken from the client, and left alone by Update.
 	shelfRequest.CreatedWithUserBasedPaths = config.Bool("app.userBasedPaths")
-	return s.Repository.ShelfRepository.Create(shelfRequest)
+	id, err := s.Repository.ShelfRepository.Create(shelfRequest)
+	if err != nil {
+		return "", err
+	}
+	s.Domain.publishDomainChanged(id, callerUserId, shelfRequest.Domain, "")
+	return id, nil
 }
 
 func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, shelfRequest *model.Shelf) (*model.Shelf, error) {
@@ -294,6 +323,8 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 		return nil, err
 	}
 
+	s.Domain.publishDomainChanged(shelfId, existing.UserId, shelfRequest.Domain, existing.Domain)
+
 	shelf, err := s.Repository.ShelfRepository.Get(shelfId)
 	if err != nil {
 		return nil, err
@@ -306,7 +337,116 @@ func (s *shelfServiceImpl) Update(shelfId, callerUserId string, isAdmin bool, sh
 
 // Delete expects the caller to have checked ownership via Get.
 func (s *shelfServiceImpl) Delete(shelfRequest *model.Shelf) error {
-	return s.Repository.ShelfRepository.Delete(shelfRequest)
+	if err := s.Repository.ShelfRepository.Delete(shelfRequest); err != nil {
+		return err
+	}
+	s.Domain.publishDomainChanged(shelfRequest.Id, shelfRequest.UserId, "", shelfRequest.Domain)
+	return nil
+}
+
+// ListDomains reads one page after cursor, a shelf id.
+func (s *shelfServiceImpl) ListDomains(cursor string, limit int) ([]model.ServiceDomain, string, error) {
+	shelves, err := s.Repository.ShelfRepository.ListDomains(cursor, limit+1)
+	if err != nil {
+		return nil, "", err
+	}
+
+	next := ""
+	if len(shelves) > limit {
+		shelves = shelves[:limit]
+		next = shelves[limit-1].Id
+	}
+
+	items := make([]model.ServiceDomain, 0, len(shelves))
+	for _, shelf := range shelves {
+		items = append(items, toServiceDomain(shelf))
+	}
+	return items, next, nil
+}
+
+// maxDomainRecordsBytes is what fits into shelf.domain_records.
+const maxDomainRecordsBytes = 4096
+
+// SetDomainStatus answers ErrConflict when shelfId does not have domain (anymore), so
+// a stale controller can not label a new domain, or when another shelf is ready on it.
+func (s *shelfServiceImpl) SetDomainStatus(domain, shelfId string, status model.DomainStatus) (*model.ServiceDomain, error) {
+	switch status.State {
+	case model.DomainStatePending, model.DomainStateReady, model.DomainStateError:
+	default:
+		return nil, fmt.Errorf("%w: state must be pending, ready or error", ErrInvalidInput)
+	}
+	if status.Records == nil {
+		status.Records = []model.DomainRecord{}
+	}
+	encoded, err := json.Marshal(status.Records)
+	if err != nil {
+		return nil, err
+	}
+	if len(encoded) > maxDomainRecordsBytes {
+		return nil, fmt.Errorf("%w: the records are larger than %d bytes", ErrInvalidInput, maxDomainRecordsBytes)
+	}
+
+	domain = NormalizeDomain(domain)
+	shelf, err := s.Repository.ShelfRepository.Get(shelfId)
+	if err != nil {
+		return nil, err
+	}
+	if shelf == nil || domain == "" || shelf.Domain != domain {
+		return nil, fmt.Errorf("%w: the shelf does not have the domain %q anymore", ErrConflict, domain)
+	}
+
+	if status.State == model.DomainStateReady {
+		taken, err := s.Repository.ShelfRepository.DomainReadyInUse(domain, shelfId)
+		if err != nil {
+			return nil, err
+		}
+		if taken {
+			return nil, fmt.Errorf("%w: another shelf is already ready on the domain %q", ErrConflict, domain)
+		}
+	}
+
+	now := time.Now().Unix()
+	updated, err := s.Repository.ShelfRepository.SetDomainStatus(shelfId, domain, status, now)
+	if err != nil {
+		return nil, err
+	}
+	if !updated {
+		return nil, fmt.Errorf("%w: the shelf does not have the domain %q anymore", ErrConflict, domain)
+	}
+
+	shelf.DomainStatus, shelf.DomainUpdatedAt = &status, now
+	item := toServiceDomain(*shelf)
+	return &item, nil
+}
+
+func toServiceDomain(shelf model.Shelf) model.ServiceDomain {
+	item := model.ServiceDomain{
+		Domain:    shelf.Domain,
+		ShelfId:   shelf.Id,
+		OwnerId:   shelf.UserId,
+		CreatedAt: unixToRfc3339(shelfCreatedAt(shelf.Id)),
+		UpdatedAt: unixToRfc3339(max(shelf.DomainUpdatedAt, shelfCreatedAt(shelf.Id))),
+		Status:    model.ServiceDomainStatus{Records: []model.DomainRecord{}, ObservedDomain: shelf.Domain},
+	}
+	if shelf.DomainStatus != nil {
+		item.Status.State = shelf.DomainStatus.State
+		item.Status.Reason = shelf.DomainStatus.Reason
+		item.Status.Message = shelf.DomainStatus.Message
+		if shelf.DomainStatus.Records != nil {
+			item.Status.Records = shelf.DomainStatus.Records
+		}
+	}
+	return item
+}
+
+// shelfCreatedAt reads the creation time out of the UUIDv7 id, 0 for any other id.
+func shelfCreatedAt(id string) int64 {
+	parsed, err := uuid.Parse(id)
+	if err != nil || parsed.Version() != 7 {
+		return 0
+	}
+	seconds, _ := parsed.Time().UnixTime()
+	return seconds
 }
 
 func shelfLimitError(limit int) error {

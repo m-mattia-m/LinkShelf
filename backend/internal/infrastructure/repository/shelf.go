@@ -6,7 +6,9 @@ import (
 	"backend/internal/infrastructure/api/model"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -23,8 +25,17 @@ type ShelfRepository interface {
 	// PathInUse reports whether another shelf has this path (case-insensitive).
 	PathInUse(path, exceptShelfId string) (bool, error)
 	PathInUseByUser(userId, path, exceptShelfId string) (bool, error)
+	// GetReadyByDomain resolves a shelf by its normalized domain, only while its state is ready.
+	GetReadyByDomain(domain string) (*model.Shelf, error)
 	// DomainInUse reports whether a shelf other than exceptShelfId has this domain.
 	DomainInUse(domain, exceptShelfId string) (bool, error)
+	// DomainReadyInUse is DomainInUse, counting only shelves whose domain state is ready.
+	DomainReadyInUse(domain, exceptShelfId string) (bool, error)
+	// ListDomains returns the shelves with a domain ordered by id, starting after afterId, at most limit.
+	ListDomains(afterId string, limit int) ([]model.Shelf, error)
+	// SetDomainStatus stores the status of a shelf's domain. It reports false when the
+	// shelf does not exist or does not have domain (anymore).
+	SetDomainStatus(shelfId, domain string, status model.DomainStatus, now int64) (bool, error)
 	// ListPathCollisions returns shelves sharing a path.
 	ListPathCollisions() ([]PathCollision, error)
 	CountByUserId(userId string) (int, error)
@@ -43,7 +54,8 @@ type PathCollision struct {
 
 // shelfSelect is the shared SELECT for shelf reads, including the owner's username.
 const shelfSelect = `
-		SELECT s.id, s.title, s.path, s.domain, s.description, s.theme_id, s.icon, s.user_id, u.username, s.created_user_based_paths, s.no_index, s.footer_enabled, s.footer_custom_text
+		SELECT s.id, s.title, s.path, s.domain, s.description, s.theme_id, s.icon, s.user_id, u.username, s.created_user_based_paths, s.no_index, s.footer_enabled, s.footer_custom_text,
+			s.domain_state, s.domain_reason, s.domain_message, s.domain_records, s.domain_updated_at
 		FROM shelf s
 		JOIN "user" u ON u.id = s.user_id
 `
@@ -76,6 +88,10 @@ func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 		domain   sql.NullString
 		themeId  sql.NullString
 		username sql.NullString
+		records  string
+		state    string
+		reason   string
+		message  string
 	)
 
 	err := scan(
@@ -92,9 +108,23 @@ func scanShelf(scan func(dest ...any) error) (model.Shelf, error) {
 		&shelf.NoIndex,
 		&shelf.FooterEnabled,
 		&shelf.FooterCustomText,
+		&state,
+		&reason,
+		&message,
+		&records,
+		&shelf.DomainUpdatedAt,
 	)
 	if err != nil {
 		return model.Shelf{}, err
+	}
+
+	if state != "" {
+		status := &model.DomainStatus{State: state, Reason: reason, Message: message, Records: []model.DomainRecord{}}
+		if records != "" {
+			// A damaged value only costs the records, never the shelf.
+			_ = json.Unmarshal([]byte(records), &status.Records)
+		}
+		shelf.DomainStatus = status
 	}
 
 	shelf.Path = path.String
@@ -221,6 +251,25 @@ func (r *shelfRepository) GetByDomain(domain string) (*model.Shelf, error) {
 	return &shelf, nil
 }
 
+func (r *shelfRepository) GetReadyByDomain(domain string) (*model.Shelf, error) {
+	query, err := buildSqlStatements(shelfSelect + `WHERE s.domain = ? AND s.domain_state = 'ready'`)
+	if err != nil {
+		return nil, err
+	}
+
+	row := r.Engine.QueryRowContext(context.TODO(), query, domain)
+	shelf, err := scanShelf(row.Scan)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &shelf, nil
+}
+
 func (r *shelfRepository) GetByUsernameAndPath(username, path string) (*model.Shelf, error) {
 	query, err := buildSqlStatements(shelfSelect + `WHERE u.username = ? AND LOWER(s.path) = LOWER(?)`)
 	if err != nil {
@@ -289,6 +338,77 @@ func (r *shelfRepository) DomainInUse(domain, exceptShelfId string) (bool, error
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *shelfRepository) DomainReadyInUse(domain, exceptShelfId string) (bool, error) {
+	query, err := buildSqlStatements(`
+		SELECT COUNT(*)
+		FROM shelf
+		WHERE domain = ? AND domain_state = 'ready' AND id <> ?
+	`)
+	if err != nil {
+		return false, err
+	}
+
+	var count int
+	if err := r.Engine.QueryRowContext(context.TODO(), query, domain, exceptShelfId).Scan(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *shelfRepository) ListDomains(afterId string, limit int) ([]model.Shelf, error) {
+	query, err := buildSqlStatements(shelfSelect + `WHERE s.domain IS NOT NULL AND s.id > ? ORDER BY s.id LIMIT ?`)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Engine.QueryContext(context.TODO(), query, afterId, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	shelves := make([]model.Shelf, 0)
+	for rows.Next() {
+		shelf, err := scanShelf(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		shelves = append(shelves, shelf)
+	}
+	return shelves, rows.Err()
+}
+
+func (r *shelfRepository) SetDomainStatus(shelfId, domain string, status model.DomainStatus, now int64) (bool, error) {
+	query, err := buildSqlStatements(`
+		UPDATE shelf
+		SET domain_state = ?,
+			domain_reason = ?,
+			domain_message = ?,
+			domain_records = ?,
+			domain_updated_at = ?
+		WHERE id = ? AND domain = ?
+	`)
+	if err != nil {
+		return false, err
+	}
+
+	records, err := json.Marshal(status.Records)
+	if err != nil {
+		return false, err
+	}
+
+	result, err := r.Engine.ExecContext(context.TODO(), query,
+		status.State, status.Reason, status.Message, string(records), now, shelfId, domain)
+	if err != nil {
+		return false, err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected > 0, nil
 }
 
 func (r *shelfRepository) ListPathCollisions() ([]PathCollision, error) {
@@ -370,7 +490,12 @@ func (r *shelfRepository) Create(s *model.Shelf) (string, error) {
 func (r *shelfRepository) Update(s *model.Shelf) error {
 	query, err := buildSqlStatements(`
 		UPDATE shelf
-		SET title = ?,
+		SET domain_state = CASE WHEN COALESCE(domain, '') = ? THEN domain_state ELSE '' END,
+			domain_reason = CASE WHEN COALESCE(domain, '') = ? THEN domain_reason ELSE '' END,
+			domain_message = CASE WHEN COALESCE(domain, '') = ? THEN domain_message ELSE '' END,
+			domain_records = CASE WHEN COALESCE(domain, '') = ? THEN domain_records ELSE '' END,
+			domain_updated_at = CASE WHEN COALESCE(domain, '') = ? THEN domain_updated_at ELSE ? END,
+			title = ?,
 			path = ?,
 			domain = ?,
 			description = ?,
@@ -388,6 +513,7 @@ func (r *shelfRepository) Update(s *model.Shelf) error {
 	_, err = r.Engine.ExecContext(
 		context.TODO(),
 		query,
+		s.Domain, s.Domain, s.Domain, s.Domain, s.Domain, time.Now().Unix(),
 		s.Title,
 		nullIfEmpty(s.Path),
 		nullIfEmpty(s.Domain),

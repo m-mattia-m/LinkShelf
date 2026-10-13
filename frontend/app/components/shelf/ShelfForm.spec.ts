@@ -317,6 +317,50 @@ describe('ShelfForm', () => {
       expect(screen.getByText(/https:\/\/profile\.example\.com - point the domain/)).toBeInTheDocument()
     })
 
+    it('shows the status and DNS records a controller reported for the saved domain', async () => {
+      await renderSuspended(ShelfForm, {
+        props: {
+          modelValue: buildShelfProp({
+            path: '',
+            domain: 'profile.example.com',
+            domainStatus: {
+              state: 'pending',
+              reason: 'txt_missing',
+              message: '',
+              records: [{ type: 'TXT', name: '_c.profile.example.com', value: 'linkshelf-verification=abc' }]
+            }
+          })
+        }
+      })
+
+      expect(screen.getByTestId('domain-status-state')).toHaveTextContent('Pending')
+      expect(screen.getByTestId('domain-status-record')).toHaveTextContent('linkshelf-verification=abc')
+    })
+
+    it('shows no status once the typed domain differs from the saved one', async () => {
+      await renderSuspended(ShelfForm, {
+        props: {
+          modelValue: buildShelfProp({
+            path: '',
+            domain: 'profile.example.com',
+            domainStatus: { state: 'ready', reason: '', message: '', records: [] }
+          })
+        }
+      })
+      const input = screen.getByPlaceholderText('profile.example.com')
+      await fireEvent.update(input, 'other.example.com')
+
+      expect(screen.queryByTestId('domain-status')).not.toBeInTheDocument()
+    })
+
+    it('shows no status for a shelf without one', async () => {
+      await renderSuspended(ShelfForm, {
+        props: { modelValue: buildShelfProp({ path: '', domain: 'profile.example.com' }) }
+      })
+
+      expect(screen.queryByTestId('domain-status')).not.toBeInTheDocument()
+    })
+
     it('warns about a shelf that has both and says which one saving keeps', async () => {
       const { emitted } = await renderSuspended(ShelfForm, {
         props: { modelValue: buildShelfProp({ path: 'my-shelf', domain: 'profile.example.com' }) }

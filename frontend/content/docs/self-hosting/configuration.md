@@ -158,6 +158,14 @@ authentication:
     # At least 32 bytes, different from jwtSecret, e.g. `openssl rand -base64 48`.
     # Set it via AUTHENTICATION_SERVICETOKEN_TOKEN.
     token: ""
+    # limits | domains:read | domains:write-status, see "Service token" below.
+    scopes: [limits]
+customDomains:
+  # true: a domain is served only while a controller reports it as ready.
+  requireReady: false
+webhooks:
+  enabled: false
+  endpoints: []
 limits:
   # Shelf limit copied onto every new user. Empty means unlimited. Existing
   # users keep their limit, change it per user in the admin settings.
@@ -278,7 +286,12 @@ An external service, such as a billing system, can change limits without an admi
    (`AUTHENTICATION_SERVICETOKEN_ENABLED`, `AUTHENTICATION_SERVICETOKEN_TOKEN`). Keep it in a secret, not in a file.
 3. The service sends it as `Authorization: Bearer <token>`
 
-It works on two endpoints and nowhere else, every other endpoint answers `401`:
+By default it holds the scope `limits`. Further scopes (`authentication.serviceToken.scopes`,
+`AUTHENTICATION_SERVICETOKEN_SCOPES`, comma separated) open the service endpoints described in
+[Automating custom domains](/docs/self-hosting/automating-custom-domains). A service endpoint answers `403` when the
+token lacks its scope, and `401` to every user token. The token is rejected on every route its scopes do not cover.
+
+With the scope `limits` it works on two endpoints:
 
 | Endpoint | Body | Result |
 | --- | --- | --- |

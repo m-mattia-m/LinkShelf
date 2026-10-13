@@ -21,3 +21,4 @@ navigation: true
 - [Kubernetes](/docs/self-hosting/kubernetes)
 - [Configuration](/docs/self-hosting/configuration)
 - [Custom domains](/docs/self-hosting/custom-domains)
+- [Automating custom domains](/docs/self-hosting/automating-custom-domains): webhooks and an API for automatic DNS, routes and certificates

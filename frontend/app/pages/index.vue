@@ -25,6 +25,7 @@ const features = computed(() => [
   { icon: 'i-lucide-folder-plus', title: t('home.features.shelves.title'), description: t('home.features.shelves.description') },
   { icon: 'i-lucide-users', title: t('home.features.users.title'), description: t('home.features.users.description') },
   { icon: 'i-lucide-globe', title: t('home.features.domains.title'), description: t('home.features.domains.description') },
+  { icon: 'i-lucide-webhook', title: t('home.features.automation.title'), description: t('home.features.automation.description') },
   { icon: 'i-lucide-paintbrush', title: t('home.features.themes.title'), description: t('home.features.themes.description') },
   { icon: 'i-lucide-qr-code', title: t('home.features.qrCodes.title'), description: t('home.features.qrCodes.description') },
   { icon: 'i-lucide-file-text', title: t('home.features.footer.title'), description: t('home.features.footer.description') },
