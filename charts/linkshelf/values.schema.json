@@ -150,9 +150,6 @@
                 }
             }
         },
-        "siteUrl": {
-            "type": "string"
-        },
         "podAnnotations": {
             "type": "object"
         },
@@ -345,6 +342,9 @@
                     "type": "string"
                 }
             }
+        },
+        "siteUrl": {
+            "type": "string"
         },
         "startupProbe": {
             "type": "object",
