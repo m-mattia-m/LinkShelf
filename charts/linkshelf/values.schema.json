@@ -343,6 +343,9 @@
                 }
             }
         },
+        "siteUrl": {
+            "type": "string"
+        },
         "startupProbe": {
             "type": "object",
             "properties": {

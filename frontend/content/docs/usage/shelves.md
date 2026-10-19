@@ -1,5 +1,6 @@
 ---
 title: Shelves
+description: "How a LinkShelf shelf is reached through a path or a domain, and how to configure it."
 order: 2
 ---
 

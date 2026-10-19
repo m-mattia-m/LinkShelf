@@ -35,8 +35,21 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:8085'
+      apiBase: 'http://localhost:8085',
+      // Public origin of this instance's own website, e.g. https://linkshelf.cloud.
+      // Empty (default): no sitemap, no canonical/OG URLs, client-only rendering as before.
+      siteUrl: ''
     }
+  },
+
+  routeRules: {
+    '/app/**': { headers: { 'X-Robots-Tag': 'noindex, nofollow' } },
+    '/auth/**': { headers: { 'X-Robots-Tag': 'noindex, nofollow' } },
+    // Locale-prefixed variants (i18n default strategy: prefix_except_default).
+    ...Object.fromEntries(['de', 'de-CH', 'es'].flatMap(code => [
+      [`/${code}/app/**`, { headers: { 'X-Robots-Tag': 'noindex, nofollow' } }],
+      [`/${code}/auth/**`, { headers: { 'X-Robots-Tag': 'noindex, nofollow' } }]
+    ]))
   },
 
   // "/" depends on the host (shelf domains), so it's not prerendered.

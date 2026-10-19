@@ -19,6 +19,10 @@ oidcRedirectUrl: ""
 # Restrict the API to this instance's origins and host (app.strictOrigins). Requires the ingress.
 strictOrigins: true
 
+# Public URL of the instance's own website, e.g. https://links.example.org (NUXT_PUBLIC_SITE_URL).
+# Optional: enables sitemap, canonical URLs and server-rendered marketing pages. Empty keeps them off.
+siteUrl: ""
+
 # Optional Plausible analytics, disabled by default.
 plausible:
   enabled: false

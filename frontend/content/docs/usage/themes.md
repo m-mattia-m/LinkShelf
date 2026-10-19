@@ -1,5 +1,6 @@
 ---
 title: Themes
+description: "Change how a LinkShelf shelf's public page looks with instance themes provided by the admin or your own themes."
 order: 3
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: Configuration
+description: "All LinkShelf configuration options, set in YAML or as environment variables, from app and database to authentication and SMTP."
 order: 6
 ---
 
@@ -184,6 +185,14 @@ smtp:
   # none | starttls | tls - Mailpit speaks plain SMTP with no TLS at all.
   tlsMode: none
 ```
+
+## Website and SEO
+
+The frontend has one setting for the instance's own website, set as an environment variable: `NUXT_PUBLIC_SITE_URL`
+(Helm: `siteUrl`). It is optional. Set it to the public URL of your own instance, e.g. `https://links.example.org`, to
+enable a sitemap, canonical URLs, Open Graph URLs and server-side rendering of the marketing pages and docs. Leave it
+empty if the instance is only used for shelves: the frontend then behaves as it always did. The `og-image.png`
+(1200×630) in the frontend's `public` folder is used for link previews.
 
 ## User-based paths
 

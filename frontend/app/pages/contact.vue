@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SettingPageBody } from '~~/api'
 
-const websiteSettings = useState('settings') as unknown as SettingPageBody
+const websiteSettings = useState('settings') as unknown as SettingPageBody | null
 
 definePageMeta({
   layout: 'landingpage'
@@ -11,7 +11,7 @@ definePageMeta({
 <template>
   <div class="my-8 mx-4 sm:mx-6 lg:mx-8">
     <MDC
-      :value="websiteSettings.contact"
+      :value="websiteSettings?.contact ?? ''"
       tag="article"
     />
   </div>

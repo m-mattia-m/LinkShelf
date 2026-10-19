@@ -14,8 +14,15 @@ const { data: page } = await useAsyncData(
 )
 
 if (!page.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Page not found' })
+  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
+
+useSeoMeta({
+  title: () => page.value ? `${page.value.title} – LinkShelf Docs` : undefined,
+  ogTitle: () => page.value ? `${page.value.title} – LinkShelf Docs` : undefined,
+  description: () => page.value?.description,
+  ogDescription: () => page.value?.description
+})
 
 definePageMeta({
   layout: 'docs'

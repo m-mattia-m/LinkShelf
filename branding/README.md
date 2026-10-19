@@ -6,6 +6,12 @@
 - [WebP](./LinkShelf.webp)
 - [SVG](./LinkStack.svg)
 
+## OG image
+
+- [PNG](./og-image.png)
+- [WebP](./og-image.webp)
+- [SVG](./og-image.svg)
+
 ## Colors
 
 ![color palette](colors.webp)
@@ -18,5 +24,5 @@
 
 ## Credits
 
-Logo icon "Link Circle" by Solar Icons (https://www.svgrepo.com/author/Solar%20Icons/),
-licensed under CC BY (https://www.svgrepo.com/page/licensing/#CC%20Attribution)
+Logo icon "Link Circle" by [Solar Icons](https://www.svgrepo.com/author/Solar%20Icons/),
+licensed under [CC BY](https://www.svgrepo.com/page/licensing/#CC%20Attribution)

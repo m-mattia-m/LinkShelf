@@ -1,5 +1,6 @@
 ---
 title: Custom domains
+description: "Serve a LinkShelf shelf on a domain of its own, such as profile.example.com, and the rules that apply."
 order: 7
 ---
 

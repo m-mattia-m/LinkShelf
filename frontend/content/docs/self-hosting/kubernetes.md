@@ -1,5 +1,6 @@
 ---
 title: Kubernetes
+description: "Deploy LinkShelf on Kubernetes with the Helm chart, including ingress, database options and the bundled Postgres for evaluation."
 order: 5
 ---
 
@@ -177,6 +178,12 @@ env:
   - name: APP_ADDITIONALORIGINS
     value: "https://links.example.org"
 ```
+
+## Website and SEO
+
+Set `siteUrl` to the public URL of your instance (`NUXT_PUBLIC_SITE_URL`) to enable the sitemap, canonical URLs and
+server-rendered marketing pages, see [Website and SEO](/docs/self-hosting/configuration#website-and-seo). It is empty
+by default.
 
 ## Analytics
 

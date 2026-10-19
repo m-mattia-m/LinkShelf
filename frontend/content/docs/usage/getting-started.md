@@ -1,5 +1,6 @@
 ---
 title: Getting started
+description: "Build your first LinkShelf shelf: create a shelf, add sections and links, and put them in the order you want."
 order: 1
 ---
 

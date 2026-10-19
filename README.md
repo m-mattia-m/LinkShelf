@@ -23,6 +23,17 @@ as well as with Docker Compose.
 - **API:** OpenAPI spec and Swagger UI at `/swagger`.
 - **Languages:** UI in English, Deutsch, Schwiizerdütsch and Español.
 
+### Planned
+
+- **Analytics:** optional built-in, privacy-friendly analytics.
+- **More analytics providers:** further external providers alongside Plausible.
+- **Replica and rollback testing:** thorough testing of multi-replica setups and rollbacks.
+- **Content blocks:** headings, Markdown text, lists and spacers next to links.
+- **Social icons:** a block for linking your social profiles.
+- **Custom branding:** configurable logo and favicon.
+- **Enhanced theming:** finer control over colors, fonts and backgrounds.
+- **Multiple paths per domain:** several shelves under different paths of one custom domain.
+
 ## Quick start
 
 1. Copy the compose file from the [Docker docs](frontend/content/docs/self-hosting/docker.md) and create its `.env` with

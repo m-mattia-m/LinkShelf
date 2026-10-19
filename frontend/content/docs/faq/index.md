@@ -1,5 +1,6 @@
 ---
 title: FAQ
+description: "Answers to common LinkShelf questions about upgrades, rollbacks, backups and running multiple replicas."
 icon: i-lucide-circle-help
 order: 5
 navigation: true

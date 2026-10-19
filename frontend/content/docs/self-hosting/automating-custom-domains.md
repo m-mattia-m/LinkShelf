@@ -1,5 +1,6 @@
 ---
 title: Automating custom domains
+description: "The small, generic API contract an external controller can use to automate routing and certificates for LinkShelf custom domains."
 order: 8
 ---
 

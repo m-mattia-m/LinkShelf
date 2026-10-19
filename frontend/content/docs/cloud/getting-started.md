@@ -1,5 +1,6 @@
 ---
 title: Getting started
+description: "LinkShelf Cloud is the managed version of LinkShelf: sign up and share shelves without maintaining a server."
 order: 1
 ---
 

@@ -106,6 +106,7 @@ Rendered as YAML.
 {{- with (include "linkshelf.frontendUrl" .) }}{{ $env = set $env "APP_FRONTENDURL" (dict "value" .) }}{{ end }}
 {{- with (include "linkshelf.apiUrl" .) }}{{ $env = set $env "NUXT_PUBLIC_API_BASE" (dict "value" .) }}{{ end }}
 {{- with (include "linkshelf.oidcRedirectUrl" .) }}{{ $env = set $env "AUTHENTICATION_OIDC_REDIRECTURL" (dict "value" .) }}{{ end }}
+{{- with .Values.siteUrl }}{{ $env = set $env "NUXT_PUBLIC_SITE_URL" (dict "value" .) }}{{ end }}
 {{- /* Optional Plausible Analytics, disabled by default - an instance owner's choice. */}}
 {{- if .Values.plausible.enabled }}
 {{- $env = set $env "NUXT_PUBLIC_PLAUSIBLE_ENABLED" (dict "value" "true") }}
