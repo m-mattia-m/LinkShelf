@@ -88,8 +88,12 @@
 
   "auth.userMenu.signOut": "Abmelden",
 
+  "seo.title": "LinkShelf – Linktree-Alternative zum Selbst-Hosten",
+  "seo.description": "Open-Source-Alternative zu Linktree für den Eigenbetrieb. Ein Container, Docker Compose oder Helm-Chart, eigene Domain, OIDC-Login und Themes. AGPL-lizenziert.",
+
   "home.welcome.title": "Starte mit dem Teilen von Links.",
   "home.welcome.description": "LinkShelf ist eine Open-Source-Alternative zu Linktree, die du selbst hostest.",
+  "home.welcome.imageAlt": "LinkShelf-Dashboard und Shelf-Editor",
   "home.welcome.getStarted": "Loslegen",
   "home.welcome.sourceCode": "Quellcode",
   "home.features.title": "Alles, was du zum Teilen deiner Links brauchst",

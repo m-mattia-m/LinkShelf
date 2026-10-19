@@ -1,5 +1,6 @@
 ---
 title: Documentation
+description: "Documentation for LinkShelf: using shelves, self-hosting your own instance, the managed cloud and frequently asked questions."
 icon: i-lucide-handshake
 order: 1
 navigation: true

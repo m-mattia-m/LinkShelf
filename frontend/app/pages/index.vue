@@ -16,7 +16,7 @@ const links = computed<ButtonProps[]>(() => [
     color: 'neutral',
     variant: 'subtle',
     leadingIcon: 'i-uil-github',
-    to: 'https://github.com/m-mattia-m/Linkshelf',
+    to: 'https://github.com/m-mattia-m/LinkShelf',
     size: 'xl'
   }
 ])
@@ -43,7 +43,7 @@ const ctaLinks = computed<ButtonProps[]>(() => [
   },
   {
     label: t('home.cta.github'),
-    to: 'https://github.com/m-mattia-m/linkshelf',
+    to: 'https://github.com/m-mattia-m/LinkShelf',
     target: '_blank',
     icon: 'i-simple-icons-github',
     color: 'neutral',
@@ -65,21 +65,20 @@ const shelfHost = useState<string | null | undefined>('shelf-host')
     :domain="shelfHost"
   />
   <div v-else>
-    <UPageCTA
+    <UPageHero
       :title="$t('home.welcome.title')"
       :description="$t('home.welcome.description')"
       orientation="horizontal"
       :links="links"
-      :ui="{ root: 'rounded-none' }"
     >
       <img
         src="/presentation.webp"
         width="320"
         height="364"
-        alt="Illustration"
+        :alt="$t('home.welcome.imageAlt')"
         class="w-full rounded-lg"
       >
-    </UPageCTA>
+    </UPageHero>
 
     <UPageSection
       id="features"

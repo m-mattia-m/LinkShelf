@@ -1,5 +1,6 @@
 ---
 title: Getting started
+description: "Run your own LinkShelf instance from a single container image with frontend and backend, and what you need to get started."
 order: 1
 ---
 

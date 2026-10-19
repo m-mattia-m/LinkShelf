@@ -21,7 +21,7 @@ describe('landing page', () => {
     await renderSuspended(IndexPage)
 
     expect(screen.getByRole('link', { name: /Get started/ })).toHaveAttribute('href', '/app')
-    expect(screen.getByRole('link', { name: /Source code/ })).toHaveAttribute('href', 'https://github.com/m-mattia-m/Linkshelf')
+    expect(screen.getByRole('link', { name: /Source code/ })).toHaveAttribute('href', 'https://github.com/m-mattia-m/LinkShelf')
   })
 
   it('renders the features section', async () => {
@@ -38,7 +38,7 @@ describe('landing page', () => {
 
     expect(screen.getByText('Ready to host your own?')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Read the docs/ })).toHaveAttribute('href', '/docs/self-hosting/getting-started')
-    expect(screen.getByRole('link', { name: /View on GitHub/ })).toHaveAttribute('href', 'https://github.com/m-mattia-m/linkshelf')
+    expect(screen.getByRole('link', { name: /View on GitHub/ })).toHaveAttribute('href', 'https://github.com/m-mattia-m/LinkShelf')
   })
 })
 

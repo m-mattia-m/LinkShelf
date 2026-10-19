@@ -1,5 +1,6 @@
 ---
 title: Cloud
+description: "LinkShelf Cloud, the managed version of the open-source LinkShelf, available at account.linkshelf.cloud."
 icon: i-lucide-cloud
 order: 4
 navigation: true

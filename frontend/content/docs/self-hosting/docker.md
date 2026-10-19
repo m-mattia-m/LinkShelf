@@ -1,5 +1,6 @@
 ---
 title: Docker
+description: "Run LinkShelf with Docker Compose, including the required secrets, environment variables and optional Plausible analytics."
 order: 4
 ---
 
@@ -80,6 +81,13 @@ Add `APP_STRICTORIGINS=true` to lock the API to those addresses, see
 [Strict origins](/docs/self-hosting/configuration#strict-origins). To also reach the instance on another domain, add it
 to `APP_ADDITIONALORIGINS` (comma-separated for more than one), see [Reachable on more than one
 domain](/docs/self-hosting/configuration#reachable-on-more-than-one-domain).
+
+## Website and SEO
+
+Optional. `NUXT_PUBLIC_SITE_URL` is the public URL of your own instance, e.g. `https://links.example.org`. Set it to
+enable a sitemap at `/sitemap.xml`, a `robots.txt` that points to it, canonical and Open Graph URLs, and server-side
+rendering of the landing page, `/about`, `/cloud` and the docs. Requests to any other host, such as a shelf on a custom
+domain, are not affected. Leave it empty if the instance is only used for shelves.
 
 ## Analytics
 

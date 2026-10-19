@@ -1,5 +1,6 @@
 ---
 title: Admin
+description: "The LinkShelf admin settings: page content, the first bootstrap admin and instance-wide options for users with the admin role."
 order: 4
 ---
 

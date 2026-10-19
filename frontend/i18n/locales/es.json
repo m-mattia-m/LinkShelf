@@ -88,8 +88,12 @@
 
   "auth.userMenu.signOut": "Cerrar sesión",
 
+  "seo.title": "LinkShelf – Alternativa a Linktree autoalojada",
+  "seo.description": "Alternativa a Linktree de código abierto y autoalojada. Un contenedor, Docker Compose o Helm, dominio propio, inicio de sesión OIDC y temas. Licencia AGPL.",
+
   "home.welcome.title": "Empieza a compartir tus enlaces.",
   "home.welcome.description": "LinkShelf es una alternativa de código abierto a Linktree que alojas tú mismo.",
+  "home.welcome.imageAlt": "Panel de LinkShelf y editor de estanterías",
   "home.welcome.getStarted": "Empezar",
   "home.welcome.sourceCode": "Código fuente",
   "home.features.title": "Todo lo que necesitas para compartir tus enlaces",
