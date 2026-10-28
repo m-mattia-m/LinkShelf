@@ -85,9 +85,11 @@ jobs:
         run: |
           go build ./...
 
+      # Pinned to go.mod's version, see ci.yaml.
       - name: Install mockgen
+        working-directory: backend
         run: |
-          go install go.uber.org/mock/mockgen@latest
+          go install go.uber.org/mock/mockgen@"$(go list -m -f '{{.Version}}' go.uber.org/mock)"
 
       - name: Verify go generate is up-to-date
         working-directory: backend
@@ -183,13 +185,18 @@ jobs:
         with:
           ref: ${{ needs.release.outputs.tag }}
 
+      # Registers the QEMU binfmt handlers via a container instead of apt:
+      # newer ubuntu-latest images no longer ship a real qemu-user-static
+      # package (only a virtual one), so "apt-get install qemu-user-static"
+      # broke the build whenever the runner image moved on.
       - name: Set up QEMU for cross-arch emulation
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
 
       - name: Install buildah
         run: |
+          sudo apt-get update
           sudo apt-get install -y buildah
           buildah version
 
