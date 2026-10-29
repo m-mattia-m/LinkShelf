@@ -6,7 +6,7 @@ LinkShelf is an open source, self-hosted Linktree alternative. Collect your link
 theme and share it under your own URL or domain. It runs as a single container and is built to be deployed on Kubernetes
 as well as with Docker Compose.
 
-![LinkShelf dashboard and shelf editor](frontend/public/presentation.webp)
+![LinkShelf dashboard and shelf editor](branding/og-image.svg)
 
 ## Features
 
