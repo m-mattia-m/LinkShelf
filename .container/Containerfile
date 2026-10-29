@@ -30,7 +30,11 @@ RUN go build \
 # =========================
 # Build Nuxt frontend
 # =========================
-FROM node:26-alpine@sha256:40cd011b55415bc894e45b02fdd5a5dfde056921b7d23a64c74f80497af48797 AS nuxt-builder
+# Runs on the build host's architecture, like go-builder: the output is plain
+# JS plus better-sqlite3's bundled prebuilds (pruned to TARGETARCH below), so
+# nothing here needs the target CPU. Under QEMU emulation the arm64
+# "npm run build" took 15+ minutes or hung outright in "Bundling server".
+FROM --platform=$BUILDPLATFORM node:26-alpine@sha256:40cd011b55415bc894e45b02fdd5a5dfde056921b7d23a64c74f80497af48797 AS nuxt-builder
 
 RUN apk add --no-cache python3 make g++
 
