@@ -171,6 +171,8 @@ jobs:
   build-and-push:
     needs: release
     runs-on: ubuntu-latest
+    # Fails a stuck build instead of letting it hang for the 6h default.
+    timeout-minutes: 30
 
     permissions:
       contents: read
@@ -209,7 +211,11 @@ jobs:
           buildah manifest create "$IMAGE_NAME"
 
           for arch in amd64 arm64; do
+            # --layers caches each step, so the second architecture reuses
+            # the arch-independent nuxt-builder layers (npm ci, npm run build)
+            # from the first instead of running them again.
             buildah build \
+              --layers \
               --arch "$arch" \
               --os linux \
               --manifest "$IMAGE_NAME" \
