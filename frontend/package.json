@@ -44,15 +44,15 @@
     "@testing-library/vue": "^8.1.0",
     "@vitest/coverage-v8": "^5.0.5",
     "@vue/test-utils": "^2.5.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "happy-dom": "^21.0.4",
     "msw": "^2.15.0",
-    "nuxt": "^4.6.2",
+    "nuxt": "^4.6.3",
     "typescript": "^5.9.3",
     "vitest": "^5.0.3",
     "vue": "^3.5.43",
     "vue-router": "^5.4.0",
-    "vue-tsc": "^3.3.13"
+    "vue-tsc": "^3.3.14"
   },
   "overrides": {
     "esbuild": "^0.28.2"
